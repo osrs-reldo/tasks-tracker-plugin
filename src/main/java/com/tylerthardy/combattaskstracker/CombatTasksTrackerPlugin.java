@@ -24,6 +24,8 @@ import net.runelite.client.util.ImageUtil;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.LinkedHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @PluginDescriptor(
@@ -31,9 +33,12 @@ import java.util.LinkedHashMap;
 )
 public class CombatTasksTrackerPlugin extends Plugin
 {
+	private static final Pattern completedTasksRegex = Pattern.compile("Tasks Completed: \\d+/(\\d+)");
+
 	public LinkedHashMap<String, Integer> taskTitleColors;
 	private CombatTasksTrackerPanel pluginPanel;
 	private NavigationButton navButton;
+	private Integer maxTaskCount;
 	private int previousTaskCount = -1;
 
 	@Inject
@@ -87,9 +92,24 @@ public class CombatTasksTrackerPlugin extends Plugin
 	{
 		if (widgetLoaded.getGroupId() == CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID)
 		{
+			maxTaskCount = getMaxTaskCount();
 			storeFollowingWidgetLoaded();
 			setFilterClickListeners();
 		}
+	}
+
+	private Integer getMaxTaskCount() {
+		Widget bar = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_BAR);
+		if (bar == null) return null;
+
+		for (Widget dynamicChild : bar.getDynamicChildren()) {
+			Matcher m = completedTasksRegex.matcher(dynamicChild.getText());
+			if (m.find()) {
+				return Integer.parseInt(m.group(1));
+			}
+		}
+
+		return null;
 	}
 
 	private boolean storeFollowingDropdownChange() {
@@ -111,8 +131,21 @@ public class CombatTasksTrackerPlugin extends Plugin
 
 	private void setTaskTitleColors(LinkedHashMap<String, Integer> colors) {
 		taskTitleColors = colors;
-		previousTaskCount = taskTitleColors.size();
-		sendChatMessage(previousTaskCount + " tasks stored for export", Color.RED);
+
+		int currentCount = colors.size();
+		previousTaskCount = currentCount;
+
+		String taskCount = String.valueOf(previousTaskCount);
+		String helpMessage = " (remove filters to get full export)";
+		Color messageColor = Color.decode("#940B00");
+		if (maxTaskCount != null) {
+			taskCount += "/" + maxTaskCount;
+			if (maxTaskCount == currentCount) {
+				messageColor = Color.decode("#007517");
+				helpMessage = "";
+			}
+		}
+		sendChatMessage(taskCount + " tasks stored for export" + helpMessage, messageColor);
 	}
 
 	private boolean setFilterDropdownListener(int widgetId) {
@@ -154,6 +187,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 	private void sendChatMessage(String chatMessage, Color color)
 	{
 		final String message = new ChatMessageBuilder()
+				.append(color, "Combat Task Tracker: ")
 				.append(color, chatMessage)
 				.build();
 
