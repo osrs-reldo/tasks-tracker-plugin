@@ -23,7 +23,6 @@ import net.runelite.client.util.ImageUtil;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 @Slf4j
@@ -79,6 +78,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 	{
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
+			taskTitleColors = new LinkedHashMap<>();
 		}
 	}
 
@@ -87,20 +87,32 @@ public class CombatTasksTrackerPlugin extends Plugin
 	{
 		if (widgetLoaded.getGroupId() == CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID)
 		{
-			storeTaskTitleColors();
+			storeFollowingWidgetLoaded();
 			setFilterClickListeners();
 		}
 	}
 
-	private boolean storeTaskTitleColors() {
+	private boolean storeFollowingDropdownChange() {
 		LinkedHashMap<String, Integer> colors = getTitleColors();
+		if (colors == null) return true;
 
 		if (colors.size() == previousTaskCount) return false;
 
+		setTaskTitleColors(colors);
+		return true;
+	}
+
+	private void storeFollowingWidgetLoaded() {
+		LinkedHashMap<String, Integer> colors = getTitleColors();
+		if (colors == null) return;
+
+		setTaskTitleColors(colors);
+	}
+
+	private void setTaskTitleColors(LinkedHashMap<String, Integer> colors) {
 		taskTitleColors = colors;
 		previousTaskCount = taskTitleColors.size();
 		sendChatMessage(previousTaskCount + " tasks stored for export", Color.RED);
-		return true;
 	}
 
 	private boolean setFilterDropdownListener(int widgetId) {
@@ -111,7 +123,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 		if (options.length == 0) return false;
 
 		for (Widget option : options) {
-			option.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(this::storeTaskTitleColors));
+			option.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(this::storeFollowingDropdownChange));
 		}
 		return true;
 	}
@@ -129,6 +141,8 @@ public class CombatTasksTrackerPlugin extends Plugin
 
 	private LinkedHashMap<String, Integer> getTitleColors() {
 		Widget list = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_LIST_TITLES);
+		if (list == null) return null;
+
 		LinkedHashMap<String, Integer> titleColors = new LinkedHashMap<>();
 		Widget[] titleWidgets = list.getDynamicChildren();
 		for (Widget titleWidget : titleWidgets) {
