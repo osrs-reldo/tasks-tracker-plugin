@@ -73,6 +73,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 	{
 		return configManager.getConfig(CombatTasksTrackerConfig.class);
 	}
+
 	@Override
 	protected void startUp() throws Exception
 	{
@@ -205,9 +206,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 			trackedTasks.add(taskName);
 		}
 
-		SwingUtilities.invokeLater(() -> {
-			pluginPanel.redrawTracker();
-		});
+		SwingUtilities.invokeLater(() -> pluginPanel.redrawTracker());
 
 		return trackedTasks.contains(taskName);
 	}
