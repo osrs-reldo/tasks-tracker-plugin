@@ -1,20 +1,29 @@
 package com.tylerthardy.combattaskstracker;
 
 import javax.inject.Inject;
+import javax.swing.*;
+
+import com.google.inject.Provides;
+import com.tylerthardy.combattaskstracker.ui.CombatTasksTrackerPanel;
 import com.tylerthardy.combattaskstracker.widgets.CombatTasksWidgetID;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.SpriteID;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.JavaScriptCallback;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetType;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -23,6 +32,7 @@ import net.runelite.client.util.ImageUtil;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,6 +46,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 	private static final Pattern completedTasksRegex = Pattern.compile("Tasks Completed: \\d+/(\\d+)");
 
 	public LinkedHashMap<String, Integer> taskTitleColors;
+	public HashSet<String> trackedTasks = new HashSet<>();
 	private CombatTasksTrackerPanel pluginPanel;
 	private NavigationButton navButton;
 	private Integer maxTaskCount;
@@ -53,6 +64,15 @@ public class CombatTasksTrackerPlugin extends Plugin
 	@Inject
 	private ChatMessageManager chatMessageManager;
 
+	@Inject
+	private CombatTasksTrackerConfig config;
+
+
+	@Provides
+	CombatTasksTrackerConfig getConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(CombatTasksTrackerConfig.class);
+	}
 	@Override
 	protected void startUp() throws Exception
 	{
@@ -60,7 +80,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 		pluginPanel = new CombatTasksTrackerPanel(this);
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
-				.tooltip("Hiscore")
+				.tooltip("Combat Tracker")
 				.icon(icon)
 				.priority(5)
 				.panel(pluginPanel)
@@ -79,7 +99,35 @@ public class CombatTasksTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onConfigChanged(ConfigChanged configChanged) {
+		if (configChanged.getKey().equals("sprite_id"))
+		{
+			Widget expandButtonContainer = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_LIST_EXPAND_BUTTONS);
+			if (expandButtonContainer == null) return;
+			Widget[] children = expandButtonContainer.getDynamicChildren();
+			if (children.length == 0) return;
+			children[0].setSpriteId(Integer.parseInt(configChanged.getNewValue()));
+		}
+	}
+
+	@Subscribe
+	public void onScriptPostFired(ScriptPostFired scriptPostFired)
+	{
+		handleScriptPostFired(scriptPostFired);
+	}
+	private void handleScriptPostFired(ScriptPostFired scriptPostFired)
+	{
+		if (scriptPostFired.getScriptId() == 4862) {
+			addSaveButtons();
+		}
+	}
+
+	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
+	{
+		handleOnGameStateChanged(gameStateChanged);
+	}
+	private void handleOnGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
@@ -90,12 +138,78 @@ public class CombatTasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded widgetLoaded)
 	{
+		handleOnWidgetLoaded(widgetLoaded);
+	}
+	private void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
+	{
 		if (widgetLoaded.getGroupId() == CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID)
 		{
 			maxTaskCount = getMaxTaskCount();
-			storeFollowingWidgetLoaded();
+			storeTasksFollowingWidgetLoaded();
 			setFilterClickListeners();
+			addSaveButtons();
 		}
+	}
+
+	public void addSaveButtons() {
+		Widget list = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_LIST);
+		Widget titles = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_LIST_TITLES);
+
+		if (list != null && titles != null)
+		{
+			Widget[] taskListTitles = titles.getDynamicChildren();
+			Widget[] taskListItems = list.getDynamicChildren();
+			if (taskListTitles.length != taskListItems.length)
+			{
+				log.error("Task list items & titles lengths do not match");
+				return;
+			}
+
+			int yLocation = 14;
+			for (int i = 0; i < taskListTitles.length; i++)
+			{
+				Widget taskListTitle = taskListTitles[i];
+				Widget taskListItem = taskListItems[i];
+				String taskName = taskListTitle.getText();
+
+				Widget trackTaskButton = list.createChild(-1, WidgetType.GRAPHIC);
+				trackTaskButton.setSpriteId(getTrackTaskButtonSpriteId(trackedTasks.contains(taskName)));
+				trackTaskButton.setOriginalWidth(13);
+				trackTaskButton.setOriginalHeight(12);
+				trackTaskButton.setOriginalX(300);
+				trackTaskButton.setOriginalY(yLocation);
+				trackTaskButton.setHasListener(true);
+				trackTaskButton.setAction(1, "Track");
+				trackTaskButton.setOnOpListener((JavaScriptCallback) e -> {
+					boolean tracked = toggleTrackTask(taskName);
+					trackTaskButton.setSpriteId(getTrackTaskButtonSpriteId(tracked));
+				});
+				trackTaskButton.setName(taskName);
+				trackTaskButton.revalidate();
+
+				yLocation += taskListItem.getHeight();
+			}
+		}
+	}
+
+	private int getTrackTaskButtonSpriteId(boolean tracked)
+	{
+		return tracked ? SpriteID.FAIRY_RING_REMOVE_FAVOURITE : SpriteID.FAIRY_RING_ADD_FAVOURITE;
+	}
+
+	private boolean toggleTrackTask(String taskName)
+	{
+		if (trackedTasks.contains(taskName)) {
+			trackedTasks.remove(taskName);
+		} else {
+			trackedTasks.add(taskName);
+		}
+
+		SwingUtilities.invokeLater(() -> {
+			pluginPanel.redrawTracker();
+		});
+
+		return trackedTasks.contains(taskName);
 	}
 
 	private Integer getMaxTaskCount() {
@@ -112,7 +226,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 		return null;
 	}
 
-	private boolean storeFollowingDropdownChange() {
+	private boolean storeTasksFollowingDropdownChange() {
 		LinkedHashMap<String, Integer> colors = getTitleColors();
 		if (colors == null) return true;
 
@@ -122,7 +236,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 		return true;
 	}
 
-	private void storeFollowingWidgetLoaded() {
+	private void storeTasksFollowingWidgetLoaded() {
 		LinkedHashMap<String, Integer> colors = getTitleColors();
 		if (colors == null) return;
 
@@ -156,7 +270,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 		if (options.length == 0) return false;
 
 		for (Widget option : options) {
-			option.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(this::storeFollowingDropdownChange));
+			option.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(this::storeTasksFollowingDropdownChange));
 		}
 		return true;
 	}

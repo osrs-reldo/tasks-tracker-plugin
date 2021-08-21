@@ -1,17 +1,21 @@
-package com.tylerthardy.combattaskstracker;
+package com.tylerthardy.combattaskstracker.ui;
 
 import com.google.gson.Gson;
+import com.tylerthardy.combattaskstracker.CombatTasksTrackerPlugin;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.util.HashSet;
 
 public class CombatTasksTrackerPanel extends PluginPanel
 {
     private final JLabel title = new JLabel();
+    private JPanel centerPanel;
 
     private final CombatTasksTrackerPlugin plugin;
 
@@ -22,22 +26,64 @@ public class CombatTasksTrackerPanel extends PluginPanel
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
+        JPanel northPanel = getNorthPanel();
+        this.centerPanel = getCenterPanel();
+        add(northPanel, BorderLayout.NORTH);
+        add(centerPanel, BorderLayout.CENTER);
+    }
+
+    public void redrawTracker()
+    {
+        assert SwingUtilities.isEventDispatchThread();
+        remove(centerPanel);
+        centerPanel = getCenterPanel();
+        add(centerPanel);
+        revalidate();
+        repaint();
+    }
+
+    private JPanel getNorthPanel() {
         JPanel northPanel = new JPanel(new BorderLayout());
         northPanel.setBorder(new EmptyBorder(1, 0, 10, 0));
 
         title.setText("Combat Tasks Tracker");
         title.setForeground(Color.WHITE);
 
-        northPanel.add(title, BorderLayout.WEST);
-
-        JPanel centerPanel = new JPanel(new BorderLayout());
         JButton exportButton = new JButton("Export");
         exportButton.addActionListener(e -> copyJsonToClipboard());
-        centerPanel.setBackground( ColorScheme.DARK_GRAY_COLOR);
-        centerPanel.add(exportButton);
 
-        add(northPanel, BorderLayout.NORTH);
-        add(centerPanel, BorderLayout.CENTER);
+        JButton resetButton = new JButton("Test");
+        resetButton.addActionListener(e -> {
+            plugin.trackedTasks = new HashSet<>();
+            redrawTracker();
+        });
+
+        northPanel.add(title, BorderLayout.NORTH);
+        northPanel.add(exportButton, BorderLayout.CENTER);
+        northPanel.add(resetButton, BorderLayout.SOUTH);
+
+        return northPanel;
+    }
+
+    private JPanel getCenterPanel() {
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new GridBagLayout());
+        centerPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.weightx = 1;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        for (String trackedTask : plugin.trackedTasks) {
+            TrackedCombatTaskPanel task = new TrackedCombatTaskPanel(trackedTask);
+            centerPanel.add(task, constraints);
+            constraints.gridy++;
+            centerPanel.add(Box.createRigidArea(new Dimension(0, 10)), constraints);
+            constraints.gridy++;
+        }
+
+        return centerPanel;
     }
 
     private void copyJsonToClipboard()
