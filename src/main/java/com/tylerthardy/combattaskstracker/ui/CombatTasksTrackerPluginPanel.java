@@ -12,14 +12,14 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.util.HashSet;
 
-public class CombatTasksTrackerPanel extends PluginPanel
+public class CombatTasksTrackerPluginPanel extends PluginPanel
 {
     private final JLabel title = new JLabel();
     private JPanel centerPanel;
 
     private final CombatTasksTrackerPlugin plugin;
 
-    public CombatTasksTrackerPanel(CombatTasksTrackerPlugin plugin)
+    public CombatTasksTrackerPluginPanel(CombatTasksTrackerPlugin plugin)
     {
         this.plugin = plugin;
 

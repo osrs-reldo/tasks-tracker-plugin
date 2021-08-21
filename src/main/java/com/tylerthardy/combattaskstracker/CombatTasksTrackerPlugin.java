@@ -4,7 +4,7 @@ import javax.inject.Inject;
 import javax.swing.*;
 
 import com.google.inject.Provides;
-import com.tylerthardy.combattaskstracker.ui.CombatTasksTrackerPanel;
+import com.tylerthardy.combattaskstracker.ui.CombatTasksTrackerPluginPanel;
 import com.tylerthardy.combattaskstracker.widgets.CombatTasksWidgetID;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -47,7 +47,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 
 	public LinkedHashMap<String, Integer> taskTitleColors;
 	public HashSet<String> trackedTasks = new HashSet<>();
-	private CombatTasksTrackerPanel pluginPanel;
+	private CombatTasksTrackerPluginPanel pluginPanel;
 	private NavigationButton navButton;
 	private Integer maxTaskCount;
 	private int previousTaskCount = -1;
@@ -77,7 +77,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		taskTitleColors = new LinkedHashMap<>();
-		pluginPanel = new CombatTasksTrackerPanel(this);
+		pluginPanel = new CombatTasksTrackerPluginPanel(this);
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
 				.tooltip("Combat Tracker")
