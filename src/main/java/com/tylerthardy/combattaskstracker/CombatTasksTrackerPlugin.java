@@ -46,7 +46,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 	private static final Pattern completedTasksRegex = Pattern.compile("Tasks Completed: \\d+/(\\d+)");
 
 	public LinkedHashMap<String, Integer> taskTitleColors;
-	public HashSet<String> trackedTasks = new HashSet<>();
+	public HashSet<CombatTask> trackedTasks = new HashSet<>();
 	private CombatTasksTrackerPluginPanel pluginPanel;
 	private NavigationButton navButton;
 	private Integer maxTaskCount;
@@ -172,9 +172,10 @@ public class CombatTasksTrackerPlugin extends Plugin
 				Widget taskListTitle = taskListTitles[i];
 				Widget taskListItem = taskListItems[i];
 				String taskName = taskListTitle.getText();
+				CombatTask task = CombatTask.getTask(taskName);
 
 				Widget trackTaskButton = list.createChild(-1, WidgetType.GRAPHIC);
-				trackTaskButton.setSpriteId(getTrackTaskButtonSpriteId(trackedTasks.contains(taskName)));
+				trackTaskButton.setSpriteId(getTrackTaskButtonSpriteId(trackedTasks.contains(task)));
 				trackTaskButton.setOriginalWidth(13);
 				trackTaskButton.setOriginalHeight(12);
 				trackTaskButton.setOriginalX(300);
@@ -200,15 +201,19 @@ public class CombatTasksTrackerPlugin extends Plugin
 
 	private boolean toggleTrackTask(String taskName)
 	{
-		if (trackedTasks.contains(taskName)) {
-			trackedTasks.remove(taskName);
+		CombatTask task = CombatTask.getTask(taskName);
+		// If can't be found, can't track it
+		if (task == null) return false;
+
+		if (trackedTasks.contains(task)) {
+			trackedTasks.remove(task);
 		} else {
-			trackedTasks.add(taskName);
+			trackedTasks.add(task);
 		}
 
 		SwingUtilities.invokeLater(() -> pluginPanel.redrawTracker());
 
-		return trackedTasks.contains(taskName);
+		return trackedTasks.contains(task);
 	}
 
 	private Integer getMaxTaskCount() {

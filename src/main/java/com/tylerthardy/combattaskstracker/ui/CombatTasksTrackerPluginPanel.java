@@ -1,6 +1,7 @@
 package com.tylerthardy.combattaskstracker.ui;
 
 import com.google.gson.Gson;
+import com.tylerthardy.combattaskstracker.CombatTask;
 import com.tylerthardy.combattaskstracker.CombatTasksTrackerPlugin;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
@@ -75,7 +76,7 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
         constraints.weightx = 1;
         constraints.gridx = 0;
         constraints.gridy = 0;
-        for (String trackedTask : plugin.trackedTasks) {
+        for (CombatTask trackedTask : plugin.trackedTasks) {
             TrackedCombatTaskPanel task = new TrackedCombatTaskPanel(trackedTask);
             centerPanel.add(task, constraints);
             constraints.gridy++;
