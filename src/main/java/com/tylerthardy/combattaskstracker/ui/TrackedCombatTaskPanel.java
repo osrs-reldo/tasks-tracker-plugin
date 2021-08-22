@@ -26,5 +26,7 @@ public class TrackedCombatTaskPanel extends JPanel {
         JLabel description = new JLabel(task.description);
         description.setFont(FontManager.getRunescapeSmallFont());
         add(description, BorderLayout.SOUTH);
+
+        setToolTipText(task.description);
     }
 }
