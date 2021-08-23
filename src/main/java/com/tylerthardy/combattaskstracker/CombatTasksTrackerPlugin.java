@@ -1,6 +1,7 @@
 package com.tylerthardy.combattaskstracker;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.swing.*;
 
 import com.google.inject.Provides;
@@ -24,6 +25,7 @@ import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -56,6 +58,9 @@ public class CombatTasksTrackerPlugin extends Plugin
 	private Client client;
 
 	@Inject
+	private SpriteManager spriteManager;
+
+	@Inject
 	private ClientToolbar clientToolbar;
 
 	@Inject
@@ -67,6 +72,9 @@ public class CombatTasksTrackerPlugin extends Plugin
 	@Inject
 	private CombatTasksTrackerConfig config;
 
+	@Inject
+	@Named("developerMode")
+	boolean developerMode;
 
 	@Provides
 	CombatTasksTrackerConfig getConfig(ConfigManager configManager)
@@ -78,7 +86,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		taskTitleColors = new LinkedHashMap<>();
-		pluginPanel = new CombatTasksTrackerPluginPanel(this);
+		pluginPanel = new CombatTasksTrackerPluginPanel(this, spriteManager, developerMode);
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
 				.tooltip("Combat Tracker")
@@ -211,7 +219,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 			trackedTasks.add(task);
 		}
 
-		SwingUtilities.invokeLater(() -> pluginPanel.redrawTracker());
+		SwingUtilities.invokeLater(() -> pluginPanel.refresh());
 
 		return trackedTasks.contains(task);
 	}
