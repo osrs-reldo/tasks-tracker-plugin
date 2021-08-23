@@ -31,15 +31,6 @@ public class TrackedCombatTaskPanel extends JPanel {
         createPanel(task);
     }
 
-    @Override
-    public Dimension getPreferredSize()
-    {
-        return new Dimension(
-                super.getPreferredSize().width,
-                details.getPreferredSize().height + CONTAINER_PADDING_TOP + CONTAINER_PADDING_BOTTOM + PADDING_TOP
-        );
-    }
-
     public void createPanel(CombatTask task)
     {
         setLayout(new BorderLayout());
@@ -73,5 +64,6 @@ public class TrackedCombatTaskPanel extends JPanel {
         add(container, BorderLayout.NORTH);
 
         setToolTipText(task.description);
+        revalidate();
     }
 }

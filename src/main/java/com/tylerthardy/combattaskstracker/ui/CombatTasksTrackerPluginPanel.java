@@ -7,7 +7,6 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -20,6 +19,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 
@@ -40,7 +41,8 @@ import static com.tylerthardy.combattaskstracker.CombatTask.WHACKAMOLE;
 public class CombatTasksTrackerPluginPanel extends PluginPanel
 {
     private final boolean developerMode;
-    private FixedWidthPanel mainPanel;
+    private final FixedWidthPanel mainPanel = new FixedWidthPanel();
+    private GridBagConstraints mainPanelConstraints;
 
     private final CombatTasksTrackerPlugin plugin;
     private final SpriteManager spriteManager;
@@ -51,6 +53,14 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
         this.plugin = plugin;
         this.spriteManager = spriteManager;
         this.developerMode = developerMode;
+
+        mainPanelConstraints = new GridBagConstraints();
+        mainPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
+        mainPanelConstraints.anchor = GridBagConstraints.NORTHWEST;
+        mainPanelConstraints.weightx = 1;
+        mainPanelConstraints.weighty = 0;
+        mainPanelConstraints.gridx = 0;
+        mainPanelConstraints.gridy = 0;
 
         drawPanel();
         refresh();
@@ -66,7 +76,16 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
     {
         assert SwingUtilities.isEventDispatchThread();
         mainPanel.removeAll();
-        populatePanelWithTasks(mainPanel);
+        mainPanelConstraints.gridy = 0;
+
+        int count = 1;
+        int length = plugin.trackedTasks.size();
+        for (CombatTask trackedTask : plugin.trackedTasks) {
+            TrackedCombatTaskPanel task = new TrackedCombatTaskPanel(spriteManager, trackedTask);
+            mainPanelConstraints.weighty = (count++ == length) ? 1 : 0;
+            mainPanel.add(task, mainPanelConstraints);
+            mainPanelConstraints.gridy++;
+        }
         validate();
         repaint();
     }
@@ -78,13 +97,11 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
         add(getNorthPanel(), BorderLayout.NORTH);
 
         FixedWidthPanel centerPanel = new FixedWidthPanel();
-        mainPanel = new FixedWidthPanel();
+        mainPanel.setLayout(new GridBagLayout());
         mainPanel.setBorder(new EmptyBorder(8, 10, 10, 10));
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         centerPanel.setLayout(new BorderLayout());
         centerPanel.add(mainPanel, BorderLayout.NORTH);
-        centerPanel.setBackground(Color.RED);
         JScrollPane scrollPane = new JScrollPane(mainPanel);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         add(scrollPane, BorderLayout.CENTER);
@@ -164,13 +181,6 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
         northPanel.add(title, BorderLayout.NORTH);
 
         return northPanel;
-    }
-
-    private void populatePanelWithTasks(JPanel target) {
-        for (CombatTask trackedTask : plugin.trackedTasks) {
-            TrackedCombatTaskPanel task = new TrackedCombatTaskPanel(spriteManager, trackedTask);
-            target.add(task);
-        }
     }
 
     private void copyJsonToClipboard()
