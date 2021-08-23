@@ -102,32 +102,55 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
         exportButton.addActionListener(e -> copyJsonToClipboard());
         southPanel.add(exportButton, BorderLayout.SOUTH);
 
+        JButton clearButton = new JButton("Clear");
+        clearButton.setBorder(new EmptyBorder(5, 5, 5, 5));
+        clearButton.setLayout(new BorderLayout(0, BORDER_OFFSET));
+        clearButton.addActionListener(e -> clear());
+        southPanel.add(clearButton, BorderLayout.NORTH);
+
         if (developerMode)
         {
             JButton testButton = new JButton("Test");
             testButton.setBorder(new EmptyBorder(5, 5, 5, 5));
             testButton.setLayout(new BorderLayout(0, BORDER_OFFSET));
             testButton.addActionListener(e -> test());
-            southPanel.add(testButton, BorderLayout.NORTH);
+            southPanel.add(testButton, BorderLayout.CENTER);
         }
 
         return southPanel;
     }
 
+    private void clear()
+    {
+        if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(null,
+                "Are you sure you clear your tracked tasks?", "Clear Tasks",
+                JOptionPane.YES_NO_OPTION))
+        {
+            plugin.trackedTasks.clear();
+            refresh();
+        }
+    }
+
     private void test() {
-        plugin.trackedTasks.add(PERSONAL_SPACE);
-        plugin.trackedTasks.add(ROYAL_AFFAIRS);
-        plugin.trackedTasks.add(HARDER_MODE_I);
-        plugin.trackedTasks.add(HARDER_MODE_II);
-        plugin.trackedTasks.add(REMINISCE);
-        plugin.trackedTasks.add(WHACKAMOLE);
-        plugin.trackedTasks.add(COLLATERAL_DAMAGE);
-        plugin.trackedTasks.add(LIGHTNING_LURE);
-        plugin.trackedTasks.add(LEAVING_NO_ONE_BEHIND);
-        plugin.trackedTasks.add(DONT_LOOK_AT_THE_ECLIPSE);
-        plugin.trackedTasks.add(DONT_LOOK_AT_ME);
-        plugin.trackedTasks.add(ID_RATHER_NOT_LEARN);
-        plugin.trackedTasks.add(JUST_LIKE_THAT);
+        int displayCount = (int)(Math.random() * 10);
+        CombatTask[] testTasks = {
+                PERSONAL_SPACE,
+                ROYAL_AFFAIRS,
+                HARDER_MODE_I,
+                HARDER_MODE_II,
+                REMINISCE,
+                WHACKAMOLE,
+                COLLATERAL_DAMAGE,
+                LIGHTNING_LURE,
+                LEAVING_NO_ONE_BEHIND,
+                DONT_LOOK_AT_THE_ECLIPSE,
+                DONT_LOOK_AT_ME,
+                ID_RATHER_NOT_LEARN,
+                JUST_LIKE_THAT
+        };
+        for (int i = 0; i < displayCount; i++) {
+            plugin.trackedTasks.add(testTasks[i]);
+        }
         refresh();
     }
 
