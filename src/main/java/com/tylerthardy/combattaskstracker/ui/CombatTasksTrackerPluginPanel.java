@@ -40,9 +40,7 @@ import static com.tylerthardy.combattaskstracker.CombatTask.WHACKAMOLE;
 public class CombatTasksTrackerPluginPanel extends PluginPanel
 {
     private final boolean developerMode;
-    private JPanel centerPanel;
     private FixedWidthPanel mainPanel;
-    private JScrollPane scrollPane;
 
     private final CombatTasksTrackerPlugin plugin;
     private final SpriteManager spriteManager;
@@ -87,7 +85,7 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
         centerPanel.setLayout(new BorderLayout());
         centerPanel.add(mainPanel, BorderLayout.NORTH);
         centerPanel.setBackground(Color.RED);
-        scrollPane = new JScrollPane(mainPanel);
+        JScrollPane scrollPane = new JScrollPane(mainPanel);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         add(scrollPane, BorderLayout.CENTER);
 
