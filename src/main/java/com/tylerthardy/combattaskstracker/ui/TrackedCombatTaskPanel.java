@@ -1,6 +1,7 @@
 package com.tylerthardy.combattaskstracker.ui;
 
 import com.tylerthardy.combattaskstracker.CombatTask;
+import com.tylerthardy.combattaskstracker.CombatTasksTrackerPlugin;
 import net.runelite.api.Constants;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
@@ -9,7 +10,9 @@ import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -17,15 +20,19 @@ import java.awt.Dimension;
 
 public class TrackedCombatTaskPanel extends JPanel {
 
+    private final CombatTasksTrackerPlugin plugin;
     private final SpriteManager spriteManager;
-
+    private final CombatTask task;
     private final JLabel icon = new JLabel();
     private final JPanel details = new JPanel(new BorderLayout());
 
-    public TrackedCombatTaskPanel(SpriteManager spriteManager, CombatTask task) {
+    public TrackedCombatTaskPanel(CombatTasksTrackerPlugin plugin, SpriteManager spriteManager, CombatTask task) {
         super(new BorderLayout());
+        this.plugin = plugin;
         this.spriteManager = spriteManager;
+        this.task = task;
         createPanel(task);
+        setComponentPopupMenu(createPopupMenu());
     }
 
     public void createPanel(CombatTask task)
@@ -59,6 +66,19 @@ public class TrackedCombatTaskPanel extends JPanel {
         add(container, BorderLayout.NORTH);
 
         setToolTipText(task.description);
+        createPopupMenu();
         revalidate();
+    }
+
+    private JPopupMenu createPopupMenu()
+    {
+        final JMenuItem removeTask = new JMenuItem("Remove");
+        removeTask.addActionListener(e -> plugin.toggleTrackTask(task.name));
+
+        final JPopupMenu popupMenu = new JPopupMenu();
+        popupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
+        popupMenu.add(removeTask);
+
+        return popupMenu;
     }
 }

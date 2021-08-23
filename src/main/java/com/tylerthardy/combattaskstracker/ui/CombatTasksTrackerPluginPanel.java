@@ -120,11 +120,11 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
         exportButton.addActionListener(e -> copyJsonToClipboard());
         southPanel.add(exportButton, BorderLayout.SOUTH);
 
-        JButton clearButton = new JButton("Clear");
-        clearButton.setBorder(new EmptyBorder(5, 5, 5, 5));
-        clearButton.setLayout(new BorderLayout(0, BORDER_OFFSET));
-        clearButton.addActionListener(e -> clear());
-        southPanel.add(clearButton, BorderLayout.NORTH);
+        JButton removeAllButton = new JButton("Remove All");
+        removeAllButton.setBorder(new EmptyBorder(5, 5, 5, 5));
+        removeAllButton.setLayout(new BorderLayout(0, BORDER_OFFSET));
+        removeAllButton.addActionListener(e -> removeAllTasks());
+        southPanel.add(removeAllButton, BorderLayout.NORTH);
 
         if (developerMode)
         {
@@ -138,10 +138,10 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
         return southPanel;
     }
 
-    private void clear()
+    private void removeAllTasks()
     {
         if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(null,
-                "Are you sure you clear your tracked tasks?", "Clear Tasks",
+                "Are you sure you want to remove all of your tracked tasks?", "Remove All Tasks",
                 JOptionPane.YES_NO_OPTION))
         {
             plugin.trackedTasks.clear();

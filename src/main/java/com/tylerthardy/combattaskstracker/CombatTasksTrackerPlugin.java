@@ -1,9 +1,5 @@
 package com.tylerthardy.combattaskstracker;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.swing.*;
-
 import com.google.inject.Provides;
 import com.tylerthardy.combattaskstracker.ui.CombatTasksTrackerPluginPanel;
 import com.tylerthardy.combattaskstracker.widgets.CombatTasksWidgetID;
@@ -32,7 +28,10 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
 
-import java.awt.*;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.swing.SwingUtilities;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -202,12 +201,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 		}
 	}
 
-	private int getTrackTaskButtonSpriteId(boolean tracked)
-	{
-		return tracked ? SpriteID.FAIRY_RING_REMOVE_FAVOURITE : SpriteID.FAIRY_RING_ADD_FAVOURITE;
-	}
-
-	private boolean toggleTrackTask(String taskName)
+	public boolean toggleTrackTask(String taskName)
 	{
 		CombatTask task = CombatTask.getTask(taskName);
 		// If can't be found, can't track it
@@ -222,6 +216,11 @@ public class CombatTasksTrackerPlugin extends Plugin
 		SwingUtilities.invokeLater(() -> pluginPanel.refresh());
 
 		return trackedTasks.contains(task);
+	}
+
+	private int getTrackTaskButtonSpriteId(boolean tracked)
+	{
+		return tracked ? SpriteID.FAIRY_RING_REMOVE_FAVOURITE : SpriteID.FAIRY_RING_ADD_FAVOURITE;
 	}
 
 	private Integer getMaxTaskCount() {
