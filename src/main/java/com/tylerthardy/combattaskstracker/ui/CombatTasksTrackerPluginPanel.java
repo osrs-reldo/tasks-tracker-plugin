@@ -5,6 +5,7 @@ import com.tylerthardy.combattaskstracker.CombatTask;
 import com.tylerthardy.combattaskstracker.CombatTasksTrackerPlugin;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 
 import javax.swing.JButton;
@@ -81,11 +82,18 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
 
         int count = 1;
         int length = plugin.trackedTasks.size();
-        for (CombatTask trackedTask : plugin.trackedTasks) {
-            TrackedCombatTaskPanel task = new TrackedCombatTaskPanel(spriteManager, trackedTask);
-            mainPanelConstraints.weighty = (count++ == length) ? 1 : 0;
-            mainPanel.add(task, mainPanelConstraints);
-            mainPanelConstraints.gridy++;
+        if (length == 0) {
+            JLabel emptyTasks = new JLabel();
+            emptyTasks.setText("<html><center>" + "You're not tracking any tasks. Visit the Combat Tasks UI in-game to add tasks to this panel." + "</center></html>");
+            emptyTasks.setFont(FontManager.getRunescapeSmallFont());
+            mainPanel.add(emptyTasks, mainPanelConstraints);
+        } else {
+            for (CombatTask trackedTask : plugin.trackedTasks) {
+                TrackedCombatTaskPanel task = new TrackedCombatTaskPanel(plugin, spriteManager, trackedTask);
+                mainPanelConstraints.weighty = (count++ == length) ? 1 : 0;
+                mainPanel.add(task, mainPanelConstraints);
+                mainPanelConstraints.gridy++;
+            }
         }
         validate();
         repaint();
