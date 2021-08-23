@@ -23,6 +23,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
+import java.util.Arrays;
 
 import static com.tylerthardy.combattaskstracker.CombatTask.COLLATERAL_DAMAGE;
 import static com.tylerthardy.combattaskstracker.CombatTask.DONT_LOOK_AT_ME;
@@ -42,7 +43,7 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
 {
     private final boolean developerMode;
     private final FixedWidthPanel mainPanel = new FixedWidthPanel();
-    private GridBagConstraints mainPanelConstraints;
+    private final GridBagConstraints mainPanelConstraints;
 
     private final CombatTasksTrackerPlugin plugin;
     private final SpriteManager spriteManager;
@@ -165,9 +166,7 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
                 ID_RATHER_NOT_LEARN,
                 JUST_LIKE_THAT
         };
-        for (int i = 0; i < displayCount; i++) {
-            plugin.trackedTasks.add(testTasks[i]);
-        }
+        plugin.trackedTasks.addAll(Arrays.asList(testTasks).subList(0, displayCount));
         refresh();
     }
 

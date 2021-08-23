@@ -21,9 +21,6 @@ public class TrackedCombatTaskPanel extends JPanel {
 
     private final JLabel icon = new JLabel();
     private final JPanel details = new JPanel(new BorderLayout());
-    private final int PADDING_TOP = 7;
-    private final int CONTAINER_PADDING_TOP = 7;
-    private final int CONTAINER_PADDING_BOTTOM = 6;
 
     public TrackedCombatTaskPanel(SpriteManager spriteManager, CombatTask task) {
         super(new BorderLayout());
@@ -37,15 +34,13 @@ public class TrackedCombatTaskPanel extends JPanel {
         setBorder(new EmptyBorder(7, 0, 0, 0));
 
         JPanel container = new JPanel();
-        container.setBorder(new EmptyBorder(CONTAINER_PADDING_TOP, CONTAINER_PADDING_TOP, CONTAINER_PADDING_BOTTOM, 0));
+        container.setBorder(new EmptyBorder(7, 7, 6, 0));
         container.setLayout(new BorderLayout());
         container.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
         // Icon
         icon.setMinimumSize(new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT));
-        spriteManager.getSpriteAsync(task.tier.spriteId, 0, sprite -> {
-            icon.setIcon(new ImageIcon(sprite));
-        });
+        spriteManager.getSpriteAsync(task.tier.spriteId, 0, sprite -> icon.setIcon(new ImageIcon(sprite)));
 
         // Details
         details.setBackground(ColorScheme.DARKER_GRAY_COLOR);
