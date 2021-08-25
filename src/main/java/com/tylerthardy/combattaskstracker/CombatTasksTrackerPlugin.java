@@ -159,7 +159,24 @@ public class CombatTasksTrackerPlugin extends Plugin
 		}
 	}
 
-	public void addSaveButtons() {
+	public boolean toggleTrackTask(String taskName)
+	{
+		CombatTask task = CombatTask.getTask(taskName);
+		// If can't be found, can't track it
+		if (task == null) return false;
+
+		if (trackedTasks.contains(task)) {
+			trackedTasks.remove(task);
+		} else {
+			trackedTasks.add(task);
+		}
+
+		SwingUtilities.invokeLater(() -> pluginPanel.refresh());
+
+		return trackedTasks.contains(task);
+	}
+
+	private void addSaveButtons() {
 		Widget list = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_LIST);
 		Widget titles = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_LIST_TITLES);
 
@@ -199,23 +216,6 @@ public class CombatTasksTrackerPlugin extends Plugin
 				yLocation += taskListItem.getHeight();
 			}
 		}
-	}
-
-	public boolean toggleTrackTask(String taskName)
-	{
-		CombatTask task = CombatTask.getTask(taskName);
-		// If can't be found, can't track it
-		if (task == null) return false;
-
-		if (trackedTasks.contains(task)) {
-			trackedTasks.remove(task);
-		} else {
-			trackedTasks.add(task);
-		}
-
-		SwingUtilities.invokeLater(() -> pluginPanel.refresh());
-
-		return trackedTasks.contains(task);
 	}
 
 	private int getTrackTaskButtonSpriteId(boolean tracked)
