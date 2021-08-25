@@ -428,8 +428,9 @@ public enum CombatTask {
     }
 
     public static CombatTask getTask(String name) {
+        name = name.toLowerCase();
         for (CombatTask td : values()) {
-            if (td.name.equals(name)) {
+            if (td.name.toLowerCase().equals(name)) {
                 return td;
             }
         }

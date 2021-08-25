@@ -8,6 +8,7 @@ import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.SpriteID;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
@@ -27,6 +28,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -44,7 +46,8 @@ import java.util.regex.Pattern;
 )
 public class CombatTasksTrackerPlugin extends Plugin
 {
-	private static final Pattern completedTasksRegex = Pattern.compile("Tasks Completed: \\d+/(\\d+)");
+	private static final Pattern completedTasksLabelRegex = Pattern.compile("Tasks Completed: \\d+/(\\d+)");
+	private static final Pattern taskCompletedChatMessageRegex = Pattern.compile("Congratulations, you've completed an? (.*) combat task: (.*)\\.");;
 
 	public LinkedHashMap<String, Integer> taskTitleColors;
 	public HashSet<CombatTask> trackedTasks = new HashSet<>();
@@ -107,6 +110,26 @@ public class CombatTasksTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onChatMessage(ChatMessage chatMessage) {
+		handleOnChatMessage(chatMessage);
+	}
+	private void handleOnChatMessage(ChatMessage chatMessage) {
+		if (chatMessage.getType() != ChatMessageType.GAMEMESSAGE) {
+			return;
+		}
+
+		String strippedMessage = Text.removeFormattingTags(chatMessage.getMessage());
+		Matcher m = taskCompletedChatMessageRegex.matcher(strippedMessage);
+		if (!m.find()) {
+			return;
+		}
+
+		String tier = m.group(1);
+		String taskName = m.group(2);
+		completeTask(taskName);
+	}
+
+	@Subscribe
 	public void onConfigChanged(ConfigChanged configChanged) {
 		if (configChanged.getKey().equals("sprite_id"))
 		{
@@ -162,6 +185,10 @@ public class CombatTasksTrackerPlugin extends Plugin
 	public boolean toggleTrackTask(String taskName)
 	{
 		CombatTask task = CombatTask.getTask(taskName);
+		return toggleTrackTask(task);
+	}
+
+	private boolean toggleTrackTask(CombatTask task) {
 		// If can't be found, can't track it
 		if (task == null) return false;
 
@@ -174,6 +201,13 @@ public class CombatTasksTrackerPlugin extends Plugin
 		SwingUtilities.invokeLater(() -> pluginPanel.refresh());
 
 		return trackedTasks.contains(task);
+	}
+
+	private void completeTask(String taskName) {
+		CombatTask task = CombatTask.getTask(taskName);
+		if (trackedTasks.contains(task)) {
+			toggleTrackTask(task);
+		}
 	}
 
 	private void addSaveButtons() {
@@ -228,7 +262,7 @@ public class CombatTasksTrackerPlugin extends Plugin
 		if (bar == null) return null;
 
 		for (Widget dynamicChild : bar.getDynamicChildren()) {
-			Matcher m = completedTasksRegex.matcher(dynamicChild.getText());
+			Matcher m = completedTasksLabelRegex.matcher(dynamicChild.getText());
 			if (m.find()) {
 				return Integer.parseInt(m.group(1));
 			}
