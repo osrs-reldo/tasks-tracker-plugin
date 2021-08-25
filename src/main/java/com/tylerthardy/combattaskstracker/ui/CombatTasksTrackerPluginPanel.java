@@ -78,6 +78,7 @@ public class CombatTasksTrackerPluginPanel extends PluginPanel
     {
         assert SwingUtilities.isEventDispatchThread();
         mainPanel.removeAll();
+        mainPanelConstraints.weighty = 0;
         mainPanelConstraints.gridy = 0;
 
         int count = 1;
