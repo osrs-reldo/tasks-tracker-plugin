@@ -1,7 +1,6 @@
 package com.tylerthardy.combattaskstracker;
 
 public enum CombatTask {
-
     NOXIOUS_FOE("Noxious Foe", TaskTier.EASY, "Aberrant spectre", "Kill an Aberrant Spectre."),
     BARROWS_NOVICE("Barrows Novice", TaskTier.EASY, "Barrows", "Open the Barrows chest 10 times."),
     DEFENCE_WHAT_DEFENCE("Defence? What Defence?", TaskTier.EASY, "Barrows", "Kill any Barrows Brother using only magical damage."),

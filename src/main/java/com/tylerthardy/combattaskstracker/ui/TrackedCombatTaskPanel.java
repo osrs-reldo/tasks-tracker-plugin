@@ -18,7 +18,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 
-public class TrackedCombatTaskPanel extends JPanel {
+public class TrackedCombatTaskPanel extends JPanel
+{
 
     private final CombatTasksTrackerPlugin plugin;
     private final SpriteManager spriteManager;
