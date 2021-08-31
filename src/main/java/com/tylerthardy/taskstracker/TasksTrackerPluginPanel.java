@@ -11,6 +11,7 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -35,7 +36,6 @@ public class TasksTrackerPluginPanel extends PluginPanel
 {
     private final boolean developerMode;
     private final FixedWidthPanel mainPanel = new FixedWidthPanel();
-    private final GridBagConstraints mainPanelConstraints;
 
     private final TasksTrackerPlugin plugin;
     private ClientThread clientThread;
@@ -48,14 +48,6 @@ public class TasksTrackerPluginPanel extends PluginPanel
         this.clientThread = clientThread;
         this.spriteManager = spriteManager;
         this.developerMode = developerMode;
-
-        mainPanelConstraints = new GridBagConstraints();
-        mainPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
-        mainPanelConstraints.anchor = GridBagConstraints.NORTHWEST;
-        mainPanelConstraints.weightx = 1;
-        mainPanelConstraints.weighty = 0;
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 0;
 
         drawPanel();
         refresh();
@@ -71,19 +63,13 @@ public class TasksTrackerPluginPanel extends PluginPanel
     {
         assert SwingUtilities.isEventDispatchThread();
         mainPanel.removeAll();
-        mainPanelConstraints.weighty = 0;
-        mainPanelConstraints.gridy = 0;
 
         log.debug("Loading task types...");
         List<Task> tasks = TaskLoader.getTasks(plugin.selectedTaskType);
         log.debug("Creating panels...");
-        int length = tasks.size();
-        int count = 1;
         for (Task task : tasks) {
             TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager);
-            mainPanelConstraints.weighty = (count++ == length) ? 1 : 0;
-            mainPanel.add(taskPanel, mainPanelConstraints);
-            mainPanelConstraints.gridy++;
+            mainPanel.add(taskPanel);
         }
         log.debug("Validate and repaint...");
         validate();
@@ -97,8 +83,8 @@ public class TasksTrackerPluginPanel extends PluginPanel
         add(getNorthPanel(), BorderLayout.NORTH);
 
         FixedWidthPanel centerPanel = new FixedWidthPanel();
-        mainPanel.setLayout(new GridBagLayout());
-        mainPanel.setBorder(new EmptyBorder(8, 10, 10, 10));
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBorder(new EmptyBorder(0, 10, 10, 10));
         mainPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         centerPanel.setLayout(new BorderLayout());
         centerPanel.add(mainPanel, BorderLayout.NORTH);

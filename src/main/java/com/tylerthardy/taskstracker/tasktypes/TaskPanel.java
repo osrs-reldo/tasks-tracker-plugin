@@ -9,6 +9,7 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.timetracking.TimeTrackingConfig;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
+import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.SwingUtil;
@@ -61,7 +62,7 @@ public abstract class TaskPanel extends JPanel
     public void createPanel(Task task)
     {
         setLayout(new BorderLayout());
-        setBorder(new EmptyBorder(7, 0, 0, 0));
+        setBorder(new EmptyBorder(0, 0, 7, 0));
 
         JPanel container = new JPanel(new BorderLayout());
         container.setBorder(new EmptyBorder(7, 7, 6, 0));
@@ -121,5 +122,11 @@ public abstract class TaskPanel extends JPanel
         toggleTrack.setSelected(task.isTracked());
 
         revalidate();
+    }
+
+    @Override
+    public Dimension getMaximumSize()
+    {
+        return new Dimension(PluginPanel.PANEL_WIDTH, getPreferredSize().height);
     }
 }
