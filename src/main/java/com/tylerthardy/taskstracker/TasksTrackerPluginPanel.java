@@ -1,9 +1,12 @@
 package com.tylerthardy.taskstracker;
 
 import com.google.gson.Gson;
-import com.tylerthardy.taskstracker.types.Task;
-import com.tylerthardy.taskstracker.types.TaskType;
-import com.tylerthardy.taskstracker.types.TaskPanel;
+import com.tylerthardy.taskstracker.tasktypes.Task;
+import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
+import com.tylerthardy.taskstracker.tasktypes.TaskType;
+import com.tylerthardy.taskstracker.tasktypes.GenericTaskPanel;
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
@@ -27,6 +30,7 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.util.List;
 
+@Slf4j
 public class TasksTrackerPluginPanel extends PluginPanel
 {
     private final boolean developerMode;
@@ -34,12 +38,14 @@ public class TasksTrackerPluginPanel extends PluginPanel
     private final GridBagConstraints mainPanelConstraints;
 
     private final TasksTrackerPlugin plugin;
+    private ClientThread clientThread;
     private final SpriteManager spriteManager;
 
-    public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, SpriteManager spriteManager, boolean developerMode)
+    public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, boolean developerMode)
     {
         super(false);
         this.plugin = plugin;
+        this.clientThread = clientThread;
         this.spriteManager = spriteManager;
         this.developerMode = developerMode;
 
@@ -68,15 +74,18 @@ public class TasksTrackerPluginPanel extends PluginPanel
         mainPanelConstraints.weighty = 0;
         mainPanelConstraints.gridy = 0;
 
+        log.debug("Loading task types...");
         List<Task> tasks = TaskLoader.getTasks(plugin.selectedTaskType);
+        log.debug("Creating panels...");
         int length = tasks.size();
         int count = 1;
-        for (Task trackedTask : tasks) {
-            TaskPanel task = new TaskPanel(trackedTask);
+        for (Task task : tasks) {
+            TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager);
             mainPanelConstraints.weighty = (count++ == length) ? 1 : 0;
-            mainPanel.add(task, mainPanelConstraints);
+            mainPanel.add(taskPanel, mainPanelConstraints);
             mainPanelConstraints.gridy++;
         }
+        log.debug("Validate and repaint...");
         validate();
         repaint();
     }

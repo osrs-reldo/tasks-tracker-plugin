@@ -2,9 +2,8 @@ package com.tylerthardy.taskstracker;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.tylerthardy.taskstracker.TasksTrackerPlugin;
-import com.tylerthardy.taskstracker.types.Task;
-import com.tylerthardy.taskstracker.types.TaskType;
+import com.tylerthardy.taskstracker.tasktypes.Task;
+import com.tylerthardy.taskstracker.tasktypes.TaskType;
 
 import java.io.IOException;
 import java.io.InputStream;

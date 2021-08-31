@@ -1,8 +1,9 @@
 package com.tylerthardy.taskstracker;
 
 import com.google.inject.Provides;
-import com.tylerthardy.taskstracker.types.Task;
-import com.tylerthardy.taskstracker.types.TaskType;
+import com.tylerthardy.combattaskstracker.CombatTask;
+import com.tylerthardy.taskstracker.tasktypes.Task;
+import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -24,6 +25,7 @@ import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.swing.SwingUtilities;
 import java.awt.image.BufferedImage;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -79,7 +81,7 @@ public class TasksTrackerPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		taskTitleColors = new LinkedHashMap<>();
-		pluginPanel = new TasksTrackerPluginPanel(this, spriteManager, developerMode);
+		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager, developerMode);
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
 				.tooltip("Task Tracker")

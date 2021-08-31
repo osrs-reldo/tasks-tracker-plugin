@@ -1,9 +1,9 @@
-package com.tylerthardy.taskstracker.types;
+package com.tylerthardy.taskstracker.tasktypes;
 
-import com.tylerthardy.taskstracker.types.combattask.CombatTask;
-import com.tylerthardy.taskstracker.types.league1.League1Task;
-import com.tylerthardy.taskstracker.types.league2.League2Task;
-import com.tylerthardy.taskstracker.types.testtask.TestTask;
+import com.tylerthardy.taskstracker.tasktypes.combattask.CombatTask;
+import com.tylerthardy.taskstracker.tasktypes.league1.League1Task;
+import com.tylerthardy.taskstracker.tasktypes.league2.League2Task;
+import com.tylerthardy.taskstracker.tasktypes.testtask.TestTask;
 import lombok.Getter;
 
 import java.lang.reflect.Type;
