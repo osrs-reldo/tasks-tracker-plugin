@@ -1,4 +1,4 @@
-package com.tylerthardy.taskstracker;
+package com.tylerthardy.taskstracker.panel;
 
 import net.runelite.client.ui.PluginPanel;
 

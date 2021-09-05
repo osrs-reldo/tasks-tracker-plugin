@@ -1,9 +1,7 @@
-package com.tylerthardy.taskstracker;
+package com.tylerthardy.taskstracker.panel;
 
 import com.google.gson.Gson;
-import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskManager;
-import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
@@ -11,46 +9,37 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.ScrollPaneConstants;
+import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 public class TasksTrackerPluginPanel extends PluginPanel
 {
-    private final boolean developerMode;
-    private final FixedWidthPanel mainPanel = new FixedWidthPanel();
-
-    private final TasksTrackerPlugin plugin;
-    private TaskManager taskManager;
-    private ClientThread clientThread;
+    private AllTaskListPanel allTasksPanel;
+    private TrackedTaskListPanel trackedTaskListPanel;
+    private final TaskManager taskManager;
+    private final ClientThread clientThread;
     private final SpriteManager spriteManager;
 
-    public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TaskManager taskManager, ClientThread clientThread, SpriteManager spriteManager, boolean developerMode)
+    public TasksTrackerPluginPanel(TaskManager taskManager, ClientThread clientThread, SpriteManager spriteManager)
     {
         super(false);
-        this.plugin = plugin;
         this.taskManager = taskManager;
         this.clientThread = clientThread;
         this.spriteManager = spriteManager;
-        this.developerMode = developerMode;
 
-        drawPanel();
+        createPanel(this);
         refresh();
     }
 
@@ -62,39 +51,24 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
     public void refresh()
     {
-        assert SwingUtilities.isEventDispatchThread();
-        mainPanel.removeAll();
-
-        log.debug("Creating panels...");
-        ArrayList<Task> tasks = taskManager.tasks.get(taskManager.selectedTaskType);
-        if (tasks != null) {
-            for (Task task : tasks) {
-                TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager);
-                mainPanel.add(taskPanel);
-            }
-        }
-        log.debug("Validate and repaint...");
-        validate();
-        repaint();
+        allTasksPanel.refresh();
+        trackedTaskListPanel.refresh();
     }
 
-    private void drawPanel() {
-        setLayout(new BorderLayout());
-        setBackground(ColorScheme.DARK_GRAY_COLOR);
+    private void createPanel(JPanel parent) {
+        parent.setLayout(new BorderLayout());
+        parent.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-        add(getNorthPanel(), BorderLayout.NORTH);
+        trackedTaskListPanel = new TrackedTaskListPanel(taskManager, clientThread, spriteManager);
+        allTasksPanel = new AllTaskListPanel(taskManager, clientThread, spriteManager);
 
-        FixedWidthPanel centerPanel = new FixedWidthPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.setBorder(new EmptyBorder(0, 10, 10, 10));
-        mainPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        centerPanel.setLayout(new BorderLayout());
-        centerPanel.add(mainPanel, BorderLayout.NORTH);
-        JScrollPane scrollPane = new JScrollPane(mainPanel);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        add(scrollPane, BorderLayout.CENTER);
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Tracked Tasks", trackedTaskListPanel);
+        tabbedPane.addTab("All Tasks", allTasksPanel);
 
-        add(getSouthPanel(), BorderLayout.SOUTH);
+        parent.add(getNorthPanel(), BorderLayout.NORTH);
+        parent.add(tabbedPane, BorderLayout.CENTER);
+        parent.add(getSouthPanel(), BorderLayout.SOUTH);
     }
 
     private JPanel getSouthPanel()

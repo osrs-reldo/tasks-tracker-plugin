@@ -1,6 +1,7 @@
 package com.tylerthardy.taskstracker;
 
 import com.google.inject.Provides;
+import com.tylerthardy.taskstracker.panel.TasksTrackerPluginPanel;
 import com.tylerthardy.taskstracker.tasktypes.TaskManager;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -25,11 +26,8 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 
 @Slf4j
 @PluginDescriptor(
@@ -61,10 +59,6 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject
 	private TasksTrackerConfig config;
 
-	@Inject
-	@Named("developerMode")
-	boolean developerMode;
-
 	@Provides
 	TasksTrackerConfig getConfig(ConfigManager configManager)
 	{
@@ -74,7 +68,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		pluginPanel = new TasksTrackerPluginPanel(this, taskManager, clientThread, spriteManager, developerMode);
+		pluginPanel = new TasksTrackerPluginPanel(taskManager, clientThread, spriteManager);
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
 				.tooltip("Task Tracker")

@@ -1,6 +1,5 @@
 package com.tylerthardy.taskstracker.tasktypes;
 
-import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.Util;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.SpriteID;
@@ -15,9 +14,9 @@ import java.awt.image.BufferedImage;
 @Slf4j
 public class GenericTaskPanel extends TaskPanel
 {
-    public GenericTaskPanel(ClientThread clientThread, SpriteManager spriteManager, Task task)
+    public GenericTaskPanel(TaskManager taskManager, ClientThread clientThread, SpriteManager spriteManager, Task task)
     {
-        super(clientThread, spriteManager, task);
+        super(taskManager, clientThread, spriteManager, task);
     }
 
     public JPopupMenu getPopupMenu()

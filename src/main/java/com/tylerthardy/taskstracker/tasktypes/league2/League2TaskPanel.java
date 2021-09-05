@@ -1,7 +1,7 @@
 package com.tylerthardy.taskstracker.tasktypes.league2;
 
-import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.tasktypes.Task;
+import com.tylerthardy.taskstracker.tasktypes.TaskManager;
 import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
@@ -11,8 +11,8 @@ import java.awt.image.BufferedImage;
 
 public class League2TaskPanel extends TaskPanel
 {
-    public League2TaskPanel(ClientThread clientThread, SpriteManager spriteManager, Task task) {
-        super(clientThread, spriteManager, task);
+    public League2TaskPanel(TaskManager taskManager, ClientThread clientThread, SpriteManager spriteManager, Task task) {
+        super(taskManager, clientThread, spriteManager, task);
     }
 
     @Override

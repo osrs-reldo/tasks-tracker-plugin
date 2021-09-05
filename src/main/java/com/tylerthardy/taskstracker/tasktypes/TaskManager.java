@@ -53,6 +53,11 @@ public class TaskManager
         setSelectedTaskType(TaskType.TEST);
     }
 
+    public void refresh()
+    {
+        SwingUtilities.invokeLater(() -> plugin.pluginPanel.refresh());
+    }
+
     public void setSelectedTaskType(TaskType type)
     {
         selectedTaskType = type;
@@ -145,7 +150,7 @@ public class TaskManager
         if (taskProgress.size() == previousTaskCount) return false;
 
         updateTaskProgress(taskProgress);
-        SwingUtilities.invokeLater(() -> plugin.pluginPanel.refresh());
+        refresh();
         return true;
     }
 
@@ -154,7 +159,7 @@ public class TaskManager
         if (taskProgress == null) return;
 
         updateTaskProgress(taskProgress);
-        SwingUtilities.invokeLater(() -> plugin.pluginPanel.refresh());
+        refresh();
     }
 
     private void updateTaskProgress(LinkedHashMap<String, Boolean> taskProgress) {

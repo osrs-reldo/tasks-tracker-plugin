@@ -1,14 +1,11 @@
 package com.tylerthardy.taskstracker.tasktypes.league1;
 
-import com.tylerthardy.taskstracker.TasksTrackerPlugin;
-import com.tylerthardy.taskstracker.tasktypes.GenericTaskPanel;
 import com.tylerthardy.taskstracker.tasktypes.RequiredSkill;
 import com.tylerthardy.taskstracker.tasktypes.Task;
+import com.tylerthardy.taskstracker.tasktypes.TaskManager;
 import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
-
-import java.awt.image.BufferedImage;
 
 public class League1Task extends Task
 {
@@ -21,7 +18,7 @@ public class League1Task extends Task
     }
 
     @Override
-    public TaskPanel generatePanel(ClientThread clientThread, SpriteManager spriteManager) {
-        return new League1TaskPanel(clientThread, spriteManager, this);
+    public TaskPanel generatePanel(TaskManager taskManager, ClientThread clientThread, SpriteManager spriteManager) {
+        return new League1TaskPanel(taskManager, clientThread, spriteManager, this);
     }
 }
