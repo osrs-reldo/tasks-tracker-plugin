@@ -22,7 +22,7 @@ public class League2Task extends Task
     }
 
     @Override
-    public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager) {
-        return new League2TaskPanel(plugin, clientThread, spriteManager, this);
+    public TaskPanel generatePanel(ClientThread clientThread, SpriteManager spriteManager) {
+        return new League2TaskPanel(clientThread, spriteManager, this);
     }
 }

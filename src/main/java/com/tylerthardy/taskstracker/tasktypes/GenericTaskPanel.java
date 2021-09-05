@@ -15,9 +15,9 @@ import java.awt.image.BufferedImage;
 @Slf4j
 public class GenericTaskPanel extends TaskPanel
 {
-    public GenericTaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task)
+    public GenericTaskPanel(ClientThread clientThread, SpriteManager spriteManager, Task task)
     {
-        super(plugin, clientThread, spriteManager, task);
+        super(clientThread, spriteManager, task);
     }
 
     public JPopupMenu getPopupMenu()

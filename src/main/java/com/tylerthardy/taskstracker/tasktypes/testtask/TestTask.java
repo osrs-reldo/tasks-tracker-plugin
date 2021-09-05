@@ -19,7 +19,7 @@ public class TestTask extends Task
     }
 
     @Override
-    public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager) {
-        return new TestTaskPanel(plugin, clientThread, spriteManager, this);
+    public TaskPanel generatePanel(ClientThread clientThread, SpriteManager spriteManager) {
+        return new TestTaskPanel(clientThread, spriteManager, this);
     }
 }

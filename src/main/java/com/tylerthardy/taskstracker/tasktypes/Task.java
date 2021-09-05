@@ -20,5 +20,5 @@ public abstract class Task
     private boolean completed;
     private boolean tracked;
 
-    public abstract TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager);
+    public abstract TaskPanel generatePanel(ClientThread clientThread, SpriteManager spriteManager);
 }

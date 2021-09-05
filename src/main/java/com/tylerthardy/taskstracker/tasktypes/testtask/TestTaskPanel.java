@@ -8,8 +8,8 @@ import net.runelite.client.game.SpriteManager;
 
 public class TestTaskPanel extends GenericTaskPanel
 {
-    public TestTaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task)
+    public TestTaskPanel(ClientThread clientThread, SpriteManager spriteManager, Task task)
     {
-        super(plugin, clientThread, spriteManager, task);
+        super(clientThread, spriteManager, task);
     }
 }

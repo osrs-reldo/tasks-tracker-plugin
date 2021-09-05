@@ -49,7 +49,7 @@ public abstract class TaskPanel extends JPanel
     public static ImageIcon MINUS_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "minus.png"));
     public static ImageIcon EYE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "eye.png"));
 
-    public TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task)
+    public TaskPanel(ClientThread clientThread, SpriteManager spriteManager, Task task)
     {
         super(new BorderLayout());
         this.clientThread = clientThread;
