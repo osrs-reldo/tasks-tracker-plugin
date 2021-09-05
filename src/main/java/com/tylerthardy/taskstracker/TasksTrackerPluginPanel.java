@@ -2,9 +2,9 @@ package com.tylerthardy.taskstracker;
 
 import com.google.gson.Gson;
 import com.tylerthardy.taskstracker.tasktypes.Task;
+import com.tylerthardy.taskstracker.tasktypes.TaskManager;
 import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
-import com.tylerthardy.taskstracker.tasktypes.GenericTaskPanel;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
@@ -25,8 +25,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.util.List;
@@ -38,13 +36,15 @@ public class TasksTrackerPluginPanel extends PluginPanel
     private final FixedWidthPanel mainPanel = new FixedWidthPanel();
 
     private final TasksTrackerPlugin plugin;
+    private TaskManager taskManager;
     private ClientThread clientThread;
     private final SpriteManager spriteManager;
 
-    public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, boolean developerMode)
+    public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TaskManager taskManager, ClientThread clientThread, SpriteManager spriteManager, boolean developerMode)
     {
         super(false);
         this.plugin = plugin;
+        this.taskManager = taskManager;
         this.clientThread = clientThread;
         this.spriteManager = spriteManager;
         this.developerMode = developerMode;
@@ -64,10 +64,8 @@ public class TasksTrackerPluginPanel extends PluginPanel
         assert SwingUtilities.isEventDispatchThread();
         mainPanel.removeAll();
 
-        log.debug("Loading task types...");
-        List<Task> tasks = TaskLoader.getTasks(plugin.selectedTaskType);
         log.debug("Creating panels...");
-        for (Task task : tasks) {
+        for (Task task : taskManager.tasks.get(taskManager.selectedTaskType)) {
             TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager);
             mainPanel.add(taskPanel);
         }
@@ -120,7 +118,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
                 "Are you sure you want to remove all of your tracked tasks?", "Remove All Tasks",
                 JOptionPane.YES_NO_OPTION))
         {
-            plugin.trackedTasks.clear();
+            taskManager.trackedTasks.clear();
             refresh();
         }
     }
@@ -143,13 +141,13 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
     private void updateWithNewTaskType(TaskType taskType)
     {
-        plugin.selectedTaskType = taskType;
+        taskManager.setSelectedTaskType(taskType);
         refresh();
     }
 
     private void copyJsonToClipboard()
     {
-        if (this.plugin.taskTitleColors.size() == 0)
+        if (taskManager.taskTitleColors.size() == 0)
         {
             showMessageBox(
                     "Cannot Export Data",
@@ -158,7 +156,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
         }
 
         Gson gson = new Gson();
-        String json = gson.toJson(this.plugin.taskTitleColors);
+        String json = gson.toJson(taskManager.taskTitleColors);
         final StringSelection stringSelection = new StringSelection(json);
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
 

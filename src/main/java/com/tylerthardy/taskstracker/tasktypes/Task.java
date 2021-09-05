@@ -17,6 +17,7 @@ public abstract class Task
     private final String description;
     private final String tier;
 
+    private boolean completed;
     private boolean tracked;
 
     public abstract TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager);

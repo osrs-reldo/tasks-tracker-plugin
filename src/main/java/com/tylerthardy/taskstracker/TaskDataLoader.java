@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class TaskLoader
+public class TaskDataLoader
 {
     private static final HashMap<TaskType, ArrayList<Task>> taskCache = new HashMap<>();
 

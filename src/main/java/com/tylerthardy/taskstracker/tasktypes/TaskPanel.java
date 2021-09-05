@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Constants;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
-import net.runelite.client.plugins.timetracking.TimeTrackingConfig;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
@@ -30,9 +29,11 @@ import java.awt.image.BufferedImage;
 public abstract class TaskPanel extends JPanel
 {
     private final JLabel icon = new JLabel();
+    private final JPanel container = new JPanel(new BorderLayout());
     private final JPanel body = new JPanel(new BorderLayout());
     private final JShadowedLabel name = new JShadowedLabel();
     private final JLabel description = new JLabel();
+    private final JPanel buttons = new JPanel();
     private final JToggleButton toggleTrack = new JToggleButton();
 
     private ClientThread clientThread;
@@ -43,9 +44,10 @@ public abstract class TaskPanel extends JPanel
     public abstract String getTaskTooltip();
     public abstract BufferedImage getIcon();
 
-    public static ImageIcon plusIcon = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "plus.png"));
-    public static ImageIcon minusIcon = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "minus.png"));
-    public static ImageIcon eyeIcon = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "eye.png"));
+    public static Color COMPLETED_COLOR = new Color(0, 50, 0);
+    public static ImageIcon PLUS_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "plus.png"));
+    public static ImageIcon MINUS_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "minus.png"));
+    public static ImageIcon EYE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "eye.png"));
 
     public TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task)
     {
@@ -64,12 +66,9 @@ public abstract class TaskPanel extends JPanel
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(0, 0, 7, 0));
 
-        JPanel container = new JPanel(new BorderLayout());
         container.setBorder(new EmptyBorder(7, 7, 6, 0));
-        container.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
         // Body
-        body.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
         name.setFont(FontManager.getRunescapeSmallFont());
         name.setForeground(Color.WHITE);
@@ -80,18 +79,16 @@ public abstract class TaskPanel extends JPanel
         body.add(description, BorderLayout.CENTER);
 
         // Buttons
-        JPanel buttons = new JPanel();
         buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
         buttons.setBorder(new EmptyBorder(0,0,0,7));
-        buttons.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         toggleTrack.setPreferredSize(new Dimension(8, 8));
-        toggleTrack.setIcon(plusIcon);
-        toggleTrack.setSelectedIcon(minusIcon);
+        toggleTrack.setIcon(PLUS_ICON);
+        toggleTrack.setSelectedIcon(MINUS_ICON);
         toggleTrack.setBorder(new EmptyBorder(0,0,5,0));
         toggleTrack.addActionListener(e -> task.setTracked(toggleTrack.isSelected()));
         SwingUtil.removeButtonDecorations(toggleTrack);
         JLabel viewDetails = new JLabel();
-        viewDetails.setIcon(eyeIcon);
+        viewDetails.setIcon(EYE_ICON);
         buttons.add(toggleTrack);
         buttons.add(viewDetails);
 
@@ -108,6 +105,7 @@ public abstract class TaskPanel extends JPanel
         // State
         name.setText(Util.wrapWithHtml(task.getName()));
         description.setText(Util.wrapWithHtml(task.getDescription()));
+        setBackgroundColor(task.isCompleted() ? COMPLETED_COLOR : ColorScheme.DARKER_GRAY_COLOR);
 
         clientThread.invoke(() -> {
             if (getIcon() != null)
@@ -122,6 +120,13 @@ public abstract class TaskPanel extends JPanel
         toggleTrack.setSelected(task.isTracked());
 
         revalidate();
+    }
+
+    private void setBackgroundColor(Color color)
+    {
+        container.setBackground(color);
+        body.setBackground(color);
+        buttons.setBackground(color);
     }
 
     @Override

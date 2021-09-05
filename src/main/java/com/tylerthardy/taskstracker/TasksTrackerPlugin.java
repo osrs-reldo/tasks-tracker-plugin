@@ -1,10 +1,9 @@
 package com.tylerthardy.taskstracker;
 
 import com.google.inject.Provides;
-import com.tylerthardy.combattaskstracker.CombatTask;
-import com.tylerthardy.taskstracker.tasktypes.Task;
-import com.tylerthardy.taskstracker.tasktypes.TaskType;
+import com.tylerthardy.taskstracker.tasktypes.TaskManager;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.events.ChatMessage;
@@ -12,7 +11,9 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -25,11 +26,9 @@ import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.swing.SwingUtilities;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.regex.Pattern;
 
 @Slf4j
 @PluginDescriptor(
@@ -37,17 +36,8 @@ import java.util.regex.Pattern;
 )
 public class TasksTrackerPlugin extends Plugin
 {
-	public TaskType selectedTaskType = TaskType.TEST;
-
-	private static final Pattern completedTasksLabelRegex = Pattern.compile("Tasks Completed: \\d+/(\\d+)");
-	private static final Pattern taskCompletedChatMessageRegex = Pattern.compile("Congratulations, you've completed an? (.*) combat task: (.*)\\.");;
-
-	public LinkedHashMap<String, Integer> taskTitleColors;
-	public HashSet<Task> trackedTasks = new HashSet<>();
-	private TasksTrackerPluginPanel pluginPanel;
+	public TasksTrackerPluginPanel pluginPanel;
 	private NavigationButton navButton;
-	private Integer maxTaskCount;
-	private int previousTaskCount = -1;
 
 	@Inject
 	private Client client;
@@ -65,6 +55,9 @@ public class TasksTrackerPlugin extends Plugin
 	private ChatMessageManager chatMessageManager;
 
 	@Inject
+	private TaskManager taskManager;
+
+	@Inject
 	private TasksTrackerConfig config;
 
 	@Inject
@@ -80,8 +73,8 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		taskTitleColors = new LinkedHashMap<>();
-		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager, developerMode);
+		taskManager.taskTitleColors = new LinkedHashMap<>();
+		pluginPanel = new TasksTrackerPluginPanel(this, taskManager, clientThread, spriteManager, developerMode);
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
 				.tooltip("Task Tracker")
@@ -107,7 +100,7 @@ public class TasksTrackerPlugin extends Plugin
 		handleOnChatMessage(chatMessage);
 	}
 	private void handleOnChatMessage(ChatMessage chatMessage) {
-		// handle completion messages per task type
+		taskManager.handleChatMessage(chatMessage);
 	}
 
 	@Subscribe
@@ -121,7 +114,7 @@ public class TasksTrackerPlugin extends Plugin
 	}
 	private void handleScriptPostFired(ScriptPostFired scriptPostFired)
 	{
-		// handle widget scripts per task type
+		// add save buttons to task widgets
 	}
 
 	@Subscribe
@@ -133,7 +126,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
-			taskTitleColors = new LinkedHashMap<>();
+			taskManager.taskTitleColors = new LinkedHashMap<>();
 		}
 	}
 
@@ -144,6 +137,25 @@ public class TasksTrackerPlugin extends Plugin
 	}
 	private void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
 	{
-		// do widget stuff per task type
+		taskManager.handleOnWidgetLoaded(widgetLoaded);
+	}
+
+	public void completeTask(String taskName)
+	{
+		log.error("completeTask not yet implemented, but fired for: " + taskName);
+	}
+
+	public void sendChatMessage(String chatMessage, Color color)
+	{
+		final String message = new ChatMessageBuilder()
+				.append(color, "Combat Task Tracker: ")
+				.append(color, chatMessage)
+				.build();
+
+		chatMessageManager.queue(
+				QueuedMessage.builder()
+						.type(ChatMessageType.CONSOLE)
+						.runeLiteFormattedMessage(message)
+						.build());
 	}
 }

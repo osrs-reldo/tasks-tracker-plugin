@@ -49,11 +49,11 @@ public class CombatTasksTrackerPlugin extends Plugin
 	private static final Pattern completedTasksLabelRegex = Pattern.compile("Tasks Completed: \\d+/(\\d+)");
 	private static final Pattern taskCompletedChatMessageRegex = Pattern.compile("Congratulations, you've completed an? (.*) combat task: (.*)\\.");;
 
+	private Integer maxTaskCount;
 	public LinkedHashMap<String, Integer> taskTitleColors;
 	public HashSet<CombatTask> trackedTasks = new HashSet<>();
 	private CombatTasksTrackerPluginPanel pluginPanel;
 	private NavigationButton navButton;
-	private Integer maxTaskCount;
 	private int previousTaskCount = -1;
 
 	@Inject
