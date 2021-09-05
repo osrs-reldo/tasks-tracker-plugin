@@ -28,6 +28,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 @Slf4j
@@ -73,7 +74,6 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		taskManager.taskTitleColors = new LinkedHashMap<>();
 		pluginPanel = new TasksTrackerPluginPanel(this, taskManager, clientThread, spriteManager, developerMode);
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
@@ -126,7 +126,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
-			taskManager.taskTitleColors = new LinkedHashMap<>();
+			// TODO clear or update tasks when logging into a new account
 		}
 	}
 

@@ -44,8 +44,6 @@ public class TaskManager
 
     private int previousTaskCount = -1;
 
-    public LinkedHashMap<String, Integer> taskTitleColors;
-
     @Inject
     public TaskManager(TasksTrackerPlugin plugin, Client client, ClientThread clientThread)
     {

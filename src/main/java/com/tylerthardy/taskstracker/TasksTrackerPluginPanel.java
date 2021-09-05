@@ -27,6 +27,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -65,9 +66,12 @@ public class TasksTrackerPluginPanel extends PluginPanel
         mainPanel.removeAll();
 
         log.debug("Creating panels...");
-        for (Task task : taskManager.tasks.get(taskManager.selectedTaskType)) {
-            TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager);
-            mainPanel.add(taskPanel);
+        ArrayList<Task> tasks = taskManager.tasks.get(taskManager.selectedTaskType);
+        if (tasks != null) {
+            for (Task task : tasks) {
+                TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager);
+                mainPanel.add(taskPanel);
+            }
         }
         log.debug("Validate and repaint...");
         validate();
@@ -131,6 +135,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
         title.setForeground(Color.WHITE);
 
         JComboBox<TaskType> taskTypeDropdown = new JComboBox<>(TaskType.values());
+        taskTypeDropdown.setSelectedItem(taskManager.selectedTaskType);
         taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex())));
 
         northPanel.add(title, BorderLayout.NORTH);
@@ -147,22 +152,22 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
     private void copyJsonToClipboard()
     {
-        if (taskManager.taskTitleColors.size() == 0)
+        if (taskManager.tasks.size() == 0)
         {
             showMessageBox(
                     "Cannot Export Data",
-                    "You must open the relevant UI before exporting.");
+                    "There is no task data to export. Try opening UIs for the tasks to gather data.");
             return;
         }
 
         Gson gson = new Gson();
-        String json = gson.toJson(taskManager.taskTitleColors);
+        String json = gson.toJson(taskManager.tasks);
         final StringSelection stringSelection = new StringSelection(json);
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
 
         showMessageBox(
                 "Data Exported!",
-                "Exported data copied to clipboard!"
+                "Exported task data copied to clipboard!"
         );
     }
 
