@@ -122,7 +122,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
-			// TODO clear or update tasks when logging into a new account
+			// TODO: clear or update tasks when logging into a new account
 		}
 	}
 

@@ -17,10 +17,7 @@ public class AllTaskListPanel extends TaskListPanel
     @Override
     public ArrayList<Task> getTasks() {
         // TODO: Build a filter service
-        return taskManager.tasks.get(taskManager.selectedTaskType)
-                .stream()
-                .filter(t -> taskManager.taskTextFilter == null || t.getName().toLowerCase().startsWith(taskManager.taskTextFilter))
-                .collect(Collectors.toCollection(ArrayList::new));
+        return taskManager.tasks.get(taskManager.selectedTaskType);
     }
 
     @Override

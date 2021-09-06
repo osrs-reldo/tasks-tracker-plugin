@@ -14,7 +14,6 @@ import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.ArrayList;
 
@@ -24,8 +23,9 @@ public abstract class TaskListPanel extends JScrollPane
     public abstract ArrayList<Task> getTasks();
     public abstract String getEmptyTaskListMessage();
 
-    public final TaskManager taskManager;
+    public final ArrayList<TaskPanel> taskPanels = new ArrayList<>();
 
+    public final TaskManager taskManager;
     private final ClientThread clientThread;
     private final SpriteManager spriteManager;
     private final TaskListListPanel taskList;
@@ -43,9 +43,18 @@ public abstract class TaskListPanel extends JScrollPane
     }
 
 
+    public void redraw()
+    {
+        taskList.redraw();
+    }
+
     public void refresh()
     {
-        taskList.refresh();
+        assert SwingUtilities.isEventDispatchThread();
+        for (TaskPanel task : taskPanels)
+        {
+            task.refresh();
+        }
     }
 
     private class TaskListListPanel extends FixedWidthPanel
@@ -57,10 +66,11 @@ public abstract class TaskListPanel extends JScrollPane
             setAlignmentX(Component.LEFT_ALIGNMENT);
         }
 
-        public void refresh()
+        public void redraw()
         {
             assert SwingUtilities.isEventDispatchThread();
             removeAll();
+            taskPanels.clear();
 
             log.debug("Creating panels...");
             ArrayList<Task> tasks = getTasks();
@@ -76,6 +86,7 @@ public abstract class TaskListPanel extends JScrollPane
                 for (Task task : tasks) {
                     TaskPanel taskPanel = task.generatePanel(taskManager, clientThread, spriteManager);
                     add(taskPanel);
+                    taskPanels.add(taskPanel);
                 }
             }
             log.debug("Validated and repaint...");

@@ -89,7 +89,7 @@ public abstract class TaskPanel extends JPanel
         toggleTrack.setBorder(new EmptyBorder(0,0,5,0));
         toggleTrack.addActionListener(e -> {
             task.setTracked(toggleTrack.isSelected());
-            taskManager.refresh();
+            taskManager.redraw();
         });
         SwingUtil.removeButtonDecorations(toggleTrack);
         JLabel viewDetails = new JLabel();
@@ -102,16 +102,6 @@ public abstract class TaskPanel extends JPanel
         container.add(body, BorderLayout.CENTER);
         container.add(buttons, BorderLayout.EAST);
 
-        add(container, BorderLayout.NORTH);
-    }
-
-    public void refresh()
-    {
-        // State
-        name.setText(Util.wrapWithHtml(task.getName()));
-        description.setText(Util.wrapWithHtml(task.getDescription()));
-        setBackgroundColor(task.isCompleted() ? COMPLETED_COLOR : ColorScheme.DARKER_GRAY_COLOR);
-
         clientThread.invoke(() -> {
             if (getIcon() != null)
             {
@@ -122,9 +112,31 @@ public abstract class TaskPanel extends JPanel
                 icon.setBorder(new EmptyBorder(0,0,0,0));
             }
         });
+
+        add(container, BorderLayout.NORTH);
+    }
+
+    public void refresh()
+    {
+        name.setText(Util.wrapWithHtml(task.getName()));
+        description.setText(Util.wrapWithHtml(task.getDescription()));
+        setBackgroundColor(task.isCompleted() ? COMPLETED_COLOR : ColorScheme.DARKER_GRAY_COLOR);
         toggleTrack.setSelected(task.isTracked());
 
+        setVisible(meetsFilterCriteria());
+
         revalidate();
+    }
+
+    private boolean meetsFilterCriteria()
+    {
+        String nameLowercase = task.getName().toLowerCase();
+        if (taskManager.taskTextFilter != null && !nameLowercase.startsWith(taskManager.taskTextFilter))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void setBackgroundColor(Color color)

@@ -1,6 +1,5 @@
 package com.tylerthardy.taskstracker.tasktypes;
 
-import com.google.common.base.Predicates;
 import com.tylerthardy.combattaskstracker.widgets.CombatTasksWidgetID;
 import com.tylerthardy.taskstracker.TaskDataLoader;
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
@@ -21,7 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,6 +51,11 @@ public class TaskManager
         this.client = client;
         this.clientThread = clientThread;
         setSelectedTaskType(TaskType.TEST);
+    }
+
+    public void redraw()
+    {
+        SwingUtilities.invokeLater(() -> plugin.pluginPanel.redraw());
     }
 
     public void refresh()
@@ -87,7 +90,7 @@ public class TaskManager
 
     public void completeTask(String taskName)
     {
-        Optional<Task> first = tasks.get(selectedTaskType).stream().filter(t -> t.getName().toLowerCase().equals(taskName.toLowerCase())).findFirst();
+        Optional<Task> first = tasks.get(selectedTaskType).stream().filter(t -> t.getName().equalsIgnoreCase(taskName)).findFirst();
         first.ifPresent(task -> {
             task.setTracked(false);
             task.setCompleted(true);

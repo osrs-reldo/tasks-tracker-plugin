@@ -15,7 +15,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
@@ -41,13 +40,19 @@ public class TasksTrackerPluginPanel extends PluginPanel
         this.spriteManager = spriteManager;
 
         createPanel(this);
-        refresh();
+        redraw();
     }
 
     @Override
     public Dimension getPreferredSize()
     {
         return new Dimension(PANEL_WIDTH + SCROLLBAR_WIDTH, super.getPreferredSize().height);
+    }
+
+    public void redraw()
+    {
+        allTasksPanel.redraw();
+        trackedTaskListPanel.redraw();
     }
 
     public void refresh()
@@ -98,7 +103,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
                 JOptionPane.YES_NO_OPTION))
         {
             taskManager.trackedTasks.clear();
-            refresh();
+            redraw();
         }
     }
 
@@ -129,7 +134,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
     private void updateWithNewTaskType(TaskType taskType)
     {
         taskManager.setSelectedTaskType(taskType);
-        refresh();
+        redraw();
     }
 
     private void copyJsonToClipboard()
