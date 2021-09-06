@@ -2,6 +2,7 @@ package com.tylerthardy.taskstracker;
 
 import com.google.inject.Provides;
 import com.tylerthardy.taskstracker.panel.TasksTrackerPluginPanel;
+import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskManager;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -28,6 +29,7 @@ import net.runelite.client.util.ImageUtil;
 import javax.inject.Inject;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.util.Optional;
 
 @Slf4j
 @PluginDescriptor(
@@ -136,7 +138,12 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void completeTask(String taskName)
 	{
-		log.error("completeTask not yet implemented, but fired for: " + taskName);
+		Optional<Task> first = taskManager.tasks.get(taskManager.selectedTaskType).stream().filter(t -> t.getName().toLowerCase().equals(taskName.toLowerCase())).findFirst();
+		first.ifPresent(task -> {
+			task.setTracked(false);
+			taskManager.refresh();
+		});
+		log.error("completeTask fired for: " + taskName);
 	}
 
 	public void sendChatMessage(String chatMessage, Color color)
