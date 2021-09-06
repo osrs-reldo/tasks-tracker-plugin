@@ -9,7 +9,8 @@ import net.runelite.client.game.SpriteManager;
 public class CombatTask extends Task
 {
     public String area;
-
+    public String monster;
+    public String category;
     public CombatTask(String name, String description, String tier) {
         super(name, description, tier);
     }
