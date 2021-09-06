@@ -31,6 +31,7 @@ public class TaskDataLoader
 
         try (InputStream dataFile = TasksTrackerPlugin.class.getResourceAsStream(taskType.getDataFileName()))
         {
+            assert dataFile != null;
             Type classType = taskType.getClassType();
             Type listType = TypeToken.getParameterized(ArrayList.class, classType).getType();
             ArrayList<Task> tasks = new Gson().fromJson(new InputStreamReader(dataFile, StandardCharsets.UTF_8), listType);

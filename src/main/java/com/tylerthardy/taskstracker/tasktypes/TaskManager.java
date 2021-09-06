@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,7 +82,17 @@ public class TaskManager
 
         String tier = m.group(1);
         String taskName = m.group(2);
-        plugin.completeTask(taskName);
+        completeTask(taskName);
+    }
+
+    public void completeTask(String taskName)
+    {
+        Optional<Task> first = tasks.get(selectedTaskType).stream().filter(t -> t.getName().toLowerCase().equals(taskName.toLowerCase())).findFirst();
+        first.ifPresent(task -> {
+            task.setTracked(false);
+            task.setCompleted(true);
+            refresh();
+        });
     }
 
     public void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
