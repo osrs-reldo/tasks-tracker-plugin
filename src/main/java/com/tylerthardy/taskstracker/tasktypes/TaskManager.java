@@ -133,18 +133,6 @@ public class TaskManager
                 .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(CombatTasksWidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_COMPLETED)));
     }
 
-    private LinkedHashMap<String, Integer> getTitleColors() {
-        Widget list = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_LIST_TITLES);
-        if (list == null) return null;
-
-        LinkedHashMap<String, Integer> titleColors = new LinkedHashMap<>();
-        Widget[] titleWidgets = list.getDynamicChildren();
-        for (Widget titleWidget : titleWidgets) {
-            titleColors.put(titleWidget.getText(), titleWidget.getTextColor());
-        }
-        return titleColors;
-    }
-
     private LinkedHashMap<String, Boolean> getTaskProgressFromTitleColors() {
         Widget list = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_LIST_TITLES);
         if (list == null) return null;
