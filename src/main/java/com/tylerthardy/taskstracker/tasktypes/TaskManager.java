@@ -35,6 +35,7 @@ public class TaskManager
     public HashSet<Task> trackedTasks = new HashSet<>();
     public TaskType selectedTaskType = TaskType.TEST;
     public HashMap<TaskType, ArrayList<Task>> tasks = new HashMap<>();
+    public String taskTextFilter;
 
     // old
     private Integer maxTaskCount;

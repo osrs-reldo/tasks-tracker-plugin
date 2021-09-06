@@ -36,10 +36,7 @@ public abstract class TaskListPanel extends JScrollPane
         this.clientThread = clientThread;
         this.spriteManager = spriteManager;
 
-        FixedWidthPanel centerPanel = new FixedWidthPanel();
         taskList = new TaskListListPanel();
-        centerPanel.setLayout(new BorderLayout());
-        centerPanel.add(taskList, BorderLayout.NORTH);
 
         setViewportView(taskList);
         setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

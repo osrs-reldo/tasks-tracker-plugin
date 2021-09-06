@@ -15,6 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
@@ -112,8 +113,15 @@ public class TasksTrackerPluginPanel extends PluginPanel
         taskTypeDropdown.setSelectedItem(taskManager.selectedTaskType);
         taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex())));
 
+        SearchBox searchBox = new SearchBox();
+        searchBox.addTextChangedListener(() -> {
+            taskManager.taskTextFilter = searchBox.getText().toLowerCase();
+            taskManager.refresh();
+        });
+
         northPanel.add(title, BorderLayout.NORTH);
-        northPanel.add(taskTypeDropdown, BorderLayout.SOUTH);
+        northPanel.add(taskTypeDropdown, BorderLayout.CENTER);
+        northPanel.add(searchBox, BorderLayout.SOUTH);
 
         return northPanel;
     }

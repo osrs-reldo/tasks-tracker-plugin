@@ -6,6 +6,7 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class AllTaskListPanel extends TaskListPanel
 {
@@ -15,7 +16,11 @@ public class AllTaskListPanel extends TaskListPanel
 
     @Override
     public ArrayList<Task> getTasks() {
-        return taskManager.tasks.get(taskManager.selectedTaskType);
+        // TODO: Build a filter service
+        return taskManager.tasks.get(taskManager.selectedTaskType)
+                .stream()
+                .filter(t -> taskManager.taskTextFilter == null || t.getName().toLowerCase().startsWith(taskManager.taskTextFilter))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     @Override
