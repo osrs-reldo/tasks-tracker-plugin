@@ -1,6 +1,6 @@
 package com.tylerthardy.taskstracker.tasktypes;
 
-import com.tylerthardy.combattaskstracker.widgets.CombatTasksWidgetID;
+import com.tylerthardy.taskstracker.widgets.CombatTasksWidgetID;
 import com.tylerthardy.taskstracker.TaskDataLoader;
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 

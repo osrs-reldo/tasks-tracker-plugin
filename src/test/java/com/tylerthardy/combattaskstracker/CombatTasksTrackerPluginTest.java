@@ -8,9 +8,7 @@ public class CombatTasksTrackerPluginTest
 {
 	public static void main(String[] args) throws Exception
 	{
-		ExternalPluginManager.loadBuiltin(
-				CombatTasksTrackerPlugin.class,
-				TasksTrackerPlugin.class);
+		ExternalPluginManager.loadBuiltin(TasksTrackerPlugin.class);
 		RuneLite.main(args);
 	}
 }
