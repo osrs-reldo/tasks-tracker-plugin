@@ -141,6 +141,7 @@ public class TasksTrackerPlugin extends Plugin
 		Optional<Task> first = taskManager.tasks.get(taskManager.selectedTaskType).stream().filter(t -> t.getName().toLowerCase().equals(taskName.toLowerCase())).findFirst();
 		first.ifPresent(task -> {
 			task.setTracked(false);
+			task.setCompleted(true);
 			taskManager.refresh();
 		});
 		log.error("completeTask fired for: " + taskName);
