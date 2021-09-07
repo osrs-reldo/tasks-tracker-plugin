@@ -1,7 +1,7 @@
 package com.tylerthardy.taskstracker.panel;
 
+import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.tasktypes.Task;
-import com.tylerthardy.taskstracker.tasktypes.TaskManager;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
 
@@ -10,14 +10,14 @@ import java.util.stream.Collectors;
 
 public class TrackedTaskListPanel extends TaskListPanel
 {
-    public TrackedTaskListPanel(TaskManager taskManager, ClientThread clientThread, SpriteManager spriteManager) {
-        super(taskManager, clientThread, spriteManager);
+    public TrackedTaskListPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager) {
+        super(plugin, clientThread, spriteManager);
     }
 
     @Override
     public ArrayList<Task> getTasks() {
         // TODO: Build a filter service
-        return taskManager.tasks.get(taskManager.selectedTaskType)
+        return plugin.taskManagers.get(plugin.selectedTaskType).tasks
                 .stream()
                 .filter(Task::isTracked)
                 .collect(Collectors.toCollection(ArrayList::new));

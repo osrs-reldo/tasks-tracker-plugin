@@ -1,7 +1,7 @@
 package com.tylerthardy.taskstracker.tasktypes.testtask;
 
+import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.tasktypes.Task;
-import com.tylerthardy.taskstracker.tasktypes.TaskManager;
 import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
@@ -16,7 +16,7 @@ public class TestTask extends Task
     }
 
     @Override
-    public TaskPanel generatePanel(TaskManager taskManager, ClientThread clientThread, SpriteManager spriteManager) {
-        return new TestTaskPanel(taskManager, clientThread, spriteManager, this);
+    public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager) {
+        return new TestTaskPanel(plugin, clientThread, spriteManager, this);
     }
 }

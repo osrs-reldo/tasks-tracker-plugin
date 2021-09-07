@@ -36,7 +36,7 @@ public abstract class TaskPanel extends JPanel
     private final JPanel buttons = new JPanel();
     private final JToggleButton toggleTrack = new JToggleButton();
 
-    private final TaskManager taskManager;
+    private TasksTrackerPlugin plugin;
     private final ClientThread clientThread;
     public final SpriteManager spriteManager;
     public final Task task;
@@ -50,10 +50,10 @@ public abstract class TaskPanel extends JPanel
     public static ImageIcon MINUS_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "minus.png"));
     public static ImageIcon EYE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "eye.png"));
 
-    public TaskPanel(TaskManager taskManager, ClientThread clientThread, SpriteManager spriteManager, Task task)
+    public TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task)
     {
         super(new BorderLayout());
-        this.taskManager = taskManager;
+        this.plugin = plugin;
         this.clientThread = clientThread;
         this.spriteManager = spriteManager;
         this.task = task;
@@ -89,7 +89,7 @@ public abstract class TaskPanel extends JPanel
         toggleTrack.setBorder(new EmptyBorder(0,0,5,0));
         toggleTrack.addActionListener(e -> {
             task.setTracked(toggleTrack.isSelected());
-            taskManager.redraw();
+            plugin.pluginPanel.redraw();
         });
         SwingUtil.removeButtonDecorations(toggleTrack);
         JLabel viewDetails = new JLabel();
@@ -131,7 +131,7 @@ public abstract class TaskPanel extends JPanel
     private boolean meetsFilterCriteria()
     {
         String nameLowercase = task.getName().toLowerCase();
-        if (taskManager.taskTextFilter != null && !nameLowercase.startsWith(taskManager.taskTextFilter))
+        if (plugin.taskTextFilter != null && !nameLowercase.startsWith(plugin.taskTextFilter))
         {
             return false;
         }

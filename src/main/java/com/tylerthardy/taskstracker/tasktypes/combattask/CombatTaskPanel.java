@@ -1,7 +1,7 @@
 package com.tylerthardy.taskstracker.tasktypes.combattask;
 
+import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.tasktypes.Task;
-import com.tylerthardy.taskstracker.tasktypes.TaskManager;
 import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
@@ -11,8 +11,8 @@ import java.awt.image.BufferedImage;
 
 public class CombatTaskPanel extends TaskPanel
 {
-    public CombatTaskPanel(TaskManager taskManager, ClientThread clientThread, SpriteManager spriteManager, Task task) {
-        super(taskManager, clientThread, spriteManager, task);
+    public CombatTaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task) {
+        super(plugin, clientThread, spriteManager, task);
     }
 
     @Override

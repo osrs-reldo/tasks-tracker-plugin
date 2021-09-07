@@ -1,5 +1,6 @@
 package com.tylerthardy.taskstracker.tasktypes;
 
+import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import lombok.Data;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
@@ -17,5 +18,5 @@ public abstract class Task
     private boolean completed;
     private boolean tracked;
 
-    public abstract TaskPanel generatePanel(TaskManager taskManager, ClientThread clientThread, SpriteManager spriteManager);
+    public abstract TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager);
 }

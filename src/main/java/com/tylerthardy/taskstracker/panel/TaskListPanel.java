@@ -1,7 +1,7 @@
 package com.tylerthardy.taskstracker.panel;
 
+import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.tasktypes.Task;
-import com.tylerthardy.taskstracker.tasktypes.TaskManager;
 import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
@@ -16,23 +16,25 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Optional;
 
 @Slf4j
 public abstract class TaskListPanel extends JScrollPane
 {
+    public TasksTrackerPlugin plugin;
+
     public abstract ArrayList<Task> getTasks();
     public abstract String getEmptyTaskListMessage();
 
     public final ArrayList<TaskPanel> taskPanels = new ArrayList<>();
 
-    public final TaskManager taskManager;
     private final ClientThread clientThread;
     private final SpriteManager spriteManager;
     private final TaskListListPanel taskList;
 
-    public TaskListPanel(TaskManager taskManager, ClientThread clientThread, SpriteManager spriteManager)
+    public TaskListPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager)
     {
-        this.taskManager = taskManager;
+        this.plugin = plugin;
         this.clientThread = clientThread;
         this.spriteManager = spriteManager;
 
@@ -48,12 +50,20 @@ public abstract class TaskListPanel extends JScrollPane
         taskList.redraw();
     }
 
-    public void refresh()
+    public void refresh(Task task)
     {
         assert SwingUtilities.isEventDispatchThread();
-        for (TaskPanel task : taskPanels)
+
+        if (task != null) {
+            Optional<TaskPanel> panel = taskPanels.stream()
+                    .filter(tp -> tp.task.getName().equalsIgnoreCase(task.getName()))
+                    .findFirst();
+            panel.ifPresent(TaskPanel::refresh);
+            return;
+        }
+        for (TaskPanel taskPanel : taskPanels)
         {
-            task.refresh();
+            taskPanel.refresh();
         }
     }
 
@@ -84,7 +94,7 @@ public abstract class TaskListPanel extends JScrollPane
             }
             {
                 for (Task task : tasks) {
-                    TaskPanel taskPanel = task.generatePanel(taskManager, clientThread, spriteManager);
+                    TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager);
                     add(taskPanel);
                     taskPanels.add(taskPanel);
                 }

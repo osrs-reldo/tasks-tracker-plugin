@@ -2,8 +2,10 @@ package com.tylerthardy.taskstracker;
 
 import com.google.inject.Provides;
 import com.tylerthardy.taskstracker.panel.TasksTrackerPluginPanel;
-import com.tylerthardy.taskstracker.tasktypes.Task;
-import com.tylerthardy.taskstracker.tasktypes.TaskManager;
+import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
+import com.tylerthardy.taskstracker.tasktypes.GenericTaskManager;
+import com.tylerthardy.taskstracker.tasktypes.TaskType;
+import com.tylerthardy.taskstracker.tasktypes.combattask.CombatTaskManager;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -29,7 +31,7 @@ import net.runelite.client.util.ImageUtil;
 import javax.inject.Inject;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
-import java.util.Optional;
+import java.util.HashMap;
 
 @Slf4j
 @PluginDescriptor(
@@ -37,8 +39,12 @@ import java.util.Optional;
 )
 public class TasksTrackerPlugin extends Plugin
 {
+	public TaskType selectedTaskType;
+	public HashMap<TaskType, AbstractTaskManager> taskManagers = new HashMap<>();
+	public String taskTextFilter;
 	public TasksTrackerPluginPanel pluginPanel;
-	private NavigationButton navButton;
+
+    private NavigationButton navButton;
 
 	@Inject
 	private Client client;
@@ -56,9 +62,6 @@ public class TasksTrackerPlugin extends Plugin
 	private ChatMessageManager chatMessageManager;
 
 	@Inject
-	private TaskManager taskManager;
-
-	@Inject
 	private TasksTrackerConfig config;
 
 	@Provides
@@ -70,7 +73,8 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		pluginPanel = new TasksTrackerPluginPanel(taskManager, clientThread, spriteManager);
+		setSelectedTaskType(TaskType.TEST);
+		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager);
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
 				.tooltip("Task Tracker")
@@ -81,14 +85,14 @@ public class TasksTrackerPlugin extends Plugin
 
 		clientToolbar.addNavigation(navButton);
 
-		log.info("Combat Tasks Tracker started!");
+		log.info("Tasks Tracker started!");
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
 		clientToolbar.removeNavigation(navButton);
-		log.info("Combat Tasks Tracker stopped!");
+		log.info("Tasks Tracker stopped!");
 	}
 
 	@Subscribe
@@ -96,7 +100,7 @@ public class TasksTrackerPlugin extends Plugin
 		handleOnChatMessage(chatMessage);
 	}
 	private void handleOnChatMessage(ChatMessage chatMessage) {
-		taskManager.handleChatMessage(chatMessage);
+		taskManagers.values().forEach(tm -> tm.handleChatMessage(chatMessage));
 	}
 
 	@Subscribe
@@ -133,7 +137,17 @@ public class TasksTrackerPlugin extends Plugin
 	}
 	private void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
 	{
-		taskManager.handleOnWidgetLoaded(widgetLoaded);
+		taskManagers.values().forEach(tm -> tm.handleOnWidgetLoaded(widgetLoaded));
+	}
+
+	public void setSelectedTaskType(TaskType type)
+	{
+		selectedTaskType = type;
+		// FIXME: This is doing double duty to the task loader to store all tasks in a cache
+		if (!taskManagers.containsKey(type))
+		{
+			taskManagers.put(type, getTaskTypeManager(type));
+		}
 	}
 
 	public void sendChatMessage(String chatMessage, Color color)
@@ -148,5 +162,14 @@ public class TasksTrackerPlugin extends Plugin
 						.type(ChatMessageType.CONSOLE)
 						.runeLiteFormattedMessage(message)
 						.build());
+	}
+
+	private AbstractTaskManager getTaskTypeManager(TaskType type)
+	{
+		if (type == TaskType.COMBAT)
+		{
+			return new CombatTaskManager(client, clientThread, this);
+		}
+		return new GenericTaskManager(type, this);
 	}
 }
