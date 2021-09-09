@@ -12,6 +12,7 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.client.callback.ClientThread;
@@ -29,8 +30,10 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
+import javax.swing.SwingUtilities;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 import java.util.HashMap;
 
 @Slf4j
@@ -39,6 +42,7 @@ import java.util.HashMap;
 )
 public class TasksTrackerPlugin extends Plugin
 {
+	public int[] playerSkills;
 	public TaskType selectedTaskType;
 	public HashMap<TaskType, AbstractTaskManager> taskManagers = new HashMap<>();
 	public String taskTextFilter;
@@ -127,6 +131,23 @@ public class TasksTrackerPlugin extends Plugin
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
 			// TODO: clear or update tasks when logging into a new account
+		}
+	}
+
+	@Subscribe
+	public void onGameTick(GameTick gameTick)
+	{
+		handleOnGameTick(gameTick);
+	}
+	private void handleOnGameTick(GameTick gameTick)
+	{
+		log.debug("tick check skills changed");
+		int[] newSkills = client.getRealSkillLevels();
+		boolean changed = !Arrays.equals(playerSkills, newSkills);
+		if (changed)
+		{
+			playerSkills = client.getRealSkillLevels();
+			SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
 		}
 	}
 

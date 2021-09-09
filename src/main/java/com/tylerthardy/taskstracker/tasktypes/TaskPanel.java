@@ -44,8 +44,13 @@ public abstract class TaskPanel extends JPanel
     public abstract JPopupMenu getPopupMenu();
     public abstract String getTaskTooltip();
     public abstract BufferedImage getIcon();
+    public Color getTaskBackgroundColor(Task task, int[] playerSkills)
+    {
+        return task.isCompleted() ? COMPLETED_COLOR : ColorScheme.DARKER_GRAY_COLOR;
+    }
 
     public static Color COMPLETED_COLOR = new Color(0, 50, 0);
+    public static Color UNQUALIFIED_COLOR = new Color(70, 30, 0);
     public static ImageIcon PLUS_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "plus.png"));
     public static ImageIcon MINUS_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "minus.png"));
     public static ImageIcon EYE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "eye.png"));
@@ -120,7 +125,7 @@ public abstract class TaskPanel extends JPanel
     {
         name.setText(Util.wrapWithHtml(task.getName()));
         description.setText(Util.wrapWithHtml(task.getDescription()));
-        setBackgroundColor(task.isCompleted() ? COMPLETED_COLOR : ColorScheme.DARKER_GRAY_COLOR);
+        setBackgroundColor(getTaskBackgroundColor(task, plugin.playerSkills));
         toggleTrack.setSelected(task.isTracked());
 
         setVisible(meetsFilterCriteria());
