@@ -33,7 +33,18 @@ public abstract class AbstractTaskManager
         tasks = loadTaskData();
     }
 
-    public abstract void handleChatMessage(ChatMessage chatMessage);
+	/**
+	 * Method to be run any time a chat message is sent.
+	 * All tasks will have a chat messages related to them - specifically completion chat messages.
+	 * Hook into the chat messages by implementing this method.
+	 * @param chatMessage RuneLite chat message event
+	 */
+	public abstract void handleChatMessage(ChatMessage chatMessage);
+
+	/**
+	 *
+	 * @return A hashmap of task name (String) -> completion (boolean)
+	 */
     public abstract HashMap<String, Boolean> scrapeTaskCompletedData();
     public abstract int scrapeTotalCount();
 
