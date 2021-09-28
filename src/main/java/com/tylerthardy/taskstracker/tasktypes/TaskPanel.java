@@ -156,4 +156,12 @@ public abstract class TaskPanel extends JPanel
     {
         return new Dimension(PluginPanel.PANEL_WIDTH, getPreferredSize().height);
     }
+
+	@Override
+	public JToolTip createToolTip()
+	{
+		JToolTip customTooltip = new JToolTip();
+		customTooltip.setFont(FontManager.getRunescapeSmallFont());
+		return customTooltip;
+	}
 }

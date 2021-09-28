@@ -1,17 +1,16 @@
 package com.tylerthardy.taskstracker.tasktypes.combattask;
 
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
-import com.tylerthardy.taskstracker.tasktypes.Task;
+import com.tylerthardy.taskstracker.Util;
 import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
+import java.awt.image.BufferedImage;
+import javax.swing.JPopupMenu;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
 
-import javax.swing.JPopupMenu;
-import java.awt.image.BufferedImage;
-
 public class CombatTaskPanel extends TaskPanel
 {
-    public CombatTaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task) {
+    public CombatTaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, CombatTask task) {
         super(plugin, clientThread, spriteManager, task);
     }
 
@@ -22,7 +21,15 @@ public class CombatTaskPanel extends TaskPanel
 
     @Override
     public String getTaskTooltip() {
-        return task.getDescription();
+		CombatTask task = (CombatTask) this.task;
+		String text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
+			task.getTier() + Util.HTML_LINE_BREAK +
+			task.getMonster() + Util.HTML_LINE_BREAK +
+			task.getDescription();
+
+		text = Util.wrapWithWrappingParagraph(text, 200);
+
+		return Util.wrapWithHtml(text);
     }
 
     @Override
