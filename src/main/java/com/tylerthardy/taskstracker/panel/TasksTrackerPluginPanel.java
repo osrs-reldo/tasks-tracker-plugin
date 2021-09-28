@@ -103,10 +103,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
         taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex())));
 
         SearchBox searchBox = new SearchBox();
-        searchBox.addTextChangedListener(() -> {
-            plugin.taskTextFilter = searchBox.getText().toLowerCase();
-            plugin.taskManagers.get(plugin.selectedTaskType).refresh(null);
-        });
+        searchBox.addTextChangedListener(() -> plugin.applyFilter(searchBox.getText().toLowerCase()));
 
         northPanel.add(title, BorderLayout.NORTH);
         northPanel.add(taskTypeDropdown, BorderLayout.CENTER);

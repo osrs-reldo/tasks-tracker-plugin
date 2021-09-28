@@ -171,6 +171,12 @@ public class TasksTrackerPlugin extends Plugin
 		}
 	}
 
+	public void applyFilter(String text)
+	{
+		taskTextFilter = text;
+		taskManagers.get(selectedTaskType).refresh(null);
+	}
+
 	public void sendChatMessage(String chatMessage, Color color)
 	{
 		final String message = new ChatMessageBuilder()
