@@ -22,6 +22,7 @@ import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -57,6 +58,9 @@ public class TasksTrackerPlugin extends Plugin
 	private SpriteManager spriteManager;
 
 	@Inject
+	private SkillIconManager skillIconManager;
+
+	@Inject
 	private ClientToolbar clientToolbar;
 
 	@Inject
@@ -78,7 +82,7 @@ public class TasksTrackerPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		setSelectedTaskType(TaskType.TEST);
-		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager);
+		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager, skillIconManager);
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
 				.tooltip("Task Tracker")

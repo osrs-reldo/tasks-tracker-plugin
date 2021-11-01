@@ -4,6 +4,7 @@ import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 
 public class TestTask extends Task
@@ -16,7 +17,7 @@ public class TestTask extends Task
     }
 
     @Override
-    public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager) {
+    public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager) {
         return new TestTaskPanel(plugin, clientThread, spriteManager, this);
     }
 }

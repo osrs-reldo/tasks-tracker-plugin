@@ -1,23 +1,28 @@
 package com.tylerthardy.taskstracker.tasktypes.league1;
 
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
+import com.tylerthardy.taskstracker.Util;
 import com.tylerthardy.taskstracker.tasktypes.RequiredSkill;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.net.URL;
+import javax.swing.JPopupMenu;
 import net.runelite.api.Skill;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 
-import javax.swing.JPopupMenu;
-import java.awt.Color;
-import java.awt.image.BufferedImage;
-
 public class League1TaskPanel extends TaskPanel
 {
-    public League1TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task) {
+	private SkillIconManager skillIconManager;
+
+	public League1TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager, Task task) {
         super(plugin, clientThread, spriteManager, task);
-    }
+		this.skillIconManager = skillIconManager;
+	}
 
     @Override
     public JPopupMenu getPopupMenu() {
@@ -26,7 +31,15 @@ public class League1TaskPanel extends TaskPanel
 
     @Override
     public String getTaskTooltip() {
-        return task.getDescription();
+		League1Task task = (League1Task) this.task;
+		String text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
+			task.getTier() + Util.HTML_LINE_BREAK +
+			task.getDescription() +
+			getSkillSectionHtml();
+
+		text = Util.wrapWithWrappingParagraph(text, 200);
+
+		return Util.wrapWithHtml(text);
     }
 
     @Override
@@ -73,4 +86,24 @@ public class League1TaskPanel extends TaskPanel
 
         return ColorScheme.DARKER_GRAY_COLOR;
     }
+
+    private String getSkillSectionHtml()
+	{
+		StringBuilder skillSection = new StringBuilder();
+		League1Task task = (League1Task) this.task;
+		for (RequiredSkill requiredSkill : task.skills)
+		{
+			skillSection.append(Util.HTML_LINE_BREAK);
+			skillSection.append(getSkillRequirementHtml(requiredSkill.getSkill().toLowerCase(), requiredSkill.getLevel()));
+		}
+
+		return skillSection.toString();
+	}
+
+	private String getSkillRequirementHtml(String skillName, String level)
+	{
+		String skillIconPath = "/skill_icons_small/" + skillName + ".png";
+		URL url = SkillIconManager.class.getResource(skillIconPath);
+		return Util.imageTag(url) + " " + level;
+	}
 }

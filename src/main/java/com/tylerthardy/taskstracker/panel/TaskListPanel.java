@@ -3,20 +3,20 @@ package com.tylerthardy.taskstracker.panel;
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
-import lombok.extern.slf4j.Slf4j;
-import net.runelite.client.callback.ClientThread;
-import net.runelite.client.game.SpriteManager;
-import net.runelite.client.ui.FontManager;
-
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Optional;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import java.awt.Component;
-import java.util.ArrayList;
-import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.client.callback.ClientThread;
+import net.runelite.client.game.SkillIconManager;
+import net.runelite.client.game.SpriteManager;
+import net.runelite.client.ui.FontManager;
 
 @Slf4j
 public abstract class TaskListPanel extends JScrollPane
@@ -30,13 +30,15 @@ public abstract class TaskListPanel extends JScrollPane
 
     private final ClientThread clientThread;
     private final SpriteManager spriteManager;
+    private final SkillIconManager skillIconManager;
     private final TaskListListPanel taskList;
 
-    public TaskListPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager)
+    public TaskListPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
     {
         this.plugin = plugin;
         this.clientThread = clientThread;
         this.spriteManager = spriteManager;
+		this.skillIconManager = skillIconManager;
 
         taskList = new TaskListListPanel();
 
@@ -94,7 +96,7 @@ public abstract class TaskListPanel extends JScrollPane
             }
             {
                 for (Task task : tasks) {
-                    TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager);
+                    TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager, skillIconManager);
                     add(taskPanel);
                     taskPanels.add(taskPanel);
                 }

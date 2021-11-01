@@ -4,12 +4,11 @@ import com.google.gson.Gson;
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
-import lombok.extern.slf4j.Slf4j;
-import net.runelite.client.callback.ClientThread;
-import net.runelite.client.game.SpriteManager;
-import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.ui.PluginPanel;
-
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -18,11 +17,12 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Toolkit;
-import java.awt.datatransfer.StringSelection;
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.client.callback.ClientThread;
+import net.runelite.client.game.SkillIconManager;
+import net.runelite.client.game.SpriteManager;
+import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.PluginPanel;
 
 @Slf4j
 public class TasksTrackerPluginPanel extends PluginPanel
@@ -32,13 +32,15 @@ public class TasksTrackerPluginPanel extends PluginPanel
     private TasksTrackerPlugin plugin;
     private final ClientThread clientThread;
     private final SpriteManager spriteManager;
+    private SkillIconManager skillIconManager;
 
-    public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager)
+    public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
     {
         super(false);
         this.plugin = plugin;
         this.clientThread = clientThread;
         this.spriteManager = spriteManager;
+        this.skillIconManager = skillIconManager;
 
         createPanel(this);
         redraw();
@@ -66,8 +68,8 @@ public class TasksTrackerPluginPanel extends PluginPanel
         parent.setLayout(new BorderLayout());
         parent.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-        trackedTaskListPanel = new TrackedTaskListPanel(plugin, clientThread, spriteManager);
-        allTasksPanel = new AllTaskListPanel(plugin, clientThread, spriteManager);
+        trackedTaskListPanel = new TrackedTaskListPanel(plugin, clientThread, spriteManager, skillIconManager);
+        allTasksPanel = new AllTaskListPanel(plugin, clientThread, spriteManager, skillIconManager);
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Tracked Tasks", trackedTaskListPanel);
