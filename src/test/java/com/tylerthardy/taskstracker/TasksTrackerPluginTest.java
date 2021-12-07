@@ -1,13 +1,13 @@
-package com.tylerthardy.combattaskstracker;
+package com.tylerthardy.taskstracker;
 
 import net.runelite.client.RuneLite;
 import net.runelite.client.externalplugins.ExternalPluginManager;
 
-public class CombatTasksTrackerPluginTest
+public class TasksTrackerPluginTest
 {
 	public static void main(String[] args) throws Exception
 	{
-		ExternalPluginManager.loadBuiltin(CombatTasksTrackerPlugin.class);
+		ExternalPluginManager.loadBuiltin(TasksTrackerPlugin.class);
 		RuneLite.main(args);
 	}
 }

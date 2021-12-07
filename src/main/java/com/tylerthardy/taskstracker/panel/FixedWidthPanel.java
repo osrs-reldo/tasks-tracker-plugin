@@ -1,10 +1,11 @@
-package com.tylerthardy.combattaskstracker.ui;
+package com.tylerthardy.taskstracker.panel;
 
-import java.awt.Dimension;
-import javax.swing.JPanel;
 import net.runelite.client.ui.PluginPanel;
 
-class FixedWidthPanel extends JPanel
+import javax.swing.JPanel;
+import java.awt.Dimension;
+
+public class FixedWidthPanel extends JPanel
 {
     @Override
     public Dimension getPreferredSize()

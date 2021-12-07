@@ -1,11 +1,11 @@
-package com.tylerthardy.combattaskstracker;
+package com.tylerthardy.taskstracker;
 
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 
-@ConfigGroup("combat-tasks-tracker")
-public interface CombatTasksTrackerConfig extends Config {
+@ConfigGroup("tasks-tracker")
+public interface TasksTrackerConfig extends Config {
     @ConfigItem
             (
                     position = 0,
