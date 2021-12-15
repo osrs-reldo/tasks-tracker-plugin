@@ -131,7 +131,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
         }
 
         Gson gson = new Gson();
-        String json = gson.toJson(plugin.taskManagers);
+        String json = gson.toJson(plugin.taskManagers.get(plugin.selectedTaskType).tasks);
         final StringSelection stringSelection = new StringSelection(json);
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
 
