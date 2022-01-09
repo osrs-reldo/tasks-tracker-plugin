@@ -136,7 +136,7 @@ public abstract class TaskPanel extends JPanel
     private boolean meetsFilterCriteria()
     {
         String nameLowercase = task.getName().toLowerCase();
-        if (plugin.taskTextFilter != null && !nameLowercase.startsWith(plugin.taskTextFilter))
+        if (plugin.taskTextFilter != null && !nameLowercase.contains(plugin.taskTextFilter))
         {
             return false;
         }
