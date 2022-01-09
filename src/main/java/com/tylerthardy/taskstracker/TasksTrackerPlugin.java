@@ -44,12 +44,15 @@ import java.util.HashMap;
 public class TasksTrackerPlugin extends Plugin
 {
 	public int[] playerSkills;
-	public TaskType selectedTaskType;
 	public HashMap<TaskType, AbstractTaskManager> taskManagers = new HashMap<>();
+
+	public TaskType selectedTaskType;
 	public String taskTextFilter;
+	public boolean isIncompleteFilter;
+
 	public TasksTrackerPluginPanel pluginPanel;
 
-    private NavigationButton navButton;
+	private NavigationButton navButton;
 
 	@Inject
 	private Client client;
@@ -175,9 +178,8 @@ public class TasksTrackerPlugin extends Plugin
 		}
 	}
 
-	public void applyFilter(String text)
+	public void refresh()
 	{
-		taskTextFilter = text;
 		taskManagers.get(selectedTaskType).refresh(null);
 	}
 

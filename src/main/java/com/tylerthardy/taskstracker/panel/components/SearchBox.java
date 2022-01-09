@@ -1,4 +1,4 @@
-package com.tylerthardy.taskstracker.panel;
+package com.tylerthardy.taskstracker.panel.components;
 
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;

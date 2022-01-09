@@ -2,6 +2,8 @@ package com.tylerthardy.taskstracker.panel;
 
 import com.google.gson.Gson;
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
+import com.tylerthardy.taskstracker.panel.components.CheckBox;
+import com.tylerthardy.taskstracker.panel.components.SearchBox;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import java.awt.BorderLayout;
@@ -9,6 +11,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -93,7 +96,8 @@ public class TasksTrackerPluginPanel extends PluginPanel
         return southPanel;
     }
 
-    private JPanel getNorthPanel() {
+    private JPanel getNorthPanel()
+	{
         JPanel northPanel = new JPanel(new BorderLayout());
         northPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
@@ -104,15 +108,36 @@ public class TasksTrackerPluginPanel extends PluginPanel
         taskTypeDropdown.setSelectedItem(plugin.selectedTaskType);
         taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex())));
 
-        SearchBox searchBox = new SearchBox();
-        searchBox.addTextChangedListener(() -> plugin.applyFilter(searchBox.getText().toLowerCase()));
-
         northPanel.add(title, BorderLayout.NORTH);
         northPanel.add(taskTypeDropdown, BorderLayout.CENTER);
-        northPanel.add(searchBox, BorderLayout.SOUTH);
+        northPanel.add(getFiltersPanel(), BorderLayout.SOUTH);
 
         return northPanel;
     }
+
+    private JPanel getFiltersPanel()
+	{
+		JPanel filtersPanel = new JPanel();
+		filtersPanel.setLayout(new BoxLayout(filtersPanel, BoxLayout.Y_AXIS));
+
+		SearchBox text = new SearchBox();
+		text.addTextChangedListener(() -> {
+			plugin.taskTextFilter = text.getText().toLowerCase();
+			plugin.refresh();
+		});
+
+		CheckBox isIncomplete = new CheckBox("Show Incomplete Only");
+		isIncomplete.setSelected(plugin.isIncompleteFilter);
+		isIncomplete.addActionListener(e -> {
+			plugin.isIncompleteFilter = isIncomplete.isSelected();
+			plugin.refresh();
+		});
+
+		filtersPanel.add(text);
+		filtersPanel.add(isIncomplete);
+
+		return filtersPanel;
+	}
 
     private void updateWithNewTaskType(TaskType taskType)
     {
