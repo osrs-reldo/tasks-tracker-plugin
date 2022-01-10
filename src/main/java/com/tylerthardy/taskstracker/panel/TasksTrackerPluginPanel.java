@@ -11,6 +11,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -18,6 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
@@ -98,19 +100,25 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
     private JPanel getNorthPanel()
 	{
-        JPanel northPanel = new JPanel(new BorderLayout());
+        JPanel northPanel = new JPanel();
+        BoxLayout layout = new BoxLayout(northPanel, BoxLayout.Y_AXIS);
+		northPanel.setLayout(layout);
         northPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         JLabel title = new JLabel("Tasks Tracker");
+        title.setHorizontalAlignment(SwingConstants.LEFT);
         title.setForeground(Color.WHITE);
 
         JComboBox<TaskType> taskTypeDropdown = new JComboBox<>(TaskType.values());
+		taskTypeDropdown.setAlignmentX(LEFT_ALIGNMENT);
         taskTypeDropdown.setSelectedItem(plugin.selectedTaskType);
         taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex())));
 
-        northPanel.add(title, BorderLayout.NORTH);
-        northPanel.add(taskTypeDropdown, BorderLayout.CENTER);
-        northPanel.add(getFiltersPanel(), BorderLayout.SOUTH);
+        northPanel.add(title);
+		northPanel.add(Box.createVerticalStrut(10));
+        northPanel.add(taskTypeDropdown);
+        northPanel.add(Box.createVerticalStrut(2));
+        northPanel.add(getFiltersPanel());
 
         return northPanel;
     }
@@ -118,23 +126,24 @@ public class TasksTrackerPluginPanel extends PluginPanel
     private JPanel getFiltersPanel()
 	{
 		JPanel filtersPanel = new JPanel();
+		filtersPanel.setAlignmentX(LEFT_ALIGNMENT);
 		filtersPanel.setLayout(new BoxLayout(filtersPanel, BoxLayout.Y_AXIS));
 
-		SearchBox text = new SearchBox();
-		text.addTextChangedListener(() -> {
-			plugin.taskTextFilter = text.getText().toLowerCase();
+		SearchBox textSearch = new SearchBox();
+		textSearch.addTextChangedListener(() -> {
+			plugin.taskTextFilter = textSearch.getText().toLowerCase();
 			plugin.refresh();
 		});
 
-		CheckBox isIncomplete = new CheckBox("Show Incomplete Only");
-		isIncomplete.setSelected(plugin.isIncompleteFilter);
-		isIncomplete.addActionListener(e -> {
-			plugin.isIncompleteFilter = isIncomplete.isSelected();
+		CheckBox isIncompleteCheckbox = new CheckBox("Show Incomplete Only");
+		isIncompleteCheckbox.setSelected(plugin.isIncompleteFilter);
+		isIncompleteCheckbox.addActionListener(e -> {
+			plugin.isIncompleteFilter = isIncompleteCheckbox.isSelected();
 			plugin.refresh();
 		});
 
-		filtersPanel.add(text);
-		filtersPanel.add(isIncomplete);
+		filtersPanel.add(textSearch);
+		filtersPanel.add(isIncompleteCheckbox);
 
 		return filtersPanel;
 	}
