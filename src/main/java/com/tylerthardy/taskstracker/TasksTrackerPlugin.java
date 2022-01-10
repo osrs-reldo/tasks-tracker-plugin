@@ -6,6 +6,12 @@ import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.GenericTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import com.tylerthardy.taskstracker.tasktypes.combattask.CombatTaskManager;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.HashMap;
+import javax.inject.Inject;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -13,7 +19,6 @@ import net.runelite.api.GameState;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageBuilder;
@@ -29,13 +34,6 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
-
-import javax.inject.Inject;
-import javax.swing.SwingUtilities;
-import java.awt.Color;
-import java.awt.image.BufferedImage;
-import java.util.Arrays;
-import java.util.HashMap;
 
 @Slf4j
 @PluginDescriptor(
@@ -119,16 +117,6 @@ public class TasksTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onScriptPostFired(ScriptPostFired scriptPostFired)
-	{
-		handleScriptPostFired(scriptPostFired);
-	}
-	private void handleScriptPostFired(ScriptPostFired scriptPostFired)
-	{
-		// add save buttons to task widgets
-	}
-
-	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		handleOnGameStateChanged(gameStateChanged);
@@ -148,7 +136,6 @@ public class TasksTrackerPlugin extends Plugin
 	}
 	private void handleOnGameTick(GameTick gameTick)
 	{
-		log.debug("tick check skills changed");
 		int[] newSkills = client.getRealSkillLevels();
 		boolean changed = !Arrays.equals(playerSkills, newSkills);
 		if (changed)
@@ -186,7 +173,7 @@ public class TasksTrackerPlugin extends Plugin
 	public void sendChatMessage(String chatMessage, Color color)
 	{
 		final String message = new ChatMessageBuilder()
-				.append(color, "Combat Task Tracker: ")
+				.append(color, "Task Tracker: ")
 				.append(color, chatMessage)
 				.build();
 

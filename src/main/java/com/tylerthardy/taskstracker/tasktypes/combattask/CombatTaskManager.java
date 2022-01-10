@@ -63,7 +63,6 @@ public class CombatTaskManager extends AbstractTaskManager
         completeTask(taskName);
     }
 
-    @Override
     public LinkedHashMap<String, Boolean> scrapeTaskCompletedData()
     {
         Widget list = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_LIST_TITLES);
@@ -77,7 +76,6 @@ public class CombatTaskManager extends AbstractTaskManager
         return taskProgress;
     }
 
-    @Override
     public int scrapeTotalCount() {
         Widget bar = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_BAR);
         if (bar == null) return -1;

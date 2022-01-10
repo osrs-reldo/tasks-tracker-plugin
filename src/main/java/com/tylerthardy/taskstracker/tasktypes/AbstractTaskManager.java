@@ -3,10 +3,6 @@ package com.tylerthardy.taskstracker.tasktypes;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
-import net.runelite.api.events.ChatMessage;
-import net.runelite.api.events.WidgetLoaded;
-
-import javax.swing.SwingUtilities;
 import java.awt.Color;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,9 +10,11 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Optional;
+import javax.swing.SwingUtilities;
+import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.WidgetLoaded;
 
 public abstract class AbstractTaskManager
 {
@@ -30,7 +28,17 @@ public abstract class AbstractTaskManager
     {
         this.taskType = taskType;
         this.plugin = plugin;
-        tasks = loadTaskData();
+		try (InputStream dataFile = TasksTrackerPlugin.class.getResourceAsStream(taskType.getDataFileName()))
+		{
+			assert dataFile != null;
+			Type classType = taskType.getClassType();
+			Type listType = TypeToken.getParameterized(ArrayList.class, classType).getType();
+			tasks = new Gson().fromJson(new InputStreamReader(dataFile, StandardCharsets.UTF_8), listType);
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
     }
 
 	/**
@@ -42,12 +50,11 @@ public abstract class AbstractTaskManager
 	public abstract void handleChatMessage(ChatMessage chatMessage);
 
 	/**
-	 *
-	 * @return A hashmap of task name (String) -> completion (boolean)
+	 * Method to be run any time a widget is loaded.
+	 * Most tasks will have an interface (combat task progress, leagues tab, etc). Data can be scraped from this interface.
+	 * Hook into a widget opening by implementing this method.
+	 * @param widgetLoaded RuneLite widget loaded event
 	 */
-    public abstract HashMap<String, Boolean> scrapeTaskCompletedData();
-    public abstract int scrapeTotalCount();
-
     public void handleOnWidgetLoaded(WidgetLoaded widgetLoaded) {}
 
     public void redraw()
@@ -84,22 +91,6 @@ public abstract class AbstractTaskManager
         }
 
         sendTaskUpdateMessage(taskProgress);
-    }
-
-    public ArrayList<Task> loadTaskData()
-    {
-        try (InputStream dataFile = TasksTrackerPlugin.class.getResourceAsStream(taskType.getDataFileName()))
-        {
-            assert dataFile != null;
-            Type classType = taskType.getClassType();
-            Type listType = TypeToken.getParameterized(ArrayList.class, classType).getType();
-            ArrayList<Task> tasks = new Gson().fromJson(new InputStreamReader(dataFile, StandardCharsets.UTF_8), listType);
-            return tasks;
-        }
-        catch (IOException e)
-        {
-            throw new RuntimeException(e);
-        }
     }
 
     private void sendTaskUpdateMessage(LinkedHashMap<String, Boolean> taskProgress) {

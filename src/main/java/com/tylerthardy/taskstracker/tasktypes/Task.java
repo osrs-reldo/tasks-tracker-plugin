@@ -10,7 +10,6 @@ import net.runelite.client.game.SpriteManager;
 @Data
 public abstract class Task
 {
-    private static String dataFileName;
     private static TaskType type;
 
     private final String name;
