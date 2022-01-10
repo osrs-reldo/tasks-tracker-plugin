@@ -30,8 +30,8 @@ import net.runelite.client.ui.PluginPanel;
 @Slf4j
 public class TasksTrackerPluginPanel extends PluginPanel
 {
-    private AllTaskListPanel allTasksPanel;
-    private TrackedTaskListPanel trackedTaskListPanel;
+    public AllTaskListPanel allTasksPanel;
+    public TrackedTaskListPanel trackedTaskListPanel;
     private TasksTrackerPlugin plugin;
     private final ClientThread clientThread;
     private final SpriteManager spriteManager;
