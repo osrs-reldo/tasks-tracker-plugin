@@ -3,7 +3,6 @@ package com.tylerthardy.taskstracker.panel;
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.panel.components.FixedWidthPanel;
 import com.tylerthardy.taskstracker.tasktypes.Task;
-import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Optional;

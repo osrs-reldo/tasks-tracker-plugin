@@ -2,7 +2,7 @@ package com.tylerthardy.taskstracker.tasktypes.combattask;
 
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.Util;
-import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
+import com.tylerthardy.taskstracker.panel.TaskPanel;
 import java.awt.image.BufferedImage;
 import javax.swing.JPopupMenu;
 import net.runelite.client.callback.ClientThread;

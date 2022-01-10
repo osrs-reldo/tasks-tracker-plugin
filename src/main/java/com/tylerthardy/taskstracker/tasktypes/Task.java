@@ -1,6 +1,7 @@
 package com.tylerthardy.taskstracker.tasktypes;
 
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
+import com.tylerthardy.taskstracker.panel.TaskPanel;
 import lombok.Data;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SkillIconManager;

@@ -4,7 +4,7 @@ import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.Util;
 import com.tylerthardy.taskstracker.tasktypes.RequiredSkill;
 import com.tylerthardy.taskstracker.tasktypes.Task;
-import com.tylerthardy.taskstracker.tasktypes.TaskPanel;
+import com.tylerthardy.taskstracker.panel.TaskPanel;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.net.URL;

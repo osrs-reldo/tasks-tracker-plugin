@@ -1,7 +1,8 @@
-package com.tylerthardy.taskstracker.tasktypes;
+package com.tylerthardy.taskstracker.panel;
 
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.Util;
+import com.tylerthardy.taskstracker.tasktypes.Task;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;

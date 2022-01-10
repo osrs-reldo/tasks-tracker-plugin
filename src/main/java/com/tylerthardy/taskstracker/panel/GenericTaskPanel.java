@@ -1,7 +1,8 @@
-package com.tylerthardy.taskstracker.tasktypes;
+package com.tylerthardy.taskstracker.panel;
 
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.Util;
+import com.tylerthardy.taskstracker.tasktypes.Task;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.SpriteID;
 import net.runelite.client.callback.ClientThread;

@@ -1,7 +1,7 @@
 package com.tylerthardy.taskstracker.tasktypes.testtask;
 
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
-import com.tylerthardy.taskstracker.tasktypes.GenericTaskPanel;
+import com.tylerthardy.taskstracker.panel.GenericTaskPanel;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
