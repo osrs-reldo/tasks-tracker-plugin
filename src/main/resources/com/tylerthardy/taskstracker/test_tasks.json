@@ -3,18 +3,18 @@
         "name": "Test Task 1",
         "description": "Kill the Abyssal Sire 100 times.",
         "filter1": "Abyssal Nexus",
-        "filter2": "Hard",
+        "filter2": "Easy",
         "filter3": "Abyssal Demon"
     },
     {
-        "name": "Abyssal Adept",
+        "name": "Test Task 2",
         "description": "Kill the Abyssal Sire 100 times.",
         "filter1": "Abyssal Nexus",
-        "filter2": "Hard",
+        "filter2": "Medium",
         "filter3": "Abyssal Demon"
     },
     {
-        "name": "Abyssal Adept",
+        "name": "Test Task 3",
         "description": "Kill the Abyssal Sire 100 times.",
         "filter1": "Abyssal Nexus",
         "filter2": "Hard",

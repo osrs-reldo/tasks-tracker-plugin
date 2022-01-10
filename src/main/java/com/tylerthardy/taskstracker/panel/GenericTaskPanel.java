@@ -45,6 +45,6 @@ public class GenericTaskPanel extends TaskPanel
 
     @Override
     public BufferedImage getIcon() {
-        return spriteManager.getSprite(SpriteID.PRAYER_PROTECT_FROM_MAGIC, 0);
+        return spriteManager.getSprite(SpriteID.QUESTS_PAGE_ICON_BLUE_QUESTS, 0);
     }
 }
