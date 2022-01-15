@@ -4,6 +4,7 @@ import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.tasktypes.RequiredSkill;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.panel.TaskPanel;
+import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
@@ -15,7 +16,7 @@ public class League1Task extends Task
 
     public League1Task(String name, String description, String tier)
     {
-        super(name, description, tier);
+        super(TaskType.LEAGUE_1, name, description, tier);
     }
 
     @Override

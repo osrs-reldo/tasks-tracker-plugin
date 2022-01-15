@@ -18,6 +18,8 @@ public class TrackedTaskListPanel extends TaskListPanel
     @Override
     public ArrayList<Task> getTasks() {
         // TODO: Build a filter service
+		if (plugin.selectedTaskType == null)
+			return null;
         return plugin.taskManagers.get(plugin.selectedTaskType).tasks
                 .stream()
                 .filter(Task::isTracked)

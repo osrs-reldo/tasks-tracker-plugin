@@ -10,8 +10,7 @@ import net.runelite.client.game.SpriteManager;
 @Data
 public abstract class Task
 {
-    private static TaskType type;
-
+    private final TaskType type;
     private final String name;
     private final String description;
     private final String tier;

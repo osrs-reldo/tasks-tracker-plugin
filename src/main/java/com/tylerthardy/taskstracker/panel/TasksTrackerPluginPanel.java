@@ -154,34 +154,33 @@ public class TasksTrackerPluginPanel extends PluginPanel
         redraw();
     }
 
-    private void copyJsonToClipboard()
-    {
-        if (plugin.taskManagers.get(plugin.selectedTaskType).tasks.size() == 0)
-        {
-            showMessageBox(
-                    "Cannot Export Data",
-                    "There is no task data to export. Try opening UIs for the tasks to gather data.");
-            return;
-        }
+	public void copyJsonToClipboard()
+	{
+		if (plugin.taskManagers.get(plugin.selectedTaskType).tasks.size() == 0)
+		{
+			showMessageBox(
+				"Cannot Export Data",
+				"There is no task data to export. Try opening UIs for the tasks to gather data.");
+			return;
+		}
 
-        Gson gson = new Gson();
-        String json = gson.toJson(plugin.taskManagers.get(plugin.selectedTaskType).tasks);
-        final StringSelection stringSelection = new StringSelection(json);
-        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+		Gson gson = new Gson();
+		String trackedDataJson = gson.toJson(plugin.latestDisplayedData);
+		final StringSelection stringSelection = new StringSelection(trackedDataJson);
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
 
-        showMessageBox(
-                "Data Exported!",
-                "Exported task data copied to clipboard!"
-        );
-    }
+		showMessageBox(
+			"Data Exported!",
+			"Exported task data copied to clipboard!"
+		);
+	}
 
-    private static void showMessageBox(final String title, final String message)
-    {
-        SwingUtilities.invokeLater(() ->
-                JOptionPane.showMessageDialog(
-                        null,
-                        message, title,
-                        JOptionPane.INFORMATION_MESSAGE));
-    }
-
+	private static void showMessageBox(final String title, final String message)
+	{
+		SwingUtilities.invokeLater(() ->
+			JOptionPane.showMessageDialog(
+				null,
+				message, title,
+				JOptionPane.INFORMATION_MESSAGE));
+	}
 }

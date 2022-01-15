@@ -95,8 +95,7 @@ public abstract class TaskPanel extends JPanel
         toggleTrack.setBorder(new EmptyBorder(0,0,5,0));
         toggleTrack.addActionListener(e -> {
             task.setTracked(toggleTrack.isSelected());
-            plugin.pluginPanel.trackedTaskListPanel.redraw();
-            plugin.pluginPanel.allTasksPanel.refresh(task);
+            plugin.saveTrackerData(task);
         });
         SwingUtil.removeButtonDecorations(toggleTrack);
         JLabel viewDetails = new JLabel();

@@ -1,9 +1,13 @@
 package com.tylerthardy.taskstracker;
 
 import com.google.inject.Provides;
+import com.tylerthardy.taskstracker.data.TrackerDataStore;
+import com.tylerthardy.taskstracker.data.TrackerSave;
+import com.tylerthardy.taskstracker.data.TrackerWorldType;
 import com.tylerthardy.taskstracker.panel.TasksTrackerPluginPanel;
 import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.GenericTaskManager;
+import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import com.tylerthardy.taskstracker.tasktypes.combattask.CombatTaskManager;
 import java.awt.Color;
@@ -47,6 +51,7 @@ public class TasksTrackerPlugin extends Plugin
 	public TaskType selectedTaskType;
 	public String taskTextFilter;
 	public boolean isIncompleteFilter;
+	public TrackerSave latestDisplayedData;
 
 	public TasksTrackerPluginPanel pluginPanel;
 
@@ -59,6 +64,8 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject	private ClientThread clientThread;
 	@Inject	private ChatMessageManager chatMessageManager;
 	@Inject	private TasksTrackerConfig config;
+
+	@Inject private TrackerDataStore trackerDataStore;
 
 	@Provides
 	TasksTrackerConfig getConfig(ConfigManager configManager)
@@ -112,7 +119,14 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
-			// TODO: clear or update tasks when logging into a new account
+			TrackerWorldType worldType = TrackerWorldType.forWorld(client.getWorldType());
+			TrackerSave trackerSave = trackerDataStore.getData(client.getUsername(), worldType);
+			if (trackerSave != null)
+			{
+				handleTrackerData(trackerSave, null);
+			} else {
+				// Do nothing
+			}
 		}
 	}
 
@@ -150,6 +164,7 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			taskManagers.put(type, getTaskTypeManager(type));
 		}
+		saveTrackerData(null);
 	}
 
 	public void refresh()
@@ -178,5 +193,42 @@ public class TasksTrackerPlugin extends Plugin
 			return new CombatTaskManager(client, clientThread, this);
 		}
 		return new GenericTaskManager(type, this);
+	}
+
+	public void saveTrackerData(Task task)
+	{
+		handleTrackerData(new TrackerSave(taskManagers, client.getUsername(), TrackerWorldType.forWorld(client.getWorldType()), selectedTaskType), task);
+	}
+
+	private void handleTrackerData(TrackerSave newData, Task task)
+	{
+		trackerDataStore.save(newData);
+
+		boolean shouldRedraw = isDifferentIdentityThanLast(newData);
+		boolean shouldUpdatePanel = shouldRedraw || task != null;
+		if (shouldUpdatePanel) {
+			newData.tasks.forEach((taskType, tasks) -> {
+				taskManagers.get(taskType).tasks = tasks;
+			});
+		}
+		SwingUtilities.invokeLater(() -> {
+			if (shouldRedraw) {
+				pluginPanel.redraw();
+			}
+			if (shouldUpdatePanel) {
+				pluginPanel.allTasksPanel.refresh(task);
+				pluginPanel.trackedTaskListPanel.redraw();
+			}
+		});
+		latestDisplayedData = newData;
+	}
+
+	private boolean isDifferentIdentityThanLast(TrackerSave data) {
+		if (latestDisplayedData == null) {
+			return true;
+		}
+		boolean userNamesSame = latestDisplayedData.getUsername().equalsIgnoreCase(data.getUsername());
+		boolean worldTypesSame = latestDisplayedData.getWorldType() == data.getWorldType();
+		return !userNamesSame || !worldTypesSame;
 	}
 }
