@@ -52,26 +52,13 @@ public class TasksTrackerPlugin extends Plugin
 
 	private NavigationButton navButton;
 
-	@Inject
-	private Client client;
-
-	@Inject
-	private SpriteManager spriteManager;
-
-	@Inject
-	private SkillIconManager skillIconManager;
-
-	@Inject
-	private ClientToolbar clientToolbar;
-
-	@Inject
-	private ClientThread clientThread;
-
-	@Inject
-	private ChatMessageManager chatMessageManager;
-
-	@Inject
-	private TasksTrackerConfig config;
+	@Inject	private Client client;
+	@Inject	private SpriteManager spriteManager;
+	@Inject	private SkillIconManager skillIconManager;
+	@Inject	private ClientToolbar clientToolbar;
+	@Inject	private ClientThread clientThread;
+	@Inject	private ChatMessageManager chatMessageManager;
+	@Inject	private TasksTrackerConfig config;
 
 	@Provides
 	TasksTrackerConfig getConfig(ConfigManager configManager)
