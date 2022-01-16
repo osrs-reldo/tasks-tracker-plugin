@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.Optional;
 import javax.swing.SwingUtilities;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
 
 public abstract class AbstractTaskManager
@@ -70,10 +71,18 @@ public abstract class AbstractTaskManager
 	/**
 	 * Method to be run any time a widget is loaded.
 	 * Most tasks will have an interface (combat task progress, leagues tab, etc). Data can be scraped from this interface.
-	 * Hook into a widget opening by implementing this method.
+	 * Hook into a widget opening by overriding this method.
 	 * @param widgetLoaded RuneLite widget loaded event
 	 */
     public void handleOnWidgetLoaded(WidgetLoaded widgetLoaded) {}
+
+	/**
+	 * Method to be run any time after a script has fired.
+	 * Most tasks will have a script that load a list of tasks into an interface. Some lists are not accessible through widgets until this script is complete.
+	 * Hook into the completion of a script by overriding this method.
+	 * @param scriptPostFired
+	 */
+	public void handleOnScriptPostFired(ScriptPostFired scriptPostFired) {}
 
     public void redraw()
     {

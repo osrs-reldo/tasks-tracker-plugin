@@ -1,4 +1,4 @@
-package com.tylerthardy.taskstracker.widgets;
+package com.tylerthardy.taskstracker.tasktypes.combattask;
 
 public class CombatTasksWidgetID {
     public static final int COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID = 715;

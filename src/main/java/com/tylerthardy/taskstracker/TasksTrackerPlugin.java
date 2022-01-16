@@ -24,6 +24,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageBuilder;
@@ -157,6 +158,16 @@ public class TasksTrackerPlugin extends Plugin
 	private void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
 	{
 		taskManagers.values().forEach(tm -> tm.handleOnWidgetLoaded(widgetLoaded));
+	}
+
+	@Subscribe
+	public void onScriptPostFired(ScriptPostFired scriptPostFired)
+	{
+		handleOnScriptPostFired(scriptPostFired);
+	}
+	private void handleOnScriptPostFired(ScriptPostFired scriptPostFired)
+	{
+		taskManagers.values().forEach(tm -> tm.handleOnScriptPostFired(scriptPostFired));
 	}
 
 	public void setSelectedTaskType(TaskType type)

@@ -4,19 +4,17 @@ import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.data.TrackerDataStore;
 import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
-import com.tylerthardy.taskstracker.widgets.CombatTasksWidgetID;
-import net.runelite.api.ChatMessageType;
+import java.util.LinkedHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.runelite.api.Client;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.JavaScriptCallback;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.util.Text;
-
-import java.util.LinkedHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class CombatTaskManager extends AbstractTaskManager
 {
@@ -41,18 +39,27 @@ public class CombatTaskManager extends AbstractTaskManager
     {
         if (widgetLoaded.getGroupId() == CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID)
         {
-            maxTaskCount = scrapeTotalCount();
-            updateTasksFollowingWidgetLoaded();
             setFilterClickListeners();
         }
     }
 
     @Override
+	public void handleOnScriptPostFired(ScriptPostFired scriptPostFired)
+	{
+		if (scriptPostFired.getScriptId() == CombatTasksScriptID.ca_tasks_draw_list)
+		{
+			maxTaskCount = scrapeTotalCount();
+			updateTasksFollowingWidgetLoaded();
+			setFilterClickListeners();
+		}
+	}
+
+    @Override
     public void handleChatMessage(ChatMessage chatMessage)
     {
-        if (chatMessage.getType() != ChatMessageType.GAMEMESSAGE) {
-            return;
-        }
+//        if (chatMessage.getType() != ChatMessageType.GAMEMESSAGE) {
+//            return;
+//        }
         String strippedMessage = Text.removeFormattingTags(chatMessage.getMessage());
         Matcher m = TASK_COMPLETED_CHAT_MESSAGE_REGEX.matcher(strippedMessage);
         if (!m.find()) {
