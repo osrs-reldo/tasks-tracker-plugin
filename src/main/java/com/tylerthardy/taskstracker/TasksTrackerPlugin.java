@@ -1,6 +1,7 @@
 package com.tylerthardy.taskstracker;
 
 import com.google.inject.Provides;
+import com.tylerthardy.taskstracker.bosses.BossData;
 import com.tylerthardy.taskstracker.data.TrackerDataStore;
 import com.tylerthardy.taskstracker.panel.TasksTrackerPluginPanel;
 import com.tylerthardy.taskstracker.quests.QuestData;
@@ -38,6 +39,7 @@ import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
@@ -59,10 +61,11 @@ public class TasksTrackerPlugin extends Plugin
 	public TasksTrackerPluginPanel pluginPanel;
 
 	private NavigationButton navButton;
-	private boolean shouldLoadQuests;
 
 	@Inject	private Client client;
 	@Inject	private SpriteManager spriteManager;
+	@Inject	private PluginManager pluginManager;
+	@Inject	private ConfigManager configManager;
 	@Inject	private SkillIconManager skillIconManager;
 	@Inject	private ClientToolbar clientToolbar;
 	@Inject	private ClientThread clientThread;
@@ -91,11 +94,6 @@ public class TasksTrackerPlugin extends Plugin
 				.panel(pluginPanel)
 				.build();
 		clientToolbar.addNavigation(navButton);
-
-		if (client.getGameState() == GameState.LOGGED_IN)
-		{
-			shouldLoadQuests = true;
-		}
 
 		log.info("Tasks Tracker started!");
 	}
@@ -134,7 +132,6 @@ public class TasksTrackerPlugin extends Plugin
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
 			trackerDataStore.loadProfile();
-			shouldLoadQuests = true;
 		}
 	}
 
@@ -156,12 +153,6 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			playerSkills = client.getRealSkillLevels();
 			SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
-		}
-
-		if (shouldLoadQuests)
-		{
-			trackerDataStore.currentProfile.quests = new QuestData(client);
-			shouldLoadQuests = false;
 		}
 	}
 
@@ -232,7 +223,12 @@ public class TasksTrackerPlugin extends Plugin
 	public void copyJsonToClipboard(TaskType taskType)
 	{
 		clientThread.invokeLater(() -> {
-			String exportJson = trackerDataStore.exportToJson(taskType);
+			HashMap<String, Object> additionalData = new HashMap<>();
+			if (taskType == TaskType.COMBAT)
+			{
+				additionalData = buildAdditionalData();
+			}
+			String exportJson = trackerDataStore.exportToJson(taskType, additionalData);
 			final StringSelection stringSelection = new StringSelection(exportJson);
 			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
 
@@ -241,6 +237,14 @@ public class TasksTrackerPlugin extends Plugin
 				"Exported task data copied to clipboard!"
 			);
 		});
+	}
+
+	private HashMap<String, Object> buildAdditionalData()
+	{
+		HashMap<String, Object> additionalData = new HashMap<>();
+		additionalData.put("quests", new QuestData(client));
+		additionalData.put("bosses", new BossData(pluginManager, configManager));
+		return additionalData;
 	}
 
 	private static void showMessageBox(final String title, final String message)

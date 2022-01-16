@@ -75,7 +75,7 @@ public class TrackerDataStore
 		currentProfile = trackerProfile;
 	}
 
-	public String exportToJson(TaskType taskType)
+	public String exportToJson(TaskType taskType, HashMap<String, Object> additionalData)
 	{
 		Gson gson = new GsonBuilder()
 			.registerTypeAdapter(float.class, new LongSerializer())
@@ -85,10 +85,9 @@ public class TrackerDataStore
 		{
 			return gson.toJson(currentProfile);
 		} else {
-			HashMap<String, Object> export = new HashMap<>();
+			HashMap<String, Object> export = additionalData;
 			export.put("timestamp", Instant.now().toEpochMilli());
 			export.put("tasks", currentProfile.tasksByType.get(taskType));
-			export.put("quests", currentProfile.quests);
 			return gson.toJson(export);
 		}
 	}
