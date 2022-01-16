@@ -3,6 +3,7 @@ package com.tylerthardy.taskstracker;
 import com.google.inject.Provides;
 import com.tylerthardy.taskstracker.data.TrackerDataStore;
 import com.tylerthardy.taskstracker.panel.TasksTrackerPluginPanel;
+import com.tylerthardy.taskstracker.quests.QuestData;
 import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
@@ -49,6 +50,7 @@ public class TasksTrackerPlugin extends Plugin
 {
 	public int[] playerSkills;
 	public HashMap<TaskType, AbstractTaskManager> taskManagers = new HashMap<>();
+	public QuestData questData;
 
 	public TaskType selectedTaskType;
 	public String taskTextFilter;
@@ -57,6 +59,7 @@ public class TasksTrackerPlugin extends Plugin
 	public TasksTrackerPluginPanel pluginPanel;
 
 	private NavigationButton navButton;
+	private boolean shouldLoadQuests;
 
 	@Inject	private Client client;
 	@Inject	private SpriteManager spriteManager;
@@ -88,6 +91,11 @@ public class TasksTrackerPlugin extends Plugin
 				.panel(pluginPanel)
 				.build();
 		clientToolbar.addNavigation(navButton);
+
+		if (client.getGameState() == GameState.LOGGED_IN)
+		{
+			shouldLoadQuests = true;
+		}
 
 		log.info("Tasks Tracker started!");
 	}
@@ -126,6 +134,7 @@ public class TasksTrackerPlugin extends Plugin
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
 			trackerDataStore.loadProfile();
+			shouldLoadQuests = true;
 		}
 	}
 
@@ -147,6 +156,12 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			playerSkills = client.getRealSkillLevels();
 			SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
+		}
+
+		if (shouldLoadQuests)
+		{
+			trackerDataStore.currentProfile.quests = new QuestData(client);
+			shouldLoadQuests = false;
 		}
 	}
 
@@ -216,14 +231,16 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void copyJsonToClipboard(TaskType taskType)
 	{
-		String trackedDataJson = trackerDataStore.exportToJson(taskType);
-		final StringSelection stringSelection = new StringSelection(trackedDataJson);
-		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+		clientThread.invokeLater(() -> {
+			String exportJson = trackerDataStore.exportToJson(taskType);
+			final StringSelection stringSelection = new StringSelection(exportJson);
+			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
 
-		showMessageBox(
-			"Data Exported!",
-			"Exported task data copied to clipboard!"
-		);
+			showMessageBox(
+				"Data Exported!",
+				"Exported task data copied to clipboard!"
+			);
+		});
 	}
 
 	private static void showMessageBox(final String title, final String message)

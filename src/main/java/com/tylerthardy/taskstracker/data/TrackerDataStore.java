@@ -22,7 +22,7 @@ public class TrackerDataStore
 
 	private final ConfigManager configManager;
 
-	public TrackerProfile loaded;
+	public TrackerProfile currentProfile;
 
 	@Inject
 	public TrackerDataStore(ConfigManager configManager)
@@ -32,7 +32,7 @@ public class TrackerDataStore
 
 	public void saveTask(Task task)
 	{
-		HashMap<String, TaskSave> typeTasks = loaded.tasksByType.computeIfAbsent(task.getType(), k -> new HashMap<>());
+		HashMap<String, TaskSave> typeTasks = currentProfile.tasksByType.computeIfAbsent(task.getType(), k -> new HashMap<>());
 		if (task.isTracked() || task.isCompleted()) {
 			TaskSave taskSave = new TaskSave();
 			taskSave.setCompleted(task.isCompleted());
@@ -72,7 +72,7 @@ public class TrackerDataStore
 			}
 		}
 
-		loaded = trackerProfile;
+		currentProfile = trackerProfile;
 	}
 
 	public String exportToJson(TaskType taskType)
@@ -83,11 +83,12 @@ public class TrackerDataStore
 
 		if (taskType == null)
 		{
-			return gson.toJson(loaded);
+			return gson.toJson(currentProfile);
 		} else {
 			HashMap<String, Object> export = new HashMap<>();
-			export.put("tasks", loaded.tasksByType.get(taskType));
 			export.put("timestamp", Instant.now().toEpochMilli());
+			export.put("tasks", currentProfile.tasksByType.get(taskType));
+			export.put("quests", currentProfile.quests);
 			return gson.toJson(export);
 		}
 	}
@@ -101,11 +102,11 @@ public class TrackerDataStore
 
 		for (TaskType taskType : TaskType.values())
 		{
-			if (!loaded.tasksByType.containsKey(taskType))
+			if (!currentProfile.tasksByType.containsKey(taskType))
 			{
 				continue;
 			}
-			String configValue = gson.toJson(loaded.tasksByType.get(taskType));
+			String configValue = gson.toJson(currentProfile.tasksByType.get(taskType));
 			configManager.setRSProfileConfiguration(PLUGIN_BASE_GROUP, TASKS_PREFIX + "." + taskType.name(), configValue);
 		}
 	}
