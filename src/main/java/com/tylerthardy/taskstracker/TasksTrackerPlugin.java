@@ -6,10 +6,10 @@ import com.tylerthardy.taskstracker.data.TrackerSave;
 import com.tylerthardy.taskstracker.data.TrackerWorldType;
 import com.tylerthardy.taskstracker.panel.TasksTrackerPluginPanel;
 import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
-import com.tylerthardy.taskstracker.tasktypes.generic.GenericTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import com.tylerthardy.taskstracker.tasktypes.combattask.CombatTaskManager;
+import com.tylerthardy.taskstracker.tasktypes.generic.GenericTaskManager;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
@@ -77,7 +77,8 @@ public class TasksTrackerPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager, skillIconManager);
-		pluginPanel.setLoggedIn(isLoggedInState(client.getGameState()));
+		pluginPanel.setLoggedIn(true);//isLoggedInState(client.getGameState()));
+		trackerDataStore.load("gangrenepotato@googlemail.com", TrackerWorldType.DEFAULT);
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
@@ -125,14 +126,7 @@ public class TasksTrackerPlugin extends Plugin
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
 			TrackerWorldType worldType = TrackerWorldType.forWorld(client.getWorldType());
-			TrackerSave trackerSave = trackerDataStore.load(client.getUsername(), worldType);
-			if (trackerSave != null)
-			{
-				trackerDataStore.save(trackerSave);
-				handleTrackerData(trackerSave, null);
-			} else {
-				setSelectedTaskType(TaskType.COMBAT);
-			}
+			trackerDataStore.load(client.getUsername(), worldType);
 		}
 	}
 
@@ -175,7 +169,6 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			taskManagers.put(type, getTaskTypeManager(type));
 		}
-		saveTrackerData();
 	}
 
 	public void refresh()
@@ -201,48 +194,49 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		if (type == TaskType.COMBAT)
 		{
-			return new CombatTaskManager(client, clientThread, this);
+			return new CombatTaskManager(client, clientThread, this, trackerDataStore);
 		}
-		return new GenericTaskManager(type, this);
+		return new GenericTaskManager(type, this, trackerDataStore);
 	}
 
-	public void saveTrackerData()
+	public void trackTask(Task task)
 	{
-		trackerDataStore.save(new TrackerSave(taskManagers, client.getUsername(), TrackerWorldType.forWorld(client.getWorldType()), selectedTaskType));
+		// TODO: Move this responsibility; not correct to be here
+		trackerDataStore.saveTask(task);
 	}
 
-	private void handleTrackerData(TrackerSave newData, Task task)
-	{
-		boolean shouldRedraw = isDifferentIdentityThanLast(newData);
-		boolean shouldUpdatePanel = shouldRedraw || task != null;
-		if (shouldUpdatePanel) {
-			newData.tasks.forEach((taskType, tasks) -> {
-				if (taskManagers.get(taskType) == null)
-				{
-					taskManagers.put(taskType, getTaskTypeManager(taskType));
-				}
-				taskManagers.get(taskType).tasks = tasks;
-			});
-			setSelectedTaskType(newData.getSelectedTaskType());
-		}
-		SwingUtilities.invokeLater(() -> {
-			if (shouldRedraw) {
-				pluginPanel.redraw();
-			}
-			if (shouldUpdatePanel) {
-				pluginPanel.allTasksPanel.refresh(task);
-				pluginPanel.trackedTaskListPanel.redraw();
-			}
-		});
-		latestDisplayedData = newData;
-	}
-
-	private boolean isDifferentIdentityThanLast(TrackerSave data) {
-		if (latestDisplayedData == null) {
-			return true;
-		}
-		boolean userNamesSame = latestDisplayedData.getUsername().equalsIgnoreCase(data.getUsername());
-		boolean worldTypesSame = latestDisplayedData.getWorldType() == data.getWorldType();
-		return !userNamesSame || !worldTypesSame;
-	}
+//	private void handleTrackerData(TrackerSave newData, Task task)
+//	{
+//		boolean shouldRedraw = isDifferentIdentityThanLast(newData);
+//		boolean shouldUpdatePanel = shouldRedraw || task != null;
+//		if (shouldUpdatePanel) {
+//			newData.tasks.forEach((taskType, tasks) -> {
+//				if (taskManagers.get(taskType) == null)
+//				{
+//					taskManagers.put(taskType, getTaskTypeManager(taskType));
+//				}
+//				taskManagers.get(taskType).tasks = tasks;
+//			});
+//			setSelectedTaskType(newData.getSelectedTaskType());
+//		}
+//		SwingUtilities.invokeLater(() -> {
+//			if (shouldRedraw) {
+//				pluginPanel.redraw();
+//			}
+//			if (shouldUpdatePanel) {
+//				pluginPanel.allTasksPanel.refresh(task);
+//				pluginPanel.trackedTaskListPanel.redraw();
+//			}
+//		});
+//		latestDisplayedData = newData;
+//	}
+//
+//	private boolean isDifferentIdentityThanLast(TrackerSave data) {
+//		if (latestDisplayedData == null) {
+//			return true;
+//		}
+//		boolean userNamesSame = latestDisplayedData.getUsername().equalsIgnoreCase(data.getUsername());
+//		boolean worldTypesSame = latestDisplayedData.getWorldType() == data.getWorldType();
+//		return !userNamesSame || !worldTypesSame;
+//	}
 }

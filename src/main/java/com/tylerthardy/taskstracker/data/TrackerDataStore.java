@@ -15,16 +15,62 @@ public class TrackerDataStore
 	private static final String PLUGIN_BASE_GROUP = "tasksTracker";
 	private static final String TRACKER_SAVES_KEY = "trackerSaves";
 
-	private ConfigManager configManager;
+	private final ConfigManager configManager;
 
-	private HashMap<String, HashMap<TrackerWorldType, TrackerSave>> saves;
+	public TrackerSave loaded;
+	private final HashMap<String, HashMap<TrackerWorldType, TrackerSave>> data;
 
 	@Inject
 	public TrackerDataStore(ConfigManager configManager)
 	{
 		this.configManager = configManager;
-		HashMap<String, HashMap<TrackerWorldType, TrackerSave>> data = loadDataFromConfig();
-		saves = data != null ? data : new HashMap<>();
+		this.data = loadDataFromConfig();
+	}
+
+	public void saveTask(Task task)
+	{
+		HashMap<String, TaskSave> typeTasks = loaded.tasks.computeIfAbsent(task.getType(), k -> new HashMap<>());
+		TaskSave taskSave = new TaskSave();
+		taskSave.setCompleted(task.isCompleted());
+		taskSave.setTracked(task.isTracked());
+		typeTasks.put(task.getName(), taskSave);
+		saveDataToConfig();
+	}
+
+	public void load(String username, TrackerWorldType worldType)
+	{
+		HashMap<TrackerWorldType, TrackerSave> playerSave = data.computeIfAbsent(username, k -> new HashMap<>());
+		this.loaded = playerSave.computeIfAbsent(worldType, k -> new TrackerSave(username, worldType));
+	}
+
+	private void saveLoadedToData()
+	{
+		String username = loaded.getUsername();
+
+		// Check if there is a current tracker save for existing login and remove it
+		if (data.containsKey(username))
+		{
+			data.get(username).remove(loaded.getWorldType());
+		}
+		else
+		{
+			data.put(username, new HashMap<>());
+		}
+
+		// Re-save
+		data.get(username).put(loaded.getWorldType(), loaded);
+	}
+
+	private void saveDataToConfig()
+	{
+		saveLoadedToData();
+
+		// Set configuration
+		Gson gson = new GsonBuilder()
+			.registerTypeAdapter(TaskSave.class, new TaskSerializer())
+			.create();
+		String configValue = gson.toJson(data);
+		configManager.setConfiguration(PLUGIN_BASE_GROUP, TRACKER_SAVES_KEY, configValue);
 	}
 
 	private HashMap<String, HashMap<TrackerWorldType, TrackerSave>> loadDataFromConfig()
@@ -34,7 +80,7 @@ public class TrackerDataStore
 		if (jsonString == null)
 		{
 			// Never set before
-			return null;
+			return new HashMap<>();
 		}
 
 		Gson gson = new GsonBuilder()
@@ -48,39 +94,7 @@ public class TrackerDataStore
 		{
 			// log.error("{} json invalid. All is lost", TrackerDataStore.TRACKER_SAVES_KEY, ex);
 			configManager.unsetConfiguration(PLUGIN_BASE_GROUP, TrackerDataStore.TRACKER_SAVES_KEY);
-			return null;
+			return new HashMap<>();
 		}
-	}
-
-	public TrackerSave load(String username, TrackerWorldType worldType)
-	{
-		HashMap<TrackerWorldType, TrackerSave> playerSaves = saves.get(username);
-		if (playerSaves == null) return null;
-		return playerSaves.get(worldType);
-	}
-
-	public void save(TrackerSave newSave)
-	{
-		// Check if there is a current tracker save for existing login and remove it
-		if (saves.containsKey(newSave.getUsername()))
-		{
-			if (saves.get(newSave.getUsername()).containsKey(newSave.getWorldType()))
-			{
-				saves.get(newSave.getUsername()).remove(newSave.getWorldType());
-			}
-		}
-		else
-		{
-			saves.put(newSave.getUsername(), new HashMap<>());
-		}
-
-		// Re-save
-		saves.get(newSave.getUsername()).put(newSave.getWorldType(), newSave);
-
-		// Set configuration
-		Gson gson = new GsonBuilder()
-			.registerTypeAdapter(Task.class, new TaskSerializer())
-			.create();
-		configManager.setConfiguration(PLUGIN_BASE_GROUP, TRACKER_SAVES_KEY, gson.toJson(saves));
 	}
 }

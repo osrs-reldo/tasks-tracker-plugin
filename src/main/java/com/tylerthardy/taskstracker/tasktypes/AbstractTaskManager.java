@@ -3,6 +3,8 @@ package com.tylerthardy.taskstracker.tasktypes;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
+import com.tylerthardy.taskstracker.data.TaskSave;
+import com.tylerthardy.taskstracker.data.TrackerDataStore;
 import java.awt.Color;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,6 +12,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Optional;
 import javax.swing.SwingUtilities;
@@ -23,11 +26,13 @@ public abstract class AbstractTaskManager
     public int maxTaskCount;
 
     private final TasksTrackerPlugin plugin;
+	private final TrackerDataStore trackerDataStore;
 
-    public AbstractTaskManager(TaskType taskType, TasksTrackerPlugin plugin)
+	public AbstractTaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
     {
         this.taskType = taskType;
         this.plugin = plugin;
+		this.trackerDataStore = trackerDataStore;
 		try (InputStream dataFile = TasksTrackerPlugin.class.getResourceAsStream(taskType.getDataFileName()))
 		{
 			assert dataFile != null;
@@ -39,7 +44,20 @@ public abstract class AbstractTaskManager
 		{
 			throw new RuntimeException(e);
 		}
+		applyTrackerSave();
     }
+
+	private void applyTrackerSave()
+	{
+		HashMap<String, TaskSave> loadedTasks = trackerDataStore.loaded.tasks.get(taskType);
+		if (loadedTasks == null) return;
+		tasks.forEach(task -> {
+			TaskSave loadedTask = loadedTasks.get(task.getName());
+			if (loadedTask == null) return;
+			task.setTracked(loadedTask.isTracked());
+			task.setCompleted(loadedTask.isCompleted());
+		});
+	}
 
 	/**
 	 * Method to be run any time a chat message is sent.
@@ -76,9 +94,9 @@ public abstract class AbstractTaskManager
             if (plugin.selectedTaskType == taskType)
             {
                 refresh(task);
-            }
-			plugin.saveTrackerData();
-        });
+			}
+			trackerDataStore.saveTask(task);
+		});
     }
 
     public void updateTaskProgress(LinkedHashMap<String, Boolean> taskProgress)
@@ -88,11 +106,11 @@ public abstract class AbstractTaskManager
             if (taskProgress.containsKey(task.getName()))
             {
                 task.setCompleted(taskProgress.get(task.getName()));
+				trackerDataStore.saveTask(task);
             }
         }
 
         sendTaskUpdateMessage(taskProgress);
-		plugin.saveTrackerData();
     }
 
     private void sendTaskUpdateMessage(LinkedHashMap<String, Boolean> taskProgress) {

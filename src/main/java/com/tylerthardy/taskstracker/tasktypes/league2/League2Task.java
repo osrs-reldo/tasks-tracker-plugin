@@ -17,10 +17,16 @@ public class League2Task extends Task
 
     public League2Task(String name, String description, String tier)
     {
-        super(TaskType.LEAGUE_2, name, description, tier);
+        super(name, description, tier);
     }
 
-    @Override
+	@Override
+	public TaskType getType()
+	{
+		return TaskType.LEAGUE_2;
+	}
+
+	@Override
     public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager) {
         return new League2TaskPanel(plugin, clientThread, spriteManager, this);
     }

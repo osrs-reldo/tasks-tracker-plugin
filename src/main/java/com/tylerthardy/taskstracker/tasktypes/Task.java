@@ -10,7 +10,6 @@ import net.runelite.client.game.SpriteManager;
 @Data
 public abstract class Task
 {
-    private final TaskType type;
     private final String name;
     private final String description;
     private final String tier;
@@ -19,5 +18,6 @@ public abstract class Task
     private boolean tracked;
     private float timestamp;
 
+	public abstract TaskType getType();
     public abstract TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager);
 }

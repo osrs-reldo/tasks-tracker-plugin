@@ -1,6 +1,7 @@
 package com.tylerthardy.taskstracker.tasktypes.combattask;
 
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
+import com.tylerthardy.taskstracker.data.TrackerDataStore;
 import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import com.tylerthardy.taskstracker.widgets.CombatTasksWidgetID;
@@ -28,9 +29,9 @@ public class CombatTaskManager extends AbstractTaskManager
 
     private int previousTaskCount = -1;
 
-    public CombatTaskManager(Client client, ClientThread clientThread, TasksTrackerPlugin plugin)
+    public CombatTaskManager(Client client, ClientThread clientThread, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
     {
-        super(TaskType.COMBAT, plugin);
+        super(TaskType.COMBAT, plugin, trackerDataStore);
         this.client = client;
         this.clientThread = clientThread;
     }

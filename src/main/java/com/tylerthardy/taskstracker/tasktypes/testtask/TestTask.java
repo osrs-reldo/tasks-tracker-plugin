@@ -14,10 +14,16 @@ public class TestTask extends Task
     public String filter2;
     public String filter3;
     public TestTask(String name, String description, String tier) {
-        super(TaskType.TEST, name, description, tier);
+        super(name, description, tier);
     }
 
-    @Override
+	@Override
+	public TaskType getType()
+	{
+		return TaskType.TEST;
+	}
+
+	@Override
     public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager) {
         return new TestTaskPanel(plugin, clientThread, spriteManager, this);
     }
