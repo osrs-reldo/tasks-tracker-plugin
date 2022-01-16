@@ -1,6 +1,5 @@
 package com.tylerthardy.taskstracker.panel;
 
-import com.google.gson.Gson;
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.panel.components.CheckBox;
 import com.tylerthardy.taskstracker.panel.components.SearchBox;
@@ -11,18 +10,14 @@ import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Toolkit;
-import java.awt.datatransfer.StringSelection;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
@@ -94,7 +89,7 @@ public class LoggedInPanel extends PluginPanel
 		JButton exportButton = new JButton("Export");
 		exportButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 		exportButton.setLayout(new BorderLayout(0, BORDER_OFFSET));
-		exportButton.addActionListener(e -> copyJsonToClipboard());
+		exportButton.addActionListener(e -> plugin.copyJsonToClipboard(plugin.selectedTaskType));
 		southPanel.add(exportButton, BorderLayout.SOUTH);
 
 		return southPanel;
@@ -154,35 +149,5 @@ public class LoggedInPanel extends PluginPanel
 	{
 		plugin.setSelectedTaskType(taskType);
 		redraw();
-	}
-
-	public void copyJsonToClipboard()
-	{
-		if (plugin.taskManagers.get(plugin.selectedTaskType).tasks.size() == 0)
-		{
-			showMessageBox(
-				"Cannot Export Data",
-				"There is no task data to export. Try opening UIs for the tasks to gather data.");
-			return;
-		}
-
-		Gson gson = new Gson();
-		String trackedDataJson = gson.toJson(plugin.latestDisplayedData);
-		final StringSelection stringSelection = new StringSelection(trackedDataJson);
-		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
-
-		showMessageBox(
-			"Data Exported!",
-			"Exported task data copied to clipboard!"
-		);
-	}
-
-	private static void showMessageBox(final String title, final String message)
-	{
-		SwingUtilities.invokeLater(() ->
-			JOptionPane.showMessageDialog(
-				null,
-				message, title,
-				JOptionPane.INFORMATION_MESSAGE));
 	}
 }

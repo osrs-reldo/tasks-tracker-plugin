@@ -2,8 +2,6 @@ package com.tylerthardy.taskstracker;
 
 import com.google.inject.Provides;
 import com.tylerthardy.taskstracker.data.TrackerDataStore;
-import com.tylerthardy.taskstracker.data.TrackerSave;
-import com.tylerthardy.taskstracker.data.TrackerWorldType;
 import com.tylerthardy.taskstracker.panel.TasksTrackerPluginPanel;
 import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.Task;
@@ -11,10 +9,13 @@ import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import com.tylerthardy.taskstracker.tasktypes.combattask.CombatTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.generic.GenericTaskManager;
 import java.awt.Color;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.HashMap;
 import javax.inject.Inject;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -51,7 +52,6 @@ public class TasksTrackerPlugin extends Plugin
 	public TaskType selectedTaskType;
 	public String taskTextFilter;
 	public boolean isIncompleteFilter;
-	public TrackerSave latestDisplayedData;
 
 	public TasksTrackerPluginPanel pluginPanel;
 
@@ -77,8 +77,7 @@ public class TasksTrackerPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager, skillIconManager);
-		pluginPanel.setLoggedIn(true);//isLoggedInState(client.getGameState()));
-		trackerDataStore.load("gangrenepotato@googlemail.com", TrackerWorldType.DEFAULT);
+		pluginPanel.setLoggedIn(isLoggedInState(client.getGameState()));
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
@@ -125,8 +124,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
-			TrackerWorldType worldType = TrackerWorldType.forWorld(client.getWorldType());
-			trackerDataStore.load(client.getUsername(), worldType);
+			trackerDataStore.loadProfile();
 		}
 	}
 
@@ -205,38 +203,24 @@ public class TasksTrackerPlugin extends Plugin
 		trackerDataStore.saveTask(task);
 	}
 
-//	private void handleTrackerData(TrackerSave newData, Task task)
-//	{
-//		boolean shouldRedraw = isDifferentIdentityThanLast(newData);
-//		boolean shouldUpdatePanel = shouldRedraw || task != null;
-//		if (shouldUpdatePanel) {
-//			newData.tasks.forEach((taskType, tasks) -> {
-//				if (taskManagers.get(taskType) == null)
-//				{
-//					taskManagers.put(taskType, getTaskTypeManager(taskType));
-//				}
-//				taskManagers.get(taskType).tasks = tasks;
-//			});
-//			setSelectedTaskType(newData.getSelectedTaskType());
-//		}
-//		SwingUtilities.invokeLater(() -> {
-//			if (shouldRedraw) {
-//				pluginPanel.redraw();
-//			}
-//			if (shouldUpdatePanel) {
-//				pluginPanel.allTasksPanel.refresh(task);
-//				pluginPanel.trackedTaskListPanel.redraw();
-//			}
-//		});
-//		latestDisplayedData = newData;
-//	}
-//
-//	private boolean isDifferentIdentityThanLast(TrackerSave data) {
-//		if (latestDisplayedData == null) {
-//			return true;
-//		}
-//		boolean userNamesSame = latestDisplayedData.getUsername().equalsIgnoreCase(data.getUsername());
-//		boolean worldTypesSame = latestDisplayedData.getWorldType() == data.getWorldType();
-//		return !userNamesSame || !worldTypesSame;
-//	}
+	public void copyJsonToClipboard(TaskType taskType)
+	{
+		String trackedDataJson = trackerDataStore.exportToJson(taskType);
+		final StringSelection stringSelection = new StringSelection(trackedDataJson);
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+
+		showMessageBox(
+			"Data Exported!",
+			"Exported task data copied to clipboard!"
+		);
+	}
+
+	private static void showMessageBox(final String title, final String message)
+	{
+		SwingUtilities.invokeLater(() ->
+			JOptionPane.showMessageDialog(
+				null,
+				message, title,
+				JOptionPane.INFORMATION_MESSAGE));
+	}
 }

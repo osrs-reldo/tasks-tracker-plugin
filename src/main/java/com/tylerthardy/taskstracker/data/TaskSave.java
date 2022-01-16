@@ -8,7 +8,7 @@ public class TaskSave
 {
 	boolean isCompleted;
 	boolean isTracked;
-	float timestamp;
+	Long timestamp;
 
 	public TaskSave()
 	{

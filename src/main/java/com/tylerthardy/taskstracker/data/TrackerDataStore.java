@@ -5,96 +5,108 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.tylerthardy.taskstracker.tasktypes.Task;
+import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import java.lang.reflect.Type;
+import java.time.Instant;
 import java.util.HashMap;
 import javax.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
 
+@Slf4j
 public class TrackerDataStore
 {
 	private static final String PLUGIN_BASE_GROUP = "tasksTracker";
-	private static final String TRACKER_SAVES_KEY = "trackerSaves";
+	private static final String PROFILE_DATA = "profileData";
+	private static final String TASKS_PREFIX = "tasks";
 
 	private final ConfigManager configManager;
 
-	public TrackerSave loaded;
-	private final HashMap<String, HashMap<TrackerWorldType, TrackerSave>> data;
+	public TrackerProfile loaded;
 
 	@Inject
 	public TrackerDataStore(ConfigManager configManager)
 	{
 		this.configManager = configManager;
-		this.data = loadDataFromConfig();
 	}
 
 	public void saveTask(Task task)
 	{
-		HashMap<String, TaskSave> typeTasks = loaded.tasks.computeIfAbsent(task.getType(), k -> new HashMap<>());
-		TaskSave taskSave = new TaskSave();
-		taskSave.setCompleted(task.isCompleted());
-		taskSave.setTracked(task.isTracked());
-		typeTasks.put(task.getName(), taskSave);
-		saveDataToConfig();
-	}
-
-	public void load(String username, TrackerWorldType worldType)
-	{
-		HashMap<TrackerWorldType, TrackerSave> playerSave = data.computeIfAbsent(username, k -> new HashMap<>());
-		this.loaded = playerSave.computeIfAbsent(worldType, k -> new TrackerSave(username, worldType));
-	}
-
-	private void saveLoadedToData()
-	{
-		String username = loaded.getUsername();
-
-		// Check if there is a current tracker save for existing login and remove it
-		if (data.containsKey(username))
-		{
-			data.get(username).remove(loaded.getWorldType());
-		}
-		else
-		{
-			data.put(username, new HashMap<>());
+		HashMap<String, TaskSave> typeTasks = loaded.tasksByType.computeIfAbsent(task.getType(), k -> new HashMap<>());
+		if (task.isTracked() || task.isCompleted()) {
+			TaskSave taskSave = new TaskSave();
+			taskSave.setCompleted(task.isCompleted());
+			taskSave.setTracked(task.isTracked());
+			typeTasks.put(task.getName(), taskSave);
+		} else {
+			typeTasks.remove(task.getName());
 		}
 
-		// Re-save
-		data.get(username).put(loaded.getWorldType(), loaded);
+		saveLoadedToConfig();
 	}
 
-	private void saveDataToConfig()
+	public void loadProfile()
 	{
-		saveLoadedToData();
+		TrackerProfile trackerProfile = new TrackerProfile();
 
-		// Set configuration
+		Type deserializeType = new TypeToken<HashMap<String, TaskSave>>(){}.getType();
+		Gson gson = new GsonBuilder()
+			.registerTypeAdapter(TaskSave.class, new TaskDeserializer())
+			.create();
+
+		for (TaskType taskType : TaskType.values())
+		{
+			String jsonString = configManager.getRSProfileConfiguration(PLUGIN_BASE_GROUP, TASKS_PREFIX + "." + taskType.name());
+			if (jsonString == null)
+			{
+				continue;
+			}
+			try
+			{
+				trackerProfile.tasksByType.put(taskType, gson.fromJson(jsonString, deserializeType));
+			}
+			catch (JsonParseException ex)
+			{
+				log.error("{} json invalid. All is lost", TASKS_PREFIX + "." + taskType.name(), ex);
+				configManager.unsetRSProfileConfiguration(PLUGIN_BASE_GROUP, TASKS_PREFIX + "." + taskType.name());
+			}
+		}
+
+		loaded = trackerProfile;
+	}
+
+	public String exportToJson(TaskType taskType)
+	{
+		Gson gson = new GsonBuilder()
+			.registerTypeAdapter(float.class, new LongSerializer())
+			.create();
+
+		if (taskType == null)
+		{
+			return gson.toJson(loaded);
+		} else {
+			HashMap<String, Object> export = new HashMap<>();
+			export.put("tasks", loaded.tasksByType.get(taskType));
+			export.put("timestamp", Instant.now().toEpochMilli());
+			return gson.toJson(export);
+		}
+	}
+
+	private void saveLoadedToConfig()
+	{
 		Gson gson = new GsonBuilder()
 			.registerTypeAdapter(TaskSave.class, new TaskSerializer())
+			.registerTypeAdapter(float.class, new LongSerializer())
 			.create();
-		String configValue = gson.toJson(data);
-		configManager.setConfiguration(PLUGIN_BASE_GROUP, TRACKER_SAVES_KEY, configValue);
-	}
 
-	private HashMap<String, HashMap<TrackerWorldType, TrackerSave>> loadDataFromConfig()
-	{
-		Type deserializeType = new TypeToken<HashMap<String, HashMap<TrackerWorldType, TrackerSave>>>(){}.getType();
-		String jsonString = configManager.getConfiguration(PLUGIN_BASE_GROUP, TrackerDataStore.TRACKER_SAVES_KEY);
-		if (jsonString == null)
+		for (TaskType taskType : TaskType.values())
 		{
-			// Never set before
-			return new HashMap<>();
-		}
-
-		Gson gson = new GsonBuilder()
-			.registerTypeAdapter(Task.class, new TaskDeserializer())
-			.create();
-		try
-		{
-			return gson.fromJson(jsonString, deserializeType);
-		}
-		catch (JsonParseException ex)
-		{
-			// log.error("{} json invalid. All is lost", TrackerDataStore.TRACKER_SAVES_KEY, ex);
-			configManager.unsetConfiguration(PLUGIN_BASE_GROUP, TrackerDataStore.TRACKER_SAVES_KEY);
-			return new HashMap<>();
+			if (!loaded.tasksByType.containsKey(taskType))
+			{
+				continue;
+			}
+			String configValue = gson.toJson(loaded.tasksByType.get(taskType));
+			configManager.setRSProfileConfiguration(PLUGIN_BASE_GROUP, TASKS_PREFIX + "." + taskType.name(), configValue);
 		}
 	}
 }
