@@ -28,10 +28,4 @@ public enum TaskType
         this.dataFileName = dataFileName;
         this.classType = classType;
     }
-
-    @Override
-    public String toString()
-    {
-        return name;
-    }
 }

@@ -1,6 +1,8 @@
-package com.tylerthardy.taskstracker.tasktypes;
+package com.tylerthardy.taskstracker.tasktypes.generic;
 
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
+import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
+import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import net.runelite.api.events.ChatMessage;
 
 public class GenericTaskManager extends AbstractTaskManager

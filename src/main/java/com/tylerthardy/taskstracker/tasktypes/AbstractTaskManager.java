@@ -77,7 +77,7 @@ public abstract class AbstractTaskManager
             {
                 refresh(task);
             }
-			plugin.saveTrackerData(task);
+			plugin.saveTrackerData();
         });
     }
 
@@ -92,7 +92,7 @@ public abstract class AbstractTaskManager
         }
 
         sendTaskUpdateMessage(taskProgress);
-		plugin.saveTrackerData(null);
+		plugin.saveTrackerData();
     }
 
     private void sendTaskUpdateMessage(LinkedHashMap<String, Boolean> taskProgress) {

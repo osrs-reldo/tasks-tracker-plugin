@@ -1,6 +1,7 @@
-package com.tylerthardy.taskstracker.panel;
+package com.tylerthardy.taskstracker.panel.tabs;
 
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
+import com.tylerthardy.taskstracker.panel.TaskListPanel;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import java.util.ArrayList;
 import net.runelite.client.callback.ClientThread;

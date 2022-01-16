@@ -17,6 +17,7 @@ public abstract class Task
 
     private boolean completed;
     private boolean tracked;
+    private float timestamp;
 
     public abstract TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager);
 }

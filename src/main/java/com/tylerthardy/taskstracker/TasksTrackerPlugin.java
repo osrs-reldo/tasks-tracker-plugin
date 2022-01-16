@@ -6,7 +6,7 @@ import com.tylerthardy.taskstracker.data.TrackerSave;
 import com.tylerthardy.taskstracker.data.TrackerWorldType;
 import com.tylerthardy.taskstracker.panel.TasksTrackerPluginPanel;
 import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
-import com.tylerthardy.taskstracker.tasktypes.GenericTaskManager;
+import com.tylerthardy.taskstracker.tasktypes.generic.GenericTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import com.tylerthardy.taskstracker.tasktypes.combattask.CombatTaskManager;
@@ -76,8 +76,9 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		setSelectedTaskType(TaskType.TEST);
 		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager, skillIconManager);
+		pluginPanel.setLoggedIn(isLoggedInState(client.getGameState()));
+
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
 				.tooltip("Task Tracker")
@@ -85,7 +86,6 @@ public class TasksTrackerPlugin extends Plugin
 				.priority(5)
 				.panel(pluginPanel)
 				.build();
-
 		clientToolbar.addNavigation(navButton);
 
 		log.info("Tasks Tracker started!");
@@ -94,6 +94,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
+		pluginPanel = null;
 		clientToolbar.removeNavigation(navButton);
 		log.info("Tasks Tracker stopped!");
 	}
@@ -117,17 +118,27 @@ public class TasksTrackerPlugin extends Plugin
 	}
 	private void handleOnGameStateChanged(GameStateChanged gameStateChanged)
 	{
+		SwingUtilities.invokeLater(() -> {
+			pluginPanel.setLoggedIn(isLoggedInState(gameStateChanged.getGameState()));
+		});
+
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
 			TrackerWorldType worldType = TrackerWorldType.forWorld(client.getWorldType());
-			TrackerSave trackerSave = trackerDataStore.getData(client.getUsername(), worldType);
+			TrackerSave trackerSave = trackerDataStore.load(client.getUsername(), worldType);
 			if (trackerSave != null)
 			{
+				trackerDataStore.save(trackerSave);
 				handleTrackerData(trackerSave, null);
 			} else {
-				// Do nothing
+				setSelectedTaskType(TaskType.COMBAT);
 			}
 		}
+	}
+
+	private boolean isLoggedInState(GameState gameState)
+	{
+		return gameState != GameState.LOGIN_SCREEN && gameState != GameState.LOGIN_SCREEN_AUTHENTICATOR && gameState != GameState.LOGGING_IN;
 	}
 
 	@Subscribe
@@ -164,7 +175,7 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			taskManagers.put(type, getTaskTypeManager(type));
 		}
-		saveTrackerData(null);
+		saveTrackerData();
 	}
 
 	public void refresh()
@@ -195,21 +206,24 @@ public class TasksTrackerPlugin extends Plugin
 		return new GenericTaskManager(type, this);
 	}
 
-	public void saveTrackerData(Task task)
+	public void saveTrackerData()
 	{
-		handleTrackerData(new TrackerSave(taskManagers, client.getUsername(), TrackerWorldType.forWorld(client.getWorldType()), selectedTaskType), task);
+		trackerDataStore.save(new TrackerSave(taskManagers, client.getUsername(), TrackerWorldType.forWorld(client.getWorldType()), selectedTaskType));
 	}
 
 	private void handleTrackerData(TrackerSave newData, Task task)
 	{
-		trackerDataStore.save(newData);
-
 		boolean shouldRedraw = isDifferentIdentityThanLast(newData);
 		boolean shouldUpdatePanel = shouldRedraw || task != null;
 		if (shouldUpdatePanel) {
 			newData.tasks.forEach((taskType, tasks) -> {
+				if (taskManagers.get(taskType) == null)
+				{
+					taskManagers.put(taskType, getTaskTypeManager(taskType));
+				}
 				taskManagers.get(taskType).tasks = tasks;
 			});
+			setSelectedTaskType(newData.getSelectedTaskType());
 		}
 		SwingUtilities.invokeLater(() -> {
 			if (shouldRedraw) {
