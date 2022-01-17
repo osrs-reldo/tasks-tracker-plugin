@@ -17,22 +17,23 @@ import net.runelite.client.config.ConfigManager;
 public class TrackerDataStore
 {
 	private static final String PLUGIN_BASE_GROUP = "tasksTracker";
-	private static final String PROFILE_DATA = "profileData";
+	private static final String SETTINGS_DATA = "settingsData";
 	private static final String TASKS_PREFIX = "tasks";
 
 	private final ConfigManager configManager;
 
-	public TrackerProfile currentProfile;
+	public TrackerData currentData;
 
 	@Inject
 	public TrackerDataStore(ConfigManager configManager)
 	{
 		this.configManager = configManager;
+		this.currentData = new TrackerData();
 	}
 
 	public void saveTask(Task task)
 	{
-		HashMap<String, TaskSave> typeTasks = currentProfile.tasksByType.computeIfAbsent(task.getType(), k -> new HashMap<>());
+		HashMap<String, TaskSave> typeTasks = currentData.tasksByType.computeIfAbsent(task.getType(), k -> new HashMap<>());
 		if (task.isTracked() || task.isCompleted()) {
 			TaskSave taskSave = new TaskSave();
 			taskSave.setCompleted(task.isCompleted());
@@ -47,65 +48,75 @@ public class TrackerDataStore
 
 	public void loadProfile()
 	{
-		TrackerProfile trackerProfile = new TrackerProfile();
+		TrackerData trackerData = new TrackerData();
 
-		Type deserializeType = new TypeToken<HashMap<String, TaskSave>>(){}.getType();
-		Gson gson = new GsonBuilder()
-			.registerTypeAdapter(TaskSave.class, new TaskDeserializer())
-			.create();
+		trackerData.settings = getDataFromConfig(PLUGIN_BASE_GROUP, SETTINGS_DATA, TrackerSettings.class, new TrackerSettings());
 
+		Type taskDeserializeType = new TypeToken<HashMap<String, TaskSave>>(){}.getType();
 		for (TaskType taskType : TaskType.values())
 		{
-			String jsonString = configManager.getRSProfileConfiguration(PLUGIN_BASE_GROUP, TASKS_PREFIX + "." + taskType.name());
-			if (jsonString == null)
-			{
-				continue;
-			}
-			try
-			{
-				trackerProfile.tasksByType.put(taskType, gson.fromJson(jsonString, deserializeType));
-			}
-			catch (JsonParseException ex)
-			{
-				log.error("{} json invalid. All is lost", TASKS_PREFIX + "." + taskType.name(), ex);
-				configManager.unsetRSProfileConfiguration(PLUGIN_BASE_GROUP, TASKS_PREFIX + "." + taskType.name());
-			}
+			HashMap<String, TaskSave> taskData = getDataFromConfig(PLUGIN_BASE_GROUP, TASKS_PREFIX + "." + taskType.name(), taskDeserializeType, new HashMap<>());
+			trackerData.tasksByType.put(taskType, taskData);
 		}
 
-		currentProfile = trackerProfile;
+		currentData = trackerData;
 	}
 
 	public String exportToJson(TaskType taskType, HashMap<String, Object> additionalData)
 	{
-		Gson gson = new GsonBuilder()
-			.registerTypeAdapter(float.class, new LongSerializer())
-			.create();
+		Gson gson = buildGson();
 
 		if (taskType == null)
 		{
-			return gson.toJson(currentProfile);
+			return gson.toJson(currentData);
 		} else {
 			HashMap<String, Object> export = additionalData;
 			export.put("timestamp", Instant.now().toEpochMilli());
-			export.put("tasks", currentProfile.tasksByType.get(taskType));
+			export.put("tasks", currentData.tasksByType.get(taskType));
 			return gson.toJson(export);
+		}
+	}
+
+	private Gson buildGson()
+	{
+		return new GsonBuilder()
+			.registerTypeAdapter(TaskSave.class, new TaskDeserializer())
+			.registerTypeAdapter(TaskSave.class, new TaskSerializer())
+			.registerTypeAdapter(float.class, new LongSerializer())
+			.create();
+	}
+
+	private <T> T getDataFromConfig(String groupName, String key, Type deserializeType, T defaultValue)
+	{
+		String jsonString = configManager.getRSProfileConfiguration(groupName, key);
+		if (jsonString == null)
+		{
+			return defaultValue;
+		}
+		try
+		{
+			Gson gson = buildGson();
+			return gson.fromJson(jsonString, deserializeType);
+		}
+		catch (JsonParseException ex)
+		{
+			log.error("{} json invalid. All is lost", groupName + "." + key, ex);
+			configManager.unsetRSProfileConfiguration(groupName, key);
+			return defaultValue;
 		}
 	}
 
 	private void saveLoadedToConfig()
 	{
-		Gson gson = new GsonBuilder()
-			.registerTypeAdapter(TaskSave.class, new TaskSerializer())
-			.registerTypeAdapter(float.class, new LongSerializer())
-			.create();
+		Gson gson = buildGson();
 
 		for (TaskType taskType : TaskType.values())
 		{
-			if (!currentProfile.tasksByType.containsKey(taskType))
+			if (!currentData.tasksByType.containsKey(taskType))
 			{
 				continue;
 			}
-			String configValue = gson.toJson(currentProfile.tasksByType.get(taskType));
+			String configValue = gson.toJson(currentData.tasksByType.get(taskType));
 			configManager.setRSProfileConfiguration(PLUGIN_BASE_GROUP, TASKS_PREFIX + "." + taskType.name(), configValue);
 		}
 	}

@@ -127,12 +127,15 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		SwingUtilities.invokeLater(() -> {
 			pluginPanel.setLoggedIn(isLoggedInState(gameStateChanged.getGameState()));
-		});
 
-		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
-		{
-			trackerDataStore.loadProfile();
-		}
+			if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
+			{
+				trackerDataStore.loadProfile();
+				TaskType selectedType = trackerDataStore.currentData.settings.selectedTaskType;
+				setSelectedTaskType(selectedType != null ? selectedType : TaskType.COMBAT);
+				pluginPanel.redraw();
+			}
+		});
 	}
 
 	private boolean isLoggedInState(GameState gameState)
@@ -179,6 +182,7 @@ public class TasksTrackerPlugin extends Plugin
 	public void setSelectedTaskType(TaskType type)
 	{
 		selectedTaskType = type;
+		trackerDataStore.currentData.settings.selectedTaskType = type;
 		// FIXME: This is doing double duty to the task loader to store all tasks in a cache
 		if (!taskManagers.containsKey(type))
 		{

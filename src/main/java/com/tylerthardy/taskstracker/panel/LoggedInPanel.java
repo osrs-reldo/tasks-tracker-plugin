@@ -31,10 +31,12 @@ public class LoggedInPanel extends PluginPanel
 {
 	public AllTaskListPanel allTasksPanel;
 	public TrackedTaskListPanel trackedTaskListPanel;
-	private TasksTrackerPlugin plugin;
+	private JComboBox<TaskType> taskTypeDropdown;
+
+	private final TasksTrackerPlugin plugin;
 	private final ClientThread clientThread;
 	private final SpriteManager spriteManager;
-	private SkillIconManager skillIconManager;
+	private final SkillIconManager skillIconManager;
 
 	public LoggedInPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
 	{
@@ -56,6 +58,10 @@ public class LoggedInPanel extends PluginPanel
 
 	public void redraw()
 	{
+		if (plugin.selectedTaskType != null)
+		{
+			taskTypeDropdown.setSelectedItem(plugin.selectedTaskType);
+		}
 		allTasksPanel.redraw();
 		trackedTaskListPanel.redraw();
 	}
@@ -106,7 +112,7 @@ public class LoggedInPanel extends PluginPanel
 		title.setHorizontalAlignment(SwingConstants.LEFT);
 		title.setForeground(Color.WHITE);
 
-		JComboBox<TaskType> taskTypeDropdown = new JComboBox<>(TaskType.values());
+		taskTypeDropdown = new JComboBox<>(TaskType.values());
 		taskTypeDropdown.setAlignmentX(LEFT_ALIGNMENT);
 		taskTypeDropdown.setSelectedItem(plugin.selectedTaskType);
 		taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex())));

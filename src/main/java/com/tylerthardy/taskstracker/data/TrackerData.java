@@ -4,14 +4,15 @@ import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import java.time.Instant;
 import java.util.HashMap;
 
-public class TrackerProfile
+public class TrackerData
 {
 	public HashMap<TaskType, HashMap<String, TaskSave>> tasksByType = new HashMap<>();
 	public Long timestamp;
-	public String displayName;
+	public TrackerSettings settings;
 
-	public TrackerProfile()
+	public TrackerData()
 	{
 		this.timestamp = Instant.now().toEpochMilli();
+		this.settings = new TrackerSettings();
 	}
 }
