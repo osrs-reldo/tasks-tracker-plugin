@@ -16,9 +16,8 @@ public class TaskDeserializer implements JsonDeserializer<TaskSave>
 		String input = jsonElement.getAsString();
 		String[] attributes = input.split("\\|");
 		TaskSave taskSave = new TaskSave();
-		taskSave.setCompleted(attributes[0].equals("1"));
-		taskSave.setTracked(attributes[1].equals("1"));
-		taskSave.setTimestamp(Long.parseLong(attributes[2]));
+		taskSave.setCompletedOn(Long.parseLong(attributes[0]));
+		taskSave.setTrackedOn(Long.parseLong(attributes[1]));
 		return taskSave;
 	}
 }

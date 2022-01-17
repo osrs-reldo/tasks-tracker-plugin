@@ -36,14 +36,14 @@ public class TrackerDataStore
 		HashMap<String, TaskSave> typeTasks = currentData.tasksByType.computeIfAbsent(task.getType(), k -> new HashMap<>());
 		if (task.isTracked() || task.isCompleted()) {
 			TaskSave taskSave = new TaskSave();
-			taskSave.setCompleted(task.isCompleted());
-			taskSave.setTracked(task.isTracked());
+			taskSave.setCompletedOn(task.getCompletedOn());
+			taskSave.setTrackedOn(task.getTrackedOn());
 			typeTasks.put(task.getName(), taskSave);
 		} else {
 			typeTasks.remove(task.getName());
 		}
 
-		saveLoadedToConfig();
+		saveCurrentToConfig();
 	}
 
 	public void loadProfile()
@@ -64,7 +64,10 @@ public class TrackerDataStore
 
 	public String exportToJson(TaskType taskType, HashMap<String, Object> additionalData)
 	{
-		Gson gson = buildGson();
+		// Uses different serializer
+		Gson gson = new GsonBuilder()
+			.registerTypeAdapter(float.class, new LongSerializer())
+			.create();
 
 		if (taskType == null)
 		{
@@ -106,9 +109,11 @@ public class TrackerDataStore
 		}
 	}
 
-	private void saveLoadedToConfig()
+	private void saveCurrentToConfig()
 	{
 		Gson gson = buildGson();
+
+		configManager.setRSProfileConfiguration(PLUGIN_BASE_GROUP, SETTINGS_DATA, gson.toJson(currentData.settings));
 
 		for (TaskType taskType : TaskType.values())
 		{

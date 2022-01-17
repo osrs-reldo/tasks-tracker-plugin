@@ -1,17 +1,20 @@
 package com.tylerthardy.taskstracker.data;
 
-import java.time.Instant;
 import lombok.Data;
 
 @Data
 public class TaskSave
 {
-	boolean isCompleted;
-	boolean isTracked;
-	Long timestamp;
+	long completedOn;
+	long trackedOn;
 
-	public TaskSave()
+	public boolean isCompleted()
 	{
-		timestamp = Instant.now().toEpochMilli();
+		return completedOn > 0;
+	}
+
+	public boolean isTracked()
+	{
+		return trackedOn > 0;
 	}
 }
