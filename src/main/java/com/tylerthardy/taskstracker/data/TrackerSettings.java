@@ -5,5 +5,5 @@ import com.tylerthardy.taskstracker.tasktypes.TaskType;
 public class TrackerSettings
 {
 	public String displayName;
-	public TaskType selectedTaskType;
+	public TaskType selectedTaskType = TaskType.COMBAT;
 }
