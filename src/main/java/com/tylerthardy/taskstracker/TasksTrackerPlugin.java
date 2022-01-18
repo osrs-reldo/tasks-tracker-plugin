@@ -56,7 +56,12 @@ public class TasksTrackerPlugin extends Plugin
 
 	public TaskType selectedTaskType;
 	public String taskTextFilter;
-	public boolean isIncompleteFilter;
+	public boolean isIncompleteFilter = true;
+	public boolean isCompleteFilter = true;
+	public boolean isIgnoredFilter = false;
+	public boolean isNotIgnoredFilter = true;
+	public boolean isTrackedFilter = true;
+	public boolean isUntrackedFilter = true;
 
 	public TasksTrackerPluginPanel pluginPanel;
 
@@ -219,6 +224,12 @@ public class TasksTrackerPlugin extends Plugin
 	}
 
 	public void trackTask(Task task)
+	{
+		// TODO: Move this responsibility; not correct to be here
+		trackerDataStore.saveTask(task);
+	}
+
+	public void ignoreTask(Task task)
 	{
 		// TODO: Move this responsibility; not correct to be here
 		trackerDataStore.saveTask(task);

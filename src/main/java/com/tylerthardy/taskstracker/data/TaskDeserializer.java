@@ -18,7 +18,8 @@ public class TaskDeserializer implements JsonDeserializer<TaskSave>
 		TaskSave taskSave = new TaskSave();
 		taskSave.setCompleted(attributes[0].equals("1"));
 		taskSave.setTracked(attributes[1].equals("1"));
-		taskSave.setTimestamp(Long.parseLong(attributes[2]));
+		taskSave.setIgnored(attributes[2].equals("1"));
+		taskSave.setTimestamp(Long.parseLong(attributes[3]));
 		return taskSave;
 	}
 }

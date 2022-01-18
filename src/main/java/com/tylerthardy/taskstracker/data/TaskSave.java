@@ -8,6 +8,7 @@ public class TaskSave
 {
 	boolean isCompleted;
 	boolean isTracked;
+	boolean isIgnored;
 	Long timestamp;
 
 	public TaskSave()

@@ -16,6 +16,7 @@ public abstract class Task
 
     private boolean completed;
     private boolean tracked;
+    private boolean ignored;
     private float timestamp;
 
 	public abstract TaskType getType();
