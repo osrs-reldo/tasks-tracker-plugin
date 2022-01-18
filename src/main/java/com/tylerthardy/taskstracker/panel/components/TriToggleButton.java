@@ -1,9 +1,7 @@
 package com.tylerthardy.taskstracker.panel.components;
 
-import java.awt.event.ActionListener;
 import javax.swing.Icon;
 import javax.swing.JButton;
-import javax.swing.SwingUtilities;
 import lombok.Getter;
 
 public class TriToggleButton  extends JButton {
