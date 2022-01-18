@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.Player;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
@@ -76,6 +77,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject	private TasksTrackerConfig config;
 
 	@Inject private TrackerDataStore trackerDataStore;
+	private boolean shouldGetName;
 
 	@Provides
 	TasksTrackerConfig getConfig(ConfigManager configManager)
@@ -136,11 +138,21 @@ public class TasksTrackerPlugin extends Plugin
 			if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 			{
 				trackerDataStore.loadProfile();
+				shouldGetName = true;
 				TaskType selectedType = trackerDataStore.currentData.settings.selectedTaskType;
 				setSelectedTaskType(selectedType != null ? selectedType : TaskType.COMBAT);
 				pluginPanel.redraw();
 			}
 		});
+	}
+
+	private String getDisplayName()
+	{
+		Player localPlayer = client.getLocalPlayer();
+		if (localPlayer == null) {
+			return null;
+		}
+		return localPlayer.getName();
 	}
 
 	private boolean isLoggedInState(GameState gameState)
@@ -161,6 +173,12 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			playerSkills = client.getRealSkillLevels();
 			SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
+		}
+
+		if (shouldGetName)
+		{
+			trackerDataStore.currentData.settings.displayName = getDisplayName();
+			shouldGetName = false;
 		}
 	}
 

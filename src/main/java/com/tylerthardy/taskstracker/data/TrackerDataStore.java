@@ -83,6 +83,7 @@ public class TrackerDataStore
 			return gson.toJson(currentData);
 		} else {
 			HashMap<String, Object> export = additionalData;
+			export.put("displayName", currentData.settings.displayName);
 			export.put("runescapeVersion", runescapeVersion);
 			export.put("runeliteVersion", runeliteVersion);
 			export.put("timestamp", Instant.now().toEpochMilli());
