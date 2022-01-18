@@ -137,20 +137,6 @@ public abstract class TaskPanel extends JPanel
         });
 
         add(container, BorderLayout.NORTH);
-
-        // Create popup menu for ignoring the loot event
-//        final JPopupMenu popupMenu = new JPopupMenu();
-//        popupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
-//        container.setComponentPopupMenu(popupMenu);
-//
-//        final JMenuItem toggle = new JMenuItem(task.isIgnored() ? "Reveal task" : "Ignore task");
-//        toggle.addActionListener(e -> {
-//            task.setIgnored(!task.isIgnored());
-//            plugin.pluginPanel.trackedTaskListPanel.refresh(task);
-//            plugin.pluginPanel.allTasksPanel.refresh(task);
-//            plugin.ignoreTask(task);
-//        });
-//        popupMenu.add(toggle);
     }
 
     public void refresh()
