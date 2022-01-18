@@ -47,7 +47,7 @@ public class TrackerDataStore
 			TaskSave taskSave = new TaskSave();
 			taskSave.setCompletedOn(task.getCompletedOn());
 			taskSave.setTrackedOn(task.getTrackedOn());
-			taskSave.setIgnored(task.isIgnored());
+			taskSave.setIgnoredOn(task.getIgnoredOn());
 			typeTasks.put(task.getName(), taskSave);
 		} else {
 			typeTasks.remove(task.getName());
