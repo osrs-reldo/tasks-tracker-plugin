@@ -24,11 +24,20 @@ public class TrackerDataStore
 
 	public TrackerData currentData;
 
+	private int runescapeVersion;
+	private String runeliteVersion;
+
 	@Inject
 	public TrackerDataStore(ConfigManager configManager)
 	{
 		this.configManager = configManager;
 		this.currentData = new TrackerData();
+	}
+
+	public void setVersions(int runescapeVersion, String runeliteVersion)
+	{
+		this.runescapeVersion = runescapeVersion;
+		this.runeliteVersion = runeliteVersion;
 	}
 
 	public void saveTask(Task task)
@@ -74,6 +83,8 @@ public class TrackerDataStore
 			return gson.toJson(currentData);
 		} else {
 			HashMap<String, Object> export = additionalData;
+			export.put("runescapeVersion", runescapeVersion);
+			export.put("runeliteVersion", runeliteVersion);
 			export.put("timestamp", Instant.now().toEpochMilli());
 			export.put("tasks", currentData.tasksByType.get(taskType));
 			return gson.toJson(export);

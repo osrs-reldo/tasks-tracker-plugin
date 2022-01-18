@@ -17,6 +17,7 @@ import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.HashMap;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,7 @@ import net.runelite.client.util.ImageUtil;
 )
 public class TasksTrackerPlugin extends Plugin
 {
+	public int rsRevision;
 	public int[] playerSkills;
 	public HashMap<TaskType, AbstractTaskManager> taskManagers = new HashMap<>();
 	public QuestData questData;
@@ -62,6 +64,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	private NavigationButton navButton;
 
+	@Inject	@Named("runelite.version") private String runeliteVersion;
 	@Inject	private Client client;
 	@Inject	private SpriteManager spriteManager;
 	@Inject	private PluginManager pluginManager;
@@ -83,6 +86,8 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
+		trackerDataStore.setVersions(client.getRevision(), runeliteVersion);
+		rsRevision = client.getRevision();
 		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager, skillIconManager);
 		pluginPanel.setLoggedIn(isLoggedInState(client.getGameState()));
 
