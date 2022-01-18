@@ -1,11 +1,15 @@
 package com.tylerthardy.taskstracker;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Provides;
 import com.tylerthardy.taskstracker.bosses.BossData;
+import com.tylerthardy.taskstracker.data.LongSerializer;
 import com.tylerthardy.taskstracker.data.TrackerDataStore;
 import com.tylerthardy.taskstracker.panel.TasksTrackerPluginPanel;
 import com.tylerthardy.taskstracker.quests.QuestData;
 import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
+import com.tylerthardy.taskstracker.tasktypes.Export;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import com.tylerthardy.taskstracker.tasktypes.combattask.CombatTaskManager;
@@ -14,6 +18,7 @@ import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import javax.inject.Inject;
@@ -52,10 +57,8 @@ import net.runelite.client.util.ImageUtil;
 )
 public class TasksTrackerPlugin extends Plugin
 {
-	public int rsRevision;
 	public int[] playerSkills;
 	public HashMap<TaskType, AbstractTaskManager> taskManagers = new HashMap<>();
-	public QuestData questData;
 
 	public TaskType selectedTaskType;
 	public String taskTextFilter;
@@ -93,8 +96,6 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		trackerDataStore.setVersions(client.getRevision(), runeliteVersion);
-		rsRevision = client.getRevision();
 		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager, skillIconManager);
 
 		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedInState(client.getGameState())));
@@ -262,28 +263,38 @@ public class TasksTrackerPlugin extends Plugin
 	public void copyJsonToClipboard(TaskType taskType)
 	{
 		clientThread.invokeLater(() -> {
-			HashMap<String, Object> additionalData = new HashMap<>();
-			if (taskType == TaskType.COMBAT)
-			{
-				additionalData = buildAdditionalData();
-			}
-			String exportJson = trackerDataStore.exportToJson(taskType, additionalData);
+			String exportJson = exportToJson(taskType);
 			final StringSelection stringSelection = new StringSelection(exportJson);
 			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
 
 			showMessageBox(
 				"Data Exported!",
-				"Exported task data copied to clipboard!"
+				"Exported " + taskType.getDisplayString() + " data copied to clipboard!"
 			);
 		});
 	}
 
-	private HashMap<String, Object> buildAdditionalData()
+	private String exportToJson(TaskType taskType)
 	{
-		HashMap<String, Object> additionalData = new HashMap<>();
-		additionalData.put("quests", new QuestData(client));
-		additionalData.put("bosses", new BossData(pluginManager, configManager));
-		return additionalData;
+		Gson gson = new GsonBuilder()
+			.registerTypeAdapter(float.class, new LongSerializer())
+			.create();
+
+		if (taskType == null)
+		{
+			return gson.toJson(trackerDataStore.currentData);
+		} else {
+			Export export = new Export();
+			export.setQuests(new QuestData(client));
+			export.setBosses(new BossData(pluginManager, configManager));
+			export.setDisplayName(trackerDataStore.currentData.settings.displayName);
+			export.setRunescapeVersion(client.getRevision());
+			export.setRuneliteVersion(runeliteVersion);
+			export.setTimestamp(Instant.now().toEpochMilli());
+			export.setTasks(trackerDataStore.currentData.tasksByType.get(taskType));
+			export.setTaskType(taskType.name());
+			return gson.toJson(export);
+		}
 	}
 
 	private static void showMessageBox(final String title, final String message)
