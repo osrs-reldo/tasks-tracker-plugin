@@ -96,7 +96,8 @@ public class TasksTrackerPlugin extends Plugin
 		trackerDataStore.setVersions(client.getRevision(), runeliteVersion);
 		rsRevision = client.getRevision();
 		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager, skillIconManager);
-		pluginPanel.setLoggedIn(isLoggedInState(client.getGameState()));
+
+		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedInState(client.getGameState())));
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()

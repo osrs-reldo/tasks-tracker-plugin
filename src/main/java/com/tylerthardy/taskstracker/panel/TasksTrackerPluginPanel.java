@@ -5,6 +5,7 @@ import com.tylerthardy.taskstracker.panel.tabs.AllTaskListPanel;
 import com.tylerthardy.taskstracker.panel.tabs.TrackedTaskListPanel;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import java.awt.Dimension;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SkillIconManager;
@@ -60,6 +61,8 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	public void setLoggedIn(boolean loggedIn)
 	{
+		assert SwingUtilities.isEventDispatchThread();
+
 		if (loggedIn != this.loggedIn)
 		{
 			this.removeAll();
