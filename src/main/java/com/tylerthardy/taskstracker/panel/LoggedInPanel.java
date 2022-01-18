@@ -142,16 +142,16 @@ public class LoggedInPanel extends PluginPanel
 		taskTypeDropdown.setSelectedItem(plugin.selectedTaskType);
 		taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex())));
 
-		northPanel.add(getTitlePanel());
+		northPanel.add(getTitleAndButtonPanel());
 		northPanel.add(Box.createVerticalStrut(10));
 		northPanel.add(taskTypeDropdown);
 		northPanel.add(Box.createVerticalStrut(2));
-		northPanel.add(getFiltersPanel());
+		northPanel.add(getSearchPanel());
 
 		return northPanel;
 	}
 
-	private JPanel getTitlePanel()
+	private JPanel getTitleAndButtonPanel()
 	{
 		titlePanel.setLayout(new BorderLayout());
 		titlePanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -306,7 +306,7 @@ public class LoggedInPanel extends PluginPanel
 		plugin.refresh();
 	}
 
-	private JPanel getFiltersPanel()
+	private JPanel getSearchPanel()
 	{
 		JPanel filtersPanel = new JPanel();
 		filtersPanel.setAlignmentX(LEFT_ALIGNMENT);
@@ -318,15 +318,7 @@ public class LoggedInPanel extends PluginPanel
 			plugin.refresh();
 		});
 
-//		CheckBox isIncompleteCheckbox = new CheckBox("Show Incomplete Only");
-//		isIncompleteCheckbox.setSelected(plugin.isIncompleteFilter);
-//		isIncompleteCheckbox.addActionListener(e -> {
-//			plugin.isIncompleteFilter = isIncompleteCheckbox.isSelected();
-//			plugin.refresh();
-//		});
-
 		filtersPanel.add(textSearch);
-//		filtersPanel.add(isIncompleteCheckbox);
 
 		return filtersPanel;
 	}

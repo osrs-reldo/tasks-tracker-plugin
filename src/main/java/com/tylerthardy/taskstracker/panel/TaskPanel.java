@@ -110,7 +110,7 @@ public abstract class TaskPanel extends JPanel
         SwingUtil.addModalTooltip(toggleIgnore, "Unignore", "Ignore");
         toggleIgnore.setBorder(new EmptyBorder(5,0,5,0));
         toggleIgnore.addActionListener(e -> {
-            task.setIgnored(!task.isIgnored());//@todo check tasks not saving
+            task.setIgnored(!task.isIgnored());
             plugin.pluginPanel.trackedTaskListPanel.refresh(task);
             plugin.pluginPanel.allTasksPanel.refresh(task);
             plugin.ignoreTask(task);
