@@ -15,6 +15,7 @@ public class TaskSerializer implements JsonSerializer<TaskSave>
 		ArrayList<String> attributes = new ArrayList<>();
 		attributes.add(context.serialize(value.getCompletedOn()).getAsString());
 		attributes.add(context.serialize(value.getTrackedOn()).getAsString());
+		attributes.add(value.isIgnored() ? "1" : "0");
 
 		return new JsonPrimitive(String.join("|", attributes));
 	}

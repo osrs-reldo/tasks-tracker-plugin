@@ -7,6 +7,7 @@ public class TaskSave
 {
 	long completedOn;
 	long trackedOn;
+	boolean isIgnored;
 
 	public boolean isCompleted()
 	{

@@ -17,6 +17,7 @@ public abstract class Task
 
     private long completedOn;
     private long trackedOn;
+    private boolean ignored;
 
     public void setCompletedOn(long completedOn)
 	{
