@@ -18,7 +18,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
@@ -160,44 +162,123 @@ public class LoggedInPanel extends PluginPanel
 		title.setHorizontalAlignment(SwingConstants.LEFT);
 		title.setForeground(Color.WHITE);
 
+		// Filter button bar
 		final JPanel viewControls = new JPanel();
 		viewControls.setLayout(new BoxLayout(viewControls, BoxLayout.X_AXIS));
 		viewControls.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
+		// Completed tasks filter button
 		SwingUtil.removeButtonDecorations(completedFilterBtn);
 		completedFilterBtn.setIcons(COMPLETE_INCOMPLETE_ICON, COMPLETE_ONLY_ICON, INCOMPLETE_ONLY_ICON);
 		completedFilterBtn.setToolTips("All tasks", "Completed tasks only", "Incomplete tasks only");
 		completedFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		completedFilterBtn.addActionListener(e -> {
 			completedFilterBtn.changeState();
-			plugin.isCompleteFilter = completedFilterBtn.getState() != 2;
-			plugin.isIncompleteFilter = completedFilterBtn.getState() != 1;
-			plugin.refresh();
+			completedFilterButtonAction();
 		});
+
+		// Create popup menu for manually setting the button state
+		final JPopupMenu completedFilterBtnPopupMenu = new JPopupMenu();
+		completedFilterBtnPopupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
+		completedFilterBtn.setComponentPopupMenu(completedFilterBtnPopupMenu);
+
+		final JMenuItem allTasksC = new JMenuItem("All tasks");
+		allTasksC.addActionListener(e -> {
+			completedFilterBtn.setState(0);
+			completedFilterButtonAction();
+		});
+		completedFilterBtnPopupMenu.add(allTasksC);
+
+		final JMenuItem completedTasks = new JMenuItem("Completed tasks only");
+		completedTasks.addActionListener(e -> {
+			completedFilterBtn.setState(1);
+			completedFilterButtonAction();
+		});
+		completedFilterBtnPopupMenu.add(completedTasks);
+
+		final JMenuItem incompleteTasks = new JMenuItem("Incomplete tasks only");
+		incompleteTasks.addActionListener(e -> {
+			completedFilterBtn.setState(2);
+			completedFilterButtonAction();
+		});
+		completedFilterBtnPopupMenu.add(incompleteTasks);
+
 		viewControls.add(completedFilterBtn);
 
+		// Tracked tasks filter button
 		SwingUtil.removeButtonDecorations(trackedFilterBtn);
 		trackedFilterBtn.setIcons(TRACKED_UNTRACKED_ICON, TRACKED_ONLY_ICON, UNTRACKED_ONLY_ICON);
 		trackedFilterBtn.setToolTips("All tasks", "Tracked tasks only", "Untracked tasks only");
 		trackedFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		trackedFilterBtn.addActionListener(e -> {
 			trackedFilterBtn.changeState();
-			plugin.isTrackedFilter = trackedFilterBtn.getState() != 2;
-			plugin.isUntrackedFilter = trackedFilterBtn.getState() != 1;
-			plugin.refresh();
+			trackedFilterButtonAction();
 		});
+
+		// Create popup menu for manually setting the button state
+		final JPopupMenu trackedFilterBtnPopupMenu = new JPopupMenu();
+		trackedFilterBtnPopupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
+		trackedFilterBtn.setComponentPopupMenu(trackedFilterBtnPopupMenu);
+
+		final JMenuItem allTasksT = new JMenuItem("All tasks");
+		allTasksT.addActionListener(e -> {
+			trackedFilterBtn.setState(0);
+			trackedFilterButtonAction();
+		});
+		trackedFilterBtnPopupMenu.add(allTasksT);
+
+		final JMenuItem trackedTasks = new JMenuItem("Tracked tasks only");
+		trackedTasks.addActionListener(e -> {
+			trackedFilterBtn.setState(1);
+			trackedFilterButtonAction();
+		});
+		trackedFilterBtnPopupMenu.add(trackedTasks);
+
+		final JMenuItem untrackedTasks = new JMenuItem("Untracked tasks only");
+		untrackedTasks.addActionListener(e -> {
+			trackedFilterBtn.setState(2);
+			trackedFilterButtonAction();
+		});
+		trackedFilterBtnPopupMenu.add(untrackedTasks);
+
 		viewControls.add(trackedFilterBtn);
 
+		// Ignored tasks filter button
 		SwingUtil.removeButtonDecorations(ignoredFilterBtn);
 		ignoredFilterBtn.setIcons(SEMIVISIBLE_ICON, VISIBLE_ICON, INVISIBLE_ICON);
 		ignoredFilterBtn.setToolTips("Hide ignored tasks", "All tasks", "Ignored tasks only");
 		ignoredFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		ignoredFilterBtn.addActionListener(e -> {
 			ignoredFilterBtn.changeState();
-			plugin.isIgnoredFilter = ignoredFilterBtn.getState() != 0;
-			plugin.isNotIgnoredFilter = ignoredFilterBtn.getState() != 2;
-			plugin.refresh();
+			ignoredFilterButtonAction();
 		});
+
+		// Create popup menu for manually setting the button state
+		final JPopupMenu ignoredFilterBtnPopupMenu = new JPopupMenu();
+		ignoredFilterBtnPopupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
+		ignoredFilterBtn.setComponentPopupMenu(ignoredFilterBtnPopupMenu);
+
+		final JMenuItem allTasksI = new JMenuItem("All tasks");
+		allTasksI.addActionListener(e -> {
+			ignoredFilterBtn.setState(1);
+			ignoredFilterButtonAction();
+		});
+		ignoredFilterBtnPopupMenu.add(allTasksI);
+
+		final JMenuItem unignoredTasks = new JMenuItem("Hide ignored tasks");
+		unignoredTasks.addActionListener(e -> {
+			ignoredFilterBtn.setState(0);
+			ignoredFilterButtonAction();
+		});
+		ignoredFilterBtnPopupMenu.add(unignoredTasks);
+
+		final JMenuItem ignoredTasks = new JMenuItem("Ignored tasks only");
+		ignoredTasks.addActionListener(e -> {
+			ignoredFilterBtn.setState(2);
+			ignoredFilterButtonAction();
+		});
+		ignoredFilterBtnPopupMenu.add(ignoredTasks);
+
 		viewControls.add(ignoredFilterBtn);
 
 		titlePanel.add(viewControls, BorderLayout.EAST);
@@ -207,6 +288,23 @@ public class LoggedInPanel extends PluginPanel
 		return titlePanel;
 	}
 
+	private void ignoredFilterButtonAction() {
+		plugin.isIgnoredFilter = ignoredFilterBtn.getState() != 0;
+		plugin.isNotIgnoredFilter = ignoredFilterBtn.getState() != 2;
+		plugin.refresh();
+	}
+
+	private void trackedFilterButtonAction() {
+		plugin.isTrackedFilter = trackedFilterBtn.getState() != 2;
+		plugin.isUntrackedFilter = trackedFilterBtn.getState() != 1;
+		plugin.refresh();
+	}
+
+	private void completedFilterButtonAction() {
+		plugin.isCompleteFilter = completedFilterBtn.getState() != 2;
+		plugin.isIncompleteFilter = completedFilterBtn.getState() != 1;
+		plugin.refresh();
+	}
 
 	private JPanel getFiltersPanel()
 	{

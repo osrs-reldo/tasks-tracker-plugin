@@ -68,9 +68,7 @@ public class TriToggleButton  extends JButton {
 
     public void changeState()
     {
-        state = (state+1)%3;
-        setIconState();
-        setTooltipState();
+        setState((state+1)%3);
     }
 
     private void setIconState() {
@@ -79,5 +77,12 @@ public class TriToggleButton  extends JButton {
 
     private void setTooltipState() {
         super.setToolTipText(tooltips[state]);
+    }
+
+    public void setState(int state)
+    {
+        this.state = state;
+        setIconState();
+        setTooltipState();
     }
 }
