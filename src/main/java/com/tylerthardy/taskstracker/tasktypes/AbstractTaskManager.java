@@ -57,6 +57,7 @@ public abstract class AbstractTaskManager
 			if (loadedTask == null) return;
 			task.setTracked(loadedTask.isTracked());
 			task.setCompleted(loadedTask.isCompleted());
+			task.setIgnored(loadedTask.isIgnored());
 		});
 	}
 

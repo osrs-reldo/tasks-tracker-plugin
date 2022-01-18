@@ -7,6 +7,7 @@ public class TaskSave
 {
 	long completedOn;
 	long trackedOn;
+	long ignoredOn;
 
 	public boolean isCompleted()
 	{
@@ -16,5 +17,10 @@ public class TaskSave
 	public boolean isTracked()
 	{
 		return trackedOn > 0;
+	}
+
+	public boolean isIgnored()
+	{
+		return ignoredOn > 0;
 	}
 }

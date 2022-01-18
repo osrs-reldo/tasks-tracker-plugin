@@ -17,6 +17,7 @@ public abstract class Task
 
     private long completedOn;
     private long trackedOn;
+    private long ignoredOn;
 
     public void setCompletedOn(long completedOn)
 	{
@@ -47,6 +48,19 @@ public abstract class Task
 			return;
 		}
 		trackedOn = state ? Instant.now().toEpochMilli() : -1;
+	}
+
+	public boolean isIgnored()
+	{
+		return ignoredOn > 0;
+	}
+	public void setIgnored(boolean state)
+	{
+		if (state && ignoredOn > 0)
+		{
+			return;
+		}
+		ignoredOn = state ? Instant.now().toEpochMilli() : -1;
 	}
 
 	public abstract TaskType getType();
