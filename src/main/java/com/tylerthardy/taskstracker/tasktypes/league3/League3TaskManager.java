@@ -51,6 +51,15 @@ public class League3TaskManager extends AbstractTaskManager
             updateTasksFollowingWidgetLoaded();
             setFilterClickListeners();
         }
+        if (scriptPostFired.getScriptId() == League3ScriptID.league3_summary_tab_update)
+        {
+            trackerDataStore.leagueData.put("leaguePoints", scrapeLeaguePoints());
+            trackerDataStore.leagueData.put("leaguePointsTimestamp", Instant.now().toEpochMilli());
+            trackerDataStore.leagueData.put("tasksCompleted", scrapeTaskCompletedCount());
+            trackerDataStore.leagueData.put("tasksCompletedTimestamp", Instant.now().toEpochMilli());
+            trackerDataStore.leagueData.put("sagesRenown", scrapeSagesRenown());
+            trackerDataStore.leagueData.put("sagesRenownTimestamp", Instant.now().toEpochMilli());
+        }
     }
 
     @Override
@@ -59,15 +68,6 @@ public class League3TaskManager extends AbstractTaskManager
         if (widgetLoaded.getGroupId() == League3WidgetID.LEAGUE_3_TASKS_GROUP_ID)
         {
             setFilterClickListeners();
-        }
-        if (widgetLoaded.getGroupId() == League3WidgetID.LEAGUE_3_SUMMARY_TAB)
-        {
-            trackerDataStore.leagueData.put("leaguePoints", scrapeLeaguePoints());
-            trackerDataStore.leagueData.put("leaguePointsTimestamp", Instant.now().toEpochMilli());
-            trackerDataStore.leagueData.put("tasksCompleted", scrapeTaskCompletedCount());
-            trackerDataStore.leagueData.put("tasksCompletedTimestamp", Instant.now().toEpochMilli());
-            trackerDataStore.leagueData.put("sagesRenown", scrapeSagesRenown());
-            trackerDataStore.leagueData.put("sagesRenownTimestamp", Instant.now().toEpochMilli());
         }
     }
 
