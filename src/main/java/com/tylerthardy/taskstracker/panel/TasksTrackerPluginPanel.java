@@ -48,9 +48,8 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		add(loggedInPanel, BorderLayout.NORTH);
 		loggedInPanel.setVisible(false);
 
-		// Add error pane @todo refactor LoggedInPanel into this so to not require super(false) and switch to errorPanel
-//		errorPanel.setContent("Task tracker", "Log into an account to track tasks.");
-//		add(errorPanel);
+		// Add error pane
+		// @todo: refactor LoggedInPanel into this (so to not require super(false);) and switch to errorPanel
 		add(loggedOutPanel);
     }
 
