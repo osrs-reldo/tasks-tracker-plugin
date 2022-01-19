@@ -17,11 +17,8 @@ import net.runelite.client.ui.ColorScheme;
 
 public class League1TaskPanel extends TaskPanel
 {
-	private SkillIconManager skillIconManager;
-
-	public League1TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager, Task task) {
+	public League1TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task) {
         super(plugin, clientThread, spriteManager, task);
-		this.skillIconManager = skillIconManager;
 	}
 
     @Override
@@ -58,7 +55,7 @@ public class League1TaskPanel extends TaskPanel
     {
         if (playerSkills == null) return ColorScheme.DARKER_GRAY_COLOR;
 
-        if (task.isCompleted()) return COMPLETED_COLOR;
+        if (task.isCompleted()) return COMPLETED_BACKGROUND_COLOR;
 
         for (RequiredSkill requiredSkill : ((League1Task) task).skills) {
             Skill skill;
@@ -80,7 +77,7 @@ public class League1TaskPanel extends TaskPanel
             if (playerSkills[skill.ordinal()] < level)
             {
                 setToolTipText(playerSkills[skill.ordinal()] + ":" + level);
-                return UNQUALIFIED_COLOR;
+                return UNQUALIFIED_BACKGROUND_COLOR;
             }
         }
 

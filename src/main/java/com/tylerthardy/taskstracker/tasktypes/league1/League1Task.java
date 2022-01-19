@@ -27,6 +27,6 @@ public class League1Task extends Task
 
 	@Override
     public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager) {
-        return new League1TaskPanel(plugin, clientThread, spriteManager, skillIconManager, this);
+        return new League1TaskPanel(plugin, clientThread, spriteManager, this);
     }
 }

@@ -18,7 +18,7 @@ public enum League3TaskTier
     public static League3TaskTier getTierByName(String name)
     {
         for (League3TaskTier value : values()) {
-            if (value.name().toLowerCase().equals(name.toLowerCase()))
+            if (value.name().equalsIgnoreCase(name))
             {
                 return value;
             }

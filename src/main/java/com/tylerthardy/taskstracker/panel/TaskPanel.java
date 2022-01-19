@@ -38,7 +38,7 @@ public abstract class TaskPanel extends JPanel
     private final JToggleButton toggleTrack = new JToggleButton();
     private final JToggleButton toggleIgnore = new JToggleButton();
 
-    private TasksTrackerPlugin plugin;
+    protected TasksTrackerPlugin plugin;
     private final ClientThread clientThread;
     public final SpriteManager spriteManager;
     public final Task task;
@@ -48,11 +48,12 @@ public abstract class TaskPanel extends JPanel
     public abstract BufferedImage getIcon();
     public Color getTaskBackgroundColor(Task task, int[] playerSkills)
     {
-        return task.isCompleted() ? COMPLETED_COLOR : ColorScheme.DARKER_GRAY_COLOR;
+        return task.isCompleted() ? COMPLETED_BACKGROUND_COLOR : ColorScheme.DARKER_GRAY_COLOR;
     }
-
-    public static Color COMPLETED_COLOR = new Color(0, 50, 0);
-    public static Color UNQUALIFIED_COLOR = new Color(70, 30, 0);
+    public static Color QUALIFIED_TEXT_COLOR = new Color(34, 177, 77);
+    public static Color UNQUALIFIED_TEXT_COLOR = new Color(251, 93, 93);
+    public static Color COMPLETED_BACKGROUND_COLOR = new Color(0, 50, 0);
+    public static Color UNQUALIFIED_BACKGROUND_COLOR = new Color(70, 30, 0);
     public static ImageIcon PLUS_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "plus.png"));
     public static ImageIcon MINUS_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "minus.png"));
     public static ImageIcon EYE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "eye.png"));

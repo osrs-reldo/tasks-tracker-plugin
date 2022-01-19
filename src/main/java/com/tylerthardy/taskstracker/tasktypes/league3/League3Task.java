@@ -28,6 +28,6 @@ public class League3Task extends Task
 	@Override
 	public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
 	{
-		return new League3TaskPanel(plugin, clientThread, spriteManager, skillIconManager, this);
+		return new League3TaskPanel(plugin, clientThread, spriteManager, this);
 	}
 }

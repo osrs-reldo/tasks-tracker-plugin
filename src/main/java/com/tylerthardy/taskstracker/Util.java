@@ -1,5 +1,6 @@
 package com.tylerthardy.taskstracker;
 
+import java.awt.Color;
 import java.net.URL;
 
 public class Util
@@ -25,6 +26,13 @@ public class Util
 
 	public static String colorTag(String color, String text)
 	{
-		return "<span style=\"color: " + color + "\">" + text + "</color>";
+		return "<span style=\"color: " + color + "\">" + text + "</span>";
+	}
+
+	public static String colorTag(Color color, String text)
+	{
+		String buf = Integer.toHexString(color.getRGB());
+		String hex = "#"+buf.substring(buf.length()-6);
+		return colorTag(hex, text);
 	}
 }
