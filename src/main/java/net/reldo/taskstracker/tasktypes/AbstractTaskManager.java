@@ -47,7 +47,7 @@ public abstract class AbstractTaskManager
 		applyTrackerSave();
 	}
 
-	private void applyTrackerSave()
+	public void applyTrackerSave()
 	{
 		HashMap<String, TaskSave> loadedTasks = trackerDataStore.currentData.tasksByType.get(taskType);
 		if (loadedTasks == null)

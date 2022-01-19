@@ -4,13 +4,15 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
-import net.reldo.taskstracker.tasktypes.Task;
-import net.reldo.taskstracker.tasktypes.TaskType;
-import net.reldo.taskstracker.tasktypes.league3.League3Task;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.data.reldo.ReldoImport;
+import net.reldo.taskstracker.tasktypes.Task;
+import net.reldo.taskstracker.tasktypes.TaskType;
+import net.reldo.taskstracker.tasktypes.league3.League3Task;
+import net.reldo.taskstracker.tasktypes.league3.League3TaskManager;
 import net.runelite.client.config.ConfigManager;
 
 @Slf4j
@@ -52,6 +54,32 @@ public class TrackerDataStore
 		}
 
 		saveCurrentToConfig();
+	}
+
+	public void importTasks(TaskType taskType, HashMap<String, TaskSave> tasks)
+	{
+		currentData.tasksByType.put(taskType, tasks);
+		saveCurrentToConfig();
+	}
+
+	public void importTasksFromReldo(ReldoImport reldoImport, League3TaskManager taskManager)
+	{
+		// FIXME: This entire method is a hack
+		// FIXME: Hardcoded for league 3 only
+		TaskType taskType = TaskType.LEAGUE_3;
+
+		// TODO: Remove this extra transform from id to name once we rely on ids only
+		HashMap<String, TaskSave> taskSavesByName = new HashMap<>();
+		taskManager.tasks.forEach((task) -> {
+			League3Task league3Task = (League3Task) task;
+			String idString = String.valueOf(league3Task.id);
+			if (reldoImport.getTasks().containsKey(idString))
+			{
+				taskSavesByName.put(task.getName(), reldoImport.getTasks().get(idString).toTaskSave());
+			}
+		});
+		importTasks(taskType, taskSavesByName);
+		taskManager.applyTrackerSave();
 	}
 
 	public void loadProfile()

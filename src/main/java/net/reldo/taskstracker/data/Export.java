@@ -1,11 +1,10 @@
-package net.reldo.taskstracker.tasktypes;
+package net.reldo.taskstracker.data;
 
-import net.reldo.taskstracker.bosses.BossData;
-import net.reldo.taskstracker.data.TaskSave;
-import net.reldo.taskstracker.quests.DiaryAndMiniQuestData;
-import net.reldo.taskstracker.quests.QuestData;
 import java.util.HashMap;
 import lombok.Data;
+import net.reldo.taskstracker.bosses.BossData;
+import net.reldo.taskstracker.quests.DiaryAndMiniQuestData;
+import net.reldo.taskstracker.quests.QuestData;
 
 @Data
 public class Export

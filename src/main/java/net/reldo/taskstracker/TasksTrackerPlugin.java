@@ -16,14 +16,15 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.bosses.BossData;
+import net.reldo.taskstracker.data.Export;
 import net.reldo.taskstracker.data.LongSerializer;
 import net.reldo.taskstracker.data.TaskSave;
 import net.reldo.taskstracker.data.TrackerDataStore;
+import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
 import net.reldo.taskstracker.quests.DiaryAndMiniQuestData;
 import net.reldo.taskstracker.quests.QuestData;
 import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
-import net.reldo.taskstracker.tasktypes.Export;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.combattask.CombatTaskManager;
@@ -280,6 +281,36 @@ public class TasksTrackerPlugin extends Plugin
 		trackerDataStore.saveTask(task);
 	}
 
+	public void openImportJsonDialog()
+	{
+		String json = JOptionPane.showInputDialog(null,
+			"Paste import data into the text field below to import task tracker data.",
+			"Import Tasks Input",
+			JOptionPane.INFORMATION_MESSAGE);
+
+		ReldoImport reldoImport;
+		try
+		{
+			reldoImport = ReldoImport.fromJson(json);
+		}
+		catch (Exception ex)
+		{
+			showMessageBox("Import Tasks Error", "There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+			log.error("There was an issue importing task tracker data.", ex);
+			log.info("reldoImport json: {}", json);
+			return;
+		}
+
+		if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(null,
+			"Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?",
+			"Import Tasks Overwrite Confirmation",
+			JOptionPane.YES_NO_OPTION))
+		{
+			trackerDataStore.importTasksFromReldo(reldoImport, (League3TaskManager) taskManagers.get(TaskType.LEAGUE_3));
+			pluginPanel.redraw();
+		}
+	}
+
 	public void copyJsonToClipboard(TaskType taskType)
 	{
 		clientThread.invokeLater(() -> {
@@ -289,8 +320,8 @@ public class TasksTrackerPlugin extends Plugin
 
 			showMessageBox(
 				"Data Exported!",
-				"Exported " + taskType.getDisplayString() + " data copied to clipboard!"
-			);
+				"Exported " + taskType.getDisplayString() + " data copied to clipboard!",
+				JOptionPane.INFORMATION_MESSAGE);
 		});
 	}
 
@@ -334,12 +365,8 @@ public class TasksTrackerPlugin extends Plugin
 		}
 	}
 
-	private static void showMessageBox(final String title, final String message)
+	private static void showMessageBox(final String title, final String message, int messageType)
 	{
-		SwingUtilities.invokeLater(() ->
-			JOptionPane.showMessageDialog(
-				null,
-				message, title,
-				JOptionPane.INFORMATION_MESSAGE));
+		SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null, message, title, messageType));
 	}
 }

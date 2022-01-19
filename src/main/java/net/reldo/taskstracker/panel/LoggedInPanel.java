@@ -1,12 +1,5 @@
 package net.reldo.taskstracker.panel;
 
-import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.panel.components.SearchBox;
-import net.reldo.taskstracker.panel.components.TriToggleButton;
-import net.reldo.taskstracker.panel.tabs.AllTaskListPanel;
-import net.reldo.taskstracker.panel.tabs.TrackedTaskListPanel;
-import net.reldo.taskstracker.tasktypes.Task;
-import net.reldo.taskstracker.tasktypes.TaskType;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -25,6 +18,13 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.panel.components.SearchBox;
+import net.reldo.taskstracker.panel.components.TriToggleButton;
+import net.reldo.taskstracker.panel.tabs.AllTaskListPanel;
+import net.reldo.taskstracker.panel.tabs.TrackedTaskListPanel;
+import net.reldo.taskstracker.tasktypes.Task;
+import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
@@ -122,11 +122,17 @@ public class LoggedInPanel extends JPanel
 	{
 		JPanel southPanel = new JPanel(new BorderLayout());
 
+		JButton importButton = new JButton("Import");
+		importButton.setBorder(new EmptyBorder(5, 5, 5, 5));
+		importButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
+		importButton.addActionListener(e -> plugin.openImportJsonDialog());
+		southPanel.add(importButton, BorderLayout.WEST);
+
 		JButton exportButton = new JButton("Export");
 		exportButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 		exportButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
 		exportButton.addActionListener(e -> plugin.copyJsonToClipboard(plugin.selectedTaskType));
-		southPanel.add(exportButton, BorderLayout.SOUTH);
+		southPanel.add(exportButton, BorderLayout.EAST);
 
 		return southPanel;
 	}
