@@ -14,6 +14,7 @@ import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import com.tylerthardy.taskstracker.tasktypes.combattask.CombatTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.generic.GenericTaskManager;
+import com.tylerthardy.taskstracker.tasktypes.league3.League3TaskManager;
 import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
@@ -249,6 +250,10 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			return new CombatTaskManager(client, clientThread, this, trackerDataStore);
 		}
+        if (type == TaskType.LEAGUE_3)
+        {
+            return new League3TaskManager(client, clientThread, this, trackerDataStore);
+        }
 		return new GenericTaskManager(type, this, trackerDataStore);
 	}
 
