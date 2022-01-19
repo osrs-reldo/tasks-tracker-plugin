@@ -34,7 +34,7 @@ import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.SwingUtil;
 
 @Slf4j
-public class LoggedInPanel extends PluginPanel
+public class LoggedInPanel extends JPanel
 {
 	public AllTaskListPanel allTasksPanel;
 	public TrackedTaskListPanel trackedTaskListPanel;
@@ -123,7 +123,7 @@ public class LoggedInPanel extends PluginPanel
 
 		JButton exportButton = new JButton("Export");
 		exportButton.setBorder(new EmptyBorder(5, 5, 5, 5));
-		exportButton.setLayout(new BorderLayout(0, BORDER_OFFSET));
+		exportButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
 		exportButton.addActionListener(e -> plugin.copyJsonToClipboard(plugin.selectedTaskType));
 		southPanel.add(exportButton, BorderLayout.SOUTH);
 
