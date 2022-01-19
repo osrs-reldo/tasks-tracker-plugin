@@ -27,7 +27,7 @@ public abstract class AbstractTaskManager
     public int maxTaskCount;
 
     private final TasksTrackerPlugin plugin;
-	private final TrackerDataStore trackerDataStore;
+	protected final TrackerDataStore trackerDataStore;
 
 	public AbstractTaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
     {

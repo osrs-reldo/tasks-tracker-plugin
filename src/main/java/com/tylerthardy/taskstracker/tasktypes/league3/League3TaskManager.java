@@ -4,6 +4,7 @@ import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.data.TrackerDataStore;
 import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,6 +60,15 @@ public class League3TaskManager extends AbstractTaskManager
         {
             setFilterClickListeners();
         }
+        if (widgetLoaded.getGroupId() == League3WidgetID.LEAGUE_3_SUMMARY_TAB)
+        {
+            trackerDataStore.leagueData.put("leaguePoints", scrapeLeaguePoints());
+            trackerDataStore.leagueData.put("leaguePointsTimestamp", Instant.now().toEpochMilli());
+            trackerDataStore.leagueData.put("tasksCompleted", scrapeTaskCompletedCount());
+            trackerDataStore.leagueData.put("tasksCompletedTimestamp", Instant.now().toEpochMilli());
+            trackerDataStore.leagueData.put("sagesRenown", scrapeSagesRenown());
+            trackerDataStore.leagueData.put("sagesRenownTimestamp", Instant.now().toEpochMilli());
+        }
     }
 
     @Override
@@ -108,16 +118,41 @@ public class League3TaskManager extends AbstractTaskManager
         return -1;
     }
 
+    private int scrapeTaskCompletedCount() {
+        Widget totalCount = client.getWidget(League3WidgetID.LEAGUE_3_SUMMARY_TAB, League3WidgetID.League3SummaryTab.TASKS_COMPLETED_VALUE);
+        if (totalCount == null) return -1;
+
+        return Integer.parseInt(totalCount.getText());
+    }
+
+    private int scrapeLeaguePoints() {
+        Widget totalCount = client.getWidget(League3WidgetID.LEAGUE_3_SUMMARY_TAB, League3WidgetID.League3SummaryTab.LEAGUE_POINTS_VALUE);
+        if (totalCount == null) return -1;
+
+        return Integer.parseInt(totalCount.getText());
+
+    }
+
+    private int scrapeSagesRenown() {
+        Widget totalCount = client.getWidget(League3WidgetID.LEAGUE_3_SUMMARY_TAB, League3WidgetID.League3SummaryTab.SAGE_RENOWN_VALUE);
+        if (totalCount == null) return -1;
+
+        return Integer.parseInt(totalCount.getText());
+
+    }
+
     private void setFilterClickListeners()
     {
-//        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.CombatAchievementsTasks.FILTER_TIER)
-//                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_TIER)));
-//        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.CombatAchievementsTasks.FILTER_TYPE)
-//                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_TYPE)));
-//        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.CombatAchievementsTasks.FILTER_MONSTER)
-//                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_MONSTER)));
-//        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.CombatAchievementsTasks.FILTER_COMPLETED)
-//                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_COMPLETED)));
+        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_TIER)
+                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_TIER_VALUES)));
+        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_TYPE)
+                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_TYPE_VALUES)));
+        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_AREA)
+                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_AREA_VALUES)));
+        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_SKILL)
+                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_SKILL_VALUES)));
+        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_COMPLETED)
+                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_COMPLETED_VALUES)));
     }
 
     private boolean setFilterDropdownListener(int widgetId) {

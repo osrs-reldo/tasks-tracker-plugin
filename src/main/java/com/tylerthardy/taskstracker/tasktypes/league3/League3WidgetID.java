@@ -23,21 +23,28 @@ public class League3WidgetID
         public static final int TASK_LIST_EXPAND_BUTTONS = 14;
         public static final int TASK_LIST_TIER_ICONS = 15;
         public static final int TASK_LIST_NO_FILTER_RESULTS = 16;
-        public static final int FILTERS_CONTAINER = 17;
-        public static final int FILTERS_LABEL = 18;
-        public static final int FILTER_TIER = 19;
-        public static final int FILTER_TYPE = 20;
-        public static final int FILTER_MONSTER = 21;
-        public static final int FILTER_COMPLETED = 22;
-        public static final int HAMBURGER_BUTTON = 23;
-        public static final int HAMBURGER_DROPDOWN = 25;
-        public static final int RESIZABLE_CONTAINER = 27;
-        public static final int FILTER_DROPDOWN = 28;
-        public static final int FILTER_DROPDOWN_BACKGROUND = 29;
-        public static final int FILTER_DROPDOWN_TIER = 30;
-        public static final int FILTER_DROPDOWN_TYPE = 31;
-        public static final int FILTER_DROPDOWN_MONSTER = 32;
-        public static final int FILTER_DROPDOWN_COMPLETED = 33;
+        public static final int FILTERS_CONTAINER = 18;
+        public static final int FILTERS_LABEL = 19;
+        public static final int FILTER_TIER = 20;
+        public static final int FILTER_TYPE = 21;
+        public static final int FILTER_AREA = 22;
+        public static final int FILTER_SKILL = 23;
+        public static final int FILTER_COMPLETED = 24;
+        public static final int CLOSE_BUTTON = 25;
+        public static final int HAMBURGER_BUTTON = 26;
+        public static final int UNKNOWN_OVERLAY_OR_BG = 26;
+        public static final int HAMBURGER_DROPDOWN = 28;
+        public static final int FILTER_DROPDOWN_CONTAINER = 30;
+        public static final int FILTER_DROPDOWN = 31;
+        public static final int FILTER_DROPDOWN_BACKGROUND = 32;
+        public static final int FILTER_DROPDOWN_TIER_VALUES = 33;
+        public static final int FILTER_DROPDOWN_TYPE_VALUES = 34;
+        public static final int FILTER_DROPDOWN_AREA_VALUES = 35;
+        public static final int FILTER_DROPDOWN_SKILL_VALUES = 36;
+        public static final int FILTER_DROPDOWN_COMPLETED_VALUES = 37;
+
+
+        public static final int RESIZABLE_CONTAINER = 38; //maybe?
     }
 
     public static class League3SummaryTab {

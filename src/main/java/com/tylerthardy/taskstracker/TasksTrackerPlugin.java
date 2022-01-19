@@ -302,6 +302,7 @@ public class TasksTrackerPlugin extends Plugin
 			export.setTimestamp(Instant.now().toEpochMilli());
 			export.setTasks(trackerDataStore.currentData.tasksByType.get(taskType));
 			export.setTaskType(taskType.name());
+			export.setLeagueData(trackerDataStore.leagueData);
 			return gson.toJson(export);
 		}
 	}

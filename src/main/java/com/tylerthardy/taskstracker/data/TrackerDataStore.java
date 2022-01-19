@@ -22,6 +22,7 @@ public class TrackerDataStore
 	private final ConfigManager configManager;
 
 	public TrackerData currentData;
+	public HashMap<String, Object> leagueData = new HashMap<>();
 
 	@Inject
 	public TrackerDataStore(ConfigManager configManager)
