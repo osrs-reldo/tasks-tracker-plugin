@@ -150,6 +150,11 @@ public class TasksTrackerPlugin extends Plugin
 				setSelectedTaskType(selectedType != null ? selectedType : TaskType.COMBAT);
 				pluginPanel.redraw();
 			}
+
+			if (!isLoggedInState(gameStateChanged.getGameState()))
+			{
+				taskManagers.clear();
+			}
 		});
 	}
 
@@ -213,7 +218,6 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		selectedTaskType = type;
 		trackerDataStore.currentData.settings.selectedTaskType = type;
-		// FIXME: This is doing double duty to the task loader to store all tasks in a cache
 		if (!taskManagers.containsKey(type))
 		{
 			taskManagers.put(type, getTaskTypeManager(type));
