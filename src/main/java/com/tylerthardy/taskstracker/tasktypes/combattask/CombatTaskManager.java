@@ -7,6 +7,7 @@ import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ScriptPostFired;
@@ -57,9 +58,9 @@ public class CombatTaskManager extends AbstractTaskManager
     @Override
     public void handleChatMessage(ChatMessage chatMessage)
     {
-//        if (chatMessage.getType() != ChatMessageType.GAMEMESSAGE) {
-//            return;
-//        }
+        if (chatMessage.getType() != ChatMessageType.GAMEMESSAGE) {
+            return;
+        }
         String strippedMessage = Text.removeFormattingTags(chatMessage.getMessage());
         Matcher m = TASK_COMPLETED_CHAT_MESSAGE_REGEX.matcher(strippedMessage);
         if (!m.find()) {
