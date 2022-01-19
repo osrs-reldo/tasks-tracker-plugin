@@ -2,11 +2,12 @@ package com.tylerthardy.taskstracker.tasktypes.league3;
 
 public enum League3TaskTier
 {
-    EASY(2316),
-    MEDIUM(2317),
-    HARD(2318),
-    ELITE(2319),
-    MASTER(2320);
+    BEGINNER(2316),
+    EASY(2317),
+    MEDIUM(2318),
+    HARD(2319),
+    ELITE(2320),
+    MASTER(3739);
 
     public final int spriteId;
 
