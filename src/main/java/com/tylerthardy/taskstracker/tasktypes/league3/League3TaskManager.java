@@ -5,6 +5,7 @@ import com.tylerthardy.taskstracker.data.TrackerDataStore;
 import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -88,7 +89,51 @@ public class League3TaskManager extends AbstractTaskManager
         completeTask(taskName);
     }
 
-    public LinkedHashMap<String, Boolean> scrapeTaskCompletedData()
+    @Override
+    public HashMap<Integer, Integer> getVarbits()
+    {
+        assert client.isClientThread();
+
+        League3Varbits[] varbits = new League3Varbits[]{
+            League3Varbits.FRAGMENT_SLOT_1,
+            League3Varbits.FRAGMENT_SLOT_2,
+            League3Varbits.FRAGMENT_SLOT_3,
+            League3Varbits.FRAGMENT_SLOT_4,
+            League3Varbits.FRAGMENT_SLOT_5,
+            League3Varbits.FRAGMENT_SLOT_6,
+            League3Varbits.FRAGMENT_SLOT_7,
+            League3Varbits.TASKS_COMPLETED
+        };
+
+        HashMap<Integer, Integer> varbitValueMap = new HashMap<>();
+        for(League3Varbits varbit : varbits)
+        {
+            varbitValueMap.put(varbit.getVarbitId(), client.getVarbitValue(varbit.getVarbitId()));
+        }
+
+        return varbitValueMap;
+    }
+
+    @Override
+    public HashMap<Integer, Integer> getVarps()
+    {
+        assert client.isClientThread();
+
+        League3Varps[] varps = new League3Varps[]{
+            League3Varps.LEAGUE_POINTS,
+            League3Varps.SAGES_RENOWN
+        };
+
+        HashMap<Integer, Integer> varpValueMap = new HashMap<>();
+        for(League3Varps varp : varps)
+        {
+            varpValueMap.put(varp.getVarpId(), client.getVarpValue(varp.getVarpId()));
+        }
+
+        return varpValueMap;
+    }
+
+    private LinkedHashMap<String, Boolean> scrapeTaskCompletedData()
     {
         Widget list = client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.TASK_LIST_TITLES);
         if (list == null)
@@ -104,7 +149,7 @@ public class League3TaskManager extends AbstractTaskManager
         return taskProgress;
     }
 
-    public int scrapeTotalCount() {
+    private int scrapeTotalCount() {
         Widget bar = client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.TASK_BAR);
         if (bar == null) return -1;
 

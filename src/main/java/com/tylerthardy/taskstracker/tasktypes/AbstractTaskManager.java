@@ -85,6 +85,13 @@ public abstract class AbstractTaskManager
 	 */
 	public void handleOnScriptPostFired(ScriptPostFired scriptPostFired) {}
 
+    public HashMap<Integer, Integer> getVarbits() {
+	    return new HashMap<>();
+	}
+
+    public HashMap<Integer, Integer> getVarps() {
+        return new HashMap<>();
+    }
     public void redraw()
     {
         SwingUtilities.invokeLater(() -> plugin.pluginPanel.redraw());
