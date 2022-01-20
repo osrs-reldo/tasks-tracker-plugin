@@ -11,13 +11,13 @@ import net.runelite.client.game.SpriteManager;
 
 public class League1Task extends Task
 {
-    public RequiredSkill[] skills;
-    public String other;
+	public RequiredSkill[] skills;
+	public String other;
 
-    public League1Task(String name, String description, String tier)
-    {
-        super(name, description, tier);
-    }
+	public League1Task(String name, String description, String tier)
+	{
+		super(name, description, tier);
+	}
 
 	@Override
 	public TaskType getType()
@@ -26,7 +26,8 @@ public class League1Task extends Task
 	}
 
 	@Override
-    public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager) {
-        return new League1TaskPanel(plugin, clientThread, spriteManager, this);
-    }
+	public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
+	{
+		return new League1TaskPanel(plugin, clientThread, spriteManager, this);
+	}
 }

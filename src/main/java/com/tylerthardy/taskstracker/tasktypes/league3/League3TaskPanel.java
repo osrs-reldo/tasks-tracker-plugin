@@ -2,9 +2,9 @@ package com.tylerthardy.taskstracker.tasktypes.league3;
 
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.Util;
+import com.tylerthardy.taskstracker.panel.TaskPanel;
 import com.tylerthardy.taskstracker.tasktypes.RequiredSkill;
 import com.tylerthardy.taskstracker.tasktypes.Task;
-import com.tylerthardy.taskstracker.panel.TaskPanel;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.net.URL;
@@ -17,19 +17,22 @@ import net.runelite.client.ui.ColorScheme;
 
 public class League3TaskPanel extends TaskPanel
 {
-	public League3TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task) {
+	public League3TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task)
+	{
 		super(plugin, clientThread, spriteManager, task);
 	}
 
 	//TODO: This code is wet fucking spaghetti
 
 	@Override
-	public JPopupMenu getPopupMenu() {
+	public JPopupMenu getPopupMenu()
+	{
 		return null;
 	}
 
 	@Override
-	public String getTaskTooltip() {
+	public String getTaskTooltip()
+	{
 		League3Task task = (League3Task) this.task;
 		String text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
 			task.getTier() + Util.HTML_LINE_BREAK +
@@ -42,7 +45,8 @@ public class League3TaskPanel extends TaskPanel
 	}
 
 	@Override
-	public BufferedImage getIcon() {
+	public BufferedImage getIcon()
+	{
 		League3TaskTier tier = League3TaskTier.getTierByName(task.getTier());
 		if (tier == null)
 		{
@@ -57,24 +61,37 @@ public class League3TaskPanel extends TaskPanel
 	@Override
 	public Color getTaskBackgroundColor(Task task, int[] playerSkills)
 	{
-		if (playerSkills == null) return ColorScheme.DARKER_GRAY_COLOR;
+		if (playerSkills == null)
+		{
+			return ColorScheme.DARKER_GRAY_COLOR;
+		}
 
-		if (task.isCompleted()) return COMPLETED_BACKGROUND_COLOR;
+		if (task.isCompleted())
+		{
+			return COMPLETED_BACKGROUND_COLOR;
+		}
 
-		for (RequiredSkill requiredSkill : ((League3Task) task).skills) {
+		for (RequiredSkill requiredSkill : ((League3Task) task).skills)
+		{
 			Skill skill;
 			// FIXME: Shouldn't use exception for control flow
-			try {
+			try
+			{
 				skill = Skill.valueOf(requiredSkill.skill.toUpperCase());
-			} catch (IllegalArgumentException ex) {
+			}
+			catch (IllegalArgumentException ex)
+			{
 				continue;
 			}
 
 			int level;
 			// FIXME: Shouldn't use exception for control flow
-			try {
+			try
+			{
 				level = Integer.parseInt(requiredSkill.level);
-			} catch (NumberFormatException ex) {
+			}
+			catch (NumberFormatException ex)
+			{
 				continue;
 			}
 
@@ -97,17 +114,23 @@ public class League3TaskPanel extends TaskPanel
 		{
 			Skill skill;
 			// FIXME: Shouldn't use exception for control flow
-			try {
+			try
+			{
 				skill = Skill.valueOf(requiredSkill.skill.toUpperCase());
-			} catch (IllegalArgumentException ex) {
+			}
+			catch (IllegalArgumentException ex)
+			{
 				continue;
 			}
 
 			int level;
 			// FIXME: Shouldn't use exception for control flow
-			try {
+			try
+			{
 				level = Integer.parseInt(requiredSkill.level);
-			} catch (NumberFormatException ex) {
+			}
+			catch (NumberFormatException ex)
+			{
 				continue;
 			}
 

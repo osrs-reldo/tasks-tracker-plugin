@@ -11,13 +11,13 @@ import net.runelite.client.game.SpriteManager;
 
 public class League3Task extends Task
 {
-    public RequiredSkill[] skills;
-    public String other;
+	public RequiredSkill[] skills;
+	public String other;
 
-    public League3Task(String name, String description, String tier)
-    {
-        super(name, description, tier);
-    }
+	public League3Task(String name, String description, String tier)
+	{
+		super(name, description, tier);
+	}
 
 	@Override
 	public TaskType getType()

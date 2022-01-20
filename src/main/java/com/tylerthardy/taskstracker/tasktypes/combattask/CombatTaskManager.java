@@ -19,32 +19,51 @@ import net.runelite.client.util.Text;
 
 public class CombatTaskManager extends AbstractTaskManager
 {
-    private static final Pattern COMPLETED_TASKS_LABEL_REGEX = Pattern.compile("Tasks Completed: \\d+/(\\d+)");
-    private static final Pattern TASK_COMPLETED_CHAT_MESSAGE_REGEX = Pattern.compile("Congratulations, you've completed an? (.*) combat task: (.*)\\.");
-    private static final int COMPLETED_TASK_COLOR = 901389;
+	private static final Pattern COMPLETED_TASKS_LABEL_REGEX = Pattern.compile("Tasks Completed: \\d+/(\\d+)");
+	private static final Pattern TASK_COMPLETED_CHAT_MESSAGE_REGEX = Pattern.compile("Congratulations, you've completed an? (.*) combat task: (.*)\\.");
+	private static final int COMPLETED_TASK_COLOR = 901389;
 
-    private final Client client;
-    private ClientThread clientThread;
+	private final Client client;
+	private final ClientThread clientThread;
 
-    private int previousTaskCount = -1;
+	private final int previousTaskCount = -1;
 
-    public CombatTaskManager(Client client, ClientThread clientThread, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
-    {
-        super(TaskType.COMBAT, plugin, trackerDataStore);
-        this.client = client;
-        this.clientThread = clientThread;
-    }
+	public CombatTaskManager(Client client, ClientThread clientThread, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
+	{
+		super(TaskType.COMBAT, plugin, trackerDataStore);
+		this.client = client;
+		this.clientThread = clientThread;
+	}
 
-    @Override
-    public void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
-    {
-        if (widgetLoaded.getGroupId() == CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID)
-        {
-            setFilterClickListeners();
-        }
-    }
+	@Override
+	public void handleChatMessage(ChatMessage chatMessage)
+	{
+		if (chatMessage.getType() != ChatMessageType.GAMEMESSAGE)
+		{
+			return;
+		}
+		String strippedMessage = Text.removeFormattingTags(chatMessage.getMessage());
+		Matcher m = TASK_COMPLETED_CHAT_MESSAGE_REGEX.matcher(strippedMessage);
+		if (!m.find())
+		{
+			return;
+		}
 
-    @Override
+		String tier = m.group(1);
+		String taskName = m.group(2);
+		completeTask(taskName);
+	}
+
+	@Override
+	public void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
+	{
+		if (widgetLoaded.getGroupId() == CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID)
+		{
+			setFilterClickListeners();
+		}
+	}
+
+	@Override
 	public void handleOnScriptPostFired(ScriptPostFired scriptPostFired)
 	{
 		if (scriptPostFired.getScriptId() == CombatTasksScriptID.ca_tasks_draw_list)
@@ -55,92 +74,104 @@ public class CombatTaskManager extends AbstractTaskManager
 		}
 	}
 
-    @Override
-    public void handleChatMessage(ChatMessage chatMessage)
-    {
-        if (chatMessage.getType() != ChatMessageType.GAMEMESSAGE) {
-            return;
-        }
-        String strippedMessage = Text.removeFormattingTags(chatMessage.getMessage());
-        Matcher m = TASK_COMPLETED_CHAT_MESSAGE_REGEX.matcher(strippedMessage);
-        if (!m.find()) {
-            return;
-        }
+	public LinkedHashMap<String, Boolean> scrapeTaskCompletedData()
+	{
+		Widget list = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_LIST_TITLES);
+		if (list == null)
+		{
+			return null;
+		}
 
-        String tier = m.group(1);
-        String taskName = m.group(2);
-        completeTask(taskName);
-    }
+		LinkedHashMap<String, Boolean> taskProgress = new LinkedHashMap<>();
+		Widget[] titleWidgets = list.getDynamicChildren();
+		for (Widget titleWidget : titleWidgets)
+		{
+			taskProgress.put(titleWidget.getText(), titleWidget.getTextColor() == COMPLETED_TASK_COLOR);
+		}
+		return taskProgress;
+	}
 
-    public LinkedHashMap<String, Boolean> scrapeTaskCompletedData()
-    {
-        Widget list = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_LIST_TITLES);
-        if (list == null) return null;
+	public int scrapeTotalCount()
+	{
+		Widget bar = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_BAR);
+		if (bar == null)
+		{
+			return -1;
+		}
 
-        LinkedHashMap<String, Boolean> taskProgress = new LinkedHashMap<>();
-        Widget[] titleWidgets = list.getDynamicChildren();
-        for (Widget titleWidget : titleWidgets) {
-            taskProgress.put(titleWidget.getText(), titleWidget.getTextColor() == COMPLETED_TASK_COLOR);
-        }
-        return taskProgress;
-    }
+		for (Widget dynamicChild : bar.getDynamicChildren())
+		{
+			Matcher m = COMPLETED_TASKS_LABEL_REGEX.matcher(dynamicChild.getText());
+			if (m.find())
+			{
+				return Integer.parseInt(m.group(1));
+			}
+		}
 
-    public int scrapeTotalCount() {
-        Widget bar = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.TASK_BAR);
-        if (bar == null) return -1;
+		return -1;
+	}
 
-        for (Widget dynamicChild : bar.getDynamicChildren()) {
-            Matcher m = COMPLETED_TASKS_LABEL_REGEX.matcher(dynamicChild.getText());
-            if (m.find()) {
-                return Integer.parseInt(m.group(1));
-            }
-        }
+	private void setFilterClickListeners()
+	{
+		client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.FILTER_TIER)
+			.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(CombatTasksWidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_TIER)));
+		client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.FILTER_TYPE)
+			.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(CombatTasksWidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_TYPE)));
+		client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.FILTER_MONSTER)
+			.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(CombatTasksWidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_MONSTER)));
+		client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.FILTER_COMPLETED)
+			.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(CombatTasksWidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_COMPLETED)));
+	}
 
-        return -1;
-    }
+	private boolean setFilterDropdownListener(int widgetId)
+	{
+		Widget dropdown = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, widgetId);
+		if (dropdown == null)
+		{
+			return false;
+		}
 
-    private void setFilterClickListeners()
-    {
-        client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.FILTER_TIER)
-                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(CombatTasksWidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_TIER)));
-        client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.FILTER_TYPE)
-                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(CombatTasksWidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_TYPE)));
-        client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.FILTER_MONSTER)
-                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(CombatTasksWidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_MONSTER)));
-        client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, CombatTasksWidgetID.CombatAchievementsTasks.FILTER_COMPLETED)
-                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(CombatTasksWidgetID.CombatAchievementsTasks.FILTER_DROPDOWN_COMPLETED)));
-    }
+		Widget[] options = dropdown.getDynamicChildren();
+		if (options.length == 0)
+		{
+			return false;
+		}
 
-    private boolean setFilterDropdownListener(int widgetId) {
-        Widget dropdown = client.getWidget(CombatTasksWidgetID.COMBAT_ACHIEVEMENTS_TASKS_GROUP_ID, widgetId);
-        if (dropdown == null) return false;
+		for (Widget option : options)
+		{
+			option.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(this::updateTasksFollowingDropdownChange));
+		}
+		return true;
+	}
 
-        Widget[] options = dropdown.getDynamicChildren();
-        if (options.length == 0) return false;
+	// TODO: Find better way to bring updateTasksFollowingDropdownChange/WidgetLoaded together
+	private boolean updateTasksFollowingDropdownChange()
+	{
+		LinkedHashMap<String, Boolean> taskProgress = scrapeTaskCompletedData();
+		if (taskProgress == null)
+		{
+			return true;
+		}
 
-        for (Widget option : options) {
-            option.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(this::updateTasksFollowingDropdownChange));
-        }
-        return true;
-    }
+		if (taskProgress.size() == previousTaskCount)
+		{
+			return false;
+		}
 
-    // TODO: Find better way to bring updateTasksFollowingDropdownChange/WidgetLoaded together
-    private boolean updateTasksFollowingDropdownChange() {
-        LinkedHashMap<String, Boolean> taskProgress = scrapeTaskCompletedData();
-        if (taskProgress == null) return true;
+		updateTaskProgress(taskProgress);
+		refresh(null);
+		return true;
+	}
 
-        if (taskProgress.size() == previousTaskCount) return false;
+	private void updateTasksFollowingWidgetLoaded()
+	{
+		LinkedHashMap<String, Boolean> taskProgress = scrapeTaskCompletedData();
+		if (taskProgress == null)
+		{
+			return;
+		}
 
-        updateTaskProgress(taskProgress);
-        refresh(null);
-        return true;
-    }
-
-    private void updateTasksFollowingWidgetLoaded() {
-        LinkedHashMap<String, Boolean> taskProgress = scrapeTaskCompletedData();
-        if (taskProgress == null) return;
-
-        updateTaskProgress(taskProgress);
-        refresh(null);
-    }
+		updateTaskProgress(taskProgress);
+		refresh(null);
+	}
 }

@@ -101,7 +101,8 @@ public class LoggedInPanel extends JPanel
 		trackedTaskListPanel.refresh(task);
 	}
 
-	private void createPanel(JPanel parent) {
+	private void createPanel(JPanel parent)
+	{
 		parent.setLayout(new BorderLayout());
 		parent.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
@@ -288,19 +289,22 @@ public class LoggedInPanel extends JPanel
 		return titlePanel;
 	}
 
-	private void ignoredFilterButtonAction() {
+	private void ignoredFilterButtonAction()
+	{
 		plugin.isIgnoredFilter = ignoredFilterBtn.getState() != 0;
 		plugin.isNotIgnoredFilter = ignoredFilterBtn.getState() != 2;
 		plugin.refresh();
 	}
 
-	private void trackedFilterButtonAction() {
+	private void trackedFilterButtonAction()
+	{
 		plugin.isTrackedFilter = trackedFilterBtn.getState() != 2;
 		plugin.isUntrackedFilter = trackedFilterBtn.getState() != 1;
 		plugin.refresh();
 	}
 
-	private void completedFilterButtonAction() {
+	private void completedFilterButtonAction()
+	{
 		plugin.isCompleteFilter = completedFilterBtn.getState() != 2;
 		plugin.isIncompleteFilter = completedFilterBtn.getState() != 1;
 		plugin.refresh();

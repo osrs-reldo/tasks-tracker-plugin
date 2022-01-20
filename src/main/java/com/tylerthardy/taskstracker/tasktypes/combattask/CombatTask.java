@@ -12,12 +12,14 @@ import net.runelite.client.game.SpriteManager;
 public class CombatTask extends Task
 {
 	@Getter
-    public String monster;
+	public String monster;
 	@Getter
-    public String category;
-    public CombatTask(String name, String description, String tier) {
-        super(name, description, tier);
-    }
+	public String category;
+
+	public CombatTask(String name, String description, String tier)
+	{
+		super(name, description, tier);
+	}
 
 	@Override
 	public TaskType getType()
@@ -26,7 +28,8 @@ public class CombatTask extends Task
 	}
 
 	@Override
-    public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager) {
-        return new CombatTaskPanel(plugin, clientThread, spriteManager, this);
-    }
+	public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
+	{
+		return new CombatTaskPanel(plugin, clientThread, spriteManager, this);
+	}
 }

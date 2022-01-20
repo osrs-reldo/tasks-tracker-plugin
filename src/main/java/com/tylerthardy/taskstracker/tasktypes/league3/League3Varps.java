@@ -7,8 +7,8 @@ import lombok.Getter;
 @Getter
 public enum League3Varps
 {
-    LEAGUE_POINTS(2614),
-    SAGES_RENOWN(3276);
+	LEAGUE_POINTS(2614),
+	SAGES_RENOWN(3276);
 
-    private final int varpId;
+	private final int varpId;
 }

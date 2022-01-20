@@ -309,10 +309,8 @@ public enum QuestHelperQuest
 	private final QuestVarbits varbit;
 
 	private final QuestVarPlayer varPlayer;
-
-	private Skill skill;
-
 	private final int completeValue;
+	private Skill skill;
 
 	QuestHelperQuest(int id, String name, QuestVarbits varbit)
 	{
@@ -380,7 +378,7 @@ public enum QuestHelperQuest
 			int currentState = getVar(client);
 			if (currentState == completeValue)
 			{
-				return  QuestState.FINISHED;
+				return QuestState.FINISHED;
 			}
 			if (currentState == 0)
 			{

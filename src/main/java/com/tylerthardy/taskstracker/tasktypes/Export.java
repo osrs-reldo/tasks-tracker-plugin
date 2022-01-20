@@ -12,12 +12,12 @@ public class Export
 	public QuestData quests;
 	public BossData bosses;
 	public String displayName;
-    public int runescapeVersion;
-    public String runeliteVersion;
-    public long timestamp;
-    public HashMap<String, TaskSave> tasks;
-    public String taskType;
-    public HashMap<Integer, Integer> varbits;
-    public HashMap<Integer, Integer> varps;
-    public HashMap<String, Object> leagueData;
+	public int runescapeVersion;
+	public String runeliteVersion;
+	public long timestamp;
+	public HashMap<String, TaskSave> tasks;
+	public String taskType;
+	public HashMap<Integer, Integer> varbits;
+	public HashMap<Integer, Integer> varps;
+	public HashMap<String, Object> leagueData;
 }

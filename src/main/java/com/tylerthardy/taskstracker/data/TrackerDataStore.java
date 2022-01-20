@@ -34,13 +34,16 @@ public class TrackerDataStore
 	public void saveTask(Task task)
 	{
 		HashMap<String, TaskSave> typeTasks = currentData.tasksByType.computeIfAbsent(task.getType(), k -> new HashMap<>());
-		if (task.isTracked() || task.isCompleted() || task.isIgnored()) {
+		if (task.isTracked() || task.isCompleted() || task.isIgnored())
+		{
 			TaskSave taskSave = new TaskSave();
 			taskSave.setCompletedOn(task.getCompletedOn());
 			taskSave.setTrackedOn(task.getTrackedOn());
 			taskSave.setIgnoredOn(task.getIgnoredOn());
 			typeTasks.put(task.getName(), taskSave);
-		} else {
+		}
+		else
+		{
 			typeTasks.remove(task.getName());
 		}
 

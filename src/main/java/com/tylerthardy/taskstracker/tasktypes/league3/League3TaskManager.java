@@ -23,213 +23,253 @@ import net.runelite.client.util.Text;
 @Slf4j
 public class League3TaskManager extends AbstractTaskManager
 {
-    private static final Pattern FRAGMENT_UNLOCK_CHAT_MESSAGE_REGEX = Pattern.compile("Congratulations! You've unlocked the (.*) Fragment!");
-    private static final Pattern TIER_UNLOCK_CHAT_MESSAGE_REGEX = Pattern.compile("Congratulations! You have reached a new Tier! Check the Fragments Panel for the new Passive Effects you have unlocked!");
-    private static final Pattern COMPLETED_TASKS_LABEL_REGEX = Pattern.compile("Tasks Completed: \\d+/(\\d+)");
-    private static final Pattern TASK_COMPLETED_CHAT_MESSAGE_REGEX = Pattern.compile("Congratulations, you've completed an? (.*) task: (.*)\\.");
-    private static final Pattern EARNED_CHAT_MESSAGE_REGEX = Pattern.compile("You have earned (.*) League Points and (.*) Sage's Renown.");
-    private static final Pattern CURRENCY_CHAT_MESSAGE_REGEX = Pattern.compile("You now have (.*) League Points and (.*) Sage's Renown in total.");
-    private static final int COMPLETED_TASK_COLOR = 2752445;
+	private static final Pattern FRAGMENT_UNLOCK_CHAT_MESSAGE_REGEX = Pattern.compile("Congratulations! You've unlocked the (.*) Fragment!");
+	private static final Pattern TIER_UNLOCK_CHAT_MESSAGE_REGEX = Pattern.compile("Congratulations! You have reached a new Tier! Check the Fragments Panel for the new Passive Effects you have unlocked!");
+	private static final Pattern COMPLETED_TASKS_LABEL_REGEX = Pattern.compile("Tasks Completed: \\d+/(\\d+)");
+	private static final Pattern TASK_COMPLETED_CHAT_MESSAGE_REGEX = Pattern.compile("Congratulations, you've completed an? (.*) task: (.*)\\.");
+	private static final Pattern EARNED_CHAT_MESSAGE_REGEX = Pattern.compile("You have earned (.*) League Points and (.*) Sage's Renown.");
+	private static final Pattern CURRENCY_CHAT_MESSAGE_REGEX = Pattern.compile("You now have (.*) League Points and (.*) Sage's Renown in total.");
+	private static final int COMPLETED_TASK_COLOR = 2752445;
 
-    private final Client client;
-    private ClientThread clientThread;
+	private final Client client;
+	private final ClientThread clientThread;
 
-    private int previousTaskCount = -1;
+	private final int previousTaskCount = -1;
 
-    public League3TaskManager(Client client, ClientThread clientThread, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
-    {
-        super(TaskType.LEAGUE_3, plugin, trackerDataStore);
-        this.client = client;
-        this.clientThread = clientThread;
-    }
+	public League3TaskManager(Client client, ClientThread clientThread, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
+	{
+		super(TaskType.LEAGUE_3, plugin, trackerDataStore);
+		this.client = client;
+		this.clientThread = clientThread;
+	}
 
-    @Override
-    public void handleOnScriptPostFired(ScriptPostFired scriptPostFired)
-    {
-        if (scriptPostFired.getScriptId() == League3ScriptID.league3_tasks_draw_list)
-        {
-            maxTaskCount = scrapeTotalCount();
-            updateTasksFollowingWidgetLoaded();
-            setFilterClickListeners();
-        }
-        if (scriptPostFired.getScriptId() == League3ScriptID.league3_summary_tab_update)
-        {
-            trackerDataStore.leagueData.put("leaguePoints", scrapeLeaguePoints());
-            trackerDataStore.leagueData.put("leaguePointsTimestamp", Instant.now().toEpochMilli());
-            trackerDataStore.leagueData.put("tasksCompleted", scrapeTaskCompletedCount());
-            trackerDataStore.leagueData.put("tasksCompletedTimestamp", Instant.now().toEpochMilli());
-            trackerDataStore.leagueData.put("sagesRenown", scrapeSagesRenown());
-            trackerDataStore.leagueData.put("sagesRenownTimestamp", Instant.now().toEpochMilli());
-        }
-    }
+	@Override
+	public void handleChatMessage(ChatMessage chatMessage)
+	{
+		if (chatMessage.getType() != ChatMessageType.GAMEMESSAGE)
+		{
+			return;
+		}
+		String strippedMessage = Text.removeFormattingTags(chatMessage.getMessage());
+		Matcher m = TASK_COMPLETED_CHAT_MESSAGE_REGEX.matcher(strippedMessage);
+		if (!m.find())
+		{
+			return;
+		}
 
-    @Override
-    public void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
-    {
-        if (widgetLoaded.getGroupId() == League3WidgetID.LEAGUE_3_TASKS_GROUP_ID)
-        {
-            setFilterClickListeners();
-        }
-    }
+		String tier = m.group(1);
+		String taskName = m.group(2);
+		completeTask(taskName);
+	}
 
-    @Override
-    public void handleChatMessage(ChatMessage chatMessage)
-    {
-        if (chatMessage.getType() != ChatMessageType.GAMEMESSAGE) {
-            return;
-        }
-        String strippedMessage = Text.removeFormattingTags(chatMessage.getMessage());
-        Matcher m = TASK_COMPLETED_CHAT_MESSAGE_REGEX.matcher(strippedMessage);
-        if (!m.find()) {
-            return;
-        }
+	@Override
+	public void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
+	{
+		if (widgetLoaded.getGroupId() == League3WidgetID.LEAGUE_3_TASKS_GROUP_ID)
+		{
+			setFilterClickListeners();
+		}
+	}
 
-        String tier = m.group(1);
-        String taskName = m.group(2);
-        completeTask(taskName);
-    }
+	@Override
+	public void handleOnScriptPostFired(ScriptPostFired scriptPostFired)
+	{
+		if (scriptPostFired.getScriptId() == League3ScriptID.league3_tasks_draw_list)
+		{
+			maxTaskCount = scrapeTotalCount();
+			updateTasksFollowingWidgetLoaded();
+			setFilterClickListeners();
+		}
+		if (scriptPostFired.getScriptId() == League3ScriptID.league3_summary_tab_update)
+		{
+			trackerDataStore.leagueData.put("leaguePoints", scrapeLeaguePoints());
+			trackerDataStore.leagueData.put("leaguePointsTimestamp", Instant.now().toEpochMilli());
+			trackerDataStore.leagueData.put("tasksCompleted", scrapeTaskCompletedCount());
+			trackerDataStore.leagueData.put("tasksCompletedTimestamp", Instant.now().toEpochMilli());
+			trackerDataStore.leagueData.put("sagesRenown", scrapeSagesRenown());
+			trackerDataStore.leagueData.put("sagesRenownTimestamp", Instant.now().toEpochMilli());
+		}
+	}
 
-    @Override
-    public HashMap<Integer, Integer> getVarbits()
-    {
-        assert client.isClientThread();
+	@Override
+	public HashMap<Integer, Integer> getVarbits()
+	{
+		assert client.isClientThread();
 
-        League3Varbits[] varbits = new League3Varbits[]{
-            League3Varbits.FRAGMENT_SLOT_1,
-            League3Varbits.FRAGMENT_SLOT_2,
-            League3Varbits.FRAGMENT_SLOT_3,
-            League3Varbits.FRAGMENT_SLOT_4,
-            League3Varbits.FRAGMENT_SLOT_5,
-            League3Varbits.FRAGMENT_SLOT_6,
-            League3Varbits.FRAGMENT_SLOT_7,
-            League3Varbits.TASKS_COMPLETED
-        };
+		League3Varbits[] varbits = new League3Varbits[]{
+			League3Varbits.FRAGMENT_SLOT_1,
+			League3Varbits.FRAGMENT_SLOT_2,
+			League3Varbits.FRAGMENT_SLOT_3,
+			League3Varbits.FRAGMENT_SLOT_4,
+			League3Varbits.FRAGMENT_SLOT_5,
+			League3Varbits.FRAGMENT_SLOT_6,
+			League3Varbits.FRAGMENT_SLOT_7,
+			League3Varbits.TASKS_COMPLETED
+		};
 
-        HashMap<Integer, Integer> varbitValueMap = new HashMap<>();
-        for(League3Varbits varbit : varbits)
-        {
-            varbitValueMap.put(varbit.getVarbitId(), client.getVarbitValue(varbit.getVarbitId()));
-        }
+		HashMap<Integer, Integer> varbitValueMap = new HashMap<>();
+		for (League3Varbits varbit : varbits)
+		{
+			varbitValueMap.put(varbit.getVarbitId(), client.getVarbitValue(varbit.getVarbitId()));
+		}
 
-        return varbitValueMap;
-    }
+		return varbitValueMap;
+	}
 
-    @Override
-    public HashMap<Integer, Integer> getVarps()
-    {
-        assert client.isClientThread();
+	@Override
+	public HashMap<Integer, Integer> getVarps()
+	{
+		assert client.isClientThread();
 
-        League3Varps[] varps = new League3Varps[]{
-            League3Varps.LEAGUE_POINTS,
-            League3Varps.SAGES_RENOWN
-        };
+		League3Varps[] varps = new League3Varps[]{
+			League3Varps.LEAGUE_POINTS,
+			League3Varps.SAGES_RENOWN
+		};
 
-        HashMap<Integer, Integer> varpValueMap = new HashMap<>();
-        for(League3Varps varp : varps)
-        {
-            varpValueMap.put(varp.getVarpId(), client.getVarpValue(varp.getVarpId()));
-        }
+		HashMap<Integer, Integer> varpValueMap = new HashMap<>();
+		for (League3Varps varp : varps)
+		{
+			varpValueMap.put(varp.getVarpId(), client.getVarpValue(varp.getVarpId()));
+		}
 
-        return varpValueMap;
-    }
+		return varpValueMap;
+	}
 
-    private LinkedHashMap<String, Boolean> scrapeTaskCompletedData()
-    {
-        Widget list = client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.TASK_LIST_TITLES);
-        if (list == null)
-        {
-            return null;
-        }
+	private LinkedHashMap<String, Boolean> scrapeTaskCompletedData()
+	{
+		Widget list = client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.TASK_LIST_TITLES);
+		if (list == null)
+		{
+			return null;
+		}
 
-        LinkedHashMap<String, Boolean> taskProgress = new LinkedHashMap<>();
-        Widget[] titleWidgets = list.getDynamicChildren();
-        for (Widget titleWidget : titleWidgets) {
-            taskProgress.put(titleWidget.getText(), titleWidget.getTextColor() == COMPLETED_TASK_COLOR);
-        }
-        return taskProgress;
-    }
+		LinkedHashMap<String, Boolean> taskProgress = new LinkedHashMap<>();
+		Widget[] titleWidgets = list.getDynamicChildren();
+		for (Widget titleWidget : titleWidgets)
+		{
+			taskProgress.put(titleWidget.getText(), titleWidget.getTextColor() == COMPLETED_TASK_COLOR);
+		}
+		return taskProgress;
+	}
 
-    private int scrapeTotalCount() {
-        Widget bar = client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.TASK_BAR);
-        if (bar == null) return -1;
+	private int scrapeTotalCount()
+	{
+		Widget bar = client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.TASK_BAR);
+		if (bar == null)
+		{
+			return -1;
+		}
 
-        for (Widget dynamicChild : bar.getDynamicChildren()) {
-            Matcher m = COMPLETED_TASKS_LABEL_REGEX.matcher(dynamicChild.getText());
-            if (m.find()) {
-                return Integer.parseInt(m.group(1));
-            }
-        }
+		for (Widget dynamicChild : bar.getDynamicChildren())
+		{
+			Matcher m = COMPLETED_TASKS_LABEL_REGEX.matcher(dynamicChild.getText());
+			if (m.find())
+			{
+				return Integer.parseInt(m.group(1));
+			}
+		}
 
-        return -1;
-    }
+		return -1;
+	}
 
-    private int scrapeTaskCompletedCount() {
-        Widget totalCount = client.getWidget(League3WidgetID.LEAGUE_3_SUMMARY_TAB, League3WidgetID.League3SummaryTab.TASKS_COMPLETED_VALUE);
-        if (totalCount == null) return -1;
+	private int scrapeTaskCompletedCount()
+	{
+		Widget totalCount = client.getWidget(League3WidgetID.LEAGUE_3_SUMMARY_TAB, League3WidgetID.League3SummaryTab.TASKS_COMPLETED_VALUE);
+		if (totalCount == null)
+		{
+			return -1;
+		}
 
-        return Integer.parseInt(totalCount.getText());
-    }
+		return Integer.parseInt(totalCount.getText());
+	}
 
-    private int scrapeLeaguePoints() {
-        Widget totalCount = client.getWidget(League3WidgetID.LEAGUE_3_SUMMARY_TAB, League3WidgetID.League3SummaryTab.LEAGUE_POINTS_VALUE);
-        if (totalCount == null) return -1;
+	private int scrapeLeaguePoints()
+	{
+		Widget totalCount = client.getWidget(League3WidgetID.LEAGUE_3_SUMMARY_TAB, League3WidgetID.League3SummaryTab.LEAGUE_POINTS_VALUE);
+		if (totalCount == null)
+		{
+			return -1;
+		}
 
-        return Integer.parseInt(totalCount.getText());
+		return Integer.parseInt(totalCount.getText());
 
-    }
+	}
 
-    private int scrapeSagesRenown() {
-        Widget totalCount = client.getWidget(League3WidgetID.LEAGUE_3_SUMMARY_TAB, League3WidgetID.League3SummaryTab.SAGE_RENOWN_VALUE);
-        if (totalCount == null) return -1;
+	private int scrapeSagesRenown()
+	{
+		Widget totalCount = client.getWidget(League3WidgetID.LEAGUE_3_SUMMARY_TAB, League3WidgetID.League3SummaryTab.SAGE_RENOWN_VALUE);
+		if (totalCount == null)
+		{
+			return -1;
+		}
 
-        return Integer.parseInt(totalCount.getText());
+		return Integer.parseInt(totalCount.getText());
 
-    }
+	}
 
-    private void setFilterClickListeners()
-    {
-        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_TIER)
-                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_TIER_VALUES)));
-        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_TYPE)
-                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_TYPE_VALUES)));
-        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_AREA)
-                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_AREA_VALUES)));
-        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_SKILL)
-                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_SKILL_VALUES)));
-        client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_COMPLETED)
-                .setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_COMPLETED_VALUES)));
-    }
+	private void setFilterClickListeners()
+	{
+		client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_TIER)
+			.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_TIER_VALUES)));
+		client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_TYPE)
+			.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_TYPE_VALUES)));
+		client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_AREA)
+			.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_AREA_VALUES)));
+		client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_SKILL)
+			.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_SKILL_VALUES)));
+		client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, League3WidgetID.League3Tasks.FILTER_COMPLETED)
+			.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(() -> setFilterDropdownListener(League3WidgetID.League3Tasks.FILTER_DROPDOWN_COMPLETED_VALUES)));
+	}
 
-    private boolean setFilterDropdownListener(int widgetId) {
-        Widget dropdown = client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, widgetId);
-        if (dropdown == null) return false;
+	private boolean setFilterDropdownListener(int widgetId)
+	{
+		Widget dropdown = client.getWidget(League3WidgetID.LEAGUE_3_TASKS_GROUP_ID, widgetId);
+		if (dropdown == null)
+		{
+			return false;
+		}
 
-        Widget[] options = dropdown.getDynamicChildren();
-        if (options.length == 0) return false;
+		Widget[] options = dropdown.getDynamicChildren();
+		if (options.length == 0)
+		{
+			return false;
+		}
 
-        for (Widget option : options) {
-            option.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(this::updateTasksFollowingDropdownChange));
-        }
-        return true;
-    }
+		for (Widget option : options)
+		{
+			option.setOnClickListener((JavaScriptCallback) e -> clientThread.invokeLater(this::updateTasksFollowingDropdownChange));
+		}
+		return true;
+	}
 
-    // TODO: Find better way to bring updateTasksFollowingDropdownChange/WidgetLoaded together
-    private boolean updateTasksFollowingDropdownChange() {
-        LinkedHashMap<String, Boolean> taskProgress = scrapeTaskCompletedData();
-        if (taskProgress == null) return true;
+	// TODO: Find better way to bring updateTasksFollowingDropdownChange/WidgetLoaded together
+	private boolean updateTasksFollowingDropdownChange()
+	{
+		LinkedHashMap<String, Boolean> taskProgress = scrapeTaskCompletedData();
+		if (taskProgress == null)
+		{
+			return true;
+		}
 
-        if (taskProgress.size() == previousTaskCount) return false;
+		if (taskProgress.size() == previousTaskCount)
+		{
+			return false;
+		}
 
-        updateTaskProgress(taskProgress);
-        refresh(null);
-        return true;
-    }
+		updateTaskProgress(taskProgress);
+		refresh(null);
+		return true;
+	}
 
-    private void updateTasksFollowingWidgetLoaded() {
-        LinkedHashMap<String, Boolean> taskProgress = scrapeTaskCompletedData();
-        if (taskProgress == null) return;
+	private void updateTasksFollowingWidgetLoaded()
+	{
+		LinkedHashMap<String, Boolean> taskProgress = scrapeTaskCompletedData();
+		if (taskProgress == null)
+		{
+			return;
+		}
 
-        updateTaskProgress(taskProgress);
-        refresh(null);
-    }
+		updateTaskProgress(taskProgress);
+		refresh(null);
+	}
 }

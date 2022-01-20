@@ -17,14 +17,18 @@ public enum TrackerWorldType
 
 	String displayString;
 
-	public static TrackerWorldType forWorld(EnumSet<WorldType> worldTypes) {
-		if (worldTypes.contains(WorldType.SEASONAL)) {
+	public static TrackerWorldType forWorld(EnumSet<WorldType> worldTypes)
+	{
+		if (worldTypes.contains(WorldType.SEASONAL))
+		{
 			return worldTypes.contains(WorldType.DEADMAN) ? TrackerWorldType.DEADMAN_TOURNAMENT : TrackerWorldType.LEAGUE;
 		}
-		if (worldTypes.contains(WorldType.TOURNAMENT_WORLD)) {
+		if (worldTypes.contains(WorldType.TOURNAMENT_WORLD))
+		{
 			return TrackerWorldType.TOURNAMENT;
 		}
-		if (worldTypes.contains(WorldType.DEADMAN)) {
+		if (worldTypes.contains(WorldType.DEADMAN))
+		{
 			return TrackerWorldType.DEADMAN;
 		}
 		return TrackerWorldType.DEFAULT;

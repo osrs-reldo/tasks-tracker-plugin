@@ -103,11 +103,11 @@ public class TasksTrackerPlugin extends Plugin
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
-				.tooltip("Task Tracker")
-				.icon(icon)
-				.priority(5)
-				.panel(pluginPanel)
-				.build();
+			.tooltip("Task Tracker")
+			.icon(icon)
+			.priority(5)
+			.panel(pluginPanel)
+			.build();
 		clientToolbar.addNavigation(navButton);
 
 		log.info("Tasks Tracker started!");
@@ -122,15 +122,19 @@ public class TasksTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onChatMessage(ChatMessage chatMessage) {
+	public void onChatMessage(ChatMessage chatMessage)
+	{
 		handleOnChatMessage(chatMessage);
 	}
-	private void handleOnChatMessage(ChatMessage chatMessage) {
+
+	private void handleOnChatMessage(ChatMessage chatMessage)
+	{
 		taskManagers.values().forEach(tm -> tm.handleChatMessage(chatMessage));
 	}
 
 	@Subscribe
-	public void onConfigChanged(ConfigChanged configChanged) {
+	public void onConfigChanged(ConfigChanged configChanged)
+	{
 	}
 
 	@Subscribe
@@ -138,6 +142,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		handleOnGameStateChanged(gameStateChanged);
 	}
+
 	private void handleOnGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		SwingUtilities.invokeLater(() -> {
@@ -162,7 +167,8 @@ public class TasksTrackerPlugin extends Plugin
 	private String getDisplayName()
 	{
 		Player localPlayer = client.getLocalPlayer();
-		if (localPlayer == null) {
+		if (localPlayer == null)
+		{
 			return null;
 		}
 		return localPlayer.getName();
@@ -178,6 +184,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		handleOnGameTick(gameTick);
 	}
+
 	private void handleOnGameTick(GameTick gameTick)
 	{
 		int[] newSkills = client.getRealSkillLevels();
@@ -200,6 +207,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		handleOnWidgetLoaded(widgetLoaded);
 	}
+
 	private void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
 	{
 		taskManagers.values().forEach(tm -> tm.handleOnWidgetLoaded(widgetLoaded));
@@ -210,6 +218,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		handleOnScriptPostFired(scriptPostFired);
 	}
+
 	private void handleOnScriptPostFired(ScriptPostFired scriptPostFired)
 	{
 		taskManagers.values().forEach(tm -> tm.handleOnScriptPostFired(scriptPostFired));
@@ -233,15 +242,15 @@ public class TasksTrackerPlugin extends Plugin
 	public void sendChatMessage(String chatMessage, Color color)
 	{
 		final String message = new ChatMessageBuilder()
-				.append(color, "Task Tracker: ")
-				.append(color, chatMessage)
-				.build();
+			.append(color, "Task Tracker: ")
+			.append(color, chatMessage)
+			.build();
 
 		chatMessageManager.queue(
-				QueuedMessage.builder()
-						.type(ChatMessageType.CONSOLE)
-						.runeLiteFormattedMessage(message)
-						.build());
+			QueuedMessage.builder()
+				.type(ChatMessageType.CONSOLE)
+				.runeLiteFormattedMessage(message)
+				.build());
 	}
 
 	private AbstractTaskManager getTaskTypeManager(TaskType type)
@@ -250,10 +259,10 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			return new CombatTaskManager(client, clientThread, this, trackerDataStore);
 		}
-        if (type == TaskType.LEAGUE_3)
-        {
-            return new League3TaskManager(client, clientThread, this, trackerDataStore);
-        }
+		if (type == TaskType.LEAGUE_3)
+		{
+			return new League3TaskManager(client, clientThread, this, trackerDataStore);
+		}
 		return new GenericTaskManager(type, this, trackerDataStore);
 	}
 
@@ -292,7 +301,9 @@ public class TasksTrackerPlugin extends Plugin
 		if (taskType == null)
 		{
 			return gson.toJson(trackerDataStore.currentData);
-		} else {
+		}
+		else
+		{
 			Export export = new Export();
 			export.setQuests(new QuestData(client));
 			export.setBosses(new BossData(pluginManager, configManager));
@@ -303,7 +314,7 @@ public class TasksTrackerPlugin extends Plugin
 			export.setTasks(trackerDataStore.currentData.tasksByType.get(taskType));
 			export.setTaskType(taskType.name());
 			export.setVarbits(taskManagers.get(selectedTaskType).getVarbits());
-            export.setVarps(taskManagers.get(selectedTaskType).getVarps());
+			export.setVarps(taskManagers.get(selectedTaskType).getVarps());
 			export.setLeagueData(trackerDataStore.leagueData);
 			return gson.toJson(export);
 		}
