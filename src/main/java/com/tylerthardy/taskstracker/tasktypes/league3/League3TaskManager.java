@@ -96,21 +96,10 @@ public class League3TaskManager extends AbstractTaskManager
 	{
 		assert client.isClientThread();
 
-		League3Varbits[] varbits = new League3Varbits[]{
-			League3Varbits.FRAGMENT_SLOT_1,
-			League3Varbits.FRAGMENT_SLOT_2,
-			League3Varbits.FRAGMENT_SLOT_3,
-			League3Varbits.FRAGMENT_SLOT_4,
-			League3Varbits.FRAGMENT_SLOT_5,
-			League3Varbits.FRAGMENT_SLOT_6,
-			League3Varbits.FRAGMENT_SLOT_7,
-			League3Varbits.TASKS_COMPLETED
-		};
-
 		HashMap<Integer, Integer> varbitValueMap = new HashMap<>();
-		for (League3Varbits varbit : varbits)
+		for (int varbit : League3Varbits.getAllVarbitIds())
 		{
-			varbitValueMap.put(varbit.getVarbitId(), client.getVarbitValue(varbit.getVarbitId()));
+			varbitValueMap.put(varbit, client.getVarbitValue(varbit));
 		}
 
 		return varbitValueMap;
