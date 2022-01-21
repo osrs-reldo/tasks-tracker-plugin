@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class TaskSave
 {
+	int id;
 	long completedOn;
 	long trackedOn;
 	long ignoredOn;

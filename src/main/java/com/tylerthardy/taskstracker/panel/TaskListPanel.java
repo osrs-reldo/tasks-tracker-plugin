@@ -21,89 +21,89 @@ import net.runelite.client.ui.FontManager;
 @Slf4j
 public abstract class TaskListPanel extends JScrollPane
 {
-    public TasksTrackerPlugin plugin;
+	public TasksTrackerPlugin plugin;
+	public final ArrayList<TaskPanel> taskPanels = new ArrayList<>();
+	private final ClientThread clientThread;
+	private final SpriteManager spriteManager;
+	private final SkillIconManager skillIconManager;
+	private final TaskListListPanel taskList;
 
-    public abstract ArrayList<Task> getTasks();
-    public abstract String getEmptyTaskListMessage();
-
-    public final ArrayList<TaskPanel> taskPanels = new ArrayList<>();
-
-    private final ClientThread clientThread;
-    private final SpriteManager spriteManager;
-    private final SkillIconManager skillIconManager;
-    private final TaskListListPanel taskList;
-
-    public TaskListPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
-    {
-        this.plugin = plugin;
-        this.clientThread = clientThread;
-        this.spriteManager = spriteManager;
+	public TaskListPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
+	{
+		this.plugin = plugin;
+		this.clientThread = clientThread;
+		this.spriteManager = spriteManager;
 		this.skillIconManager = skillIconManager;
 
-        taskList = new TaskListListPanel();
+		taskList = new TaskListListPanel();
 
-        setViewportView(taskList);
-        setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    }
+		setViewportView(taskList);
+		setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+	}
 
+	public abstract ArrayList<Task> getTasks();
 
-    public void redraw()
-    {
-        taskList.redraw();
-    }
+	public abstract String getEmptyTaskListMessage();
 
-    public void refresh(Task task)
-    {
-        assert SwingUtilities.isEventDispatchThread();
+	public void redraw()
+	{
+		taskList.redraw();
+	}
 
-        if (task != null) {
-            Optional<TaskPanel> panel = taskPanels.stream()
-                    .filter(tp -> tp.task.getName().equalsIgnoreCase(task.getName()))
-                    .findFirst();
-            panel.ifPresent(TaskPanel::refresh);
-            return;
-        }
-        for (TaskPanel taskPanel : taskPanels)
-        {
-            taskPanel.refresh();
-        }
-    }
+	public void refresh(Task task)
+	{
+		assert SwingUtilities.isEventDispatchThread();
 
-    private class TaskListListPanel extends FixedWidthPanel
-    {
-        public TaskListListPanel()
-        {
-            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-            setBorder(new EmptyBorder(0, 10, 10, 10));
-            setAlignmentX(Component.LEFT_ALIGNMENT);
-        }
+		if (task != null)
+		{
+			Optional<TaskPanel> panel = taskPanels.stream()
+				.filter(tp -> tp.task.getName().equalsIgnoreCase(task.getName()))
+				.findFirst();
+			panel.ifPresent(TaskPanel::refresh);
+			return;
+		}
+		for (TaskPanel taskPanel : taskPanels)
+		{
+			taskPanel.refresh();
+		}
+	}
 
-        public void redraw()
-        {
-            assert SwingUtilities.isEventDispatchThread();
-            removeAll();
-            taskPanels.clear();
+	private class TaskListListPanel extends FixedWidthPanel
+	{
+		public TaskListListPanel()
+		{
+			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+			setBorder(new EmptyBorder(0, 10, 10, 10));
+			setAlignmentX(Component.LEFT_ALIGNMENT);
+		}
 
-            log.debug("Creating panels...");
-            ArrayList<Task> tasks = getTasks();
-            if (tasks == null || tasks.size() == 0)
-            {
-                JLabel emptyTasks = new JLabel();
-                emptyTasks.setText("<html><center>" + getEmptyTaskListMessage() + "</center></html>");
-                emptyTasks.setFont(FontManager.getRunescapeSmallFont());
-                add(emptyTasks);
-                return;
-            }
-            {
-                for (Task task : tasks) {
-                    TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager, skillIconManager);
-                    add(taskPanel);
-                    taskPanels.add(taskPanel);
-                }
-            }
-            log.debug("Validated and repaint...");
-            validate();
-            repaint();
-        }
-    }
+		public void redraw()
+		{
+			assert SwingUtilities.isEventDispatchThread();
+			removeAll();
+			taskPanels.clear();
+
+			log.debug("Creating panels...");
+			ArrayList<Task> tasks = getTasks();
+			if (tasks == null || tasks.size() == 0)
+			{
+				JLabel emptyTasks = new JLabel();
+				emptyTasks.setText("<html><center>" + getEmptyTaskListMessage() + "</center></html>");
+				emptyTasks.setFont(FontManager.getRunescapeSmallFont());
+				add(emptyTasks);
+				return;
+			}
+			{
+				for (Task task : tasks)
+				{
+					TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager, skillIconManager);
+					add(taskPanel);
+					taskPanels.add(taskPanel);
+				}
+			}
+			log.debug("Validated and repaint...");
+			validate();
+			repaint();
+		}
+	}
 }

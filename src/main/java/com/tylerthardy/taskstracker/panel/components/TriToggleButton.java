@@ -4,83 +4,96 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 import lombok.Getter;
 
-public class TriToggleButton  extends JButton {
+public class TriToggleButton extends JButton
+{
 
-    @Getter
-    private int state = 0;
+	// Icons
+	private final Icon[] icons = new Icon[3];
+	// Tooltips
+	private final String[] tooltips = new String[3];
+	@Getter
+	private int state = 0;
 
-    // Icons
-    private final Icon[] icons = new Icon[3];
+	public TriToggleButton()
+	{
+		super();
+	}
 
-    // Tooltips
-    private final String[] tooltips = new String[3];
+	/* Action listener must include changeState() */
 
-    public TriToggleButton()
-    {
-        super();
-    }
+	public void setIcon(Icon icon, int state)
+	{
+		if (state < 0 || state > 3 || icon == null)
+		{
+			return;
+		}
 
-    /* Action listener must include changeState() */
+		icons[state] = icon;
 
-    public void setIcon(Icon icon, int state)
-    {
-        if (state < 0 || state > 3 || icon == null) return;
+		setIconState();
+	}
 
-        icons[state] = icon;
+	public boolean setIcons(Icon icon0, Icon icon1, Icon icon2)
+	{
+		if (icon0 == null || icon1 == null || icon2 == null)
+		{
+			return false;
+		}
 
-        setIconState();
-    }
+		setIcon(icon0, 0);
+		setIcon(icon1, 1);
+		setIcon(icon2, 2);
 
-    public boolean setIcons(Icon icon0, Icon icon1, Icon icon2)
-    {
-        if (icon0 == null || icon1 == null || icon2 == null) return false;
+		setIconState();
+		return true;
+	}
 
-        setIcon(icon0, 0);
-        setIcon(icon1, 1);
-        setIcon(icon2, 2);
+	public void setToolTip(String tooltip, int state)
+	{
+		if (state < 0 || state > 3 || tooltip == null)
+		{
+			return;
+		}
 
-        setIconState();
-        return true;
-    }
+		tooltips[state] = tooltip;
 
-    public void setToolTip(String tooltip, int state)
-    {
-        if (state < 0 || state > 3 || tooltip == null) return;
+		setTooltipState();
+	}
 
-        tooltips[state] = tooltip;
+	public boolean setToolTips(String tooltip0, String tooltip1, String tooltip2)
+	{
+		if (tooltip0 == null || tooltip1 == null || tooltip2 == null)
+		{
+			return false;
+		}
 
-        setTooltipState();
-    }
+		setToolTip(tooltip0, 0);
+		setToolTip(tooltip1, 1);
+		setToolTip(tooltip2, 2);
 
-    public boolean setToolTips(String tooltip0, String tooltip1, String tooltip2)
-    {
-        if (tooltip0 == null || tooltip1 == null || tooltip2 == null) return false;
+		setTooltipState();
+		return true;
+	}
 
-        setToolTip(tooltip0, 0);
-        setToolTip(tooltip1, 1);
-        setToolTip(tooltip2, 2);
+	public void changeState()
+	{
+		setState((state + 1) % 3);
+	}
 
-        setTooltipState();
-        return true;
-    }
+	private void setIconState()
+	{
+		super.setIcon(icons[state]);
+	}
 
-    public void changeState()
-    {
-        setState((state+1)%3);
-    }
+	private void setTooltipState()
+	{
+		super.setToolTipText(tooltips[state]);
+	}
 
-    private void setIconState() {
-        super.setIcon(icons[state]);
-    }
-
-    private void setTooltipState() {
-        super.setToolTipText(tooltips[state]);
-    }
-
-    public void setState(int state)
-    {
-        this.state = state;
-        setIconState();
-        setTooltipState();
-    }
+	public void setState(int state)
+	{
+		this.state = state;
+		setIconState();
+		setTooltipState();
+	}
 }

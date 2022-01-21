@@ -11,15 +11,15 @@ import net.runelite.client.game.SpriteManager;
 @Data
 public abstract class Task
 {
-    private final String name;
-    private final String description;
-    private final String tier;
+	private final String name;
+	private final String description;
+	private final String tier;
 
-    private long completedOn;
-    private long trackedOn;
-    private long ignoredOn;
+	private long completedOn;
+	private long trackedOn;
+	private long ignoredOn;
 
-    public void setCompletedOn(long completedOn)
+	public void setCompletedOn(long completedOn)
 	{
 		this.completedOn = completedOn;
 	}
@@ -28,6 +28,7 @@ public abstract class Task
 	{
 		return completedOn > 0;
 	}
+
 	public void setCompleted(boolean state)
 	{
 		if (state && completedOn > 0)
@@ -41,6 +42,7 @@ public abstract class Task
 	{
 		return trackedOn > 0;
 	}
+
 	public void setTracked(boolean state)
 	{
 		if (state && trackedOn > 0)
@@ -54,6 +56,7 @@ public abstract class Task
 	{
 		return ignoredOn > 0;
 	}
+
 	public void setIgnored(boolean state)
 	{
 		if (state && ignoredOn > 0)
@@ -64,5 +67,6 @@ public abstract class Task
 	}
 
 	public abstract TaskType getType();
-    public abstract TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager);
+
+	public abstract TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager);
 }

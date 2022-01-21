@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Provides;
 import com.tylerthardy.taskstracker.bosses.BossData;
 import com.tylerthardy.taskstracker.data.LongSerializer;
+import com.tylerthardy.taskstracker.data.TaskSave;
 import com.tylerthardy.taskstracker.data.TrackerDataStore;
 import com.tylerthardy.taskstracker.panel.TasksTrackerPluginPanel;
 import com.tylerthardy.taskstracker.quests.QuestData;
@@ -14,6 +15,7 @@ import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
 import com.tylerthardy.taskstracker.tasktypes.combattask.CombatTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.generic.GenericTaskManager;
+import com.tylerthardy.taskstracker.tasktypes.league3.League3TaskManager;
 import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
@@ -102,11 +104,11 @@ public class TasksTrackerPlugin extends Plugin
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
-				.tooltip("Task Tracker")
-				.icon(icon)
-				.priority(5)
-				.panel(pluginPanel)
-				.build();
+			.tooltip("Task Tracker")
+			.icon(icon)
+			.priority(5)
+			.panel(pluginPanel)
+			.build();
 		clientToolbar.addNavigation(navButton);
 
 		log.info("Tasks Tracker started!");
@@ -121,15 +123,19 @@ public class TasksTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onChatMessage(ChatMessage chatMessage) {
+	public void onChatMessage(ChatMessage chatMessage)
+	{
 		handleOnChatMessage(chatMessage);
 	}
-	private void handleOnChatMessage(ChatMessage chatMessage) {
+
+	private void handleOnChatMessage(ChatMessage chatMessage)
+	{
 		taskManagers.values().forEach(tm -> tm.handleChatMessage(chatMessage));
 	}
 
 	@Subscribe
-	public void onConfigChanged(ConfigChanged configChanged) {
+	public void onConfigChanged(ConfigChanged configChanged)
+	{
 	}
 
 	@Subscribe
@@ -137,6 +143,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		handleOnGameStateChanged(gameStateChanged);
 	}
+
 	private void handleOnGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		SwingUtilities.invokeLater(() -> {
@@ -161,7 +168,8 @@ public class TasksTrackerPlugin extends Plugin
 	private String getDisplayName()
 	{
 		Player localPlayer = client.getLocalPlayer();
-		if (localPlayer == null) {
+		if (localPlayer == null)
+		{
 			return null;
 		}
 		return localPlayer.getName();
@@ -177,6 +185,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		handleOnGameTick(gameTick);
 	}
+
 	private void handleOnGameTick(GameTick gameTick)
 	{
 		int[] newSkills = client.getRealSkillLevels();
@@ -199,6 +208,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		handleOnWidgetLoaded(widgetLoaded);
 	}
+
 	private void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
 	{
 		taskManagers.values().forEach(tm -> tm.handleOnWidgetLoaded(widgetLoaded));
@@ -209,6 +219,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		handleOnScriptPostFired(scriptPostFired);
 	}
+
 	private void handleOnScriptPostFired(ScriptPostFired scriptPostFired)
 	{
 		taskManagers.values().forEach(tm -> tm.handleOnScriptPostFired(scriptPostFired));
@@ -232,15 +243,15 @@ public class TasksTrackerPlugin extends Plugin
 	public void sendChatMessage(String chatMessage, Color color)
 	{
 		final String message = new ChatMessageBuilder()
-				.append(color, "Task Tracker: ")
-				.append(color, chatMessage)
-				.build();
+			.append(color, "Task Tracker: ")
+			.append(color, chatMessage)
+			.build();
 
 		chatMessageManager.queue(
-				QueuedMessage.builder()
-						.type(ChatMessageType.CONSOLE)
-						.runeLiteFormattedMessage(message)
-						.build());
+			QueuedMessage.builder()
+				.type(ChatMessageType.CONSOLE)
+				.runeLiteFormattedMessage(message)
+				.build());
 	}
 
 	private AbstractTaskManager getTaskTypeManager(TaskType type)
@@ -248,6 +259,10 @@ public class TasksTrackerPlugin extends Plugin
 		if (type == TaskType.COMBAT)
 		{
 			return new CombatTaskManager(client, clientThread, this, trackerDataStore);
+		}
+		if (type == TaskType.LEAGUE_3)
+		{
+			return new League3TaskManager(client, clientThread, this, trackerDataStore);
 		}
 		return new GenericTaskManager(type, this, trackerDataStore);
 	}
@@ -287,7 +302,9 @@ public class TasksTrackerPlugin extends Plugin
 		if (taskType == null)
 		{
 			return gson.toJson(trackerDataStore.currentData);
-		} else {
+		}
+		else
+		{
 			Export export = new Export();
 			export.setQuests(new QuestData(client));
 			export.setBosses(new BossData(pluginManager, configManager));
@@ -295,8 +312,22 @@ public class TasksTrackerPlugin extends Plugin
 			export.setRunescapeVersion(client.getRevision());
 			export.setRuneliteVersion(runeliteVersion);
 			export.setTimestamp(Instant.now().toEpochMilli());
-			export.setTasks(trackerDataStore.currentData.tasksByType.get(taskType));
 			export.setTaskType(taskType.name());
+			export.setVarbits(taskManagers.get(selectedTaskType).getVarbits());
+			export.setVarps(taskManagers.get(selectedTaskType).getVarps());
+
+			// TODO: Hello God, I am so sorry for this code. I will clean it up.
+			// TODO: Grab ids for other task types and skip this kludge between string/int
+			HashMap<String, TaskSave> taskSaves = trackerDataStore.currentData.tasksByType.get(taskType);
+			if (taskType == TaskType.LEAGUE_3)
+			{
+				HashMap<String, TaskSave> tasksById = new HashMap<>();
+				taskSaves.forEach((key, value) -> tasksById.put(String.valueOf(value.getId()), value));
+				export.setTasks(tasksById);
+			} else {
+				export.setTasks(trackerDataStore.currentData.tasksByType.get(taskType));
+			}
+
 			return gson.toJson(export);
 		}
 	}

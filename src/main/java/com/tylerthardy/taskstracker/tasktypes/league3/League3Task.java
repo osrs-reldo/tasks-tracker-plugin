@@ -1,22 +1,21 @@
-package com.tylerthardy.taskstracker.tasktypes.combattask;
+package com.tylerthardy.taskstracker.tasktypes.league3;
 
 import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.panel.TaskPanel;
+import com.tylerthardy.taskstracker.tasktypes.RequiredSkill;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
-import lombok.Getter;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 
-public class CombatTask extends Task
+public class League3Task extends Task
 {
-	@Getter
-	public String monster;
-	@Getter
-	public String category;
+	public RequiredSkill[] skills;
+	public String other;
+	public int id;
 
-	public CombatTask(String name, String description, String tier)
+	public League3Task(String name, String description, String tier)
 	{
 		super(name, description, tier);
 	}
@@ -24,12 +23,12 @@ public class CombatTask extends Task
 	@Override
 	public TaskType getType()
 	{
-		return TaskType.COMBAT;
+		return TaskType.LEAGUE_3;
 	}
 
 	@Override
 	public TaskPanel generatePanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
 	{
-		return new CombatTaskPanel(plugin, clientThread, spriteManager, this);
+		return new League3TaskPanel(plugin, clientThread, spriteManager, this);
 	}
 }

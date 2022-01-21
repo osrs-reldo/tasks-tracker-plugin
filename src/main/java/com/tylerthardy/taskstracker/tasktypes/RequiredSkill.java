@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class RequiredSkill
 {
-    public String skill;
-    public String level;
+	public String skill;
+	public String level;
 }

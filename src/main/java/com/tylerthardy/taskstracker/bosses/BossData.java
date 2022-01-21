@@ -15,7 +15,7 @@ public class BossData extends HashMap<String, Integer>
 			return;
 		}
 
-		for(Boss boss : Boss.values())
+		for (Boss boss : Boss.values())
 		{
 			Integer killCount = configManager.getRSProfileConfiguration(CHAT_COMMANDS_GROUP_NAME, boss.getDisplayName().toLowerCase(), int.class);
 			this.put(boss.getDisplayName(), killCount);

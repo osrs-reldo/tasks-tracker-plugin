@@ -8,11 +8,13 @@ import net.runelite.api.events.ChatMessage;
 
 public class GenericTaskManager extends AbstractTaskManager
 {
-    public GenericTaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore) {
-        super(taskType, plugin, trackerDataStore);
-    }
+	public GenericTaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
+	{
+		super(taskType, plugin, trackerDataStore);
+	}
 
-    @Override
-    public void handleChatMessage(ChatMessage chatMessage) {
-    }
+	@Override
+	public void handleChatMessage(ChatMessage chatMessage)
+	{
+	}
 }

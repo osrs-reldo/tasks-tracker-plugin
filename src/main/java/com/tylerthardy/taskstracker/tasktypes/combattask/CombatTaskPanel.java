@@ -10,17 +10,20 @@ import net.runelite.client.game.SpriteManager;
 
 public class CombatTaskPanel extends TaskPanel
 {
-    public CombatTaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, CombatTask task) {
-        super(plugin, clientThread, spriteManager, task);
-    }
+	public CombatTaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, CombatTask task)
+	{
+		super(plugin, clientThread, spriteManager, task);
+	}
 
-    @Override
-    public JPopupMenu getPopupMenu() {
-        return null;
-    }
+	@Override
+	public JPopupMenu getPopupMenu()
+	{
+		return null;
+	}
 
-    @Override
-    public String getTaskTooltip() {
+	@Override
+	public String getTaskTooltip()
+	{
 		CombatTask task = (CombatTask) this.task;
 		String text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
 			task.getTier() + Util.HTML_LINE_BREAK +
@@ -30,16 +33,17 @@ public class CombatTaskPanel extends TaskPanel
 		text = Util.wrapWithWrappingParagraph(text, 200);
 
 		return Util.wrapWithHtml(text);
-    }
+	}
 
-    @Override
-    public BufferedImage getIcon() {
-        CombatTaskTier tier = CombatTaskTier.getTierByName(task.getTier());
-        if (tier == null)
-        {
-            return null;
-        }
+	@Override
+	public BufferedImage getIcon()
+	{
+		CombatTaskTier tier = CombatTaskTier.getTierByName(task.getTier());
+		if (tier == null)
+		{
+			return null;
+		}
 
-        return spriteManager.getSprite(tier.spriteId, 0);
-    }
+		return spriteManager.getSprite(tier.spriteId, 0);
+	}
 }

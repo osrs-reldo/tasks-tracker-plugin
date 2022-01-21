@@ -17,4 +17,7 @@ public class Export
 	public long timestamp;
 	public HashMap<String, TaskSave> tasks;
 	public String taskType;
+	public HashMap<Integer, Integer> varbits;
+	public HashMap<Integer, Integer> varps;
+	public HashMap<String, Object> leagueData;
 }
