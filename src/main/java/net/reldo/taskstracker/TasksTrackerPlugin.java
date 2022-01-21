@@ -149,7 +149,7 @@ public class TasksTrackerPlugin extends Plugin
 		SwingUtilities.invokeLater(() -> {
 			pluginPanel.setLoggedIn(isLoggedInState(gameStateChanged.getGameState()));
 
-			if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
+			if (gameStateChanged.getGameState() == GameState.LOGGING_IN)
 			{
 				trackerDataStore.loadProfile();
 				shouldGetName = true;
@@ -177,7 +177,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	private boolean isLoggedInState(GameState gameState)
 	{
-		return gameState != GameState.LOGIN_SCREEN && gameState != GameState.LOGIN_SCREEN_AUTHENTICATOR && gameState != GameState.LOGGING_IN;
+		return gameState != GameState.LOGIN_SCREEN && gameState != GameState.LOGIN_SCREEN_AUTHENTICATOR;
 	}
 
 	@Subscribe
