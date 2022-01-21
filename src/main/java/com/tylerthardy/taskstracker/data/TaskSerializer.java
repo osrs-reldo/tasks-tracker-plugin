@@ -17,6 +17,10 @@ public class TaskSerializer implements JsonSerializer<TaskSave>
 		attributes.add(context.serialize(value.getTrackedOn()).getAsString());
 		attributes.add(context.serialize(value.getIgnoredOn()).getAsString());
 
+		// ID should remain the last attribute (see TaskDeserializer)
+		// TODO: The entire task saving should no longer be necessary when the plugin switches to varbits only
+		attributes.add(context.serialize(value.getId()).getAsString());
+
 		return new JsonPrimitive(String.join("|", attributes));
 	}
 }

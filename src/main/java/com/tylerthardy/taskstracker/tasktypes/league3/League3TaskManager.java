@@ -4,7 +4,6 @@ import com.tylerthardy.taskstracker.TasksTrackerPlugin;
 import com.tylerthardy.taskstracker.data.TrackerDataStore;
 import com.tylerthardy.taskstracker.tasktypes.AbstractTaskManager;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
@@ -79,15 +78,6 @@ public class League3TaskManager extends AbstractTaskManager
 			maxTaskCount = scrapeTotalCount();
 			updateTasksFollowingWidgetLoaded();
 			setFilterClickListeners();
-		}
-		if (scriptPostFired.getScriptId() == League3ScriptID.league3_summary_tab_update)
-		{
-			trackerDataStore.leagueData.put("leaguePoints", scrapeLeaguePoints());
-			trackerDataStore.leagueData.put("leaguePointsTimestamp", Instant.now().toEpochMilli());
-			trackerDataStore.leagueData.put("tasksCompleted", scrapeTaskCompletedCount());
-			trackerDataStore.leagueData.put("tasksCompletedTimestamp", Instant.now().toEpochMilli());
-			trackerDataStore.leagueData.put("sagesRenown", scrapeSagesRenown());
-			trackerDataStore.leagueData.put("sagesRenownTimestamp", Instant.now().toEpochMilli());
 		}
 	}
 

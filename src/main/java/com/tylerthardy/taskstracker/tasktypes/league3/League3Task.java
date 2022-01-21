@@ -13,6 +13,7 @@ public class League3Task extends Task
 {
 	public RequiredSkill[] skills;
 	public String other;
+	public int id;
 
 	public League3Task(String name, String description, String tier)
 	{

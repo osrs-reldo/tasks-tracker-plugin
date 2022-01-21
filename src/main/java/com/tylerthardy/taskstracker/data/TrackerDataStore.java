@@ -6,6 +6,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.tylerthardy.taskstracker.tasktypes.Task;
 import com.tylerthardy.taskstracker.tasktypes.TaskType;
+import com.tylerthardy.taskstracker.tasktypes.league3.League3Task;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import javax.inject.Inject;
@@ -22,7 +23,6 @@ public class TrackerDataStore
 	private final ConfigManager configManager;
 
 	public TrackerData currentData;
-	public HashMap<String, Object> leagueData = new HashMap<>();
 
 	@Inject
 	public TrackerDataStore(ConfigManager configManager)
@@ -37,6 +37,10 @@ public class TrackerDataStore
 		if (task.isTracked() || task.isCompleted() || task.isIgnored())
 		{
 			TaskSave taskSave = new TaskSave();
+			if (task.getType() == TaskType.LEAGUE_3)
+			{
+				taskSave.setId(((League3Task)task).id);
+			}
 			taskSave.setCompletedOn(task.getCompletedOn());
 			taskSave.setTrackedOn(task.getTrackedOn());
 			taskSave.setIgnoredOn(task.getIgnoredOn());

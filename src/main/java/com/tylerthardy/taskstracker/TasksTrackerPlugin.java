@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Provides;
 import com.tylerthardy.taskstracker.bosses.BossData;
 import com.tylerthardy.taskstracker.data.LongSerializer;
+import com.tylerthardy.taskstracker.data.TaskSave;
 import com.tylerthardy.taskstracker.data.TrackerDataStore;
 import com.tylerthardy.taskstracker.panel.TasksTrackerPluginPanel;
 import com.tylerthardy.taskstracker.quests.QuestData;
@@ -311,11 +312,22 @@ public class TasksTrackerPlugin extends Plugin
 			export.setRunescapeVersion(client.getRevision());
 			export.setRuneliteVersion(runeliteVersion);
 			export.setTimestamp(Instant.now().toEpochMilli());
-			export.setTasks(trackerDataStore.currentData.tasksByType.get(taskType));
 			export.setTaskType(taskType.name());
 			export.setVarbits(taskManagers.get(selectedTaskType).getVarbits());
 			export.setVarps(taskManagers.get(selectedTaskType).getVarps());
-			export.setLeagueData(trackerDataStore.leagueData);
+
+			// TODO: Hello God, I am so sorry for this code. I will clean it up.
+			// TODO: Grab ids for other task types and skip this kludge between string/int
+			HashMap<String, TaskSave> taskSaves = trackerDataStore.currentData.tasksByType.get(taskType);
+			if (taskType == TaskType.LEAGUE_3)
+			{
+				HashMap<String, TaskSave> tasksById = new HashMap<>();
+				taskSaves.forEach((key, value) -> tasksById.put(String.valueOf(value.getId()), value));
+				export.setTasks(tasksById);
+			} else {
+				export.setTasks(trackerDataStore.currentData.tasksByType.get(taskType));
+			}
+
 			return gson.toJson(export);
 		}
 	}
