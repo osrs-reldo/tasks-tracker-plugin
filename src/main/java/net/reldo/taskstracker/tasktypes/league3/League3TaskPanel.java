@@ -53,7 +53,7 @@ public class League3TaskPanel extends TaskPanel
 			return null;
 		}
 
-		return spriteManager.getSprite(tier.spriteId, 0);
+		return spriteManager.getSprite(tier.getSpriteId(), 0);
 	}
 
 	// TODO: Fix this file because it makes me want to vomit
