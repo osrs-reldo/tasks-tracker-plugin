@@ -100,15 +100,10 @@ public class League3TaskManager extends AbstractTaskManager
 	{
 		assert client.isClientThread();
 
-		League3Varps[] varps = new League3Varps[]{
-			League3Varps.LEAGUE_POINTS,
-			League3Varps.SAGES_RENOWN
-		};
-
 		HashMap<Integer, Integer> varpValueMap = new HashMap<>();
-		for (League3Varps varp : varps)
+		for (int varp : League3Varps.getAllVarpIds())
 		{
-			varpValueMap.put(varp.getVarpId(), client.getVarpValue(varp.getVarpId()));
+			varpValueMap.put(varp, client.getVarpValue(varp));
 		}
 
 		return varpValueMap;
