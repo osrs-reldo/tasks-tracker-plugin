@@ -2,9 +2,6 @@ package net.reldo.taskstracker.tasktypes;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.data.TaskSave;
-import net.reldo.taskstracker.data.TrackerDataStore;
 import java.awt.Color;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,8 +11,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import javax.swing.SwingUtilities;
+import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.data.TaskSave;
+import net.reldo.taskstracker.data.TrackerDataStore;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
@@ -27,6 +28,7 @@ public abstract class AbstractTaskManager
 	public TaskType taskType;
 	public ArrayList<Task> tasks;
 	public int maxTaskCount;
+	public Map<Integer, Task> tasksById;
 
 	public AbstractTaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
 	{
@@ -39,6 +41,7 @@ public abstract class AbstractTaskManager
 			Type classType = taskType.getClassType();
 			Type listType = TypeToken.getParameterized(ArrayList.class, classType).getType();
 			tasks = new Gson().fromJson(new InputStreamReader(dataFile, StandardCharsets.UTF_8), listType);
+			tasks.forEach(t -> tasksById.put(t.getId(), t));
 		}
 		catch (IOException e)
 		{
@@ -91,7 +94,7 @@ public abstract class AbstractTaskManager
 	 * Most tasks will have a script that load a list of tasks into an interface. Some lists are not accessible through widgets until this script is complete.
 	 * Hook into the completion of a script by overriding this method.
 	 *
-	 * @param scriptPostFired
+	 * @param scriptPostFired Runelite post script fire event
 	 */
 	public void handleOnScriptPostFired(ScriptPostFired scriptPostFired)
 	{

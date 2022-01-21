@@ -8,9 +8,9 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
+import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.tasktypes.league3.League3Task;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskManager;
 import net.runelite.client.config.ConfigManager;
@@ -41,7 +41,7 @@ public class TrackerDataStore
 			TaskSave taskSave = new TaskSave();
 			if (task.getType() == TaskType.LEAGUE_3)
 			{
-				taskSave.setId(((League3Task)task).id);
+				taskSave.setId((task).getId());
 			}
 			taskSave.setCompletedOn(task.getCompletedOn());
 			taskSave.setTrackedOn(task.getTrackedOn());
@@ -72,7 +72,7 @@ public class TrackerDataStore
 		HashMap<String, TaskSave> taskSavesByName = new HashMap<>();
 		taskManager.tasks.forEach((task) -> {
 			League3Task league3Task = (League3Task) task;
-			String idString = String.valueOf(league3Task.id);
+			String idString = String.valueOf(league3Task.getId());
 			if (reldoImport.getTasks().containsKey(idString))
 			{
 				taskSavesByName.put(task.getName(), reldoImport.getTasks().get(idString).toTaskSave());
