@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +87,9 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject	private ClientThread clientThread;
 	@Inject	private ChatMessageManager chatMessageManager;
 	@Inject	private TasksTrackerConfig config;
+
+	@Inject private Provider<League3TaskManager> league3TaskManagerProvider;
+	@Inject private Provider<CombatTaskManager> combatTaskManagerProvider;
 
 	@Inject private TrackerDataStore trackerDataStore;
 	private boolean shouldGetName;
@@ -263,11 +267,11 @@ public class TasksTrackerPlugin extends Plugin
 		return taskManagers.computeIfAbsent(type, t -> {
 			if (type == TaskType.COMBAT)
 			{
-				return new CombatTaskManager(this, trackerDataStore, client, clientThread);
+				return combatTaskManagerProvider.get();
 			}
 			if (type == TaskType.LEAGUE_3)
 			{
-				return new League3TaskManager(this, trackerDataStore, client, clientThread);
+				return league3TaskManagerProvider.get();
 			}
 			return null;
 		});

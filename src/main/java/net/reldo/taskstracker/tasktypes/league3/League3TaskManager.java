@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.TrackerDataStore;
@@ -32,6 +33,7 @@ public class League3TaskManager extends AbstractTaskManager
 
 	private final int previousTaskCount = -1;
 
+	@Inject
 	public League3TaskManager(TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore, Client client, ClientThread clientThread)
 	{
 		super(TaskType.LEAGUE_3, plugin, trackerDataStore, client, clientThread);

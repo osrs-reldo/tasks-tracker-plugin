@@ -3,6 +3,7 @@ package net.reldo.taskstracker.tasktypes.combattask;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.TrackerDataStore;
 import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
@@ -25,6 +26,7 @@ public class CombatTaskManager extends AbstractTaskManager
 
 	private final int previousTaskCount = -1;
 
+	@Inject
 	public CombatTaskManager(TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore, Client client, ClientThread clientThread)
 	{
 		super(TaskType.COMBAT, plugin, trackerDataStore, client, clientThread);

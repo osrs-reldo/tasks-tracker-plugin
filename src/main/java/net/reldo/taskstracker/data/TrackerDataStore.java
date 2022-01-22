@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
@@ -16,6 +17,7 @@ import net.reldo.taskstracker.tasktypes.league3.League3TaskManager;
 import net.runelite.client.config.ConfigManager;
 
 @Slf4j
+@Singleton
 public class TrackerDataStore
 {
 	private static final String PLUGIN_BASE_GROUP = "tasksTracker";
