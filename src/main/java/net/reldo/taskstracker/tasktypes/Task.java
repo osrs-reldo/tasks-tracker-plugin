@@ -19,23 +19,19 @@ public abstract class Task
 	private long trackedOn;
 	private long ignoredOn;
 
-	public void setCompletedOn(long completedOn)
-	{
-		this.completedOn = completedOn;
-	}
-
 	public boolean isCompleted()
 	{
 		return completedOn > 0;
 	}
 
-	public void setCompleted(boolean state)
+	public void setCompleted(boolean completed)
 	{
-		if (state && completedOn > 0)
+		long now = Instant.now().toEpochMilli();
+		if (completed && completedOn > 0 && completedOn <= now)
 		{
 			return;
 		}
-		completedOn = state ? Instant.now().toEpochMilli() : -1;
+		completedOn = completed ? now : -1;
 	}
 
 	public boolean isTracked()
@@ -45,11 +41,12 @@ public abstract class Task
 
 	public void setTracked(boolean state)
 	{
-		if (state && trackedOn > 0)
+		long now = Instant.now().toEpochMilli();
+		if (state && trackedOn > 0 && trackedOn <= now)
 		{
 			return;
 		}
-		trackedOn = state ? Instant.now().toEpochMilli() : -1;
+		trackedOn = state ? now : -1;
 	}
 
 	public boolean isIgnored()
@@ -59,11 +56,12 @@ public abstract class Task
 
 	public void setIgnored(boolean state)
 	{
-		if (state && ignoredOn > 0)
+		long now = Instant.now().toEpochMilli();
+		if (state && ignoredOn > 0 && ignoredOn <= now)
 		{
 			return;
 		}
-		ignoredOn = state ? Instant.now().toEpochMilli() : -1;
+		ignoredOn = state ? now : -1;
 	}
 
 	public abstract TaskType getType();

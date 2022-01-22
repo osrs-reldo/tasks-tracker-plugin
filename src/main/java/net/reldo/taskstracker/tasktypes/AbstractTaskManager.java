@@ -55,14 +55,14 @@ public abstract class AbstractTaskManager
 			return;
 		}
 		tasks.forEach(task -> {
-			TaskSave loadedTask = loadedTasks.get(task.getName());
-			if (loadedTask == null)
+			TaskSave taskSave = loadedTasks.get(task.getName());
+			if (taskSave == null)
 			{
 				return;
 			}
-			task.setTracked(loadedTask.isTracked());
-			task.setCompleted(loadedTask.isCompleted());
-			task.setIgnored(loadedTask.isIgnored());
+			task.setTrackedOn(taskSave.getTrackedOn());
+			task.setCompletedOn(taskSave.getCompletedOn());
+			task.setIgnoredOn(taskSave.getIgnoredOn());
 		});
 	}
 
