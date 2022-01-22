@@ -44,6 +44,7 @@ import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.SkillIconManager;
@@ -90,6 +91,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	@Inject private TrackerDataStore trackerDataStore;
 	private boolean shouldGetName;
+	private RuneScapeProfileType currentProfileType;
 
 	@Provides
 	TasksTrackerConfig getConfig(ConfigManager configManager)
@@ -148,11 +150,16 @@ public class TasksTrackerPlugin extends Plugin
 
 	private void handleOnGameStateChanged(GameStateChanged gameStateChanged)
 	{
+		// FIXME: This entire logic being wrapped in invokeLater is a smell
 		SwingUtilities.invokeLater(() -> {
-			pluginPanel.setLoggedIn(isLoggedInState(gameStateChanged.getGameState()));
+			GameState newGameState = gameStateChanged.getGameState();
+			RuneScapeProfileType newProfileType = RuneScapeProfileType.getCurrent(client);
 
-			if (gameStateChanged.getGameState() == GameState.LOGGING_IN)
+			pluginPanel.setLoggedIn(isLoggedInState(newGameState));
+
+			if (newGameState == GameState.LOGGING_IN || (isLoggedInState(newGameState) && currentProfileType != newProfileType))
 			{
+				taskManagers.clear();
 				trackerDataStore.loadProfile();
 				shouldGetName = true;
 				TaskType selectedType = trackerDataStore.currentData.settings.selectedTaskType;
@@ -160,10 +167,12 @@ public class TasksTrackerPlugin extends Plugin
 				pluginPanel.redraw();
 			}
 
-			if (!isLoggedInState(gameStateChanged.getGameState()))
+			if (!isLoggedInState(newGameState))
 			{
 				taskManagers.clear();
 			}
+
+			currentProfileType = newProfileType;
 		});
 	}
 
