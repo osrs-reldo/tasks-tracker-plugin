@@ -11,30 +11,36 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Optional;
 import javax.swing.SwingUtilities;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.TaskSave;
 import net.reldo.taskstracker.data.TrackerDataStore;
+import net.runelite.api.Client;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
+import net.runelite.client.callback.ClientThread;
 
 public abstract class AbstractTaskManager
 {
-	protected final TrackerDataStore trackerDataStore;
-	private final TasksTrackerPlugin plugin;
 	public TaskType taskType;
 	public ArrayList<Task> tasks;
 	public int maxTaskCount;
-	public Map<Integer, Task> tasksById;
+	public HashMap<Integer, Task> tasksById = new HashMap<>();
 
-	public AbstractTaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
+	protected final TasksTrackerPlugin plugin;
+	protected final TrackerDataStore trackerDataStore;
+	protected final ClientThread clientThread;
+	protected final Client client;
+
+	public AbstractTaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore, Client client, ClientThread clientThread)
 	{
 		this.taskType = taskType;
 		this.plugin = plugin;
 		this.trackerDataStore = trackerDataStore;
+		this.clientThread = clientThread;
+		this.client = client;
 		try (InputStream dataFile = TasksTrackerPlugin.class.getResourceAsStream(taskType.getDataFileName()))
 		{
 			assert dataFile != null;

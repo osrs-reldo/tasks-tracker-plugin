@@ -1,12 +1,12 @@
 package net.reldo.taskstracker.tasktypes.combattask;
 
+import java.util.LinkedHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.TrackerDataStore;
 import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
 import net.reldo.taskstracker.tasktypes.TaskType;
-import java.util.LinkedHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.events.ChatMessage;
@@ -23,16 +23,11 @@ public class CombatTaskManager extends AbstractTaskManager
 	private static final Pattern TASK_COMPLETED_CHAT_MESSAGE_REGEX = Pattern.compile("Congratulations, you've completed an? (.*) combat task: (.*)\\.");
 	private static final int COMPLETED_TASK_COLOR = 901389;
 
-	private final Client client;
-	private final ClientThread clientThread;
-
 	private final int previousTaskCount = -1;
 
-	public CombatTaskManager(Client client, ClientThread clientThread, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
+	public CombatTaskManager(TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore, Client client, ClientThread clientThread)
 	{
-		super(TaskType.COMBAT, plugin, trackerDataStore);
-		this.client = client;
-		this.clientThread = clientThread;
+		super(TaskType.COMBAT, plugin, trackerDataStore, client, clientThread);
 	}
 
 	@Override

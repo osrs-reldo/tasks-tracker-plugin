@@ -28,7 +28,6 @@ import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.combattask.CombatTaskManager;
-import net.reldo.taskstracker.tasktypes.generic.GenericTaskManager;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskManager;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -229,12 +228,15 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void setSelectedTaskType(TaskType type)
 	{
+		// If there is no task manager, then prevent selection
+		AbstractTaskManager taskManager = getTaskTypeManager(type);
+		if (taskManager == null)
+		{
+			return;
+		}
+
 		selectedTaskType = type;
 		trackerDataStore.currentData.settings.selectedTaskType = type;
-		if (!taskManagers.containsKey(type))
-		{
-			taskManagers.put(type, getTaskTypeManager(type));
-		}
 	}
 
 	public void refresh()
@@ -258,15 +260,17 @@ public class TasksTrackerPlugin extends Plugin
 
 	private AbstractTaskManager getTaskTypeManager(TaskType type)
 	{
-		if (type == TaskType.COMBAT)
-		{
-			return new CombatTaskManager(client, clientThread, this, trackerDataStore);
-		}
-		if (type == TaskType.LEAGUE_3)
-		{
-			return new League3TaskManager(client, clientThread, this, trackerDataStore);
-		}
-		return new GenericTaskManager(type, this, trackerDataStore);
+		return taskManagers.computeIfAbsent(type, t -> {
+			if (type == TaskType.COMBAT)
+			{
+				return new CombatTaskManager(this, trackerDataStore, client, clientThread);
+			}
+			if (type == TaskType.LEAGUE_3)
+			{
+				return new League3TaskManager(this, trackerDataStore, client, clientThread);
+			}
+			return null;
+		});
 	}
 
 	public void trackTask(Task task)

@@ -1,14 +1,14 @@
 package net.reldo.taskstracker.tasktypes.league3;
 
-import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.data.TrackerDataStore;
-import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
-import net.reldo.taskstracker.tasktypes.TaskType;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.data.TrackerDataStore;
+import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
+import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.events.ChatMessage;
@@ -30,16 +30,11 @@ public class League3TaskManager extends AbstractTaskManager
 	private static final Pattern CURRENCY_CHAT_MESSAGE_REGEX = Pattern.compile("You now have (.*) League Points and (.*) Sage's Renown in total.");
 	private static final int COMPLETED_TASK_COLOR = 2752445;
 
-	private final Client client;
-	private final ClientThread clientThread;
-
 	private final int previousTaskCount = -1;
 
-	public League3TaskManager(Client client, ClientThread clientThread, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
+	public League3TaskManager(TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore, Client client, ClientThread clientThread)
 	{
-		super(TaskType.LEAGUE_3, plugin, trackerDataStore);
-		this.client = client;
-		this.clientThread = clientThread;
+		super(TaskType.LEAGUE_3, plugin, trackerDataStore, client, clientThread);
 	}
 
 	@Override
