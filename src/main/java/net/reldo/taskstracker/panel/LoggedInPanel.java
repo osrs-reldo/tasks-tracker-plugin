@@ -18,7 +18,9 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.panel.components.SearchBox;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
 import net.reldo.taskstracker.panel.tabs.AllTaskListPanel;
@@ -44,6 +46,7 @@ public class LoggedInPanel extends JPanel
 	private final ClientThread clientThread;
 	private final SpriteManager spriteManager;
 	private final SkillIconManager skillIconManager;
+	private final TasksTrackerConfig config;
 
 	// Filter buttons
 	private TriToggleButton completedFilterBtn = new TriToggleButton();
@@ -67,13 +70,14 @@ public class LoggedInPanel extends JPanel
 	private final Icon TRACKED_ONLY_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, trackedBtnPath + "tracked_icon.png"));
 	private final Icon UNTRACKED_ONLY_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, trackedBtnPath + "untracked_icon.png"));
 
-	public LoggedInPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
+	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
 	{
 		super(false);
 		this.plugin = plugin;
 		this.clientThread = clientThread;
 		this.spriteManager = spriteManager;
 		this.skillIconManager = skillIconManager;
+		this.config = config;
 
 		createPanel(this);
 		redraw();
@@ -181,8 +185,9 @@ public class LoggedInPanel extends JPanel
 		completedFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		completedFilterBtn.addActionListener(e -> {
 			completedFilterBtn.changeState();
-			completedFilterButtonAction();
+			filterButtonAction("completed");
 		});
+		completedFilterBtn.setState(config.completedFilter().ordinal());
 
 		// Create popup menu for manually setting the button state
 		final JPopupMenu completedFilterBtnPopupMenu = new JPopupMenu();
@@ -192,21 +197,21 @@ public class LoggedInPanel extends JPanel
 		final JMenuItem allTasksC = new JMenuItem("All tasks");
 		allTasksC.addActionListener(e -> {
 			completedFilterBtn.setState(0);
-			completedFilterButtonAction();
+			filterButtonAction("completed");
 		});
 		completedFilterBtnPopupMenu.add(allTasksC);
 
 		final JMenuItem completedTasks = new JMenuItem("Completed tasks only");
 		completedTasks.addActionListener(e -> {
 			completedFilterBtn.setState(1);
-			completedFilterButtonAction();
+			filterButtonAction("completed");
 		});
 		completedFilterBtnPopupMenu.add(completedTasks);
 
 		final JMenuItem incompleteTasks = new JMenuItem("Incomplete tasks only");
 		incompleteTasks.addActionListener(e -> {
 			completedFilterBtn.setState(2);
-			completedFilterButtonAction();
+			filterButtonAction("completed");
 		});
 		completedFilterBtnPopupMenu.add(incompleteTasks);
 
@@ -219,8 +224,9 @@ public class LoggedInPanel extends JPanel
 		trackedFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		trackedFilterBtn.addActionListener(e -> {
 			trackedFilterBtn.changeState();
-			trackedFilterButtonAction();
+			filterButtonAction("tracked");
 		});
+		trackedFilterBtn.setState(config.trackedFilter().ordinal());
 
 		// Create popup menu for manually setting the button state
 		final JPopupMenu trackedFilterBtnPopupMenu = new JPopupMenu();
@@ -230,21 +236,21 @@ public class LoggedInPanel extends JPanel
 		final JMenuItem allTasksT = new JMenuItem("All tasks");
 		allTasksT.addActionListener(e -> {
 			trackedFilterBtn.setState(0);
-			trackedFilterButtonAction();
+			filterButtonAction("tracked");
 		});
 		trackedFilterBtnPopupMenu.add(allTasksT);
 
 		final JMenuItem trackedTasks = new JMenuItem("Tracked tasks only");
 		trackedTasks.addActionListener(e -> {
 			trackedFilterBtn.setState(1);
-			trackedFilterButtonAction();
+			filterButtonAction("tracked");
 		});
 		trackedFilterBtnPopupMenu.add(trackedTasks);
 
 		final JMenuItem untrackedTasks = new JMenuItem("Untracked tasks only");
 		untrackedTasks.addActionListener(e -> {
 			trackedFilterBtn.setState(2);
-			trackedFilterButtonAction();
+			filterButtonAction("tracked");
 		});
 		trackedFilterBtnPopupMenu.add(untrackedTasks);
 
@@ -257,8 +263,9 @@ public class LoggedInPanel extends JPanel
 		ignoredFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		ignoredFilterBtn.addActionListener(e -> {
 			ignoredFilterBtn.changeState();
-			ignoredFilterButtonAction();
+			filterButtonAction("ignored");
 		});
+		ignoredFilterBtn.setState(config.ignoredFilter().ordinal());
 
 		// Create popup menu for manually setting the button state
 		final JPopupMenu ignoredFilterBtnPopupMenu = new JPopupMenu();
@@ -268,21 +275,21 @@ public class LoggedInPanel extends JPanel
 		final JMenuItem allTasksI = new JMenuItem("All tasks");
 		allTasksI.addActionListener(e -> {
 			ignoredFilterBtn.setState(1);
-			ignoredFilterButtonAction();
+			filterButtonAction("ignored");
 		});
 		ignoredFilterBtnPopupMenu.add(allTasksI);
 
 		final JMenuItem unignoredTasks = new JMenuItem("Hide ignored tasks");
 		unignoredTasks.addActionListener(e -> {
 			ignoredFilterBtn.setState(0);
-			ignoredFilterButtonAction();
+			filterButtonAction("ignored");
 		});
 		ignoredFilterBtnPopupMenu.add(unignoredTasks);
 
 		final JMenuItem ignoredTasks = new JMenuItem("Ignored tasks only");
 		ignoredTasks.addActionListener(e -> {
 			ignoredFilterBtn.setState(2);
-			ignoredFilterButtonAction();
+			filterButtonAction("ignored");
 		});
 		ignoredFilterBtnPopupMenu.add(ignoredTasks);
 
@@ -295,24 +302,31 @@ public class LoggedInPanel extends JPanel
 		return titlePanel;
 	}
 
-	private void ignoredFilterButtonAction()
+	private void filterButtonAction(String filter)
 	{
-		plugin.isIgnoredFilter = ignoredFilterBtn.getState() != 0;
-		plugin.isNotIgnoredFilter = ignoredFilterBtn.getState() != 2;
-		plugin.refresh();
-	}
+		int state;
+		Enum configValue;
 
-	private void trackedFilterButtonAction()
-	{
-		plugin.isTrackedFilter = trackedFilterBtn.getState() != 2;
-		plugin.isUntrackedFilter = trackedFilterBtn.getState() != 1;
-		plugin.refresh();
-	}
+		switch (filter)
+		{
+			case "completed":
+				state = completedFilterBtn.getState();
+				configValue = ConfigValues.CompletedFilterValues.values()[state];
+				break;
+			case "tracked":
+				state = trackedFilterBtn.getState();
+				configValue = ConfigValues.TrackedFilterValues.values()[state];
+				break;
+			case "ignored":
+				state = ignoredFilterBtn.getState();
+				configValue = ConfigValues.IgnoredFilterValues.values()[state];
+				break;
+			default:
+				log.debug("Filter button action failed due to unrecognised filter.");
+				return;
+		}
 
-	private void completedFilterButtonAction()
-	{
-		plugin.isCompleteFilter = completedFilterBtn.getState() != 2;
-		plugin.isIncompleteFilter = completedFilterBtn.getState() != 1;
+		plugin.getConfigManager().setConfiguration("tasks-tracker", filter + "Filter", configValue);
 		plugin.refresh();
 	}
 

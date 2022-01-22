@@ -1,7 +1,12 @@
 package net.reldo.taskstracker.panel;
 
+import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.Util;
+//import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
+import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
+import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
 import net.reldo.taskstracker.tasktypes.Task;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -172,29 +177,31 @@ public abstract class TaskPanel extends JPanel
 			return false;
 		}
 
-		if ((plugin.isCompleteFilter && !task.isCompleted()) && !plugin.isIncompleteFilter)
+		TasksTrackerConfig config = plugin.getConfig();
+
+		if (config.completedFilter().equals(CompletedFilterValues.INCOMPLETE) && task.isCompleted())
 		{
 			return false;
 		}
-		if ((plugin.isIncompleteFilter && task.isCompleted()) && !plugin.isCompleteFilter)
+		if (config.completedFilter().equals(CompletedFilterValues.COMPLETE) && !task.isCompleted())
 		{
 			return false;
 		}
 
-		if ((plugin.isIgnoredFilter && !task.isIgnored()) && !plugin.isNotIgnoredFilter)
+		if (config.ignoredFilter().equals(IgnoredFilterValues.NOT_IGNORED) && task.isIgnored())
 		{
 			return false;
 		}
-		if ((plugin.isNotIgnoredFilter && task.isIgnored()) && !plugin.isIgnoredFilter)
+		if (config.ignoredFilter().equals(IgnoredFilterValues.IGNORED) && !task.isIgnored())
 		{
 			return false;
 		}
 
-		if ((plugin.isTrackedFilter && !task.isTracked()) && !plugin.isUntrackedFilter)
+		if (config.trackedFilter().equals(TrackedFilterValues.UNTRACKED) && task.isTracked())
 		{
 			return false;
 		}
-		return (!plugin.isUntrackedFilter || !task.isTracked()) || plugin.isTrackedFilter;
+		return !config.trackedFilter().equals(TrackedFilterValues.TRACKED) || task.isTracked();
 	}
 
 	private void setBackgroundColor(Color color)
