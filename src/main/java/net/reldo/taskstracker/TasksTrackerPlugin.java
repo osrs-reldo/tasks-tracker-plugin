@@ -45,7 +45,6 @@ import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
@@ -136,11 +135,6 @@ public class TasksTrackerPlugin extends Plugin
 	private void handleOnChatMessage(ChatMessage chatMessage)
 	{
 		taskManagers.values().forEach(tm -> tm.handleChatMessage(chatMessage));
-	}
-
-	@Subscribe
-	public void onConfigChanged(ConfigChanged configChanged)
-	{
 	}
 
 	@Subscribe
