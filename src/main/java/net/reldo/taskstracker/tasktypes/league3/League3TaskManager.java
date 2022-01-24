@@ -1,6 +1,7 @@
 package net.reldo.taskstracker.tasktypes.league3;
 
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.data.TaskDataClient;
 import net.reldo.taskstracker.data.TrackerDataStore;
 import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
 import net.reldo.taskstracker.tasktypes.TaskType;
@@ -35,9 +36,9 @@ public class League3TaskManager extends AbstractTaskManager
 
 	private final int previousTaskCount = -1;
 
-	public League3TaskManager(Client client, ClientThread clientThread, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
+	public League3TaskManager(Client client, ClientThread clientThread, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore, TaskDataClient taskDataClient)
 	{
-		super(TaskType.LEAGUE_3, plugin, trackerDataStore);
+		super(TaskType.LEAGUE_3, plugin, trackerDataStore, taskDataClient);
 		this.client = client;
 		this.clientThread = clientThread;
 	}

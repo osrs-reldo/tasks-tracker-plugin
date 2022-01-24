@@ -1,6 +1,7 @@
 package net.reldo.taskstracker.tasktypes.combattask;
 
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.data.TaskDataClient;
 import net.reldo.taskstracker.data.TrackerDataStore;
 import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
 import net.reldo.taskstracker.tasktypes.TaskType;
@@ -28,9 +29,9 @@ public class CombatTaskManager extends AbstractTaskManager
 
 	private final int previousTaskCount = -1;
 
-	public CombatTaskManager(Client client, ClientThread clientThread, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
+	public CombatTaskManager(Client client, ClientThread clientThread, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore, TaskDataClient taskDataClient)
 	{
-		super(TaskType.COMBAT, plugin, trackerDataStore);
+		super(TaskType.COMBAT, plugin, trackerDataStore, taskDataClient);
 		this.client = client;
 		this.clientThread = clientThread;
 	}

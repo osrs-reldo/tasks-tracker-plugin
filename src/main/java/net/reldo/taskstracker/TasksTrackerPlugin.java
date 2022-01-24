@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.bosses.BossData;
 import net.reldo.taskstracker.data.Export;
 import net.reldo.taskstracker.data.LongSerializer;
+import net.reldo.taskstracker.data.TaskDataClient;
 import net.reldo.taskstracker.data.TaskSave;
 import net.reldo.taskstracker.data.TrackerDataStore;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
@@ -28,7 +29,6 @@ import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.combattask.CombatTaskManager;
-import net.reldo.taskstracker.tasktypes.generic.GenericTaskManager;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskManager;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -89,6 +89,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject	private ChatMessageManager chatMessageManager;
 	@Inject	private TasksTrackerConfig config;
 
+	@Inject private TaskDataClient taskDataClient;
 	@Inject private TrackerDataStore trackerDataStore;
 	private boolean shouldGetName;
 	private RuneScapeProfileType currentProfileType;
@@ -269,13 +270,13 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		if (type == TaskType.COMBAT)
 		{
-			return new CombatTaskManager(client, clientThread, this, trackerDataStore);
+			return new CombatTaskManager(client, clientThread, this, trackerDataStore, taskDataClient);
 		}
 		if (type == TaskType.LEAGUE_3)
 		{
-			return new League3TaskManager(client, clientThread, this, trackerDataStore);
+			return new League3TaskManager(client, clientThread, this, trackerDataStore, taskDataClient);
 		}
-		return new GenericTaskManager(type, this, trackerDataStore);
+		return null;
 	}
 
 	public void trackTask(Task task)
