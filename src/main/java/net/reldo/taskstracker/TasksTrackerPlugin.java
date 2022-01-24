@@ -103,9 +103,26 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
+		// Load task managers
+		for (TaskType taskType : TaskType.values())
+		{
+			AbstractTaskManager taskManager = getTaskTypeManager(taskType);
+			if (taskManager == null)
+			{
+				continue;
+			}
+			taskManager.loadTaskSourceData();
+			taskManagers.put(taskType, taskManager);
+		}
+
 		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager, skillIconManager);
 
-		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedInState(client.getGameState())));
+		boolean isLoggedIn = isLoggedInState(client.getGameState());
+		if (isLoggedIn)
+		{
+			loadProfile();
+		}
+		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedIn));
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
@@ -119,10 +136,26 @@ public class TasksTrackerPlugin extends Plugin
 		log.info("Tasks Tracker started!");
 	}
 
+	private void loadProfile()
+	{
+		shouldGetName = true;
+		trackerDataStore.loadProfile();
+
+		TaskType selectedType = trackerDataStore.currentData.settings.selectedTaskType;
+		setSelectedTaskType(selectedType != null ? selectedType : TaskType.COMBAT);
+
+		for (TaskType taskType : TaskType.values())
+		{
+			taskManagers.get(taskType).applyTrackerSave();
+		}
+		pluginPanel.redraw();
+	}
+
 	@Override
 	protected void shutDown() throws Exception
 	{
 		pluginPanel = null;
+		taskManagers = null;
 		clientToolbar.removeNavigation(navButton);
 		log.info("Tasks Tracker stopped!");
 	}
@@ -160,17 +193,7 @@ public class TasksTrackerPlugin extends Plugin
 
 			if (newGameState == GameState.LOGGING_IN || (isLoggedInState(newGameState) && currentProfileType != newProfileType))
 			{
-				taskManagers.clear();
-				trackerDataStore.loadProfile();
-				shouldGetName = true;
-				TaskType selectedType = trackerDataStore.currentData.settings.selectedTaskType;
-				setSelectedTaskType(selectedType != null ? selectedType : TaskType.COMBAT);
-				pluginPanel.redraw();
-			}
-
-			if (!isLoggedInState(newGameState))
-			{
-				taskManagers.clear();
+				loadProfile();
 			}
 
 			currentProfileType = newProfileType;
@@ -241,10 +264,6 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		selectedTaskType = type;
 		trackerDataStore.currentData.settings.selectedTaskType = type;
-		if (!taskManagers.containsKey(type))
-		{
-			taskManagers.put(type, getTaskTypeManager(type));
-		}
 	}
 
 	public void refresh()

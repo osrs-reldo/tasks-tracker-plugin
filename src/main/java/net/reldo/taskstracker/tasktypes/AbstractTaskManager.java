@@ -17,6 +17,7 @@ import net.runelite.api.events.WidgetLoaded;
 public abstract class AbstractTaskManager
 {
 	protected final TrackerDataStore trackerDataStore;
+	private TaskDataClient taskDataClient;
 	private final TasksTrackerPlugin plugin;
 	public TaskType taskType;
 	public ArrayList<Task> tasks;
@@ -27,7 +28,11 @@ public abstract class AbstractTaskManager
 		this.taskType = taskType;
 		this.plugin = plugin;
 		this.trackerDataStore = trackerDataStore;
+		this.taskDataClient = taskDataClient;
+	}
 
+	public void loadTaskSourceData()
+	{
 		taskDataClient.loadTaskSourceData(taskType, (tasks) -> {
 			this.tasks = tasks;
 			applyTrackerSave();
@@ -45,6 +50,9 @@ public abstract class AbstractTaskManager
 			TaskSave taskSave = loadedTasks.get(task.getName());
 			if (taskSave == null)
 			{
+				task.setTrackedOn(0);
+				task.setCompletedOn(0);
+				task.setIgnoredOn(0);
 				return;
 			}
 			task.setTrackedOn(taskSave.getTrackedOn());
