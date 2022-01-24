@@ -12,7 +12,7 @@ public class AllTaskListPanel extends TaskListPanel
 {
 	public AllTaskListPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
 	{
-		super(plugin, clientThread, spriteManager, skillIconManager);
+		super(AllTaskListPanel.class.getName(), plugin, clientThread, spriteManager, skillIconManager);
 	}
 
 	@Override

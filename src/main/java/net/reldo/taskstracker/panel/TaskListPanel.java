@@ -23,19 +23,21 @@ public abstract class TaskListPanel extends JScrollPane
 {
 	public TasksTrackerPlugin plugin;
 	public final ArrayList<TaskPanel> taskPanels = new ArrayList<>();
+	private String listName;
 	private final ClientThread clientThread;
 	private final SpriteManager spriteManager;
 	private final SkillIconManager skillIconManager;
 	private final TaskListListPanel taskList;
 
-	public TaskListPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
+	public TaskListPanel(String listName, TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
 	{
+		this.listName = listName;
 		this.plugin = plugin;
 		this.clientThread = clientThread;
 		this.spriteManager = spriteManager;
 		this.skillIconManager = skillIconManager;
 
-		taskList = new TaskListListPanel();
+		taskList = new TaskListListPanel(listName);
 
 		setViewportView(taskList);
 		setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -70,7 +72,7 @@ public abstract class TaskListPanel extends JScrollPane
 
 	private class TaskListListPanel extends FixedWidthPanel
 	{
-		public TaskListListPanel()
+		public TaskListListPanel(String listName)
 		{
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 			setBorder(new EmptyBorder(0, 10, 10, 10));
@@ -83,7 +85,7 @@ public abstract class TaskListPanel extends JScrollPane
 			removeAll();
 			taskPanels.clear();
 
-			log.debug("Creating panels...");
+			log.debug(listName + " Creating panels...");
 			ArrayList<Task> tasks = getTasks();
 			if (tasks == null || tasks.size() == 0)
 			{

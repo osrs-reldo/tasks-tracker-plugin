@@ -34,18 +34,21 @@ public class TaskDataClient
 		Gson gson = new Gson();
 		Type classType = taskType.getClassType();
 		Type listType = TypeToken.getParameterized(ArrayList.class, classType).getType();
-			getTaskJson(taskType.getDataFileName(), jsonResponse -> {
-				ArrayList<Task> result = gson.fromJson(new InputStreamReader(jsonResponse, StandardCharsets.UTF_8), listType);
-				callback.execute(result);
-			});
+
+		getTaskJson(taskType.getDataFileName(), jsonResponse -> {
+			ArrayList<Task> result = gson.fromJson(new InputStreamReader(jsonResponse, StandardCharsets.UTF_8), listType);
+			callback.execute(result);
+		});
 	}
 
 	private void getTaskJson(String jsonName, CallbackCommand<InputStream> command)
 	{
 		try
 		{
+			String url = JSON_MIN_PATH + jsonName;
+			log.debug("Fetching task json {} from {}...", jsonName, url);
 			Request request = new Request.Builder()
-				.url(JSON_MIN_PATH + jsonName)
+				.url(url)
 				.build();
 			okHttpClient.newCall(request).enqueue(new Callback()
 			{
@@ -67,6 +70,7 @@ public class TaskDataClient
 							return;
 						}
 
+						log.debug("Task json {} fetched successfully, executing callback", jsonName);
 						command.execute(response.body().byteStream());
 					} else {
 						String unsuccessful = "Task json request unsuccessful with status {}" + response.code();

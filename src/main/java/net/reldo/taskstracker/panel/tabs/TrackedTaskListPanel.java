@@ -13,7 +13,7 @@ public class TrackedTaskListPanel extends TaskListPanel
 {
 	public TrackedTaskListPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
 	{
-		super(plugin, clientThread, spriteManager, skillIconManager);
+		super(TrackedTaskListPanel.class.getName(), plugin, clientThread, spriteManager, skillIconManager);
 	}
 
 	@Override
