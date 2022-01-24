@@ -119,7 +119,8 @@ public abstract class AbstractTaskManager
 
 	public void completeTask(String taskName)
 	{
-		Optional<Task> first = tasks.stream().filter(t -> t.getName().equalsIgnoreCase(taskName)).findFirst();
+		String processedTaskName = taskName.trim();
+		Optional<Task> first = tasks.stream().filter(t -> t.getName().equalsIgnoreCase(processedTaskName)).findFirst();
 		first.ifPresent(task -> {
 			task.setTracked(false);
 			task.setCompleted(true);
