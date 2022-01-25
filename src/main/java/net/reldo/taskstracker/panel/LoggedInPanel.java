@@ -26,8 +26,6 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.panel.components.SearchBox;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
-import net.reldo.taskstracker.panel.tabs.AllTaskListPanel;
-import net.reldo.taskstracker.panel.tabs.TrackedTaskListPanel;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.client.callback.ClientThread;
@@ -41,8 +39,7 @@ import net.runelite.client.util.SwingUtil;
 @Slf4j
 public class LoggedInPanel extends JPanel
 {
-	public AllTaskListPanel allTasksPanel;
-	public TrackedTaskListPanel trackedTaskListPanel;
+	public TaskListPanel taskListPanel;
 	private JComboBox<TaskType> taskTypeDropdown;
 
 	private final TasksTrackerPlugin plugin;
@@ -120,14 +117,12 @@ public class LoggedInPanel extends JPanel
 		{
 			taskTypeDropdown.setSelectedItem(plugin.selectedTaskType);
 		}
-		allTasksPanel.redraw();
-		trackedTaskListPanel.redraw();
+		taskListPanel.redraw();
 	}
 
 	public void refresh(Task task)
 	{
-		allTasksPanel.refresh(task);
-		trackedTaskListPanel.refresh(task);
+		taskListPanel.refresh(task);
 	}
 
 	private void createPanel(JPanel parent)
@@ -135,8 +130,7 @@ public class LoggedInPanel extends JPanel
 		parent.setLayout(new BorderLayout());
 		parent.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		trackedTaskListPanel = new TrackedTaskListPanel(plugin, clientThread, spriteManager, skillIconManager);
-		allTasksPanel = new AllTaskListPanel(plugin, clientThread, spriteManager, skillIconManager);
+		taskListPanel = new TaskListPanel(plugin, clientThread, spriteManager, skillIconManager);
 
 		parent.add(getNorthPanel(), BorderLayout.NORTH);
 		parent.add(getCenterPanel(), BorderLayout.CENTER);
@@ -206,7 +200,7 @@ public class LoggedInPanel extends JPanel
 		taskListTabButtons.add(rightTabSpacer);
 
 		taskListPanel.add(taskListTabButtons, BorderLayout.NORTH);
-		taskListPanel.add(allTasksPanel, BorderLayout.CENTER);
+		taskListPanel.add(this.taskListPanel, BorderLayout.CENTER);
 		return taskListPanel;
 	}
 

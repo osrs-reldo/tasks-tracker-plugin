@@ -2,8 +2,6 @@ package net.reldo.taskstracker.panel;
 
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.panel.tabs.AllTaskListPanel;
-import net.reldo.taskstracker.panel.tabs.TrackedTaskListPanel;
 import net.reldo.taskstracker.tasktypes.Task;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -27,8 +25,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 	private final LoggedInPanel loggedInPanel;
 	private final LoggedOutPanel loggedOutPanel = new LoggedOutPanel();
 
-	public AllTaskListPanel allTasksPanel;
-	public TrackedTaskListPanel trackedTaskListPanel;
+	public TaskListPanel taskListPanel;
 
 	private boolean loggedIn = false;
 
@@ -45,8 +42,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		setLayout(new BorderLayout());
 
 		loggedInPanel = new LoggedInPanel(plugin, config, clientThread, spriteManager, skillIconManager);
-		allTasksPanel = loggedInPanel.allTasksPanel;
-		trackedTaskListPanel = loggedInPanel.trackedTaskListPanel;
+		taskListPanel = loggedInPanel.taskListPanel;
 		add(loggedInPanel, BorderLayout.NORTH);
 		loggedInPanel.setVisible(false);
 

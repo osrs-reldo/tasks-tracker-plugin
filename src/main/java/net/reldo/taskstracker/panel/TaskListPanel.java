@@ -19,7 +19,7 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.FontManager;
 
 @Slf4j
-public abstract class TaskListPanel extends JScrollPane
+public class TaskListPanel extends JScrollPane
 {
 	public TasksTrackerPlugin plugin;
 	public final ArrayList<TaskPanel> taskPanels = new ArrayList<>();
@@ -41,9 +41,20 @@ public abstract class TaskListPanel extends JScrollPane
 		setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 	}
 
-	public abstract ArrayList<Task> getTasks();
+	public ArrayList<Task> getTasks()
+	{
+		// TODO: Build a filter service
+		if (plugin.selectedTaskType == null)
+		{
+			return null;
+		}
+		return plugin.taskManagers.get(plugin.selectedTaskType).tasks;
+	}
 
-	public abstract String getEmptyTaskListMessage();
+	public String getEmptyTaskListMessage()
+	{
+		return "No tasks found.";
+	}
 
 	public void redraw()
 	{

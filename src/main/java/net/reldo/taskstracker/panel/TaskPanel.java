@@ -109,8 +109,7 @@ public abstract class TaskPanel extends JPanel
 		toggleTrack.setBorder(new EmptyBorder(5, 0, 5, 0));
 		toggleTrack.addActionListener(e -> {
 			task.setTracked(toggleTrack.isSelected());
-			plugin.pluginPanel.trackedTaskListPanel.redraw();
-			plugin.pluginPanel.allTasksPanel.refresh(task);
+			plugin.pluginPanel.taskListPanel.refresh(task);
 			plugin.trackTask(task);
 		});
 		SwingUtil.removeButtonDecorations(toggleTrack);
@@ -122,8 +121,7 @@ public abstract class TaskPanel extends JPanel
 		toggleIgnore.setBorder(new EmptyBorder(5, 0, 5, 0));
 		toggleIgnore.addActionListener(e -> {
 			task.setIgnored(!task.isIgnored());
-			plugin.pluginPanel.trackedTaskListPanel.refresh(task);
-			plugin.pluginPanel.allTasksPanel.refresh(task);
+			plugin.pluginPanel.taskListPanel.refresh(task);
 			plugin.ignoreTask(task);
 		});
 		SwingUtil.removeButtonDecorations(toggleIgnore);
