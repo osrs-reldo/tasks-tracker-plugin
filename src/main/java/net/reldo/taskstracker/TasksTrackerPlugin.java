@@ -8,8 +8,10 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.swing.JOptionPane;
@@ -117,6 +119,7 @@ public class TasksTrackerPlugin extends Plugin
 		if (isLoggedIn)
 		{
 			loadProfile();
+			forceVarbitUpdate();
 		}
 		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedIn));
 
@@ -145,6 +148,18 @@ public class TasksTrackerPlugin extends Plugin
 			taskManagers.get(taskType).applyTrackerSave();
 		}
 		pluginPanel.redraw();
+	}
+
+	private void forceVarbitUpdate()
+	{
+		List<Integer> allVarbitIds = new ArrayList<>();
+		allVarbitIds.addAll(League3TaskVarps.getIdToVarpMap().keySet());
+		allVarbitIds.addAll(CombatTaskVarps.getIdToVarpMap().keySet());
+		allVarbitIds.forEach(id -> {
+			VarbitChanged spoofedChange = new VarbitChanged();
+			spoofedChange.setIndex(id);
+			onVarbitChanged(spoofedChange);
+		});
 	}
 
 	@Override
