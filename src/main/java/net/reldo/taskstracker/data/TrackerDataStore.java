@@ -39,10 +39,7 @@ public class TrackerDataStore
 		if (task.isTracked() || task.isCompleted() || task.isIgnored())
 		{
 			TaskSave taskSave = new TaskSave();
-			if (task.getType() == TaskType.LEAGUE_3)
-			{
-				taskSave.setId(((League3Task)task).id);
-			}
+			taskSave.setId((task).getId());
 			taskSave.setCompletedOn(task.getCompletedOn());
 			taskSave.setTrackedOn(task.getTrackedOn());
 			taskSave.setIgnoredOn(task.getIgnoredOn());
@@ -72,7 +69,7 @@ public class TrackerDataStore
 		HashMap<String, TaskSave> taskSavesByName = new HashMap<>();
 		taskManager.tasks.forEach((task) -> {
 			League3Task league3Task = (League3Task) task;
-			String idString = String.valueOf(league3Task.id);
+			String idString = String.valueOf(league3Task.getId());
 			if (reldoImport.getTasks().containsKey(idString))
 			{
 				taskSavesByName.put(task.getName(), reldoImport.getTasks().get(idString).toTaskSave());

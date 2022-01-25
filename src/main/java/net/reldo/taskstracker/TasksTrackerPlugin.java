@@ -30,19 +30,16 @@ import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.combattask.CombatTaskManager;
-import net.reldo.taskstracker.tasktypes.league3.League3Task;
+import net.reldo.taskstracker.tasktypes.combattask.CombatTaskVarps;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskManager;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Player;
-import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.VarbitChanged;
-import net.runelite.api.events.WidgetLoaded;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
@@ -50,7 +47,6 @@ import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
@@ -167,74 +163,71 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
-		handleOnVarbitChanged(varbitChanged);
+		int index = varbitChanged.getIndex();
+		processTaskVarp(index);
 	}
 
-	private void handleOnVarbitChanged(VarbitChanged varbitChanged)
+	private void processTaskVarp(int index)
 	{
-		int index = varbitChanged.getIndex();
+		int ordinal = -1;
+
 		League3TaskVarps leagueVarp = League3TaskVarps.getIdToVarpMap().get(index);
 		if (leagueVarp != null)
 		{
-			int minTaskId = leagueVarp.ordinal() * 32;
-			int maxTaskId = minTaskId + 31;
-			int taskProgressEnumIndex = minTaskId / 32;
-			League3TaskVarps varp = League3TaskVarps.valueOf("TASK_PROGRESS_" + taskProgressEnumIndex);
-			BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varp.getVarpId()));
-			log.debug("Varp {} = {}", varp.getVarpId(), varpValue);
-
-			for (int i = minTaskId; i <= maxTaskId; i++)
-			{
-				boolean isTaskVarbitCompleted;
-				int bitIndex = i % 32;
-				try
-				{
-					isTaskVarbitCompleted = varpValue.testBit(bitIndex);
-				}
-				catch (IllegalArgumentException ex)
-				{
-					log.error("League 3 task progress enum not found {}", taskProgressEnumIndex, ex);
-					isTaskVarbitCompleted = false;
-				}
-
-				League3Task foundTask = null;
-				for (Task task : taskManagers.get(TaskType.LEAGUE_3).tasks)
-				{
-					League3Task league3Task = (League3Task)task;
-					if (league3Task.id == i)
-					{
-						foundTask = league3Task;
-						break;
-					}
-				}
-
-				if (foundTask == null)
-				{
-					continue;
-				}
-
-				final League3Task finalTask = foundTask;
-				log.debug("{}:{}:{}:{}", taskProgressEnumIndex, i, foundTask.getName(), isTaskVarbitCompleted);
-				foundTask.setCompleted(isTaskVarbitCompleted);
-				SwingUtilities.invokeLater(() -> pluginPanel.refresh(finalTask));
-			}
+			ordinal = leagueVarp.ordinal();
 		}
-	}
 
-	@Subscribe
-	public void onChatMessage(ChatMessage chatMessage)
-	{
-		handleOnChatMessage(chatMessage);
-	}
+		CombatTaskVarps combatTaskVarp = CombatTaskVarps.getIdToVarpMap().get(index);
+		if (combatTaskVarp != null)
+		{
+			ordinal = combatTaskVarp.ordinal();
+		}
 
-	private void handleOnChatMessage(ChatMessage chatMessage)
-	{
-		taskManagers.values().forEach(tm -> tm.handleChatMessage(chatMessage));
-	}
+		if (ordinal < 0)
+		{
+			return;
+		}
 
-	@Subscribe
-	public void onConfigChanged(ConfigChanged configChanged)
-	{
+		BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(index));
+		int minTaskId = ordinal * 32;
+		int maxTaskId = minTaskId + 31;
+		int taskProgressEnumIndex = minTaskId / 32;
+		log.debug("Varp {} = {}", index, varpValue);
+
+		for (int i = minTaskId; i <= maxTaskId; i++)
+		{
+			boolean isTaskVarbitCompleted;
+			int bitIndex = i % 32;
+			try
+			{
+				isTaskVarbitCompleted = varpValue.testBit(bitIndex);
+			}
+			catch (IllegalArgumentException ex)
+			{
+				log.error("League 3 task progress enum not found {}", taskProgressEnumIndex, ex);
+				isTaskVarbitCompleted = false;
+			}
+
+			Task foundTask = null;
+			for (Task task : taskManagers.get(TaskType.LEAGUE_3).tasks)
+			{
+				if (task.getId() == i)
+				{
+					foundTask = task;
+					break;
+				}
+			}
+
+			if (foundTask == null)
+			{
+				continue;
+			}
+
+			log.debug("{}:{}:{}:{}", taskProgressEnumIndex, i, foundTask.getName(), isTaskVarbitCompleted);
+			foundTask.setCompleted(isTaskVarbitCompleted);
+			Task finalFoundTask = foundTask; // FIXME: foundTask can be final somehow
+			SwingUtilities.invokeLater(() -> pluginPanel.refresh(finalFoundTask));
+		}
 	}
 
 	@Subscribe
@@ -297,28 +290,6 @@ public class TasksTrackerPlugin extends Plugin
 			trackerDataStore.currentData.settings.displayName = getDisplayName();
 			shouldGetName = false;
 		}
-	}
-
-	@Subscribe
-	public void onWidgetLoaded(WidgetLoaded widgetLoaded)
-	{
-		handleOnWidgetLoaded(widgetLoaded);
-	}
-
-	private void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
-	{
-		taskManagers.values().forEach(tm -> tm.handleOnWidgetLoaded(widgetLoaded));
-	}
-
-	@Subscribe
-	public void onScriptPostFired(ScriptPostFired scriptPostFired)
-	{
-		handleOnScriptPostFired(scriptPostFired);
-	}
-
-	private void handleOnScriptPostFired(ScriptPostFired scriptPostFired)
-	{
-		taskManagers.values().forEach(tm -> tm.handleOnScriptPostFired(scriptPostFired));
 	}
 
 	public void setSelectedTaskType(TaskType type)
@@ -447,7 +418,9 @@ public class TasksTrackerPlugin extends Plugin
 				HashMap<String, TaskSave> tasksById = new HashMap<>();
 				taskSaves.forEach((key, value) -> tasksById.put(String.valueOf(value.getId()), value));
 				export.setTasks(tasksById);
-			} else {
+			}
+			else
+			{
 				export.setTasks(trackerDataStore.currentData.tasksByType.get(taskType));
 			}
 

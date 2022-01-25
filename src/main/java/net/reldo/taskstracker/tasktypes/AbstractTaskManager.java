@@ -10,9 +10,6 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.TaskDataClient;
 import net.reldo.taskstracker.data.TaskSave;
 import net.reldo.taskstracker.data.TrackerDataStore;
-import net.runelite.api.events.ChatMessage;
-import net.runelite.api.events.ScriptPostFired;
-import net.runelite.api.events.WidgetLoaded;
 
 public abstract class AbstractTaskManager
 {
@@ -59,37 +56,6 @@ public abstract class AbstractTaskManager
 			task.setCompletedOn(taskSave.getCompletedOn());
 			task.setIgnoredOn(taskSave.getIgnoredOn());
 		});
-	}
-
-	/**
-	 * Method to be run any time a chat message is sent.
-	 * All tasks will have a chat messages related to them - specifically completion chat messages.
-	 * Hook into the chat messages by implementing this method.
-	 *
-	 * @param chatMessage RuneLite chat message event
-	 */
-	public abstract void handleChatMessage(ChatMessage chatMessage);
-
-	/**
-	 * Method to be run any time a widget is loaded.
-	 * Most tasks will have an interface (combat task progress, leagues tab, etc). Data can be scraped from this interface.
-	 * Hook into a widget opening by overriding this method.
-	 *
-	 * @param widgetLoaded RuneLite widget loaded event
-	 */
-	public void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
-	{
-	}
-
-	/**
-	 * Method to be run any time after a script has fired.
-	 * Most tasks will have a script that load a list of tasks into an interface. Some lists are not accessible through widgets until this script is complete.
-	 * Hook into the completion of a script by overriding this method.
-	 *
-	 * @param scriptPostFired RuneLite post script fired event
-	 */
-	public void handleOnScriptPostFired(ScriptPostFired scriptPostFired)
-	{
 	}
 
 	public HashMap<Integer, Integer> getVarbits()
