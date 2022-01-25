@@ -492,10 +492,6 @@ public class LoggedInPanel extends JPanel
 	{
 		plugin.setSelectedTaskType(taskType);
 		redraw();
-	}
-
-	private void setSelectedTab(String tab)
-	{
-
+		refresh(null);
 	}
 }
