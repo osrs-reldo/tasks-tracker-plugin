@@ -44,4 +44,16 @@ public interface TasksTrackerConfig extends Config
         return ConfigValues.IgnoredFilterValues.NOT_IGNORED;
     }
 
+    @ConfigItem(
+            position = 3,
+            keyName = "taskListTab",
+            name = "Selected Task List Tab",
+            description = "Configures the currently selected tab on the task list.",
+            hidden = true
+    )
+    default ConfigValues.TaskListTabs taskListTab()
+    {
+        return ConfigValues.TaskListTabs.ALL;
+    }
+
 }

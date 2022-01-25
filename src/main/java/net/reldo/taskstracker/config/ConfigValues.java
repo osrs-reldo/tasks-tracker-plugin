@@ -24,4 +24,11 @@ public class ConfigValues {
         IGNORED;
     }
 
+    public enum TaskListTabs
+    {
+        ALL,
+        TRACKED,
+        CUSTOM;
+    }
+
 }

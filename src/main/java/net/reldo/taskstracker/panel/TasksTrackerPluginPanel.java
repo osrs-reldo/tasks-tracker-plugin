@@ -15,7 +15,6 @@ import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
-import net.runelite.client.ui.components.PluginErrorPanel;
 
 @Slf4j
 public class TasksTrackerPluginPanel extends PluginPanel
@@ -26,7 +25,6 @@ public class TasksTrackerPluginPanel extends PluginPanel
 	private final SkillIconManager skillIconManager;
 
 	private final LoggedInPanel loggedInPanel;
-	private final PluginErrorPanel errorPanel = new PluginErrorPanel();
 	private final LoggedOutPanel loggedOutPanel = new LoggedOutPanel();
 
 	public AllTaskListPanel allTasksPanel;
@@ -53,7 +51,6 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		loggedInPanel.setVisible(false);
 
 		// Add error pane
-		// @todo: refactor LoggedInPanel into this (so to not require super(false);) and switch to errorPanel
 		add(loggedOutPanel);
 	}
 
