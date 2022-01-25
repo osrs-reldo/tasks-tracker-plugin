@@ -8,7 +8,6 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.math.BigInteger;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import javax.inject.Inject;
@@ -16,7 +15,6 @@ import javax.inject.Named;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
-import net.reldo.taskstracker.bosses.BossData;
 import net.reldo.taskstracker.data.Export;
 import net.reldo.taskstracker.data.LongSerializer;
 import net.reldo.taskstracker.data.TaskDataClient;
@@ -24,8 +22,6 @@ import net.reldo.taskstracker.data.TaskSave;
 import net.reldo.taskstracker.data.TrackerDataStore;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
-import net.reldo.taskstracker.quests.DiaryAndMiniQuestData;
-import net.reldo.taskstracker.quests.QuestData;
 import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
@@ -398,20 +394,10 @@ public class TasksTrackerPlugin extends Plugin
 		}
 		else
 		{
-			Export export = new Export();
-			export.setQuests(new QuestData(client));
-			export.setDiariesAndMiniQuests(new DiaryAndMiniQuestData(client));
-			export.setBosses(new BossData(pluginManager, configManager));
-			export.setDisplayName(trackerDataStore.currentData.settings.displayName);
-			export.setRunescapeVersion(client.getRevision());
-			export.setRuneliteVersion(runeliteVersion);
-			export.setTimestamp(Instant.now().toEpochMilli());
-			export.setTaskType(taskType.name());
-			export.setVarbits(taskManagers.get(selectedTaskType).getVarbits());
-			export.setVarps(taskManagers.get(selectedTaskType).getVarps());
+			Export export = new Export(taskType, runeliteVersion, client, pluginManager, configManager);
 
-			// TODO: Hello God, I am so sorry for this code. I will clean it up.
-			// TODO: Grab ids for other task types and skip this kludge between string/int
+			// TODO: This is a holdover for tasks until the web is ready to accept varbits
+			// TODO: We already export the varbits, so ready to go
 			HashMap<String, TaskSave> taskSaves = trackerDataStore.currentData.tasksByType.get(taskType);
 			if (taskType == TaskType.LEAGUE_3)
 			{
@@ -421,7 +407,7 @@ public class TasksTrackerPlugin extends Plugin
 			}
 			else
 			{
-				export.setTasks(trackerDataStore.currentData.tasksByType.get(taskType));
+				export.setTasks(taskSaves);
 			}
 
 			return gson.toJson(export);
