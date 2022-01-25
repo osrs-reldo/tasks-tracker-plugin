@@ -18,8 +18,11 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButton;
+import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.plaf.basic.BasicButtonUI;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
@@ -259,8 +262,6 @@ public class LoggedInPanel extends JPanel
 
 		configValue = ConfigValues.IgnoredFilterValues.values()[ignoredFilterBtn.getState()];
 		plugin.getConfigManager().setConfiguration("tasks-tracker", "ignoredFilter", configValue);
-
-//		plugin.refresh();
 	}
 
 	private JPanel getSouthPanel()
@@ -282,6 +283,14 @@ public class LoggedInPanel extends JPanel
 		return southPanel;
 	}
 
+	private final JToggleButton collapseBtn = new JToggleButton();
+	private final JPanel subFilterPanel = new JPanel();
+
+	private final String expandBtnPath = "panel/components/";
+	private final BufferedImage collapseImg = ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "collapsed.png");
+	private final Icon COLLAPSED_ICON = new ImageIcon(ImageUtil.alphaOffset(collapseImg, -180));
+	private final Icon EXPANDED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "expanded.png"));
+
 	private JPanel getNorthPanel()
 	{
 		JPanel northPanel = new JPanel();
@@ -294,10 +303,43 @@ public class LoggedInPanel extends JPanel
 		taskTypeDropdown.setSelectedItem(plugin.selectedTaskType);
 		taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex())));
 
+		// Wrapper for collapsible sub-filter menu
+		JPanel subFilterWrapper = new JPanel();
+		subFilterWrapper.setLayout(new BorderLayout());
+		subFilterWrapper.setBorder(new MatteBorder(1, 0, 1, 0, ColorScheme.MEDIUM_GRAY_COLOR));
+		subFilterWrapper.setAlignmentX(LEFT_ALIGNMENT);
+
+		// collapse button wrapper
+		JPanel collapseButtonBar = new JPanel();
+		collapseButtonBar.setLayout(new BorderLayout());
+
+		// collapse button
+		SwingUtil.removeButtonDecorations(collapseBtn);
+		collapseBtn.setIcon(COLLAPSED_ICON);
+		collapseBtn.setSelectedIcon(EXPANDED_ICON);
+		SwingUtil.addModalTooltip(collapseBtn, "Collapse", "Expand");
+		collapseBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		collapseBtn.setAlignmentX(LEFT_ALIGNMENT);
+		collapseBtn.setUI(new BasicButtonUI()); // substance breaks the layout
+		collapseBtn.addActionListener(ev -> subFilterPanel.setVisible(!subFilterPanel.isVisible()));
+
+		collapseButtonBar.add(collapseBtn, BorderLayout.WEST);
+
+		// panel to hold sub-filters
+		subFilterPanel.setLayout(new BoxLayout(subFilterPanel, BoxLayout.Y_AXIS));
+		subFilterPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+		subFilterPanel.add(new JLabel("Test label."));
+		subFilterPanel.setVisible(false);
+
+		subFilterWrapper.add(collapseButtonBar, BorderLayout.NORTH);
+		subFilterWrapper.add(subFilterPanel, BorderLayout.CENTER);
+
 		northPanel.add(getTitleAndButtonPanel());
 		northPanel.add(Box.createVerticalStrut(10));
 		northPanel.add(taskTypeDropdown);
-		northPanel.add(Box.createVerticalStrut(2));
+		northPanel.add(Box.createVerticalStrut(5));
+		northPanel.add(subFilterWrapper);
+		northPanel.add(Box.createVerticalStrut(5));
 		northPanel.add(getSearchPanel());
 
 		return northPanel;
