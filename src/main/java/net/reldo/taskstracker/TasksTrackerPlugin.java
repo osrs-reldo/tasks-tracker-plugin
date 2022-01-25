@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,7 +30,9 @@ import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.combattask.CombatTaskManager;
+import net.reldo.taskstracker.tasktypes.league3.League3Task;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskManager;
+import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -38,6 +41,7 @@ import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ScriptPostFired;
+import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageBuilder;
@@ -158,6 +162,63 @@ public class TasksTrackerPlugin extends Plugin
 		taskManagers = null;
 		clientToolbar.removeNavigation(navButton);
 		log.info("Tasks Tracker stopped!");
+	}
+
+	@Subscribe
+	public void onVarbitChanged(VarbitChanged varbitChanged)
+	{
+		handleOnVarbitChanged(varbitChanged);
+	}
+
+	private void handleOnVarbitChanged(VarbitChanged varbitChanged)
+	{
+		int index = varbitChanged.getIndex();
+		League3TaskVarps leagueVarp = League3TaskVarps.getIdToVarpMap().get(index);
+		if (leagueVarp != null)
+		{
+			int minTaskId = leagueVarp.ordinal() * 32;
+			int maxTaskId = minTaskId + 31;
+			int taskProgressEnumIndex = minTaskId / 32;
+			League3TaskVarps varp = League3TaskVarps.valueOf("TASK_PROGRESS_" + taskProgressEnumIndex);
+			BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varp.getVarpId()));
+			log.debug("Varp {} = {}", varp.getVarpId(), varpValue);
+
+			for (int i = minTaskId; i <= maxTaskId; i++)
+			{
+				boolean isTaskVarbitCompleted;
+				int bitIndex = i % 32;
+				try
+				{
+					isTaskVarbitCompleted = varpValue.testBit(bitIndex);
+				}
+				catch (IllegalArgumentException ex)
+				{
+					log.error("League 3 task progress enum not found {}", taskProgressEnumIndex, ex);
+					isTaskVarbitCompleted = false;
+				}
+
+				League3Task foundTask = null;
+				for (Task task : taskManagers.get(TaskType.LEAGUE_3).tasks)
+				{
+					League3Task league3Task = (League3Task)task;
+					if (league3Task.id == i)
+					{
+						foundTask = league3Task;
+						break;
+					}
+				}
+
+				if (foundTask == null)
+				{
+					continue;
+				}
+
+				final League3Task finalTask = foundTask;
+				log.debug("{}:{}:{}:{}", taskProgressEnumIndex, i, foundTask.getName(), isTaskVarbitCompleted);
+				foundTask.setCompleted(isTaskVarbitCompleted);
+				SwingUtilities.invokeLater(() -> pluginPanel.refresh(finalTask));
+			}
+		}
 	}
 
 	@Subscribe
