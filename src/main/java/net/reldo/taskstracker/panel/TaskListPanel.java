@@ -27,6 +27,7 @@ public class TaskListPanel extends JScrollPane
 	private final SpriteManager spriteManager;
 	private final SkillIconManager skillIconManager;
 	private final TaskListListPanel taskList;
+	private final JLabel emptyTasks = new JLabel();
 
 	public TaskListPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
 	{
@@ -53,7 +54,7 @@ public class TaskListPanel extends JScrollPane
 
 	public String getEmptyTaskListMessage()
 	{
-		return "No tasks found.";
+		return "No tasks match the current filters.";
 	}
 
 	public void redraw()
@@ -65,6 +66,8 @@ public class TaskListPanel extends JScrollPane
 	{
 		assert SwingUtilities.isEventDispatchThread();
 
+		emptyTasks.setVisible(false);
+
 		if (task != null)
 		{
 			Optional<TaskPanel> panel = taskPanels.stream()
@@ -73,9 +76,19 @@ public class TaskListPanel extends JScrollPane
 			panel.ifPresent(TaskPanel::refresh);
 			return;
 		}
+
 		for (TaskPanel taskPanel : taskPanels)
 		{
 			taskPanel.refresh();
+		}
+
+		Optional<TaskPanel> visibleTaskPanel = taskPanels.stream()
+				.filter(TaskPanel::isVisible)
+				.findFirst();
+
+		if (!visibleTaskPanel.isPresent())
+		{
+			emptyTasks.setVisible(true);
 		}
 	}
 
@@ -86,6 +99,14 @@ public class TaskListPanel extends JScrollPane
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 			setBorder(new EmptyBorder(0, 10, 10, 10));
 			setAlignmentX(Component.LEFT_ALIGNMENT);
+
+			emptyTasks.setBorder(new EmptyBorder(10,0,10,0));
+			emptyTasks.setText("<html><center>" + getEmptyTaskListMessage() + "</center></html>");
+			emptyTasks.setFont(FontManager.getRunescapeSmallFont());
+			emptyTasks.setHorizontalAlignment(JLabel.CENTER);
+			emptyTasks.setVerticalAlignment(JLabel.CENTER);
+			add(emptyTasks);
+			emptyTasks.setVisible(false);
 		}
 
 		public void redraw()
@@ -93,15 +114,14 @@ public class TaskListPanel extends JScrollPane
 			assert SwingUtilities.isEventDispatchThread();
 			removeAll();
 			taskPanels.clear();
+			add(emptyTasks);
+			emptyTasks.setVisible(false);
 
 			log.debug("Creating panels...");
 			ArrayList<Task> tasks = getTasks();
 			if (tasks == null || tasks.size() == 0)
 			{
-				JLabel emptyTasks = new JLabel();
-				emptyTasks.setText("<html><center>" + getEmptyTaskListMessage() + "</center></html>");
-				emptyTasks.setFont(FontManager.getRunescapeSmallFont());
-				add(emptyTasks);
+				emptyTasks.setVisible(true);
 				return;
 			}
 			{
