@@ -135,6 +135,13 @@ public class LoggedInPanel extends JPanel
 		parent.add(getNorthPanel(), BorderLayout.NORTH);
 		parent.add(getCenterPanel(), BorderLayout.CENTER);
 		parent.add(getSouthPanel(), BorderLayout.SOUTH);
+
+		loadAndApplyFilters(config.taskListTab());
+		if(config.taskListTab().equals(ConfigValues.TaskListTabs.TRACKED))
+		{
+			trackedFilterBtn.setState(1);
+			trackedFilterBtn.setEnabled(false);
+		}
 	}
 
 	private JPanel getCenterPanel() {
@@ -159,7 +166,7 @@ public class LoggedInPanel extends JPanel
 			plugin.getConfigManager().setConfiguration("tasks-tracker", "taskListTab", ConfigValues.TaskListTabs.TRACKED);
 			filterButtonAction("tracked");
 		});
-		trackedTasksListPanelBtn.setSelected(true);
+		trackedTasksListPanelBtn.setSelected(config.taskListTab().equals(ConfigValues.TaskListTabs.TRACKED));
 
 		SwingUtil.removeButtonDecorations(allTasksListPanelBtn);
 		allTasksListPanelBtn.setBorder(new EmptyBorder(0,0,0,0));
@@ -171,7 +178,7 @@ public class LoggedInPanel extends JPanel
 			plugin.getConfigManager().setConfiguration("tasks-tracker", "taskListTab", ConfigValues.TaskListTabs.ALL);
 			plugin.refresh();
 		});
-		allTasksListPanelBtn.setSelected(false);
+		allTasksListPanelBtn.setSelected(config.taskListTab().equals(ConfigValues.TaskListTabs.ALL));
 
 		SwingUtil.removeButtonDecorations(customTasksListPanelBtn);
 		customTasksListPanelBtn.setBorder(new EmptyBorder(0,0,0,0));
@@ -183,7 +190,7 @@ public class LoggedInPanel extends JPanel
 			plugin.getConfigManager().setConfiguration("tasks-tracker", "taskListTab", ConfigValues.TaskListTabs.CUSTOM);
 			plugin.refresh();
 		});
-		customTasksListPanelBtn.setSelected(false);
+		customTasksListPanelBtn.setSelected(config.taskListTab().equals(ConfigValues.TaskListTabs.CUSTOM));
 
 		ButtonGroup listTabGroup = new ButtonGroup();
 		listTabGroup.add(trackedTasksListPanelBtn);
@@ -211,7 +218,7 @@ public class LoggedInPanel extends JPanel
 		loadAndApplyFilters(newTab);
 	}
 
-	private Map<ConfigValues.TaskListTabs, Map<String, Integer>> filterStore = new HashMap<>();
+	private final Map<ConfigValues.TaskListTabs, Map<String, Integer>> filterStore = new HashMap<>();
 
 	private void saveFilters()
 	{
