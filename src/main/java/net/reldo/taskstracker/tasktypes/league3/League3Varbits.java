@@ -74,7 +74,8 @@ public enum League3Varbits
 	CORPOREAL_BEAST_UNLOCKED(13392),
 
 	// Task data
-	TASKS_COMPLETED(10046);
+	TASKS_COMPLETED(10046),
+	LIBRARY_BOOKS(10039);
 
 	private final int varbitId;
 
