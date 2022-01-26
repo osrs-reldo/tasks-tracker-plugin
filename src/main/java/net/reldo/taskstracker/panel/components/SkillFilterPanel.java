@@ -1,9 +1,11 @@
 package net.reldo.taskstracker.panel.components;
 
 import com.google.common.collect.ImmutableList;
+import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -20,7 +22,7 @@ import static net.runelite.client.hiscore.HiscoreSkill.*;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 
-public class SkillFilterPanel extends FixedWidthPanel
+public class SkillFilterPanel extends FilterButtonPanel
 {
 
     /**
@@ -37,88 +39,66 @@ public class SkillFilterPanel extends FixedWidthPanel
             CONSTRUCTION, HUNTER
     );
 
-    private final TasksTrackerPlugin plugin;
-
-    private final Map<String, JToggleButton> skillButtons = new HashMap<>();
-
     public SkillFilterPanel(TasksTrackerPlugin plugin)
     {
-        this.plugin = plugin;
+        super(plugin);
+        this.configKey = "skillFilter";
 
-        // Panel that holds skill icons
-        setLayout(new GridLayout(8, 3));
+        setLayout(new BorderLayout());
         setBackground(ColorScheme.DARKER_GRAY_COLOR);
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // For each skill on the in-game skill panel, create a button and add it to the UI
-        for (HiscoreSkill skill : SKILLS)
-        {
-            JToggleButton button = makeSkillButton(skill);
-            skillButtons.put(skill.getName().toLowerCase(), button);
-            add(button);
-        }
+        add(makeButtonPanel(), BorderLayout.CENTER);
 
-        JToggleButton button = makeSkillButton(null);
-        button.setToolTipText("No skill requirements.");
-        skillButtons.put("noskill", button);
-        add(button);
-
-        updateSkillFilter();
+        updateFilterText();
     }
 
-    private JToggleButton makeSkillButton(HiscoreSkill skill)
+    @Override
+    protected JPanel makeButtonPanel()
     {
-        String skillName;
+        JPanel buttonPanel = new JPanel();
 
-        skillName = (skill == null) ? "noskill" :  skill.name().toLowerCase();
+        // Panel that holds skill icons
+        buttonPanel.setLayout(new GridLayout(8, 3));
+        buttonPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
-        JToggleButton button = new JToggleButton();
-        button.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        button.setBorder(new EmptyBorder(2, 0, 2, 0));
+        LinkedHashMap<String, BufferedImage> skillImages = getIconImages();
 
-        String directory = "/skill_icons_small/";//_small
-        String skillIcon = directory + skillName + ".png";
-
-        BufferedImage skillImage;
-        if(skillName.equals("noskill"))
-        {
-            skillImage = ImageUtil.loadImageResource(TasksTrackerPlugin.class, "panel/components/no_skill.png");
-        }
-        else
-        {
-            skillImage = ImageUtil.loadImageResource(getClass(), skillIcon);
-        }
-
-        ImageIcon selectedIcon = new ImageIcon(skillImage);
-        ImageIcon deselectedIcon = new ImageIcon(ImageUtil.alphaOffset(skillImage, -180));
-
-        button.setIcon(deselectedIcon);
-        button.setSelectedIcon(selectedIcon);
-        button.setToolTipText(skillName.substring(0,1).toUpperCase() + skillName.substring(1).toLowerCase());
-
-        button.addActionListener(e -> {
-            updateSkillFilter();
-            plugin.refresh();
+        // For each skill on the in-game skill panel, create a button and add it to the UI
+        skillImages.forEach((name, image) -> {
+            JToggleButton button = makeButton(name, image);
+            buttons.put(name, button);
+            buttonPanel.add(button);
         });
 
-        button.setSelected(true);
+        buttons.get("noskill").setToolTipText("No skill requirements.");
 
-        return button;
+        return buttonPanel;
     }
 
-    private void updateSkillFilter()
+    @Override
+    protected LinkedHashMap<String, BufferedImage> getIconImages()
     {
-        String skillFilter = skillButtons.entrySet().stream()
-                                .filter(e -> e.getValue().isSelected())
-                                .map(Map.Entry::getKey)
-//                                .reduce("", (a, b) -> a + "," + b);
-                                .collect(Collectors.joining(","));
+        LinkedHashMap<String, BufferedImage> images = new LinkedHashMap<>();
+        String skillName;
+        BufferedImage skillImage;
 
-        plugin.getConfigManager().setConfiguration("tasks-tracker", "skillFilter", skillFilter);
-    }
+        for (HiscoreSkill skill : SKILLS)
+        {
+            skillName = skill.name().toLowerCase();
 
-    private void setAllSelected(boolean state)
-    {
-        skillButtons.values().forEach(button -> button.setSelected(state));
+            String directory = "/skill_icons_small/";
+            String skillIcon = directory + skillName + ".png";
+
+            skillImage = ImageUtil.loadImageResource(getClass(), skillIcon);
+
+            images.put(skillName, skillImage);
+        }
+
+        skillName = "noskill";
+        skillImage = ImageUtil.loadImageResource(TasksTrackerPlugin.class, "panel/components/no_skill.png");
+        images.put(skillName, skillImage);
+
+        return images;
     }
 }
