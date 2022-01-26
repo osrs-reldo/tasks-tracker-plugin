@@ -156,7 +156,7 @@ public class TasksTrackerPlugin extends Plugin
 	protected void shutDown() throws Exception
 	{
 		pluginPanel = null;
-		taskManagers = null;
+		taskManagers = new HashMap<>();
 		clientToolbar.removeNavigation(navButton);
 		log.info("Tasks Tracker stopped!");
 	}
