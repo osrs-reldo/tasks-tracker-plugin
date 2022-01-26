@@ -163,7 +163,7 @@ public abstract class TaskPanel extends JPanel
 		revalidate();
 	}
 
-	private boolean meetsFilterCriteria()
+	protected boolean meetsFilterCriteria()
 	{
 		String nameLowercase = task.getName().toLowerCase();
 		String descriptionLowercase = task.getDescription().toLowerCase();

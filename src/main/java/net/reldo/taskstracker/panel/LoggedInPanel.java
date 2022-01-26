@@ -28,6 +28,7 @@ import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.panel.components.SearchBox;
+import net.reldo.taskstracker.panel.components.SkillFilterPanel;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
@@ -283,13 +284,14 @@ public class LoggedInPanel extends JPanel
 		return southPanel;
 	}
 
-	private final JToggleButton collapseBtn = new JToggleButton();
 	private final JPanel subFilterPanel = new JPanel();
+	private final JToggleButton collapseBtn = new JToggleButton();
 
 	private final String expandBtnPath = "panel/components/";
-	private final BufferedImage collapseImg = ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "collapsed.png");
-	private final Icon COLLAPSED_ICON = new ImageIcon(ImageUtil.alphaOffset(collapseImg, -180));
-	private final Icon EXPANDED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "expanded.png"));
+	private final BufferedImage collapseImg = ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "filter_menu_collapsed.png");
+	private final Icon MENU_COLLAPSED_ICON = new ImageIcon(ImageUtil.alphaOffset(collapseImg, -180));
+	private final Icon MENU_ICON_HOVER = new ImageIcon(collapseImg);
+	private final Icon MENU_EXPANDED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "filter_menu_expanded.png"));
 
 	private JPanel getNorthPanel()
 	{
@@ -308,39 +310,42 @@ public class LoggedInPanel extends JPanel
 		subFilterWrapper.setLayout(new BorderLayout());
 		subFilterWrapper.setBorder(new MatteBorder(1, 0, 1, 0, ColorScheme.MEDIUM_GRAY_COLOR));
 		subFilterWrapper.setAlignmentX(LEFT_ALIGNMENT);
-
-		// collapse button wrapper
-		JPanel collapseButtonBar = new JPanel();
-		collapseButtonBar.setLayout(new BorderLayout());
+		subFilterWrapper.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// collapse button
 		SwingUtil.removeButtonDecorations(collapseBtn);
-		collapseBtn.setIcon(COLLAPSED_ICON);
-		collapseBtn.setSelectedIcon(EXPANDED_ICON);
-		SwingUtil.addModalTooltip(collapseBtn, "Collapse", "Expand");
-		collapseBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		collapseBtn.setIcon(MENU_COLLAPSED_ICON);
+		collapseBtn.setSelectedIcon(MENU_EXPANDED_ICON);
+		collapseBtn.setRolloverIcon(MENU_ICON_HOVER);
+		SwingUtil.addModalTooltip(collapseBtn, "Collapse filters", "Expand filters");
+		collapseBtn.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		collapseBtn.setAlignmentX(LEFT_ALIGNMENT);
 		collapseBtn.setUI(new BasicButtonUI()); // substance breaks the layout
 		collapseBtn.addActionListener(ev -> subFilterPanel.setVisible(!subFilterPanel.isVisible()));
 
-		collapseButtonBar.add(collapseBtn, BorderLayout.WEST);
+		// filter button
+		SwingUtil.removeButtonDecorations(collapseBtn);
+		collapseBtn.setIcon(MENU_COLLAPSED_ICON);
+		collapseBtn.setSelectedIcon(MENU_EXPANDED_ICON);
 
 		// panel to hold sub-filters
 		subFilterPanel.setLayout(new BoxLayout(subFilterPanel, BoxLayout.Y_AXIS));
 		subFilterPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-		subFilterPanel.add(new JLabel("Test label."));
+		subFilterPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		subFilterPanel.setVisible(false);
+		SkillFilterPanel skillsPanel = new SkillFilterPanel(plugin);
+		subFilterPanel.add(skillsPanel);
 
-		subFilterWrapper.add(collapseButtonBar, BorderLayout.NORTH);
+		subFilterWrapper.add(collapseBtn, BorderLayout.NORTH);
 		subFilterWrapper.add(subFilterPanel, BorderLayout.CENTER);
 
 		northPanel.add(getTitleAndButtonPanel());
 		northPanel.add(Box.createVerticalStrut(10));
 		northPanel.add(taskTypeDropdown);
+		northPanel.add(Box.createVerticalStrut(2));
+		northPanel.add(getSearchPanel());
 		northPanel.add(Box.createVerticalStrut(5));
 		northPanel.add(subFilterWrapper);
-		northPanel.add(Box.createVerticalStrut(5));
-		northPanel.add(getSearchPanel());
 
 		return northPanel;
 	}

@@ -56,4 +56,16 @@ public interface TasksTrackerConfig extends Config
         return ConfigValues.TaskListTabs.ALL;
     }
 
+    @ConfigItem(
+            position = 4,
+            keyName = "skillFilter",
+            name = "Skills Filter",
+            description = "Configures the skills to filter tasks on.",
+            hidden = true
+    )
+    default String skillFilter()
+    {
+        return "";
+    }
+
 }
