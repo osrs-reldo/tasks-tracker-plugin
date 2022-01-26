@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
@@ -312,14 +313,17 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void openImportJsonDialog()
 	{
-		String json = JOptionPane.showInputDialog(null,
-			"Paste import data into the text field below to import task tracker data.",
-			"Import Tasks Input",
-			JOptionPane.INFORMATION_MESSAGE);
+		JOptionPane optionPane = new JOptionPane("Paste import data into the text field below to import task tracker data.", JOptionPane.INFORMATION_MESSAGE);
+		optionPane.setWantsInput(true);
+		JDialog inputDialog = optionPane.createDialog("Import Tasks Input");
+		inputDialog.setAlwaysOnTop(true);
+		inputDialog.setVisible(true);
 
+		String json = "";
 		ReldoImport reldoImport;
 		try
 		{
+			json = (String) optionPane.getInputValue();
 			reldoImport = ReldoImport.fromJson(json);
 		}
 		catch (Exception ex)
@@ -330,10 +334,15 @@ public class TasksTrackerPlugin extends Plugin
 			return;
 		}
 
-		if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(null,
-			"Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?",
-			"Import Tasks Overwrite Confirmation",
-			JOptionPane.YES_NO_OPTION))
+		optionPane = new JOptionPane("Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
+		JDialog confirmDialog = optionPane.createDialog("Import Tasks Overwrite Confirmation");
+		confirmDialog.setAlwaysOnTop(true);
+		confirmDialog.setVisible(true);
+
+		Object selectedValue = optionPane.getValue();
+		if(selectedValue == null) return;
+
+		if (selectedValue.equals(JOptionPane.YES_OPTION))
 		{
 			trackerDataStore.importTasksFromReldo(reldoImport, (League3TaskManager) taskManagers.get(TaskType.LEAGUE_3));
 			pluginPanel.redraw();
@@ -396,6 +405,11 @@ public class TasksTrackerPlugin extends Plugin
 
 	private static void showMessageBox(final String title, final String message, int messageType)
 	{
-		SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null, message, title, messageType));
+		SwingUtilities.invokeLater(() -> {
+			JOptionPane optionPane = new JOptionPane(message, messageType);
+			JDialog dialog = optionPane.createDialog(title);
+			dialog.setAlwaysOnTop(true);
+			dialog.setVisible(true);
+		});
 	}
 }
