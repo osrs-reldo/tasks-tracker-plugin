@@ -32,7 +32,7 @@ public abstract class Task
 		{
 			return;
 		}
-		completedOn = completed ? now : -1;
+		completedOn = completed ? now : 0;
 	}
 
 	public boolean isTracked()
@@ -47,7 +47,7 @@ public abstract class Task
 		{
 			return;
 		}
-		trackedOn = state ? now : -1;
+		trackedOn = state ? now : 0;
 	}
 
 	public boolean isIgnored()
@@ -62,7 +62,7 @@ public abstract class Task
 		{
 			return;
 		}
-		ignoredOn = state ? now : -1;
+		ignoredOn = state ? now : 0;
 	}
 
 	public abstract TaskType getType();

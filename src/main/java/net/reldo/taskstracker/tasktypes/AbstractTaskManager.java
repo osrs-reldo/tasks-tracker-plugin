@@ -17,7 +17,7 @@ public abstract class AbstractTaskManager
 	private TaskDataClient taskDataClient;
 	private final TasksTrackerPlugin plugin;
 	public TaskType taskType;
-	public ArrayList<Task> tasks;
+	public ArrayList<Task> tasks = new ArrayList<>();
 	public int maxTaskCount;
 
 	public AbstractTaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore, TaskDataClient taskDataClient)
