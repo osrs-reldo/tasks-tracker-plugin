@@ -1,16 +1,14 @@
 package net.reldo.taskstracker.tasktypes;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import javax.swing.SwingUtilities;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.TaskDataClient;
 import net.reldo.taskstracker.data.TaskSave;
 import net.reldo.taskstracker.data.TrackerDataStore;
 
-public abstract class AbstractTaskManager
+public class TaskManager
 {
 	protected final TrackerDataStore trackerDataStore;
 	private TaskDataClient taskDataClient;
@@ -19,7 +17,7 @@ public abstract class AbstractTaskManager
 	public ArrayList<Task> tasks = new ArrayList<>();
 	public int maxTaskCount;
 
-	public AbstractTaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore, TaskDataClient taskDataClient)
+	public TaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore, TaskDataClient taskDataClient)
 	{
 		this.taskType = taskType;
 		this.plugin = plugin;
@@ -65,22 +63,5 @@ public abstract class AbstractTaskManager
 	public void refresh(Task task)
 	{
 		SwingUtilities.invokeLater(() -> plugin.pluginPanel.refresh(task));
-	}
-
-	private void sendTaskUpdateMessage(LinkedHashMap<String, Boolean> taskProgress)
-	{
-		String taskCount = String.valueOf(taskProgress.size());
-		String helpMessage = " (remove filters to get full export)";
-		Color messageColor = Color.decode("#940B00");
-		if (maxTaskCount > 0)
-		{
-			taskCount += "/" + maxTaskCount;
-			if (maxTaskCount == taskProgress.size())
-			{
-				messageColor = Color.decode("#007517");
-				helpMessage = "";
-			}
-		}
-		plugin.sendChatMessage(taskCount + " tasks stored for export" + helpMessage, messageColor);
 	}
 }

@@ -10,9 +10,9 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.tasktypes.Task;
+import net.reldo.taskstracker.tasktypes.TaskManager;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.league3.League3Task;
-import net.reldo.taskstracker.tasktypes.league3.League3TaskManager;
 import net.runelite.client.config.ConfigManager;
 
 @Slf4j
@@ -59,7 +59,7 @@ public class TrackerDataStore
 		saveCurrentToConfig();
 	}
 
-	public void importTasksFromReldo(ReldoImport reldoImport, League3TaskManager taskManager)
+	public void importTasksFromReldo(ReldoImport reldoImport, TaskManager taskManager)
 	{
 		// FIXME: This entire method is a hack
 		// FIXME: Hardcoded for league 3 only

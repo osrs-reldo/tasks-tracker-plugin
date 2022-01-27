@@ -3,7 +3,6 @@ package net.reldo.taskstracker;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Provides;
-import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
@@ -25,14 +24,11 @@ import net.reldo.taskstracker.data.TaskSave;
 import net.reldo.taskstracker.data.TrackerDataStore;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
-import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
 import net.reldo.taskstracker.tasktypes.Task;
+import net.reldo.taskstracker.tasktypes.TaskManager;
 import net.reldo.taskstracker.tasktypes.TaskType;
-import net.reldo.taskstracker.tasktypes.combattask.CombatTaskManager;
 import net.reldo.taskstracker.tasktypes.combattask.CombatTaskVarps;
-import net.reldo.taskstracker.tasktypes.league3.League3TaskManager;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
-import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Player;
@@ -40,9 +36,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.callback.ClientThread;
-import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
-import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
@@ -62,7 +56,7 @@ import net.runelite.client.util.ImageUtil;
 public class TasksTrackerPlugin extends Plugin
 {
 	public int[] playerSkills;
-	public HashMap<TaskType, AbstractTaskManager> taskManagers = new HashMap<>();
+	public HashMap<TaskType, TaskManager> taskManagers = new HashMap<>();
 
 	public TaskType selectedTaskType;
 	public String taskTextFilter;
@@ -105,7 +99,7 @@ public class TasksTrackerPlugin extends Plugin
 		// Load task managers
 		for (TaskType taskType : TaskType.values())
 		{
-			AbstractTaskManager taskManager = getTaskTypeManager(taskType);
+			TaskManager taskManager = new TaskManager(taskType, this, trackerDataStore, taskDataClient);
 			if (taskManager == null)
 			{
 				continue;
@@ -315,33 +309,6 @@ public class TasksTrackerPlugin extends Plugin
 		taskManagers.get(selectedTaskType).refresh(null);
 	}
 
-	public void sendChatMessage(String chatMessage, Color color)
-	{
-		final String message = new ChatMessageBuilder()
-			.append(color, "Task Tracker: ")
-			.append(color, chatMessage)
-			.build();
-
-		chatMessageManager.queue(
-			QueuedMessage.builder()
-				.type(ChatMessageType.CONSOLE)
-				.runeLiteFormattedMessage(message)
-				.build());
-	}
-
-	private AbstractTaskManager getTaskTypeManager(TaskType type)
-	{
-		if (type == TaskType.COMBAT)
-		{
-			return new CombatTaskManager(client, clientThread, this, trackerDataStore, taskDataClient);
-		}
-		if (type == TaskType.LEAGUE_3)
-		{
-			return new League3TaskManager(client, clientThread, this, trackerDataStore, taskDataClient);
-		}
-		return null;
-	}
-
 	public void trackTask(Task task)
 	{
 		// TODO: Move this responsibility; not correct to be here
@@ -387,7 +354,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (selectedValue.equals(JOptionPane.YES_OPTION))
 		{
-			trackerDataStore.importTasksFromReldo(reldoImport, (League3TaskManager) taskManagers.get(TaskType.LEAGUE_3));
+			trackerDataStore.importTasksFromReldo(reldoImport, taskManagers.get(TaskType.LEAGUE_3));
 			pluginPanel.redraw();
 		}
 	}
