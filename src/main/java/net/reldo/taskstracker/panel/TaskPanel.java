@@ -1,11 +1,9 @@
 package net.reldo.taskstracker.panel;
 
-import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.Util;
-import net.reldo.taskstracker.tasktypes.Task;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -14,8 +12,12 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.JToolTip;
+import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.Util;
+import net.reldo.taskstracker.tasktypes.Task;
 import net.runelite.api.Constants;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
@@ -63,7 +65,7 @@ public abstract class TaskPanel extends JPanel
 		this.task = task;
 		createPanel(task);
 		setComponentPopupMenu(getPopupMenu());
-		setToolTipText(getTaskTooltip());
+		ToolTipManager.sharedInstance().registerComponent(this);
 		refresh();
 	}
 
@@ -216,5 +218,11 @@ public abstract class TaskPanel extends JPanel
 		JToolTip customTooltip = new JToolTip();
 		customTooltip.setFont(FontManager.getRunescapeSmallFont());
 		return customTooltip;
+	}
+
+	@Override
+	public String getToolTipText(MouseEvent mouseEvent)
+	{
+		return getTaskTooltip();
 	}
 }
