@@ -1,10 +1,14 @@
 package net.reldo.taskstracker.tasktypes.combattask;
 
+import java.util.Arrays;
+import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.Util;
 import net.reldo.taskstracker.panel.TaskPanel;
 import java.awt.image.BufferedImage;
 import javax.swing.JPopupMenu;
+import net.reldo.taskstracker.tasktypes.RequiredSkill;
+import net.reldo.taskstracker.tasktypes.league3.League3Task;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
 
@@ -45,5 +49,23 @@ public class CombatTaskPanel extends TaskPanel
 		}
 
 		return spriteManager.getSprite(tier.spriteId, 0);
+	}
+
+	//@todo decouple this from League 3. This should be a general filter that can be added to any task type with skill requirements.
+	@Override
+	protected boolean meetsFilterCriteria()
+	{
+		TasksTrackerConfig config = plugin.getConfig();
+
+		CombatTask task = (CombatTask) this.task;
+
+		String tierFilter = config.tierFilter();
+
+		if (!tierFilter.contains("f-" + task.getTier().toLowerCase())) // prefix included to cover case where one key name is contained in another (e.g. "Master" -> "Grandmaster")
+		{
+			return false;
+		}
+
+		return super.meetsFilterCriteria();
 	}
 }

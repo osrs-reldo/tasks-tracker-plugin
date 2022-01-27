@@ -68,4 +68,16 @@ public interface TasksTrackerConfig extends Config
         return "";
     }
 
+    @ConfigItem(
+            position = 4,
+            keyName = "tierFilter",
+            name = "Tier Filter",
+            description = "Configures the tiers to filter tasks on.",
+            hidden = true
+    )
+    default String tierFilter()
+    {
+        return "";
+    }
+
 }

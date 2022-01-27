@@ -1,22 +1,16 @@
-package net.reldo.taskstracker.panel.components;
+package net.reldo.taskstracker.panel.subfilters;
 
 import com.google.common.collect.ImmutableList;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.stream.Collectors;
-import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.border.EmptyBorder;
 import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.ConfigManager;
+import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.client.hiscore.HiscoreSkill;
 import static net.runelite.client.hiscore.HiscoreSkill.*;
 import net.runelite.client.ui.ColorScheme;
@@ -48,17 +42,14 @@ public class SkillFilterPanel extends FilterButtonPanel
         setBackground(ColorScheme.DARKER_GRAY_COLOR);
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        add(makeButtonPanel(), BorderLayout.CENTER);
-
-        updateFilterText();
+        redraw();
     }
 
     @Override
     protected JPanel makeButtonPanel()
     {
-        JPanel buttonPanel = new JPanel();
-
         // Panel that holds skill icons
+        JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(8, 3));
         buttonPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
@@ -100,5 +91,14 @@ public class SkillFilterPanel extends FilterButtonPanel
         images.put(skillName, skillImage);
 
         return images;
+    }
+
+    @Override
+    public void redraw()
+    {
+        if(plugin.selectedTaskType != null)
+            this.setVisible(!plugin.selectedTaskType.equals(TaskType.COMBAT));
+
+        super.redraw();
     }
 }

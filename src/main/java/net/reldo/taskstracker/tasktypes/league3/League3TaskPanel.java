@@ -182,6 +182,13 @@ public class League3TaskPanel extends TaskPanel
 			return false;
 		}
 
+		String tierFilter = config.tierFilter();
+
+		if (!tierFilter.contains(task.getTier().toLowerCase()))
+		{
+			return false;
+		}
+
 		return super.meetsFilterCriteria();
 	}
 
