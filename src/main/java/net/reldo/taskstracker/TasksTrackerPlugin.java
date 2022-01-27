@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.bosses.BossData;
 import net.reldo.taskstracker.data.Export;
 import net.reldo.taskstracker.data.LongSerializer;
+import net.reldo.taskstracker.data.TaskDataClient;
 import net.reldo.taskstracker.data.TaskSave;
 import net.reldo.taskstracker.data.TrackerDataStore;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
@@ -29,7 +31,6 @@ import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.combattask.CombatTaskManager;
-import net.reldo.taskstracker.tasktypes.generic.GenericTaskManager;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskManager;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -84,6 +85,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject	private ChatMessageManager chatMessageManager;
 	@Getter @Inject	private TasksTrackerConfig config;
 
+	@Inject private TaskDataClient taskDataClient;
 	@Inject private TrackerDataStore trackerDataStore;
 	private boolean shouldGetName;
 	private RuneScapeProfileType currentProfileType;
@@ -97,9 +99,26 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
+		// Load task managers
+		for (TaskType taskType : TaskType.values())
+		{
+			AbstractTaskManager taskManager = getTaskTypeManager(taskType);
+			if (taskManager == null)
+			{
+				continue;
+			}
+			taskManager.loadTaskSourceData();
+			taskManagers.put(taskType, taskManager);
+		}
+
 		pluginPanel = new TasksTrackerPluginPanel(this, config, clientThread, spriteManager, skillIconManager);
 
-		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedInState(client.getGameState())));
+		boolean isLoggedIn = isLoggedInState(client.getGameState());
+		if (isLoggedIn)
+		{
+			loadProfile();
+		}
+		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedIn));
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
@@ -113,10 +132,26 @@ public class TasksTrackerPlugin extends Plugin
 		log.info("Tasks Tracker started!");
 	}
 
+	private void loadProfile()
+	{
+		shouldGetName = true;
+		trackerDataStore.loadProfile();
+
+		TaskType selectedType = trackerDataStore.currentData.settings.selectedTaskType;
+		setSelectedTaskType(selectedType != null ? selectedType : TaskType.COMBAT);
+
+		for (TaskType taskType : TaskType.values())
+		{
+			taskManagers.get(taskType).applyTrackerSave();
+		}
+		pluginPanel.redraw();
+	}
+
 	@Override
 	protected void shutDown() throws Exception
 	{
 		pluginPanel = null;
+		taskManagers = new HashMap<>();
 		clientToolbar.removeNavigation(navButton);
 		log.info("Tasks Tracker stopped!");
 	}
@@ -154,17 +189,7 @@ public class TasksTrackerPlugin extends Plugin
 
 			if (newGameState == GameState.LOGGING_IN || (isLoggedInState(newGameState) && currentProfileType != newProfileType))
 			{
-				taskManagers.clear();
-				trackerDataStore.loadProfile();
-				shouldGetName = true;
-				TaskType selectedType = trackerDataStore.currentData.settings.selectedTaskType;
-				setSelectedTaskType(selectedType != null ? selectedType : TaskType.COMBAT);
-				pluginPanel.redraw();
-			}
-
-			if (!isLoggedInState(newGameState))
-			{
-				taskManagers.clear();
+				loadProfile();
 			}
 
 			currentProfileType = newProfileType;
@@ -235,10 +260,6 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		selectedTaskType = type;
 		trackerDataStore.currentData.settings.selectedTaskType = type;
-		if (!taskManagers.containsKey(type))
-		{
-			taskManagers.put(type, getTaskTypeManager(type));
-		}
 	}
 
 	public void refresh()
@@ -264,13 +285,13 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		if (type == TaskType.COMBAT)
 		{
-			return new CombatTaskManager(client, clientThread, this, trackerDataStore);
+			return new CombatTaskManager(client, clientThread, this, trackerDataStore, taskDataClient);
 		}
 		if (type == TaskType.LEAGUE_3)
 		{
-			return new League3TaskManager(client, clientThread, this, trackerDataStore);
+			return new League3TaskManager(client, clientThread, this, trackerDataStore, taskDataClient);
 		}
-		return new GenericTaskManager(type, this, trackerDataStore);
+		return null;
 	}
 
 	public void trackTask(Task task)
@@ -287,14 +308,17 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void openImportJsonDialog()
 	{
-		String json = JOptionPane.showInputDialog(null,
-			"Paste import data into the text field below to import task tracker data.",
-			"Import Tasks Input",
-			JOptionPane.INFORMATION_MESSAGE);
+		JOptionPane optionPane = new JOptionPane("Paste import data into the text field below to import task tracker data.", JOptionPane.INFORMATION_MESSAGE);
+		optionPane.setWantsInput(true);
+		JDialog inputDialog = optionPane.createDialog("Import Tasks Input");
+		inputDialog.setAlwaysOnTop(true);
+		inputDialog.setVisible(true);
 
+		String json = "";
 		ReldoImport reldoImport;
 		try
 		{
+			json = (String) optionPane.getInputValue();
 			reldoImport = ReldoImport.fromJson(json);
 		}
 		catch (Exception ex)
@@ -305,10 +329,15 @@ public class TasksTrackerPlugin extends Plugin
 			return;
 		}
 
-		if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(null,
-			"Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?",
-			"Import Tasks Overwrite Confirmation",
-			JOptionPane.YES_NO_OPTION))
+		optionPane = new JOptionPane("Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
+		JDialog confirmDialog = optionPane.createDialog("Import Tasks Overwrite Confirmation");
+		confirmDialog.setAlwaysOnTop(true);
+		confirmDialog.setVisible(true);
+
+		Object selectedValue = optionPane.getValue();
+		if(selectedValue == null) return;
+
+		if (selectedValue.equals(JOptionPane.YES_OPTION))
 		{
 			trackerDataStore.importTasksFromReldo(reldoImport, (League3TaskManager) taskManagers.get(TaskType.LEAGUE_3));
 			pluginPanel.redraw();
@@ -371,6 +400,11 @@ public class TasksTrackerPlugin extends Plugin
 
 	private static void showMessageBox(final String title, final String message, int messageType)
 	{
-		SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null, message, title, messageType));
+		SwingUtilities.invokeLater(() -> {
+			JOptionPane optionPane = new JOptionPane(message, messageType);
+			JDialog dialog = optionPane.createDialog(title);
+			dialog.setAlwaysOnTop(true);
+			dialog.setVisible(true);
+		});
 	}
 }

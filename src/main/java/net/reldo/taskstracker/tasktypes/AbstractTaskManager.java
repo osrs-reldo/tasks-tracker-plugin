@@ -1,21 +1,15 @@
 package net.reldo.taskstracker.tasktypes;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.data.TaskSave;
-import net.reldo.taskstracker.data.TrackerDataStore;
 import java.awt.Color;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Optional;
 import javax.swing.SwingUtilities;
+import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.data.TaskDataClient;
+import net.reldo.taskstracker.data.TaskSave;
+import net.reldo.taskstracker.data.TrackerDataStore;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
@@ -23,28 +17,26 @@ import net.runelite.api.events.WidgetLoaded;
 public abstract class AbstractTaskManager
 {
 	protected final TrackerDataStore trackerDataStore;
+	private TaskDataClient taskDataClient;
 	private final TasksTrackerPlugin plugin;
 	public TaskType taskType;
-	public ArrayList<Task> tasks;
+	public ArrayList<Task> tasks = new ArrayList<>();
 	public int maxTaskCount;
 
-	public AbstractTaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore)
+	public AbstractTaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore, TaskDataClient taskDataClient)
 	{
 		this.taskType = taskType;
 		this.plugin = plugin;
 		this.trackerDataStore = trackerDataStore;
-		try (InputStream dataFile = TasksTrackerPlugin.class.getResourceAsStream(taskType.getDataFileName()))
-		{
-			assert dataFile != null;
-			Type classType = taskType.getClassType();
-			Type listType = TypeToken.getParameterized(ArrayList.class, classType).getType();
-			tasks = new Gson().fromJson(new InputStreamReader(dataFile, StandardCharsets.UTF_8), listType);
-		}
-		catch (IOException e)
-		{
-			throw new RuntimeException(e);
-		}
-		applyTrackerSave();
+		this.taskDataClient = taskDataClient;
+	}
+
+	public void loadTaskSourceData()
+	{
+		taskDataClient.loadTaskSourceData(taskType, (tasks) -> {
+			this.tasks = tasks;
+			applyTrackerSave();
+		});
 	}
 
 	public void applyTrackerSave()
@@ -58,6 +50,9 @@ public abstract class AbstractTaskManager
 			TaskSave taskSave = loadedTasks.get(task.getName());
 			if (taskSave == null)
 			{
+				task.setTrackedOn(0);
+				task.setCompletedOn(0);
+				task.setIgnoredOn(0);
 				return;
 			}
 			task.setTrackedOn(taskSave.getTrackedOn());
@@ -91,7 +86,7 @@ public abstract class AbstractTaskManager
 	 * Most tasks will have a script that load a list of tasks into an interface. Some lists are not accessible through widgets until this script is complete.
 	 * Hook into the completion of a script by overriding this method.
 	 *
-	 * @param scriptPostFired
+	 * @param scriptPostFired RuneLite post script fired event
 	 */
 	public void handleOnScriptPostFired(ScriptPostFired scriptPostFired)
 	{
@@ -119,7 +114,8 @@ public abstract class AbstractTaskManager
 
 	public void completeTask(String taskName)
 	{
-		Optional<Task> first = tasks.stream().filter(t -> t.getName().equalsIgnoreCase(taskName)).findFirst();
+		String processedTaskName = taskName.trim();
+		Optional<Task> first = tasks.stream().filter(t -> t.getName().equalsIgnoreCase(processedTaskName)).findFirst();
 		first.ifPresent(task -> {
 			task.setTracked(false);
 			task.setCompleted(true);
