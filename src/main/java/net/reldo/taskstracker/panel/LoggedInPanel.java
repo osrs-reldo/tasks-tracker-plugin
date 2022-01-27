@@ -29,8 +29,6 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.panel.components.SearchBox;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
-import net.reldo.taskstracker.panel.subfilters.DifficultyFilterPanel;
-import net.reldo.taskstracker.panel.subfilters.SkillFilterPanel;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.client.callback.ClientThread;
@@ -96,6 +94,16 @@ public class LoggedInPanel extends JPanel
 
 	private final Icon LEFT_TAB_SPACER_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "left_spacer.png"));
 	private final Icon RIGHT_TAB_SPACER_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "right_spacer.png"));
+
+	// sub-filter panel
+	private SubFilterPanel subFilterPanel;
+	private final JToggleButton collapseBtn = new JToggleButton();
+
+	private final String expandBtnPath = "panel/components/";
+	private final BufferedImage collapseImg = ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "filter_menu_collapsed.png");
+	private final Icon MENU_COLLAPSED_ICON = new ImageIcon(ImageUtil.alphaOffset(collapseImg, -180));
+	private final Icon MENU_ICON_HOVER = new ImageIcon(collapseImg);
+	private final Icon MENU_EXPANDED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "filter_menu_expanded.png"));
 
 	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
 	{
@@ -285,15 +293,6 @@ public class LoggedInPanel extends JPanel
 
 		return southPanel;
 	}
-
-	private SubFilterPanel subFilterPanel;
-	private final JToggleButton collapseBtn = new JToggleButton();
-
-	private final String expandBtnPath = "panel/components/";
-	private final BufferedImage collapseImg = ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "filter_menu_collapsed.png");
-	private final Icon MENU_COLLAPSED_ICON = new ImageIcon(ImageUtil.alphaOffset(collapseImg, -180));
-	private final Icon MENU_ICON_HOVER = new ImageIcon(collapseImg);
-	private final Icon MENU_EXPANDED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "filter_menu_expanded.png"));
 
 	private JPanel getNorthPanel()
 	{
@@ -535,7 +534,6 @@ public class LoggedInPanel extends JPanel
 	private void updateWithNewTaskType(TaskType taskType)
 	{
 		plugin.setSelectedTaskType(taskType);
-//		subFilterPanel.setVisible(false);
 		redraw();
 		refresh(null);
 	}

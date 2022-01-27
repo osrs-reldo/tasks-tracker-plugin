@@ -1,14 +1,11 @@
 package net.reldo.taskstracker.tasktypes.combattask;
 
-import java.util.Arrays;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.Util;
 import net.reldo.taskstracker.panel.TaskPanel;
 import java.awt.image.BufferedImage;
 import javax.swing.JPopupMenu;
-import net.reldo.taskstracker.tasktypes.RequiredSkill;
-import net.reldo.taskstracker.tasktypes.league3.League3Task;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
 

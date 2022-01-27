@@ -13,7 +13,6 @@ import java.net.URL;
 import javax.swing.JPopupMenu;
 import net.runelite.api.Skill;
 import net.runelite.client.callback.ClientThread;
-import net.runelite.client.config.Config;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
