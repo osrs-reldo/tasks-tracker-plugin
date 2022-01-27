@@ -28,8 +28,9 @@ import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.panel.components.SearchBox;
-import net.reldo.taskstracker.panel.components.SkillFilterPanel;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
+import net.reldo.taskstracker.panel.subfilters.DifficultyFilterPanel;
+import net.reldo.taskstracker.panel.subfilters.SkillFilterPanel;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.client.callback.ClientThread;
@@ -120,6 +121,7 @@ public class LoggedInPanel extends JPanel
 		if (plugin.selectedTaskType != null)
 		{
 			taskTypeDropdown.setSelectedItem(plugin.selectedTaskType);
+			subFilterPanel.redraw();
 		}
 		taskListPanel.redraw();
 	}
@@ -284,7 +286,7 @@ public class LoggedInPanel extends JPanel
 		return southPanel;
 	}
 
-	private final JPanel subFilterPanel = new JPanel();
+	private SubFilterPanel subFilterPanel;
 	private final JToggleButton collapseBtn = new JToggleButton();
 
 	private final String expandBtnPath = "panel/components/";
@@ -329,12 +331,7 @@ public class LoggedInPanel extends JPanel
 		collapseBtn.setSelectedIcon(MENU_EXPANDED_ICON);
 
 		// panel to hold sub-filters
-		subFilterPanel.setLayout(new BoxLayout(subFilterPanel, BoxLayout.Y_AXIS));
-		subFilterPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-		subFilterPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		subFilterPanel.setVisible(false);
-		SkillFilterPanel skillsPanel = new SkillFilterPanel(plugin);
-		subFilterPanel.add(skillsPanel);
+		subFilterPanel = new SubFilterPanel(plugin, spriteManager);
 
 		subFilterWrapper.add(collapseBtn, BorderLayout.NORTH);
 		subFilterWrapper.add(subFilterPanel, BorderLayout.CENTER);
@@ -538,6 +535,7 @@ public class LoggedInPanel extends JPanel
 	private void updateWithNewTaskType(TaskType taskType)
 	{
 		plugin.setSelectedTaskType(taskType);
+//		subFilterPanel.setVisible(false);
 		redraw();
 		refresh(null);
 	}
