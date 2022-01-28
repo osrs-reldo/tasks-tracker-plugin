@@ -35,10 +35,11 @@ public class DifficultyFilterPanel extends FilterButtonPanel
     {
         // Panel that holds skill icons
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(2, 3));//@todo change this to a dynamic size as a taskType with more than 6 tiers will break it
         buttonPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
         LinkedHashMap<String, BufferedImage> skillImages = getIconImages();
+
+        buttonPanel.setLayout(new GridLayout(skillImages.size() / 3, 3));
 
         // For each skill on the in-game skill panel, create a button and add it to the UI
         skillImages.forEach((name, image) -> {
