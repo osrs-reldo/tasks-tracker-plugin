@@ -1,5 +1,7 @@
 package net.reldo.taskstracker.tasktypes.league3;
 
+import java.util.Arrays;
+import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.Util;
 import net.reldo.taskstracker.panel.TaskPanel;
@@ -157,4 +159,36 @@ public class League3TaskPanel extends TaskPanel
 		Color color = playerLevel > requiredLevel ? QUALIFIED_TEXT_COLOR : UNQUALIFIED_TEXT_COLOR;
 		return Util.imageTag(url) + " " + Util.colorTag(color, playerLevel + "/" + requiredLevel);
 	}
+
+	//@todo decouple this from League 3. This should be a general filter that can be added to any task type with skill requirements.
+	@Override
+	protected boolean meetsFilterCriteria()
+	{
+		TasksTrackerConfig config = plugin.getConfig();
+
+		String skillFilter = config.skillFilter();
+
+		League3Task task = (League3Task) this.task;
+
+		if (task.skills.length > 0 && !Arrays.stream(task.skills)
+				.allMatch((RequiredSkill skill) -> skillFilter.contains(skill.getSkill().toLowerCase())))
+		{
+			return false;
+		}
+
+		if(task.skills.length == 0 && !skillFilter.contains("noskill"))
+		{
+			return false;
+		}
+
+		String tierFilter = config.tierFilter();
+
+		if (!tierFilter.contains(task.getTier().toLowerCase()))
+		{
+			return false;
+		}
+
+		return super.meetsFilterCriteria();
+	}
+
 }

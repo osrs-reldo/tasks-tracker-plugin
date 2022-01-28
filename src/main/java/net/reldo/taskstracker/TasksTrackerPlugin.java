@@ -15,6 +15,7 @@ import javax.inject.Named;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.bosses.BossData;
 import net.reldo.taskstracker.data.Export;
@@ -68,12 +69,6 @@ public class TasksTrackerPlugin extends Plugin
 
 	public TaskType selectedTaskType;
 	public String taskTextFilter;
-	public boolean isIncompleteFilter = true;
-	public boolean isCompleteFilter = true;
-	public boolean isIgnoredFilter = false;
-	public boolean isNotIgnoredFilter = true;
-	public boolean isTrackedFilter = true;
-	public boolean isUntrackedFilter = true;
 
 	public TasksTrackerPluginPanel pluginPanel;
 
@@ -83,12 +78,12 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject	private Client client;
 	@Inject	private SpriteManager spriteManager;
 	@Inject	private PluginManager pluginManager;
-	@Inject	private ConfigManager configManager;
+	@Getter @Inject	private ConfigManager configManager;
 	@Inject	private SkillIconManager skillIconManager;
 	@Inject	private ClientToolbar clientToolbar;
 	@Inject	private ClientThread clientThread;
 	@Inject	private ChatMessageManager chatMessageManager;
-	@Inject	private TasksTrackerConfig config;
+	@Getter @Inject	private TasksTrackerConfig config;
 
 	@Inject private TaskDataClient taskDataClient;
 	@Inject private TrackerDataStore trackerDataStore;
@@ -116,7 +111,7 @@ public class TasksTrackerPlugin extends Plugin
 			taskManagers.put(taskType, taskManager);
 		}
 
-		pluginPanel = new TasksTrackerPluginPanel(this, clientThread, spriteManager, skillIconManager);
+		pluginPanel = new TasksTrackerPluginPanel(this, config, clientThread, spriteManager, skillIconManager);
 
 		boolean isLoggedIn = isLoggedInState(client.getGameState());
 		if (isLoggedIn)

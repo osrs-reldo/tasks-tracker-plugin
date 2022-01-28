@@ -19,33 +19,43 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.FontManager;
 
 @Slf4j
-public abstract class TaskListPanel extends JScrollPane
+public class TaskListPanel extends JScrollPane
 {
 	public TasksTrackerPlugin plugin;
 	public final ArrayList<TaskPanel> taskPanels = new ArrayList<>();
-	private String listName;
 	private final ClientThread clientThread;
 	private final SpriteManager spriteManager;
 	private final SkillIconManager skillIconManager;
 	private final TaskListListPanel taskList;
+	private final JLabel emptyTasks = new JLabel();
 
-	public TaskListPanel(String listName, TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
+	public TaskListPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
 	{
-		this.listName = listName;
 		this.plugin = plugin;
 		this.clientThread = clientThread;
 		this.spriteManager = spriteManager;
 		this.skillIconManager = skillIconManager;
 
-		taskList = new TaskListListPanel(listName);
+		taskList = new TaskListListPanel();
 
 		setViewportView(taskList);
 		setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 	}
 
-	public abstract ArrayList<Task> getTasks();
+	public ArrayList<Task> getTasks()
+	{
+		// TODO: Build a filter service
+		if (plugin.selectedTaskType == null)
+		{
+			return null;
+		}
+		return plugin.taskManagers.get(plugin.selectedTaskType).tasks;
+	}
 
-	public abstract String getEmptyTaskListMessage();
+	public String getEmptyTaskListMessage()
+	{
+		return "No tasks match the current filters.";
+	}
 
 	public void redraw()
 	{
@@ -56,6 +66,8 @@ public abstract class TaskListPanel extends JScrollPane
 	{
 		assert SwingUtilities.isEventDispatchThread();
 
+		emptyTasks.setVisible(false);
+
 		if (task != null)
 		{
 			Optional<TaskPanel> panel = taskPanels.stream()
@@ -64,19 +76,37 @@ public abstract class TaskListPanel extends JScrollPane
 			panel.ifPresent(TaskPanel::refresh);
 			return;
 		}
+
 		for (TaskPanel taskPanel : taskPanels)
 		{
 			taskPanel.refresh();
+		}
+
+		Optional<TaskPanel> visibleTaskPanel = taskPanels.stream()
+				.filter(TaskPanel::isVisible)
+				.findFirst();
+
+		if (!visibleTaskPanel.isPresent())
+		{
+			emptyTasks.setVisible(true);
 		}
 	}
 
 	private class TaskListListPanel extends FixedWidthPanel
 	{
-		public TaskListListPanel(String listName)
+		public TaskListListPanel()
 		{
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 			setBorder(new EmptyBorder(0, 10, 10, 10));
 			setAlignmentX(Component.LEFT_ALIGNMENT);
+
+			emptyTasks.setBorder(new EmptyBorder(10,0,10,0));
+			emptyTasks.setText("<html><center>" + getEmptyTaskListMessage() + "</center></html>");
+			emptyTasks.setFont(FontManager.getRunescapeSmallFont());
+			emptyTasks.setHorizontalAlignment(JLabel.CENTER);
+			emptyTasks.setVerticalAlignment(JLabel.CENTER);
+			add(emptyTasks);
+			emptyTasks.setVisible(false);
 		}
 
 		public void redraw()
@@ -84,15 +114,14 @@ public abstract class TaskListPanel extends JScrollPane
 			assert SwingUtilities.isEventDispatchThread();
 			removeAll();
 			taskPanels.clear();
+			add(emptyTasks);
+			emptyTasks.setVisible(false);
 
-			log.debug(listName + " Creating panels...");
+			log.debug(" Creating panels...");
 			ArrayList<Task> tasks = getTasks();
 			if (tasks == null || tasks.size() == 0)
 			{
-				JLabel emptyTasks = new JLabel();
-				emptyTasks.setText("<html><center>" + getEmptyTaskListMessage() + "</center></html>");
-				emptyTasks.setFont(FontManager.getRunescapeSmallFont());
-				add(emptyTasks);
+				emptyTasks.setVisible(true);
 				return;
 			}
 			{
