@@ -4,7 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -35,6 +37,7 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.SwingUtil;
@@ -136,6 +139,9 @@ public class LoggedInPanel extends JPanel
 
 	public void refresh(Task task)
 	{
+		if(task == null)
+			updateCollapseButtonText();
+
 		taskListPanel.refresh(task);
 	}
 
@@ -332,6 +338,9 @@ public class LoggedInPanel extends JPanel
 		collapseBtn.setAlignmentX(LEFT_ALIGNMENT);
 		collapseBtn.setUI(new BasicButtonUI()); // substance breaks the layout
 		collapseBtn.addActionListener(ev -> subFilterPanel.setVisible(!subFilterPanel.isVisible()));
+		collapseBtn.setHorizontalTextPosition(JButton.CENTER);
+		collapseBtn.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		collapseBtn.setFont(FontManager.getRunescapeSmallFont());
 
 		// filter button
 		SwingUtil.removeButtonDecorations(collapseBtn);
@@ -545,5 +554,21 @@ public class LoggedInPanel extends JPanel
 		plugin.setSelectedTaskType(taskType);
 		redraw();
 		refresh(null);
+	}
+
+	private void updateCollapseButtonText()
+	{
+		List<String> filterCounts = new ArrayList<>();
+
+		if(plugin.selectedTaskType.equals(TaskType.LEAGUE_3))
+		{
+			int count = config.skillFilter().equals("") ? 0 : config.skillFilter().split(",").length ;
+			filterCounts.add(count + " skill");
+		}
+
+		int count = config.tierFilter().equals("") ? 0 : config.tierFilter().split(",").length;
+		filterCounts.add(count + " tier");
+
+		collapseBtn.setText(String.join(", ", filterCounts) + " filters");
 	}
 }
