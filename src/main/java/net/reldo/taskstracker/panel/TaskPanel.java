@@ -1,11 +1,16 @@
 package net.reldo.taskstracker.panel;
 
+import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.Util;
+import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
+import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
+import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
 import net.reldo.taskstracker.tasktypes.Task;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -14,6 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.JToolTip;
+import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Constants;
@@ -63,7 +69,7 @@ public abstract class TaskPanel extends JPanel
 		this.task = task;
 		createPanel(task);
 		setComponentPopupMenu(getPopupMenu());
-		setToolTipText(getTaskTooltip());
+		ToolTipManager.sharedInstance().registerComponent(this);
 		refresh();
 	}
 
@@ -105,8 +111,7 @@ public abstract class TaskPanel extends JPanel
 		toggleTrack.setBorder(new EmptyBorder(5, 0, 5, 0));
 		toggleTrack.addActionListener(e -> {
 			task.setTracked(toggleTrack.isSelected());
-			plugin.pluginPanel.trackedTaskListPanel.redraw();
-			plugin.pluginPanel.allTasksPanel.refresh(task);
+			plugin.pluginPanel.taskListPanel.refresh(task);
 			plugin.trackTask(task);
 		});
 		SwingUtil.removeButtonDecorations(toggleTrack);
@@ -118,8 +123,7 @@ public abstract class TaskPanel extends JPanel
 		toggleIgnore.setBorder(new EmptyBorder(5, 0, 5, 0));
 		toggleIgnore.addActionListener(e -> {
 			task.setIgnored(!task.isIgnored());
-			plugin.pluginPanel.trackedTaskListPanel.refresh(task);
-			plugin.pluginPanel.allTasksPanel.refresh(task);
+			plugin.pluginPanel.taskListPanel.refresh(task);
 			plugin.ignoreTask(task);
 		});
 		SwingUtil.removeButtonDecorations(toggleIgnore);
@@ -161,7 +165,7 @@ public abstract class TaskPanel extends JPanel
 		revalidate();
 	}
 
-	private boolean meetsFilterCriteria()
+	protected boolean meetsFilterCriteria()
 	{
 		String nameLowercase = task.getName().toLowerCase();
 		String descriptionLowercase = task.getDescription().toLowerCase();
@@ -172,29 +176,31 @@ public abstract class TaskPanel extends JPanel
 			return false;
 		}
 
-		if ((plugin.isCompleteFilter && !task.isCompleted()) && !plugin.isIncompleteFilter)
+		TasksTrackerConfig config = plugin.getConfig();
+
+		if (config.completedFilter().equals(CompletedFilterValues.INCOMPLETE) && task.isCompleted())
 		{
 			return false;
 		}
-		if ((plugin.isIncompleteFilter && task.isCompleted()) && !plugin.isCompleteFilter)
+		if (config.completedFilter().equals(CompletedFilterValues.COMPLETE) && !task.isCompleted())
 		{
 			return false;
 		}
 
-		if ((plugin.isIgnoredFilter && !task.isIgnored()) && !plugin.isNotIgnoredFilter)
+		if (config.ignoredFilter().equals(IgnoredFilterValues.NOT_IGNORED) && task.isIgnored())
 		{
 			return false;
 		}
-		if ((plugin.isNotIgnoredFilter && task.isIgnored()) && !plugin.isIgnoredFilter)
+		if (config.ignoredFilter().equals(IgnoredFilterValues.IGNORED) && !task.isIgnored())
 		{
 			return false;
 		}
 
-		if ((plugin.isTrackedFilter && !task.isTracked()) && !plugin.isUntrackedFilter)
+		if (config.trackedFilter().equals(TrackedFilterValues.UNTRACKED) && task.isTracked())
 		{
 			return false;
 		}
-		return (!plugin.isUntrackedFilter || !task.isTracked()) || plugin.isTrackedFilter;
+		return !config.trackedFilter().equals(TrackedFilterValues.TRACKED) || task.isTracked();
 	}
 
 	private void setBackgroundColor(Color color)
@@ -216,5 +222,11 @@ public abstract class TaskPanel extends JPanel
 		JToolTip customTooltip = new JToolTip();
 		customTooltip.setFont(FontManager.getRunescapeSmallFont());
 		return customTooltip;
+	}
+
+	@Override
+	public String getToolTipText(MouseEvent mouseEvent)
+	{
+		return getTaskTooltip();
 	}
 }
