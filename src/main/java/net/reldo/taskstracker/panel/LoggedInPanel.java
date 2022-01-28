@@ -206,6 +206,15 @@ public class LoggedInPanel extends JPanel
 		});
 		customTasksListPanelBtn.setSelected(config.taskListTab().equals(ConfigValues.TaskListTabs.CUSTOM));
 
+		// set initial filter states to "complete and incomplete", "tracked and untracked", "not ignored"
+		Map<String, Integer> filterStates = new HashMap<>();
+		filterStates.put("completed",0);
+		filterStates.put("tracked",0);
+		filterStates.put("ignored",0);
+		filterStore.put(ConfigValues.TaskListTabs.ALL, filterStates);
+		filterStore.put(ConfigValues.TaskListTabs.CUSTOM, filterStates);
+		filterStore.put(ConfigValues.TaskListTabs.TRACKED, filterStates);
+
 		ButtonGroup listTabGroup = new ButtonGroup();
 		listTabGroup.add(trackedTasksListPanelBtn);
 		listTabGroup.add(allTasksListPanelBtn);
