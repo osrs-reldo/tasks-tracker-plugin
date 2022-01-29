@@ -5,17 +5,15 @@ import java.util.HashMap;
 import javax.swing.SwingUtilities;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.TaskDataClient;
-import net.reldo.taskstracker.data.TaskSave;
 import net.reldo.taskstracker.data.TrackerDataStore;
 
 public class TaskManager
 {
 	protected final TrackerDataStore trackerDataStore;
-	private TaskDataClient taskDataClient;
+	private final TaskDataClient taskDataClient;
 	private final TasksTrackerPlugin plugin;
 	public TaskType taskType;
 	public ArrayList<Task> tasks = new ArrayList<>();
-	public int maxTaskCount;
 
 	public TaskManager(TaskType taskType, TasksTrackerPlugin plugin, TrackerDataStore trackerDataStore, TaskDataClient taskDataClient)
 	{
@@ -29,29 +27,24 @@ public class TaskManager
 	{
 		taskDataClient.loadTaskSourceData(taskType, (tasks) -> {
 			this.tasks = tasks;
-			applyTrackerSave();
+			applyTrackerSave(trackerDataStore.currentData.tasksByType.get(taskType));
 		});
 	}
 
-	public void applyTrackerSave()
+	public void applyTrackerSave(HashMap<Integer, Task> loadedTasks)
 	{
-		HashMap<String, TaskSave> loadedTasks = trackerDataStore.currentData.tasksByType.get(taskType);
 		if (loadedTasks == null)
 		{
 			return;
 		}
+
 		tasks.forEach(task -> {
-			TaskSave taskSave = loadedTasks.get(task.getName());
-			if (taskSave == null)
+			Task loadedTask = loadedTasks.get(task.getId());
+			if (loadedTask == null)
 			{
-				task.setTrackedOn(0);
-				task.setCompletedOn(0);
-				task.setIgnoredOn(0);
 				return;
 			}
-			task.setTrackedOn(taskSave.getTrackedOn());
-			task.setCompletedOn(taskSave.getCompletedOn());
-			task.setIgnoredOn(taskSave.getIgnoredOn());
+			task.loadSave(loadedTask);
 		});
 	}
 

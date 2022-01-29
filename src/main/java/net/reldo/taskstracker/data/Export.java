@@ -8,6 +8,7 @@ import lombok.Setter;
 import net.reldo.taskstracker.bosses.BossData;
 import net.reldo.taskstracker.quests.DiaryAndMiniQuestData;
 import net.reldo.taskstracker.quests.QuestData;
+import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.league3.League3Varbits;
 import net.reldo.taskstracker.tasktypes.league3.League3Varps;
@@ -32,7 +33,7 @@ public class Export
 	private final HashMap<Integer, Integer> varbits;
 	private final HashMap<Integer, Integer> varps;
 	@Setter // TODO: Setter until property is ready to deprecate when web accepts varbits
-	private HashMap<String, TaskSave> tasks;
+	private HashMap<String, Task> tasks;
 
 	public Export(TaskType taskType, String runeliteVersion, Client client, PluginManager pluginManager, ConfigManager configManager)
 	{

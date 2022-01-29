@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.Export;
 import net.reldo.taskstracker.data.LongSerializer;
 import net.reldo.taskstracker.data.TaskDataClient;
-import net.reldo.taskstracker.data.TaskSave;
 import net.reldo.taskstracker.data.TrackerDataStore;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
@@ -81,7 +80,6 @@ public class TasksTrackerPlugin extends Plugin
 
 	@Inject private TaskDataClient taskDataClient;
 	@Inject private TrackerDataStore trackerDataStore;
-	private boolean shouldGetName;
 	private RuneScapeProfileType currentProfileType;
 
 	@Provides
@@ -97,11 +95,7 @@ public class TasksTrackerPlugin extends Plugin
 		for (TaskType taskType : TaskType.values())
 		{
 			TaskManager taskManager = new TaskManager(taskType, this, trackerDataStore, taskDataClient);
-			if (taskManager == null)
-			{
-				continue;
-			}
-			taskManager.loadTaskSourceData();
+			taskManager.loadTaskSourceData(); // TODO: async
 			taskManagers.put(taskType, taskManager);
 		}
 
@@ -129,15 +123,14 @@ public class TasksTrackerPlugin extends Plugin
 
 	private void loadProfile()
 	{
-		shouldGetName = true;
 		trackerDataStore.loadProfile();
 
-		TaskType selectedType = trackerDataStore.currentData.settings.selectedTaskType;
-		setSelectedTaskType(selectedType != null ? selectedType : TaskType.COMBAT);
+		TaskType selectedType = config.taskType();
+		setSelectedTaskType(selectedType);
 
 		for (TaskType taskType : TaskType.values())
 		{
-			taskManagers.get(taskType).applyTrackerSave();
+			taskManagers.get(taskType).applyTrackerSave(trackerDataStore.currentData.tasksByType.get(taskType));
 		}
 		pluginPanel.redraw();
 	}
@@ -166,8 +159,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
-		int index = varbitChanged.getIndex();
-		processTaskVarp(index);
+		processTaskVarp(varbitChanged.getIndex());
 	}
 
 	private void processTaskVarp(int index)
@@ -287,18 +279,12 @@ public class TasksTrackerPlugin extends Plugin
 			playerSkills = client.getRealSkillLevels();
 			SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
 		}
-
-		if (shouldGetName)
-		{
-			trackerDataStore.currentData.settings.displayName = getDisplayName();
-			shouldGetName = false;
-		}
 	}
 
 	public void setSelectedTaskType(TaskType type)
 	{
 		selectedTaskType = type;
-		trackerDataStore.currentData.settings.selectedTaskType = type;
+		configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskType", type);
 	}
 
 	public void refresh()
@@ -309,13 +295,13 @@ public class TasksTrackerPlugin extends Plugin
 	public void trackTask(Task task)
 	{
 		// TODO: Move this responsibility; not correct to be here
-		trackerDataStore.saveTask(task);
+		trackerDataStore.saveCurrentToConfig(taskManagers.get(config.taskType()).tasks);
 	}
 
 	public void ignoreTask(Task task)
 	{
 		// TODO: Move this responsibility; not correct to be here
-		trackerDataStore.saveTask(task);
+		trackerDataStore.saveCurrentToConfig(taskManagers.get(config.taskType()).tasks);
 	}
 
 	public void openImportJsonDialog()
@@ -351,6 +337,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (selectedValue.equals(JOptionPane.YES_OPTION))
 		{
+			// FIXME: Hardcoded for league 3 only
 			trackerDataStore.importTasksFromReldo(reldoImport, taskManagers.get(TaskType.LEAGUE_3));
 			pluginPanel.redraw();
 		}
@@ -386,17 +373,10 @@ public class TasksTrackerPlugin extends Plugin
 
 			// TODO: This is a holdover for tasks until the web is ready to accept varbits
 			// TODO: We already export the varbits, so ready to go
-			HashMap<String, TaskSave> taskSaves = trackerDataStore.currentData.tasksByType.get(taskType);
-			if (taskType == TaskType.LEAGUE_3)
-			{
-				HashMap<String, TaskSave> tasksById = new HashMap<>();
-				taskSaves.forEach((key, value) -> tasksById.put(String.valueOf(value.getId()), value));
-				export.setTasks(tasksById);
-			}
-			else
-			{
-				export.setTasks(taskSaves);
-			}
+			HashMap<Integer, Task> tasks = trackerDataStore.currentData.tasksByType.get(taskType);
+			HashMap<String, Task> tasksById = new HashMap<>();
+			tasks.forEach((key, value) -> tasksById.put(String.valueOf(value.getId()), value));
+			export.setTasks(tasksById);
 
 			return gson.toJson(export);
 		}

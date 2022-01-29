@@ -1,6 +1,7 @@
 package net.reldo.taskstracker;
 
 import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -79,5 +80,17 @@ public interface TasksTrackerConfig extends Config
     {
         return "";
     }
+
+	@ConfigItem(
+		position = 4,
+		keyName = "taskType",
+		name = "Task Type",
+		description = "Configures the task type which is displayed in the panel.",
+		hidden = true
+	)
+	default TaskType taskType()
+	{
+		return TaskType.COMBAT;
+	}
 
 }

@@ -1,6 +1,8 @@
 package net.reldo.taskstracker.tasktypes;
 
+import com.google.gson.annotations.Expose;
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.data.reldo.ReldoTaskSave;
 import net.reldo.taskstracker.panel.TaskPanel;
 import java.time.Instant;
 import lombok.Data;
@@ -11,13 +13,17 @@ import net.runelite.client.game.SpriteManager;
 @Data
 public abstract class Task
 {
+	@Expose
 	private final int id;
 	private final String name;
 	private final String description;
 	private final String tier;
 
+	@Expose
 	private long completedOn;
+	@Expose
 	private long trackedOn;
+	@Expose
 	private long ignoredOn;
 
 	public boolean isCompleted()
@@ -63,6 +69,32 @@ public abstract class Task
 			return;
 		}
 		ignoredOn = state ? now : 0;
+	}
+
+	public void loadSave(Task loadedData)
+	{
+		loadData(loadedData.getCompletedOn(), loadedData.getIgnoredOn(), loadedData.getTrackedOn());
+	}
+
+	public void loadReldoSave(ReldoTaskSave loadedData)
+	{
+		loadData(loadedData.getCompleted(), loadedData.getIgnored(), loadedData.getTodo());
+	}
+
+	private void loadData(long completedOn, long ignoredOn, long trackedOn)
+	{
+		if (completedOn > this.getCompletedOn())
+		{
+			this.setCompletedOn(completedOn);
+		}
+		if (ignoredOn > this.getIgnoredOn())
+		{
+			this.setIgnoredOn(ignoredOn);
+		}
+		if (trackedOn > this.getTrackedOn())
+		{
+			this.setTrackedOn(trackedOn);
+		}
 	}
 
 	public abstract TaskType getType();
