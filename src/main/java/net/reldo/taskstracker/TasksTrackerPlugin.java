@@ -56,6 +56,8 @@ import net.runelite.client.util.ImageUtil;
 )
 public class TasksTrackerPlugin extends Plugin
 {
+	public static final String CONFIG_GROUP_NAME = "tasks-tracker";
+
 	public int[] playerSkills;
 	public HashMap<TaskType, TaskManager> taskManagers = new HashMap<>();
 

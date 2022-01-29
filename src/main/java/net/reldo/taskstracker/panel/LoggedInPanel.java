@@ -183,7 +183,7 @@ public class LoggedInPanel extends JPanel
 			changeTab(ConfigValues.TaskListTabs.TRACKED);
 			trackedFilterBtn.setState(1);
 			trackedFilterBtn.setEnabled(false);
-			plugin.getConfigManager().setConfiguration("tasks-tracker", "taskListTab", ConfigValues.TaskListTabs.TRACKED);
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", ConfigValues.TaskListTabs.TRACKED);
 			filterButtonAction("tracked");
 		});
 		trackedTasksListPanelBtn.setSelected(config.taskListTab().equals(ConfigValues.TaskListTabs.TRACKED));
@@ -195,7 +195,7 @@ public class LoggedInPanel extends JPanel
 		allTasksListPanelBtn.setRolloverIcon(ALL_TAB_HOVER_ICON);
 		allTasksListPanelBtn.addActionListener(e -> {
 			changeTab(ConfigValues.TaskListTabs.ALL);
-			plugin.getConfigManager().setConfiguration("tasks-tracker", "taskListTab", ConfigValues.TaskListTabs.ALL);
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", ConfigValues.TaskListTabs.ALL);
 			plugin.refresh();
 		});
 		allTasksListPanelBtn.setSelected(config.taskListTab().equals(ConfigValues.TaskListTabs.ALL));
@@ -207,7 +207,7 @@ public class LoggedInPanel extends JPanel
 		customTasksListPanelBtn.setRolloverIcon(CUSTOM_TAB_HOVER_ICON);
 		customTasksListPanelBtn.addActionListener(e -> {
 			changeTab(ConfigValues.TaskListTabs.CUSTOM);
-			plugin.getConfigManager().setConfiguration("tasks-tracker", "taskListTab", ConfigValues.TaskListTabs.CUSTOM);
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", ConfigValues.TaskListTabs.CUSTOM);
 			plugin.refresh();
 		});
 		customTasksListPanelBtn.setSelected(config.taskListTab().equals(ConfigValues.TaskListTabs.CUSTOM));
@@ -281,13 +281,13 @@ public class LoggedInPanel extends JPanel
 		ignoredFilterBtn.setState(filterStates.get("ignored"));
 
 		configValue = ConfigValues.CompletedFilterValues.values()[completedFilterBtn.getState()];
-		plugin.getConfigManager().setConfiguration("tasks-tracker", "completedFilter", configValue);
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "completedFilter", configValue);
 
 		configValue = ConfigValues.TrackedFilterValues.values()[trackedFilterBtn.getState()];
-		plugin.getConfigManager().setConfiguration("tasks-tracker", "trackedFilter", configValue);
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "trackedFilter", configValue);
 
 		configValue = ConfigValues.IgnoredFilterValues.values()[ignoredFilterBtn.getState()];
-		plugin.getConfigManager().setConfiguration("tasks-tracker", "ignoredFilter", configValue);
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "ignoredFilter", configValue);
 	}
 
 	private JPanel getSouthPanel()
@@ -528,7 +528,7 @@ public class LoggedInPanel extends JPanel
 				return;
 		}
 
-		plugin.getConfigManager().setConfiguration("tasks-tracker", filter + "Filter", configValue);
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, filter + "Filter", configValue);
 		plugin.refresh();
 	}
 
