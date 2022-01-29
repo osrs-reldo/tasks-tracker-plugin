@@ -1,6 +1,8 @@
 package net.reldo.taskstracker.tasktypes.league3;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -62,11 +64,15 @@ public enum League3TaskVarps
 	@Getter
 	private static final HashMap<Integer, League3TaskVarps> idToVarpMap = new HashMap<>();
 
+	@Getter
+	private static final List<Integer> allVarpIds = new ArrayList<>();
+
 	static
 	{
 		for (League3TaskVarps varp : League3TaskVarps.values())
 		{
 			idToVarpMap.put(varp.getVarpId(), varp);
+			allVarpIds.add(varp.getVarpId());
 		}
 	}
 }

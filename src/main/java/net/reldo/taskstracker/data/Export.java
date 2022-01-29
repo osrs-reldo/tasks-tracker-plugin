@@ -10,6 +10,7 @@ import net.reldo.taskstracker.quests.DiaryAndMiniQuestData;
 import net.reldo.taskstracker.quests.QuestData;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
+import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
 import net.reldo.taskstracker.tasktypes.league3.League3Varbits;
 import net.reldo.taskstracker.tasktypes.league3.League3Varps;
 import net.runelite.api.Actor;
@@ -86,6 +87,7 @@ public class Export
 		if (taskType == TaskType.LEAGUE_3)
 		{
 			varpIds = League3Varps.getAllVarpIds();
+			varpIds.addAll(League3TaskVarps.getAllVarpIds());
 		}
 		if (taskType == TaskType.COMBAT)
 		{
