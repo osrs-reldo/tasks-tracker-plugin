@@ -33,7 +33,6 @@ import net.reldo.taskstracker.tasktypes.combattask.CombatTaskVarps;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.Player;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.VarbitChanged;
@@ -98,7 +97,7 @@ public class TasksTrackerPlugin extends Plugin
 		// Load task managers
 		for (TaskType taskType : TaskType.values())
 		{
-			TaskManager taskManager = new TaskManager(taskType, this, trackerDataStore, taskDataClient);
+			TaskManager taskManager = new TaskManager(taskType, taskDataClient);
 			taskManagers.put(taskType, taskManager);
 
 			taskManager.loadTaskSourceData((tasks) -> {
@@ -232,11 +231,6 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
 	{
-		handleOnGameStateChanged(gameStateChanged);
-	}
-
-	private void handleOnGameStateChanged(GameStateChanged gameStateChanged)
-	{
 		// FIXME: This entire logic being wrapped in invokeLater is a smell
 		SwingUtilities.invokeLater(() -> {
 			GameState newGameState = gameStateChanged.getGameState();
@@ -253,16 +247,6 @@ public class TasksTrackerPlugin extends Plugin
 		});
 	}
 
-	private String getDisplayName()
-	{
-		Player localPlayer = client.getLocalPlayer();
-		if (localPlayer == null)
-		{
-			return null;
-		}
-		return localPlayer.getName();
-	}
-
 	private boolean isLoggedInState(GameState gameState)
 	{
 		return gameState != GameState.LOGIN_SCREEN && gameState != GameState.LOGIN_SCREEN_AUTHENTICATOR;
@@ -270,11 +254,6 @@ public class TasksTrackerPlugin extends Plugin
 
 	@Subscribe
 	public void onGameTick(GameTick gameTick)
-	{
-		handleOnGameTick(gameTick);
-	}
-
-	private void handleOnGameTick(GameTick gameTick)
 	{
 		int[] newSkills = client.getRealSkillLevels();
 		boolean changed = !Arrays.equals(playerSkills, newSkills);
@@ -293,19 +272,12 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void refresh()
 	{
-		taskManagers.get(selectedTaskType).refresh(null);
+		pluginPanel.refresh(null);
 	}
 
-	public void trackTask(Task task)
+	public void saveCurrentTaskData()
 	{
-		// TODO: Move this responsibility; not correct to be here
-		trackerDataStore.saveCurrentToConfig(taskManagers.get(config.taskType()).tasks);
-	}
-
-	public void ignoreTask(Task task)
-	{
-		// TODO: Move this responsibility; not correct to be here
-		trackerDataStore.saveCurrentToConfig(taskManagers.get(config.taskType()).tasks);
+		trackerDataStore.saveTaskTypeToConfig(config.taskType(), taskManagers.get(config.taskType()).tasks);
 	}
 
 	public void openImportJsonDialog()
