@@ -66,18 +66,14 @@ public class TrackerDataStore
 		}
 	}
 
-	public void saveCurrentToConfig(ArrayList<Task> tasks)
+	public void saveTaskTypeToConfig(TaskType taskType, ArrayList<Task> tasks)
 	{
 		Gson gson = buildGson();
+		Map<Integer, Task> tasksWithData = tasks.stream()
+			.filter(task -> task.getCompletedOn() != 0 || task.getIgnoredOn() != 0 || task.getTrackedOn() != 0)
+			.collect(Collectors.<Task, Integer, Task>toMap(Task::getId, task -> task));
 
-		for (TaskType taskType : TaskType.values())
-		{
-			Map<Integer, Task> tasksWithData = tasks.stream()
-				.filter(task -> task.getCompletedOn() != 0 || task.getIgnoredOn() != 0 || task.getTrackedOn() != 0)
-				.collect(Collectors.<Task, Integer, Task>toMap(Task::getId, task -> task));
-
-			String configValue = gson.toJson(tasksWithData);
-			configManager.setRSProfileConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, TASKS_PREFIX + "." + taskType.name(), configValue);
-		}
+		String configValue = gson.toJson(tasksWithData);
+		configManager.setRSProfileConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, TASKS_PREFIX + "." + taskType.name(), configValue);
 	}
 }
