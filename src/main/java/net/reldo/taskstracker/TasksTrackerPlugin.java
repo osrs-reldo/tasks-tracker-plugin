@@ -90,7 +90,7 @@ public class TasksTrackerPlugin extends Plugin
 	}
 
 	@Override
-	protected void startUp() throws Exception
+	protected void startUp()
 	{
 		pluginPanel = new TasksTrackerPluginPanel(this, config, clientThread, spriteManager, skillIconManager);
 
@@ -151,7 +151,7 @@ public class TasksTrackerPlugin extends Plugin
 	}
 
 	@Override
-	protected void shutDown() throws Exception
+	protected void shutDown()
 	{
 		pluginPanel = null;
 		taskManagers = new HashMap<>();
