@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskManager;
@@ -68,7 +69,7 @@ public class TrackerDataStore
 
 	private <T> T getDataFromConfig(String key, Type deserializeType, T defaultValue)
 	{
-		String jsonString = configManager.getRSProfileConfiguration(TrackerDataStore.PLUGIN_BASE_GROUP, key);
+		String jsonString = configManager.getRSProfileConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, key);
 		if (jsonString == null)
 		{
 			return defaultValue;
@@ -80,8 +81,8 @@ public class TrackerDataStore
 		}
 		catch (JsonParseException ex)
 		{
-			log.error("{} json invalid. All is lost", TrackerDataStore.PLUGIN_BASE_GROUP + "." + key, ex);
-			configManager.unsetRSProfileConfiguration(TrackerDataStore.PLUGIN_BASE_GROUP, key);
+			log.error("{} json invalid. All is lost", TasksTrackerPlugin.CONFIG_GROUP_NAME + "." + key, ex);
+			configManager.unsetRSProfileConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, key);
 			return defaultValue;
 		}
 	}
@@ -102,7 +103,7 @@ public class TrackerDataStore
 				.collect(Collectors.<Task, Integer, Task>toMap(Task::getId, task -> task));
 
 			String configValue = gson.toJson(tasksWithData);
-			configManager.setRSProfileConfiguration(PLUGIN_BASE_GROUP, TASKS_PREFIX + "." + taskType.name(), configValue);
+			configManager.setRSProfileConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, TASKS_PREFIX + "." + taskType.name(), configValue);
 		}
 	}
 }
