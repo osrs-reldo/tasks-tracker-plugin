@@ -2,10 +2,12 @@ package net.reldo.taskstracker;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Provides;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.Type;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -91,23 +93,25 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
+		pluginPanel = new TasksTrackerPluginPanel(this, config, clientThread, spriteManager, skillIconManager);
+
 		// Load task managers
 		for (TaskType taskType : TaskType.values())
 		{
 			TaskManager taskManager = new TaskManager(taskType, this, trackerDataStore, taskDataClient);
-			taskManager.loadTaskSourceData(); // TODO: async
 			taskManagers.put(taskType, taskManager);
+
+			taskManager.loadTaskSourceData((tasks) -> {
+				boolean isLoggedIn = isLoggedInState(client.getGameState());
+				if (isLoggedIn)
+				{
+					loadProfile();
+					forceVarbitUpdate();
+				}
+				SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedIn));
+			});
 		}
 
-		pluginPanel = new TasksTrackerPluginPanel(this, config, clientThread, spriteManager, skillIconManager);
-
-		boolean isLoggedIn = isLoggedInState(client.getGameState());
-		if (isLoggedIn)
-		{
-			loadProfile();
-			forceVarbitUpdate();
-		}
-		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedIn));
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
@@ -123,14 +127,14 @@ public class TasksTrackerPlugin extends Plugin
 
 	private void loadProfile()
 	{
-		trackerDataStore.loadProfile();
-
-		TaskType selectedType = config.taskType();
-		setSelectedTaskType(selectedType);
+		setSelectedTaskType(config.taskType());
 
 		for (TaskType taskType : TaskType.values())
 		{
-			taskManagers.get(taskType).applyTrackerSave(trackerDataStore.currentData.tasksByType.get(taskType));
+			Type classType = taskType.getClassType();
+			Type taskDeserializeType = TypeToken.getParameterized(HashMap.class, Integer.class, classType).getType();
+			HashMap<Integer, Task> taskData = trackerDataStore.getDataFromConfig(TrackerDataStore.TASKS_PREFIX + "." + taskType.name(), taskDeserializeType, new HashMap<>());
+			taskManagers.get(taskType).applyTrackerSave(taskData);
 		}
 		pluginPanel.redraw();
 	}
@@ -365,7 +369,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (taskType == null)
 		{
-			return gson.toJson(trackerDataStore.currentData);
+			return gson.toJson(taskManagers);
 		}
 		else
 		{
@@ -373,9 +377,8 @@ public class TasksTrackerPlugin extends Plugin
 
 			// TODO: This is a holdover for tasks until the web is ready to accept varbits
 			// TODO: We already export the varbits, so ready to go
-			HashMap<Integer, Task> tasks = trackerDataStore.currentData.tasksByType.get(taskType);
 			HashMap<String, Task> tasksById = new HashMap<>();
-			tasks.forEach((key, value) -> tasksById.put(String.valueOf(value.getId()), value));
+			taskManagers.get(taskType).tasks.forEach((task) -> tasksById.put(String.valueOf(task.getId()), task));
 			export.setTasks(tasksById);
 
 			return gson.toJson(export);
