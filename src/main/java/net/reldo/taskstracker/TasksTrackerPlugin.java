@@ -100,16 +100,18 @@ public class TasksTrackerPlugin extends Plugin
 			taskManagers.put(taskType, taskManager);
 
 			taskManager.asyncLoadTaskSourceData((tasks) -> {
-				boolean isLoggedIn = isLoggedInState(client.getGameState());
-				if (isLoggedIn)
-				{
-					loadProfile();
-					forceVarbitUpdate();
-				}
-				SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedIn));
+				SwingUtilities.invokeLater(() -> {
+					boolean isLoggedIn = isLoggedInState(client.getGameState());
+					if (isLoggedIn)
+					{
+						loadProfile();
+						forceVarbitUpdate();
+					}
+					pluginPanel.setLoggedIn(isLoggedIn);
+					pluginPanel.redraw();
+				});
 			});
 		}
-
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
@@ -189,7 +191,6 @@ public class TasksTrackerPlugin extends Plugin
 		int minTaskId = ordinal * 32;
 		int maxTaskId = minTaskId + 31;
 		int taskProgressEnumIndex = minTaskId / 32;
-		log.debug("Varp {} = {}", index, varpValue);
 
 		for (int i = minTaskId; i <= maxTaskId; i++)
 		{

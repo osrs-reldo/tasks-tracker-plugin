@@ -118,7 +118,6 @@ public class LoggedInPanel extends JPanel
 		this.config = config;
 
 		createPanel(this);
-		redraw();
 	}
 
 	@Override
@@ -129,11 +128,7 @@ public class LoggedInPanel extends JPanel
 
 	public void redraw()
 	{
-		if (plugin.getConfig().taskType() != null)
-		{
-			taskTypeDropdown.setSelectedItem(plugin.getConfig().taskType());
-			subFilterPanel.redraw();
-		}
+		subFilterPanel.redraw();
 		taskListPanel.redraw();
 	}
 
