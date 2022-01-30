@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Provides;
 import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Panel;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
@@ -12,9 +14,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.bosses.BossData;
@@ -57,6 +65,8 @@ import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.client.util.LinkBrowser;
+import net.runelite.client.util.SwingUtil;
 
 @Slf4j
 @PluginDescriptor(
@@ -323,7 +333,7 @@ public class TasksTrackerPlugin extends Plugin
 		}
 		catch (Exception ex)
 		{
-			showMessageBox("Import Tasks Error", "There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+			showMessageBox("Import Tasks Error", "There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE, false);
 			log.error("There was an issue importing task tracker data.", ex);
 			log.info("reldoImport json: {}", json);
 			return;
@@ -351,10 +361,13 @@ public class TasksTrackerPlugin extends Plugin
 			final StringSelection stringSelection = new StringSelection(exportJson);
 			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
 
+			String message = "Exported " + taskType.getDisplayString() + " data copied to clipboard!";
+
 			showMessageBox(
 				"Data Exported!",
-				"Exported " + taskType.getDisplayString() + " data copied to clipboard!",
-				JOptionPane.INFORMATION_MESSAGE);
+					message,
+					JOptionPane.INFORMATION_MESSAGE,
+					true);
 		});
 	}
 
@@ -398,13 +411,34 @@ public class TasksTrackerPlugin extends Plugin
 		}
 	}
 
-	private static void showMessageBox(final String title, final String message, int messageType)
+	private static void showMessageBox(final String title, final String message, int messageType, boolean showOpenLeagueTools)
 	{
 		SwingUtilities.invokeLater(() -> {
-			JOptionPane optionPane = new JOptionPane(message, messageType);
-			JDialog dialog = optionPane.createDialog(title);
+			JOptionPane optionPane;
+			JDialog dialog;
+
+			if(showOpenLeagueTools)
+			{
+				String[] options = {"Open OS League Tools", "Ok"};
+
+				optionPane = new JOptionPane(message, messageType, JOptionPane.YES_NO_OPTION, null, options, options[1]);
+			}
+			else
+			{
+				optionPane = new JOptionPane(message, messageType);
+			}
+
+			dialog = optionPane.createDialog(title);
 			dialog.setAlwaysOnTop(true);
 			dialog.setVisible(true);
+
+			Object selectedValue = optionPane.getValue();
+			if(selectedValue == null) return;
+
+			if (selectedValue.equals("Open OS League Tools"))
+			{
+				LinkBrowser.browse("https://www.osleague.tools");
+			}
 		});
 	}
 }
