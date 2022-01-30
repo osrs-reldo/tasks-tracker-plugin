@@ -324,6 +324,12 @@ public class TasksTrackerPlugin extends Plugin
 		inputDialog.setAlwaysOnTop(true);
 		inputDialog.setVisible(true);
 
+		if(optionPane.getInputValue().equals("") || optionPane.getInputValue().equals("uninitializedValue"))
+		{
+			showMessageBox("Import Tasks Error", "Input was empty so no data has been imported.", JOptionPane.ERROR_MESSAGE, false);
+			return;
+		}
+
 		String json = "";
 		ReldoImport reldoImport;
 		try
