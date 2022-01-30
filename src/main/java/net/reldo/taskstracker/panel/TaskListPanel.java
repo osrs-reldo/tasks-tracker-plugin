@@ -124,13 +124,11 @@ public class TaskListPanel extends JScrollPane
 				emptyTasks.setVisible(true);
 				return;
 			}
+			for (Task task : tasks)
 			{
-				for (Task task : tasks)
-				{
-					TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager, skillIconManager);
-					add(taskPanel);
-					taskPanels.add(taskPanel);
-				}
+				TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager, skillIconManager);
+				add(taskPanel);
+				taskPanels.add(taskPanel);
 			}
 			log.debug("Validated and repaint...");
 			validate();
