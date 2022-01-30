@@ -10,9 +10,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.tasktypes.Task;
-import net.reldo.taskstracker.tasktypes.TaskManager;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.client.config.ConfigManager;
 
@@ -28,14 +26,6 @@ public class TrackerDataStore
 	public TrackerDataStore(ConfigManager configManager)
 	{
 		this.configManager = configManager;
-	}
-
-	public void importTasksFromReldo(ReldoImport reldoImport, TaskManager taskManager)
-	{
-		reldoImport.getTasks().forEach((id, reldoTaskSave) -> {
-			Task task = taskManager.tasks.get(id);
-			task.loadReldoSave(reldoTaskSave);
-		});
 	}
 
 	private Gson buildGson()

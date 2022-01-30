@@ -99,7 +99,7 @@ public class TasksTrackerPlugin extends Plugin
 			TaskManager taskManager = new TaskManager(taskType, taskDataClient);
 			taskManagers.put(taskType, taskManager);
 
-			taskManager.loadTaskSourceData((tasks) -> {
+			taskManager.asyncLoadTaskSourceData((tasks) -> {
 				boolean isLoggedIn = isLoggedInState(client.getGameState());
 				if (isLoggedIn)
 				{
@@ -311,7 +311,10 @@ public class TasksTrackerPlugin extends Plugin
 		if (selectedValue.equals(JOptionPane.YES_OPTION))
 		{
 			// FIXME: Hardcoded for league 3 only
-			trackerDataStore.importTasksFromReldo(reldoImport, taskManagers.get(TaskType.LEAGUE_3));
+			reldoImport.getTasks().forEach((id, reldoTaskSave) -> {
+				Task task = taskManagers.get(TaskType.LEAGUE_3).tasks.get(id);
+				task.loadReldoSave(reldoTaskSave);
+			});
 			pluginPanel.redraw();
 		}
 	}

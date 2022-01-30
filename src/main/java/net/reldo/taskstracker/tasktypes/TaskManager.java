@@ -17,7 +17,7 @@ public class TaskManager
 		this.taskDataClient = taskDataClient;
 	}
 
-	public void loadTaskSourceData( CallbackCommand<ArrayList<Task>> callback)
+	public void asyncLoadTaskSourceData(CallbackCommand<ArrayList<Task>> callback)
 	{
 		taskDataClient.loadTaskSourceData(taskType, (tasks) -> {
 			this.tasks = tasks;
