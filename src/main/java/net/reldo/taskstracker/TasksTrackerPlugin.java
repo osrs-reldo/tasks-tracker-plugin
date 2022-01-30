@@ -320,7 +320,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		JOptionPane optionPane = new JOptionPane("Paste import data into the text field below to import task tracker data.", JOptionPane.INFORMATION_MESSAGE);
 		optionPane.setWantsInput(true);
-		JDialog inputDialog = optionPane.createDialog("Import Tasks Input");
+		JDialog inputDialog = optionPane.createDialog(pluginPanel, "Import Tasks Input");
 		inputDialog.setAlwaysOnTop(true);
 		inputDialog.setVisible(true);
 
@@ -340,7 +340,7 @@ public class TasksTrackerPlugin extends Plugin
 		}
 
 		optionPane = new JOptionPane("Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
-		JDialog confirmDialog = optionPane.createDialog("Import Tasks Overwrite Confirmation");
+		JDialog confirmDialog = optionPane.createDialog(pluginPanel, "Import Tasks Overwrite Confirmation");
 		confirmDialog.setAlwaysOnTop(true);
 		confirmDialog.setVisible(true);
 
@@ -411,7 +411,7 @@ public class TasksTrackerPlugin extends Plugin
 		}
 	}
 
-	private static void showMessageBox(final String title, final String message, int messageType, boolean showOpenLeagueTools)
+	private void showMessageBox(final String title, final String message, int messageType, boolean showOpenLeagueTools)
 	{
 		SwingUtilities.invokeLater(() -> {
 			JOptionPane optionPane;
@@ -428,7 +428,7 @@ public class TasksTrackerPlugin extends Plugin
 				optionPane = new JOptionPane(message, messageType);
 			}
 
-			dialog = optionPane.createDialog(title);
+			dialog = optionPane.createDialog(pluginPanel, title);
 			dialog.setAlwaysOnTop(true);
 			dialog.setVisible(true);
 
