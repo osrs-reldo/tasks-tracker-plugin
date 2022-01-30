@@ -61,7 +61,6 @@ public class TasksTrackerPlugin extends Plugin
 	public int[] playerSkills;
 	public HashMap<TaskType, TaskManager> taskManagers = new HashMap<>();
 
-	public TaskType selectedTaskType;
 	public String taskTextFilter;
 
 	public TasksTrackerPluginPanel pluginPanel;
@@ -221,7 +220,6 @@ public class TasksTrackerPlugin extends Plugin
 				continue;
 			}
 
-			log.debug("{}:{}:{}:{}", taskProgressEnumIndex, i, foundTask.getName(), isTaskVarbitCompleted);
 			foundTask.setCompleted(isTaskVarbitCompleted);
 			Task finalFoundTask = foundTask; // FIXME: foundTask can be final somehow
 			SwingUtilities.invokeLater(() -> pluginPanel.refresh(finalFoundTask));
@@ -266,7 +264,6 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void setSelectedTaskType(TaskType type)
 	{
-		selectedTaskType = type;
 		configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskType", type);
 	}
 

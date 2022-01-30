@@ -60,9 +60,9 @@ public class DifficultyFilterPanel extends FilterButtonPanel
         BufferedImage tierImage;
         String directory = "panel/components/task_tiers/";
 
-        if(plugin.selectedTaskType == null) return images;
+        if (plugin.getConfig().taskType() == null) return images;
 
-        if (plugin.selectedTaskType.equals(TaskType.LEAGUE_3))
+        if (plugin.getConfig().taskType().equals(TaskType.LEAGUE_3))
         {
             directory += "league3/";
 
@@ -76,7 +76,7 @@ public class DifficultyFilterPanel extends FilterButtonPanel
             }
         }
 
-        if (plugin.selectedTaskType.equals(TaskType.COMBAT))
+        if (plugin.getConfig().taskType().equals(TaskType.COMBAT))
         {
             directory += "combat/";
 

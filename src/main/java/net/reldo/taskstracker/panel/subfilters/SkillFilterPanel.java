@@ -96,8 +96,8 @@ public class SkillFilterPanel extends FilterButtonPanel
     @Override
     public void redraw()
     {
-        if(plugin.selectedTaskType != null)
-            this.setVisible(!plugin.selectedTaskType.equals(TaskType.COMBAT));
+        if (plugin.getConfig().taskType() != null)
+            this.setVisible(!plugin.getConfig().taskType().equals(TaskType.COMBAT));
 
         super.redraw();
     }

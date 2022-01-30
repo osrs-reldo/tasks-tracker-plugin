@@ -45,11 +45,11 @@ public class TaskListPanel extends JScrollPane
 	public ArrayList<Task> getTasks()
 	{
 		// TODO: Build a filter service
-		if (plugin.selectedTaskType == null)
+		if (plugin.getConfig().taskType() == null)
 		{
 			return null;
 		}
-		return plugin.taskManagers.get(plugin.selectedTaskType).tasks;
+		return plugin.taskManagers.get(plugin.getConfig().taskType()).tasks;
 	}
 
 	public String getEmptyTaskListMessage()

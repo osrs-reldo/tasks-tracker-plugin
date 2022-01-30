@@ -129,9 +129,9 @@ public class LoggedInPanel extends JPanel
 
 	public void redraw()
 	{
-		if (plugin.selectedTaskType != null)
+		if (plugin.getConfig().taskType() != null)
 		{
-			taskTypeDropdown.setSelectedItem(plugin.selectedTaskType);
+			taskTypeDropdown.setSelectedItem(plugin.getConfig().taskType());
 			subFilterPanel.redraw();
 		}
 		taskListPanel.redraw();
@@ -303,7 +303,7 @@ public class LoggedInPanel extends JPanel
 		JButton exportButton = new JButton("Export");
 		exportButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 		exportButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
-		exportButton.addActionListener(e -> plugin.copyJsonToClipboard(plugin.selectedTaskType));
+		exportButton.addActionListener(e -> plugin.copyJsonToClipboard(plugin.getConfig().taskType()));
 		southPanel.add(exportButton, BorderLayout.EAST);
 
 		return southPanel;
@@ -318,7 +318,7 @@ public class LoggedInPanel extends JPanel
 
 		taskTypeDropdown = new JComboBox<>(TaskType.values());
 		taskTypeDropdown.setAlignmentX(LEFT_ALIGNMENT);
-		taskTypeDropdown.setSelectedItem(plugin.selectedTaskType);
+		taskTypeDropdown.setSelectedItem(plugin.getConfig().taskType());
 		taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex())));
 
 		// Wrapper for collapsible sub-filter menu
@@ -560,7 +560,7 @@ public class LoggedInPanel extends JPanel
 	{
 		List<String> filterCounts = new ArrayList<>();
 
-		if(plugin.selectedTaskType.equals(TaskType.LEAGUE_3))
+		if(plugin.getConfig().taskType().equals(TaskType.LEAGUE_3))
 		{
 			int count = config.skillFilter().equals("") ? 0 : config.skillFilter().split(",").length ;
 			filterCounts.add(count + " skill");
