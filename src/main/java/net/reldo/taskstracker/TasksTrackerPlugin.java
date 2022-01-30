@@ -437,7 +437,7 @@ public class TasksTrackerPlugin extends Plugin
 
 			if (selectedValue.equals("Open OS League Tools"))
 			{
-				LinkBrowser.browse("https://www.osleague.tools");
+				LinkBrowser.browse("https://www.osleague.tools/tracker?open=import&tab=tasks");
 			}
 		});
 	}
