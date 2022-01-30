@@ -55,9 +55,9 @@ public class LoggedInPanel extends JPanel
 	private final TasksTrackerConfig config;
 
 	// Filter buttons
-	private TriToggleButton completedFilterBtn = new TriToggleButton();
-	private TriToggleButton trackedFilterBtn = new TriToggleButton();
-	private TriToggleButton ignoredFilterBtn = new TriToggleButton();
+	private final TriToggleButton completedFilterBtn = new TriToggleButton();
+	private final TriToggleButton trackedFilterBtn = new TriToggleButton();
+	private final TriToggleButton ignoredFilterBtn = new TriToggleButton();
 	private JPanel titlePanel = new JPanel();
 
 	private final String completeBtnPath = "panel/components/complete_button/style_2a/";
