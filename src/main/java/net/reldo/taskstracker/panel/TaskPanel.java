@@ -1,11 +1,13 @@
 package net.reldo.taskstracker.panel;
 
+import java.util.ArrayList;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.Util;
 import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
+import net.reldo.taskstracker.panel.filters.Filter;
 import net.reldo.taskstracker.tasktypes.Task;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -57,6 +59,8 @@ public abstract class TaskPanel extends JPanel
 	private final JPanel buttons = new JPanel();
 	private final JToggleButton toggleTrack = new JToggleButton();
 	private final JToggleButton toggleIgnore = new JToggleButton();
+
+	protected final ArrayList<Filter> filters = new ArrayList<>();
 
 	protected TasksTrackerPlugin plugin;
 
@@ -177,6 +181,11 @@ public abstract class TaskPanel extends JPanel
 		}
 
 		TasksTrackerConfig config = plugin.getConfig();
+
+		for(Filter filter : filters)
+		{
+			if(!filter.meetsCriteria(task)) return false;
+		}
 
 		if (config.completedFilter().equals(CompletedFilterValues.INCOMPLETE) && task.isCompleted())
 		{
