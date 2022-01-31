@@ -153,7 +153,6 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		final JPanel taskListPanel = new JPanel(new BorderLayout());
 		taskListPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-//		JTabbedPane
 		tabbedPane.setBorder(new EmptyBorder(0,0,0,0));
 		tabbedPane.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH,24));
 
@@ -161,7 +160,6 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		tabbedPane.addTab("All Tasks", emptyPanel());
 		tabbedPane.addTab("Custom", emptyPanel());
 
-//		taskListPanel.add(taskListTabButtons, BorderLayout.NORTH);
 		taskListPanel.add(tabbedPane, BorderLayout.NORTH);
 		taskListPanel.add(this.taskListPanel, BorderLayout.CENTER);
 
