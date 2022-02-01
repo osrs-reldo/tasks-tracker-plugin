@@ -1,5 +1,6 @@
 package net.reldo.taskstracker.data;
 
+import com.google.gson.annotations.Expose;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -23,18 +24,18 @@ public class Export
 {
 	private final Client client;
 
-	private final QuestData quests;
-	private final DiaryAndMiniQuestData diariesAndMiniQuests;
-	private final BossData bosses;
-	private String displayName;
-	private final int runescapeVersion;
-	private final String runeliteVersion;
-	private final long timestamp;
-	private final String taskType;
-	private final HashMap<Integer, Integer> varbits;
-	private final HashMap<Integer, Integer> varps;
-	@Setter // TODO: Setter until property is ready to deprecate when web accepts varbits
-	private HashMap<String, Task> tasks;
+	@Expose	private final QuestData quests;
+	@Expose	private final DiaryAndMiniQuestData diariesAndMiniQuests;
+	@Expose	private final BossData bosses;
+	@Expose	private String displayName;
+	@Expose	private final int runescapeVersion;
+	@Expose	private final String runeliteVersion;
+	@Expose	private final long timestamp;
+	@Expose	private final String taskType;
+	@Expose	private final HashMap<Integer, Integer> varbits;
+	@Expose	private final HashMap<Integer, Integer> varps;
+	// TODO: Setter until property is ready to deprecate when web accepts varbits
+	@Setter @Expose	private HashMap<String, Task> tasks;
 
 	public Export(TaskType taskType, String runeliteVersion, Client client, PluginManager pluginManager, ConfigManager configManager)
 	{

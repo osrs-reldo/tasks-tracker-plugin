@@ -335,6 +335,7 @@ public class TasksTrackerPlugin extends Plugin
 	private String exportToJson(TaskType taskType)
 	{
 		Gson gson = new GsonBuilder()
+			.excludeFieldsWithoutExposeAnnotation()
 			.registerTypeAdapter(float.class, new LongSerializer())
 			.create();
 
