@@ -107,7 +107,7 @@ public class TasksTrackerPlugin extends Plugin
 					loadSavedTaskTypeData(taskType);
 					if (isLoggedIn && taskType == config.taskType())
 					{
-						forceVarbitUpdate();
+						forceVarpUpdate();
 						pluginPanel.redraw();
 					}
 				});
@@ -134,7 +134,7 @@ public class TasksTrackerPlugin extends Plugin
 		taskManagers.get(taskType).applyTrackerSave(taskData);
 	}
 
-	private void forceVarbitUpdate()
+	private void forceVarpUpdate()
 	{
 		List<Integer> allVarbitIds = new ArrayList<>();
 		allVarbitIds.addAll(League3TaskVarps.getIdToVarpMap().keySet());
@@ -239,7 +239,7 @@ public class TasksTrackerPlugin extends Plugin
 					loadSavedTaskTypeData(taskType);
 					if (taskType == config.taskType())
 					{
-						forceVarbitUpdate();
+						forceVarpUpdate();
 						pluginPanel.redraw();
 					}
 				}
