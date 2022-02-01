@@ -161,18 +161,4 @@ public class League3TaskPanel extends TaskPanel
 		Color color = playerLevel > requiredLevel ? QUALIFIED_TEXT_COLOR : UNQUALIFIED_TEXT_COLOR;
 		return Util.imageTag(url) + " " + Util.colorTag(color, playerLevel + "/" + requiredLevel);
 	}
-
-//	//@todo decouple this from League 3. This should be a general filter that can be added to any task type with skill requirements.
-//	@Override
-//	protected boolean meetsFilterCriteria()
-//	{
-//		TasksTrackerConfig config = plugin.getConfig();
-//
-//
-//
-//
-//
-//		return super.meetsFilterCriteria();
-//	}
-
 }

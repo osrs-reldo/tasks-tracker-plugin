@@ -139,7 +139,6 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		parent.add(getSouthPanel(), BorderLayout.SOUTH);
 
 		loadAndApplyFilters(config.taskListTab());
-		System.out.println(config.taskListTab());
 		if(config.taskListTab().equals(ConfigValues.TaskListTabs.TRACKED))
 		{
 			trackedFilterBtn.setState(1);
