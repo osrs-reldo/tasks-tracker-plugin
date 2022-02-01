@@ -546,7 +546,7 @@ public class LoggedInPanel extends JPanel
 
 	private void updateWithNewTaskType(TaskType taskType)
 	{
-		plugin.setSelectedTaskType(taskType);
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskType", taskType);
 		redraw();
 		refresh(null);
 	}

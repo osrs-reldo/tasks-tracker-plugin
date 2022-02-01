@@ -93,6 +93,9 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		pluginPanel = new TasksTrackerPluginPanel(this, config, clientThread, spriteManager, skillIconManager);
 
+		boolean isLoggedIn = isLoggedInState(client.getGameState());
+		pluginPanel.setLoggedIn(isLoggedIn);
+
 		// Load task managers
 		for (TaskType taskType : TaskType.values())
 		{
@@ -101,14 +104,12 @@ public class TasksTrackerPlugin extends Plugin
 
 			taskManager.asyncLoadTaskSourceData((tasks) -> {
 				SwingUtilities.invokeLater(() -> {
-					boolean isLoggedIn = isLoggedInState(client.getGameState());
-					if (isLoggedIn)
+					loadSavedTaskTypeData(taskType);
+					if (isLoggedIn && taskType == config.taskType())
 					{
-						loadProfile();
 						forceVarbitUpdate();
+						pluginPanel.redraw();
 					}
-					pluginPanel.setLoggedIn(isLoggedIn);
-					pluginPanel.redraw();
 				});
 			});
 		}
@@ -125,18 +126,12 @@ public class TasksTrackerPlugin extends Plugin
 		log.info("Tasks Tracker started!");
 	}
 
-	private void loadProfile()
+	private void loadSavedTaskTypeData(TaskType taskType)
 	{
-		setSelectedTaskType(config.taskType());
-
-		for (TaskType taskType : TaskType.values())
-		{
-			Type classType = taskType.getClassType();
-			Type taskDeserializeType = TypeToken.getParameterized(HashMap.class, Integer.class, classType).getType();
-			HashMap<Integer, Task> taskData = trackerDataStore.getDataFromConfig(TrackerDataStore.TASKS_PREFIX + "." + taskType.name(), taskDeserializeType, new HashMap<>());
-			taskManagers.get(taskType).applyTrackerSave(taskData);
-		}
-		pluginPanel.redraw();
+		Type classType = taskType.getClassType();
+		Type taskDeserializeType = TypeToken.getParameterized(HashMap.class, Integer.class, classType).getType();
+		HashMap<Integer, Task> taskData = trackerDataStore.getDataFromConfig(TrackerDataStore.TASKS_PREFIX + "." + taskType.name(), taskDeserializeType, new HashMap<>());
+		taskManagers.get(taskType).applyTrackerSave(taskData);
 	}
 
 	private void forceVarbitUpdate()
@@ -239,7 +234,15 @@ public class TasksTrackerPlugin extends Plugin
 
 			if (newGameState == GameState.LOGGING_IN || (isLoggedInState(newGameState) && currentProfileType != newProfileType))
 			{
-				loadProfile();
+				for (TaskType taskType : TaskType.values())
+				{
+					loadSavedTaskTypeData(taskType);
+					if (taskType == config.taskType())
+					{
+						forceVarbitUpdate();
+						pluginPanel.redraw();
+					}
+				}
 			}
 
 			currentProfileType = newProfileType;
@@ -261,11 +264,6 @@ public class TasksTrackerPlugin extends Plugin
 			playerSkills = client.getRealSkillLevels();
 			SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
 		}
-	}
-
-	public void setSelectedTaskType(TaskType type)
-	{
-		configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskType", type);
 	}
 
 	public void refresh()
