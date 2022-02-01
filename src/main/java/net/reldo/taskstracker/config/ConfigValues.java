@@ -26,8 +26,8 @@ public class ConfigValues {
 
     public enum TaskListTabs
     {
-        ALL,
         TRACKED,
+        ALL,
         CUSTOM;
     }
 

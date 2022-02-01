@@ -57,6 +57,7 @@ import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.client.util.LinkBrowser;
 
 @Slf4j
 @PluginDescriptor(
@@ -310,9 +311,15 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		JOptionPane optionPane = new JOptionPane("Paste import data into the text field below to import task tracker data.", JOptionPane.INFORMATION_MESSAGE);
 		optionPane.setWantsInput(true);
-		JDialog inputDialog = optionPane.createDialog("Import Tasks Input");
+		JDialog inputDialog = optionPane.createDialog(pluginPanel, "Import Tasks Input");
 		inputDialog.setAlwaysOnTop(true);
 		inputDialog.setVisible(true);
+
+		if(optionPane.getInputValue().equals("") || optionPane.getInputValue().equals("uninitializedValue"))
+		{
+			showMessageBox("Import Tasks Error", "Input was empty so no data has been imported.", JOptionPane.ERROR_MESSAGE, false);
+			return;
+		}
 
 		String json = "";
 		ReldoImport reldoImport;
@@ -323,14 +330,14 @@ public class TasksTrackerPlugin extends Plugin
 		}
 		catch (Exception ex)
 		{
-			showMessageBox("Import Tasks Error", "There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+			showMessageBox("Import Tasks Error", "There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE, false);
 			log.error("There was an issue importing task tracker data.", ex);
 			log.info("reldoImport json: {}", json);
 			return;
 		}
 
 		optionPane = new JOptionPane("Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
-		JDialog confirmDialog = optionPane.createDialog("Import Tasks Overwrite Confirmation");
+		JDialog confirmDialog = optionPane.createDialog(pluginPanel, "Import Tasks Overwrite Confirmation");
 		confirmDialog.setAlwaysOnTop(true);
 		confirmDialog.setVisible(true);
 
@@ -351,10 +358,13 @@ public class TasksTrackerPlugin extends Plugin
 			final StringSelection stringSelection = new StringSelection(exportJson);
 			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
 
+			String message = "Exported " + taskType.getDisplayString() + " data copied to clipboard!";
+
 			showMessageBox(
 				"Data Exported!",
-				"Exported " + taskType.getDisplayString() + " data copied to clipboard!",
-				JOptionPane.INFORMATION_MESSAGE);
+					message,
+					JOptionPane.INFORMATION_MESSAGE,
+					true);
 		});
 	}
 
@@ -398,13 +408,34 @@ public class TasksTrackerPlugin extends Plugin
 		}
 	}
 
-	private static void showMessageBox(final String title, final String message, int messageType)
+	private void showMessageBox(final String title, final String message, int messageType, boolean showOpenLeagueTools)
 	{
 		SwingUtilities.invokeLater(() -> {
-			JOptionPane optionPane = new JOptionPane(message, messageType);
-			JDialog dialog = optionPane.createDialog(title);
+			JOptionPane optionPane;
+			JDialog dialog;
+
+			if(showOpenLeagueTools)
+			{
+				String[] options = {"Open OS League Tools", "Ok"};
+
+				optionPane = new JOptionPane(message, messageType, JOptionPane.YES_NO_OPTION, null, options, options[1]);
+			}
+			else
+			{
+				optionPane = new JOptionPane(message, messageType);
+			}
+
+			dialog = optionPane.createDialog(pluginPanel, title);
 			dialog.setAlwaysOnTop(true);
 			dialog.setVisible(true);
+
+			Object selectedValue = optionPane.getValue();
+			if(selectedValue == null) return;
+
+			if (selectedValue.equals("Open OS League Tools"))
+			{
+				LinkBrowser.browse("https://www.osleague.tools/tracker?open=import&tab=tasks");
+			}
 		});
 	}
 }

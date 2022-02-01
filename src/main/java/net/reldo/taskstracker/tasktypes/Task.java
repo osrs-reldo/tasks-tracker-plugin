@@ -19,6 +19,8 @@ public abstract class Task
 	private long trackedOn;
 	private long ignoredOn;
 
+	private RequiredSkill[] skills = null;
+
 	public boolean isCompleted()
 	{
 		return completedOn > 0;
