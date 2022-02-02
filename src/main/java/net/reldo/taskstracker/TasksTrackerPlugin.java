@@ -217,6 +217,10 @@ public class TasksTrackerPlugin extends Plugin
 			}
 
 			foundTask.setCompleted(isTaskVarbitCompleted);
+			if (isTaskVarbitCompleted)
+			{
+				foundTask.setTracked(false);
+			}
 			Task finalFoundTask = foundTask; // FIXME: foundTask can be final somehow
 			SwingUtilities.invokeLater(() -> pluginPanel.refresh(finalFoundTask));
 		}
