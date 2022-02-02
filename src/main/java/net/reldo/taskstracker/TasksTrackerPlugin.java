@@ -104,9 +104,9 @@ public class TasksTrackerPlugin extends Plugin
 
 			taskManager.asyncLoadTaskSourceData((tasks) -> {
 				SwingUtilities.invokeLater(() -> {
-					loadSavedTaskTypeData(taskType);
 					if (isLoggedIn && taskType == config.taskType())
 					{
+						loadSavedTaskTypeData(taskType);
 						forceVarpUpdate();
 						pluginPanel.redraw();
 					}
