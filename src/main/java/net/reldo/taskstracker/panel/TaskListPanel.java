@@ -1,10 +1,8 @@
 package net.reldo.taskstracker.panel;
 
-import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.panel.components.FixedWidthPanel;
-import net.reldo.taskstracker.tasktypes.Task;
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Optional;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -13,6 +11,9 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.panel.components.FixedWidthPanel;
+import net.reldo.taskstracker.tasktypes.Task;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
@@ -42,14 +43,14 @@ public class TaskListPanel extends JScrollPane
 		setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 	}
 
-	public ArrayList<Task> getTasks()
+	public Collection<Task> getTasks()
 	{
 		// TODO: Build a filter service
 		if (plugin.getConfig().taskType() == null)
 		{
 			return null;
 		}
-		return plugin.taskManagers.get(plugin.getConfig().taskType()).tasks;
+		return plugin.taskManagers.get(plugin.getConfig().taskType()).tasks.values();
 	}
 
 	public String getEmptyTaskListMessage()
@@ -118,7 +119,7 @@ public class TaskListPanel extends JScrollPane
 			emptyTasks.setVisible(false);
 
 			log.debug(" Creating panels...");
-			ArrayList<Task> tasks = getTasks();
+			Collection<Task> tasks = getTasks();
 			if (tasks == null || tasks.size() == 0)
 			{
 				emptyTasks.setVisible(true);

@@ -215,7 +215,7 @@ public class TasksTrackerPlugin extends Plugin
 			}
 
 			Task foundTask = null;
-			for (Task task : taskManagers.get(TaskType.LEAGUE_3).tasks)
+			for (Task task : taskManagers.get(TaskType.LEAGUE_3).tasks.values())
 			{
 				if (task.getId() == i)
 				{
@@ -290,7 +290,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void saveCurrentTaskData()
 	{
-		trackerDataStore.saveTaskTypeToConfig(config.taskType(), taskManagers.get(config.taskType()).tasks);
+		trackerDataStore.saveTaskTypeToConfig(config.taskType(), taskManagers.get(config.taskType()).tasks.values());
 	}
 
 	public void openImportJsonDialog()
@@ -376,7 +376,7 @@ public class TasksTrackerPlugin extends Plugin
 			// TODO: This is a holdover for tasks until the web is ready to accept varbits
 			// TODO: We already export the varbits, so ready to go
 			HashMap<String, Task> tasksById = new HashMap<>();
-			taskManagers.get(taskType).tasks.forEach((task) -> tasksById.put(String.valueOf(task.getId()), task));
+			taskManagers.get(taskType).tasks.values().forEach((task) -> tasksById.put(String.valueOf(task.getId()), task));
 			export.setTasks(tasksById);
 
 			return gson.toJson(export);

@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -60,7 +60,7 @@ public class TrackerDataStore
 		}
 	}
 
-	public void saveTaskTypeToConfig(TaskType taskType, ArrayList<Task> tasks)
+	public void saveTaskTypeToConfig(TaskType taskType, Collection<Task> tasks)
 	{
 		Gson gson = buildGson();
 		Map<Integer, Task> tasksWithData = tasks.stream()
