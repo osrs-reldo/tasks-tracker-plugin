@@ -26,6 +26,8 @@ public abstract class Task
 	@Expose
 	private long ignoredOn;
 
+	private RequiredSkill[] skills = null;
+
 	public boolean isCompleted()
 	{
 		return completedOn > 0;

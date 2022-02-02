@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -19,11 +18,13 @@ import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JRadioButton;
+import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicButtonUI;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
@@ -43,7 +44,7 @@ import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.SwingUtil;
 
 @Slf4j
-public class LoggedInPanel extends JPanel
+public class LoggedInPanel extends JPanel  implements ChangeListener
 {
 	public TaskListPanel taskListPanel;
 	private JComboBox<TaskType> taskTypeDropdown;
@@ -55,10 +56,10 @@ public class LoggedInPanel extends JPanel
 	private final TasksTrackerConfig config;
 
 	// Filter buttons
-	private TriToggleButton completedFilterBtn = new TriToggleButton();
-	private TriToggleButton trackedFilterBtn = new TriToggleButton();
-	private TriToggleButton ignoredFilterBtn = new TriToggleButton();
-	private JPanel titlePanel = new JPanel();
+	private final TriToggleButton completedFilterBtn = new TriToggleButton();
+	private final TriToggleButton trackedFilterBtn = new TriToggleButton();
+	private final TriToggleButton ignoredFilterBtn = new TriToggleButton();
+	private final JPanel titlePanel = new JPanel();
 
 	private final String completeBtnPath = "panel/components/complete_button/style_2a/";
 	private final Icon COMPLETE_INCOMPLETE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, completeBtnPath + "complete_and_incomplete_icon.png"));
@@ -77,26 +78,7 @@ public class LoggedInPanel extends JPanel
 	private final Icon UNTRACKED_ONLY_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, trackedBtnPath + "untracked_icon.png"));
 
 	// Task list tabs
-	private final JRadioButton trackedTasksListPanelBtn = new JRadioButton();
-	private final JRadioButton allTasksListPanelBtn = new JRadioButton();
-	private final JRadioButton customTasksListPanelBtn = new JRadioButton();
-
-	private final String tabBtnPath = "panel/components/list_tabs/";
-
-	private final Icon ALL_TAB_SELECTED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "all_tasks_selected.png"));
-	private final Icon ALL_TAB_HOVER_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "all_tasks_hovered.png"));
-	private final Icon ALL_TAB_UNSELECTED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "all_tasks_unselected.png"));
-
-	private final Icon TRACKED_TAB_SELECTED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "tracked_tasks_selected.png"));
-	private final Icon TRACKED_TAB_HOVER_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "tracked_tasks_hovered.png"));
-	private final Icon TRACKED_TAB_UNSELECTED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "tracked_tasks_unselected.png"));
-
-	private final Icon CUSTOM_TAB_SELECTED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "custom_tasks_selected.png"));
-	private final Icon CUSTOM_TAB_HOVER_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "custom_tasks_hovered.png"));
-	private final Icon CUSTOM_TAB_UNSELECTED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "custom_tasks_unselected.png"));
-
-	private final Icon LEFT_TAB_SPACER_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "left_spacer.png"));
-	private final Icon RIGHT_TAB_SPACER_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, tabBtnPath + "right_spacer.png"));
+	private final JTabbedPane tabbedPane = new JTabbedPane();
 
 	// sub-filter panel
 	private SubFilterPanel subFilterPanel;
@@ -156,6 +138,7 @@ public class LoggedInPanel extends JPanel
 		{
 			trackedFilterBtn.setState(1);
 			trackedFilterBtn.setEnabled(false);
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "trackedFilter", ConfigValues.TrackedFilterValues.TRACKED);
 		}
 	}
 
@@ -164,75 +147,60 @@ public class LoggedInPanel extends JPanel
 		final JPanel taskListPanel = new JPanel(new BorderLayout());
 		taskListPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		// list tab button wrapper
-		final JPanel taskListTabButtons = new JPanel();
-		taskListTabButtons.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		taskListTabButtons.setLayout(new BoxLayout(taskListTabButtons, BoxLayout.X_AXIS));
+		tabbedPane.setBorder(new EmptyBorder(0,0,0,0));
+		tabbedPane.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH,24));
 
-		SwingUtil.removeButtonDecorations(trackedTasksListPanelBtn);
-		trackedTasksListPanelBtn.setBorder(new EmptyBorder(0,0,0,0));
-		trackedTasksListPanelBtn.setIcon(TRACKED_TAB_UNSELECTED_ICON);
-		trackedTasksListPanelBtn.setSelectedIcon(TRACKED_TAB_SELECTED_ICON);
-		trackedTasksListPanelBtn.setRolloverIcon(TRACKED_TAB_HOVER_ICON);
-		trackedTasksListPanelBtn.addActionListener(e -> {
-			changeTab(ConfigValues.TaskListTabs.TRACKED);
-			trackedFilterBtn.setState(1);
-			trackedFilterBtn.setEnabled(false);
-			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", ConfigValues.TaskListTabs.TRACKED);
-			filterButtonAction("tracked");
-		});
-		trackedTasksListPanelBtn.setSelected(config.taskListTab().equals(ConfigValues.TaskListTabs.TRACKED));
+		tabbedPane.addTab("Tracked Tasks", emptyPanel());
+		tabbedPane.addTab("All Tasks", emptyPanel());
+		tabbedPane.addTab("Custom", emptyPanel());
 
-		SwingUtil.removeButtonDecorations(allTasksListPanelBtn);
-		allTasksListPanelBtn.setBorder(new EmptyBorder(0,0,0,0));
-		allTasksListPanelBtn.setIcon(ALL_TAB_UNSELECTED_ICON);
-		allTasksListPanelBtn.setSelectedIcon(ALL_TAB_SELECTED_ICON);
-		allTasksListPanelBtn.setRolloverIcon(ALL_TAB_HOVER_ICON);
-		allTasksListPanelBtn.addActionListener(e -> {
-			changeTab(ConfigValues.TaskListTabs.ALL);
-			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", ConfigValues.TaskListTabs.ALL);
-			plugin.refresh();
-		});
-		allTasksListPanelBtn.setSelected(config.taskListTab().equals(ConfigValues.TaskListTabs.ALL));
-
-		SwingUtil.removeButtonDecorations(customTasksListPanelBtn);
-		customTasksListPanelBtn.setBorder(new EmptyBorder(0,0,0,0));
-		customTasksListPanelBtn.setIcon(CUSTOM_TAB_UNSELECTED_ICON);
-		customTasksListPanelBtn.setSelectedIcon(CUSTOM_TAB_SELECTED_ICON);
-		customTasksListPanelBtn.setRolloverIcon(CUSTOM_TAB_HOVER_ICON);
-		customTasksListPanelBtn.addActionListener(e -> {
-			changeTab(ConfigValues.TaskListTabs.CUSTOM);
-			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", ConfigValues.TaskListTabs.CUSTOM);
-			plugin.refresh();
-		});
-		customTasksListPanelBtn.setSelected(config.taskListTab().equals(ConfigValues.TaskListTabs.CUSTOM));
+		taskListPanel.add(tabbedPane, BorderLayout.NORTH);
+		taskListPanel.add(this.taskListPanel, BorderLayout.CENTER);
 
 		// set initial filter states to "complete and incomplete", "tracked and untracked", "not ignored"
 		Map<String, Integer> filterStates = new HashMap<>();
 		filterStates.put("completed",0);
 		filterStates.put("tracked",0);
 		filterStates.put("ignored",0);
-		filterStore.put(ConfigValues.TaskListTabs.ALL, filterStates);
-		filterStore.put(ConfigValues.TaskListTabs.CUSTOM, filterStates);
-		filterStore.put(ConfigValues.TaskListTabs.TRACKED, filterStates);
+		for(ConfigValues.TaskListTabs tab : ConfigValues.TaskListTabs.values())
+		{
+			filterStore.put(tab, filterStates);
+		}
 
-		ButtonGroup listTabGroup = new ButtonGroup();
-		listTabGroup.add(trackedTasksListPanelBtn);
-		listTabGroup.add(allTasksListPanelBtn);
-		listTabGroup.add(customTasksListPanelBtn);
+		tabbedPane.setSelectedIndex(config.taskListTab().ordinal());
+		tabbedPane.addChangeListener(this);
 
-		final JLabel leftTabSpacer = new JLabel(LEFT_TAB_SPACER_ICON);
-		final JLabel rightTabSpacer = new JLabel(RIGHT_TAB_SPACER_ICON);
-
-		taskListTabButtons.add(leftTabSpacer);
-		taskListTabButtons.add(trackedTasksListPanelBtn);
-		taskListTabButtons.add(allTasksListPanelBtn);
-		taskListTabButtons.add(customTasksListPanelBtn);
-		taskListTabButtons.add(rightTabSpacer);
-
-		taskListPanel.add(taskListTabButtons, BorderLayout.NORTH);
-		taskListPanel.add(this.taskListPanel, BorderLayout.CENTER);
 		return taskListPanel;
+	}
+
+	@Override
+	public void stateChanged(ChangeEvent e)
+	{
+		ConfigValues.TaskListTabs newTab = ConfigValues.TaskListTabs.values()[tabbedPane.getSelectedIndex()];
+		changeTab(newTab);
+
+		if(newTab.equals(ConfigValues.TaskListTabs.TRACKED))
+		{
+			trackedFilterBtn.setState(1);
+			trackedFilterBtn.setEnabled(false);
+			plugin.getConfigManager().setConfiguration("tasks-tracker", "taskListTab", ConfigValues.TaskListTabs.TRACKED);
+			filterButtonAction("tracked");
+		}
+		else
+		{
+			plugin.getConfigManager().setConfiguration("tasks-tracker", "taskListTab", newTab);
+			plugin.refresh();
+		}
+	}
+
+	private JPanel emptyPanel()
+	{
+		JPanel emptyPanel = new JPanel();
+		emptyPanel.setBorder(new EmptyBorder(0,0,0,0));
+		emptyPanel.setPreferredSize(new Dimension(0,0));
+		emptyPanel.setBackground(ColorScheme.MEDIUM_GRAY_COLOR.darker());
+		emptyPanel.setVisible(false);
+		return emptyPanel;
 	}
 
 	private void changeTab(ConfigValues.TaskListTabs newTab)
@@ -553,6 +521,8 @@ public class LoggedInPanel extends JPanel
 
 	private void updateCollapseButtonText()
 	{
+		if(plugin.getConfig().taskType() == null) return;
+
 		List<String> filterCounts = new ArrayList<>();
 
 		if(plugin.getConfig().taskType().equals(TaskType.LEAGUE_3))
