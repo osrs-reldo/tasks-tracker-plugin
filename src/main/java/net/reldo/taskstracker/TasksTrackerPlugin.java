@@ -128,9 +128,21 @@ public class TasksTrackerPlugin extends Plugin
 
 	private void loadSavedTaskTypeData(TaskType taskType)
 	{
-		Type classType = taskType.getClassType();
-		Type taskDeserializeType = TypeToken.getParameterized(HashMap.class, Integer.class, classType).getType();
-		HashMap<Integer, Task> taskData = trackerDataStore.getDataFromConfig(TrackerDataStore.TASKS_PREFIX + "." + taskType.name(), taskDeserializeType, new HashMap<>());
+		Type taskClassType = taskType.getClassType();
+		Type taskDeserializeType = TypeToken.getParameterized(HashMap.class, Integer.class, taskClassType).getType();
+		HashMap<Integer, Task> taskData;
+		// Check for old task name keyed data before loading new data
+		// TODO: Remove after Leagues III
+		if (trackerDataStore.hasStringKeyTaskData(taskType))
+		{
+			taskData = trackerDataStore.convertStringKeyDataToIdKeyData(taskType);
+			configManager.unsetRSProfileConfiguration("tasksTracker", TrackerDataStore.TASKS_PREFIX + "." + taskType.name());
+		}
+		else
+		{
+			taskData = trackerDataStore.getDataFromConfig(TrackerDataStore.TASKS_PREFIX + "." + taskType.name(), taskDeserializeType, new HashMap<>());
+		}
+
 		taskManagers.get(taskType).applyTrackerSave(taskData);
 	}
 
