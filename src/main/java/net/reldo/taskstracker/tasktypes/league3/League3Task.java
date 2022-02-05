@@ -11,9 +11,9 @@ import net.runelite.client.game.SpriteManager;
 public class League3Task extends Task
 {
 
-	public League3Task(int id, String name, String description, String tier)
+	public League3Task(int id, String name, String description, String tier, int clientSortId)
 	{
-		super(id, name, description, tier);
+		super(id, name, description, tier, clientSortId);
 	}
 
 	@Override

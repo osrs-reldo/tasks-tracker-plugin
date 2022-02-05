@@ -3,7 +3,9 @@ package net.reldo.taskstracker.panel;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
@@ -50,7 +52,10 @@ public class TaskListPanel extends JScrollPane
 		{
 			return null;
 		}
-		return plugin.taskManagers.get(plugin.getConfig().taskType()).tasks.values();
+		return plugin.taskManagers.get(plugin.getConfig().taskType()).tasks.values()
+			.stream()
+			.sorted(Comparator.comparing(Task::getClientSortId))
+			.collect(Collectors.toList());
 	}
 
 	public String getEmptyTaskListMessage()

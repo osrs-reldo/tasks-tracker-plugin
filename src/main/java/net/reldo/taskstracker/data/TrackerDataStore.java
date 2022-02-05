@@ -117,11 +117,11 @@ public class TrackerDataStore
 				Task task;
 				if (taskType == TaskType.LEAGUE_3)
 				{
-					task = new League3Task(id, null, null, null);
+					task = new League3Task(id, null, null, null, -1);
 				}
 				else
 				{
-					task = new CombatTask(id, null, null, null);
+					task = new CombatTask(id, null, null, null, -1);
 				}
 				task.setCompletedOn(completedOn);
 				task.setTrackedOn(trackedOn);

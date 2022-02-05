@@ -18,6 +18,7 @@ public abstract class Task
 	private final String name;
 	private final String description;
 	private final String tier;
+	private final int clientSortId;
 
 	@Expose
 	private long completedOn;
