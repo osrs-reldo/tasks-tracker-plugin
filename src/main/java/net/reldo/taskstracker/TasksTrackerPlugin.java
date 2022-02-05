@@ -144,6 +144,8 @@ public class TasksTrackerPlugin extends Plugin
 			taskData = trackerDataStore.getDataFromConfig(TrackerDataStore.TASKS_PREFIX + "." + taskType.name(), taskDeserializeType, new HashMap<>());
 		}
 
+		saveCurrentTaskData();
+
 		taskManagers.get(taskType).applyTrackerSave(taskData);
 	}
 
