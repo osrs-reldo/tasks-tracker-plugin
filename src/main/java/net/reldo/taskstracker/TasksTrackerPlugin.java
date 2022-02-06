@@ -145,7 +145,7 @@ public class TasksTrackerPlugin extends Plugin
 			taskData = trackerDataStore.getDataFromConfig(TrackerDataStore.TASKS_PREFIX + "." + taskType.name(), taskDeserializeType, new HashMap<>());
 		}
 
-		saveCurrentTaskData();
+		trackerDataStore.saveTaskTypeToConfig(taskType, taskManagers.get(taskType).tasks.values());
 
 		taskManagers.get(taskType).applyTrackerSave(taskData);
 	}
@@ -349,6 +349,7 @@ public class TasksTrackerPlugin extends Plugin
 				Task task = taskManagers.get(TaskType.LEAGUE_3).tasks.get(id);
 				task.loadReldoSave(reldoTaskSave);
 			});
+			trackerDataStore.saveTaskTypeToConfig(TaskType.LEAGUE_3, taskManagers.get(TaskType.LEAGUE_3).tasks.values());
 			pluginPanel.redraw();
 		}
 	}
