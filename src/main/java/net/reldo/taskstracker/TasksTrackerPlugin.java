@@ -41,6 +41,7 @@ import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
@@ -232,12 +233,21 @@ public class TasksTrackerPlugin extends Plugin
 			}
 
 			foundTask.setCompleted(isTaskVarbitCompleted);
-			if (isTaskVarbitCompleted)
+			if (isTaskVarbitCompleted && config.untrackUponCompletion())
 			{
 				foundTask.setTracked(false);
 			}
 			Task finalFoundTask = foundTask; // FIXME: foundTask can be final somehow
 			SwingUtilities.invokeLater(() -> pluginPanel.refresh(finalFoundTask));
+		}
+	}
+
+	@Subscribe
+	public void onConfigChanged(ConfigChanged configChanged)
+	{
+		if (configChanged.getKey().equals("untrackUponCompletion") && config.untrackUponCompletion())
+		{
+			forceVarpUpdate();
 		}
 	}
 
