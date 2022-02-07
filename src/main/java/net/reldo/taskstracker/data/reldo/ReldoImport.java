@@ -9,7 +9,7 @@ public class ReldoImport
 {
 	public int version;
 	public String rsn;
-	private HashMap<String, ReldoTaskSave> tasks;
+	private HashMap<Integer, ReldoTaskSave> tasks;
 
 	public static ReldoImport fromJson(String json)
 	{

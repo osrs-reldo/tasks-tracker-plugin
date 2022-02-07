@@ -100,7 +100,6 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		this.config = config;
 
 		createPanel(this);
-		redraw();
 	}
 
 	@Override
@@ -111,11 +110,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 
 	public void redraw()
 	{
-		if (plugin.selectedTaskType != null)
-		{
-			taskTypeDropdown.setSelectedItem(plugin.selectedTaskType);
-			subFilterPanel.redraw();
-		}
+		subFilterPanel.redraw();
 		taskListPanel.redraw();
 	}
 
@@ -143,7 +138,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		{
 			trackedFilterBtn.setState(1);
 			trackedFilterBtn.setEnabled(false);
-			plugin.getConfigManager().setConfiguration("tasks-tracker", "trackedFilter", ConfigValues.TrackedFilterValues.TRACKED);
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "trackedFilter", ConfigValues.TrackedFilterValues.TRACKED);
 		}
 	}
 
@@ -249,13 +244,13 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		ignoredFilterBtn.setState(filterStates.get("ignored"));
 
 		configValue = ConfigValues.CompletedFilterValues.values()[completedFilterBtn.getState()];
-		plugin.getConfigManager().setConfiguration("tasks-tracker", "completedFilter", configValue);
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "completedFilter", configValue);
 
 		configValue = ConfigValues.TrackedFilterValues.values()[trackedFilterBtn.getState()];
-		plugin.getConfigManager().setConfiguration("tasks-tracker", "trackedFilter", configValue);
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "trackedFilter", configValue);
 
 		configValue = ConfigValues.IgnoredFilterValues.values()[ignoredFilterBtn.getState()];
-		plugin.getConfigManager().setConfiguration("tasks-tracker", "ignoredFilter", configValue);
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "ignoredFilter", configValue);
 	}
 
 	private JPanel getSouthPanel()
@@ -271,7 +266,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		JButton exportButton = new JButton("Export");
 		exportButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 		exportButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
-		exportButton.addActionListener(e -> plugin.copyJsonToClipboard(plugin.selectedTaskType));
+		exportButton.addActionListener(e -> plugin.copyJsonToClipboard(plugin.getConfig().taskType()));
 		southPanel.add(exportButton, BorderLayout.EAST);
 
 		return southPanel;
@@ -286,7 +281,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 
 		taskTypeDropdown = new JComboBox<>(TaskType.values());
 		taskTypeDropdown.setAlignmentX(LEFT_ALIGNMENT);
-		taskTypeDropdown.setSelectedItem(plugin.selectedTaskType);
+		taskTypeDropdown.setSelectedItem(plugin.getConfig().taskType());
 		taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex())));
 
 		// Wrapper for collapsible sub-filter menu
@@ -496,7 +491,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 				return;
 		}
 
-		plugin.getConfigManager().setConfiguration("tasks-tracker", filter + "Filter", configValue);
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, filter + "Filter", configValue);
 		plugin.refresh();
 	}
 
@@ -519,18 +514,18 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 
 	private void updateWithNewTaskType(TaskType taskType)
 	{
-		plugin.setSelectedTaskType(taskType);
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskType", taskType);
 		redraw();
 		refresh(null);
 	}
 
 	private void updateCollapseButtonText()
 	{
-		if(plugin.selectedTaskType == null) return;
+		if(plugin.getConfig().taskType() == null) return;
 
 		List<String> filterCounts = new ArrayList<>();
 
-		if(plugin.selectedTaskType.equals(TaskType.LEAGUE_3))
+		if(plugin.getConfig().taskType().equals(TaskType.LEAGUE_3))
 		{
 			int count = config.skillFilter().equals("") ? 0 : config.skillFilter().split(",").length ;
 			filterCounts.add(count + " skill");

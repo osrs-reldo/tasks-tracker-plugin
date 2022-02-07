@@ -184,7 +184,8 @@ public enum League3Varbits
 	FRAGMENT_XP_53(13455),
 
 	// Task data
-	TASKS_COMPLETED(10046);
+	TASKS_COMPLETED(10046),
+	LIBRARY_BOOKS(10039);
 
 	private final int varbitId;
 

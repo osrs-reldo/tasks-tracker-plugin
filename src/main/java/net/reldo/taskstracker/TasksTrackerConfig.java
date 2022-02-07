@@ -1,15 +1,27 @@
 package net.reldo.taskstracker;
 
 import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 
-@ConfigGroup("tasks-tracker")
+@ConfigGroup(TasksTrackerPlugin.CONFIG_GROUP_NAME)
 public interface TasksTrackerConfig extends Config
 {
+	@ConfigItem(
+		position = 10,
+		keyName = "untrackUponCompletion",
+		name = "Untrack Tasks Upon Completion",
+		description = "Configures whether completed tasks should also automatically untracked when the task is completed."
+	)
+	default boolean untrackUponCompletion()
+	{
+		return false;
+	}
+
     @ConfigItem(
-            position = 0,
+            position = 100,
             keyName = "completedFilter",
             name = "Completed Tasks Filter",
             description = "Configures whether completed tasks should be displayed.",
@@ -21,7 +33,7 @@ public interface TasksTrackerConfig extends Config
     }
 
     @ConfigItem(
-            position = 1,
+            position = 101,
             keyName = "trackedFilter",
             name = "Tracked Tasks Filter",
             description = "Configures whether tracked tasks should be displayed.",
@@ -33,7 +45,7 @@ public interface TasksTrackerConfig extends Config
     }
 
     @ConfigItem(
-            position = 2,
+            position = 102,
             keyName = "ignoredFilter",
             name = "Ignored Tasks Filter",
             description = "Configures whether ignored tasks should be displayed.",
@@ -45,7 +57,7 @@ public interface TasksTrackerConfig extends Config
     }
 
     @ConfigItem(
-            position = 3,
+            position = 103,
             keyName = "taskListTab",
             name = "Selected Task List Tab",
             description = "Configures the currently selected tab on the task list.",
@@ -57,7 +69,7 @@ public interface TasksTrackerConfig extends Config
     }
 
     @ConfigItem(
-            position = 4,
+            position = 104,
             keyName = "skillFilter",
             name = "Skills Filter",
             description = "Configures the skills to filter tasks on.",
@@ -69,7 +81,7 @@ public interface TasksTrackerConfig extends Config
     }
 
     @ConfigItem(
-            position = 4,
+            position = 105,
             keyName = "tierFilter",
             name = "Tier Filter",
             description = "Configures the tiers to filter tasks on.",
@@ -79,5 +91,17 @@ public interface TasksTrackerConfig extends Config
     {
         return "";
     }
+
+	@ConfigItem(
+		position = 106,
+		keyName = "taskType",
+		name = "Task Type",
+		description = "Configures the task type which is displayed in the panel.",
+		hidden = true
+	)
+	default TaskType taskType()
+	{
+		return TaskType.COMBAT;
+	}
 
 }

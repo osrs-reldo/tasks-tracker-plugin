@@ -2,14 +2,18 @@ package net.reldo.taskstracker;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Provides;
-import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
-import java.time.Instant;
+import java.lang.reflect.Type;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.swing.JDialog;
@@ -17,34 +21,24 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import net.reldo.taskstracker.bosses.BossData;
 import net.reldo.taskstracker.data.Export;
 import net.reldo.taskstracker.data.LongSerializer;
 import net.reldo.taskstracker.data.TaskDataClient;
-import net.reldo.taskstracker.data.TaskSave;
 import net.reldo.taskstracker.data.TrackerDataStore;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
-import net.reldo.taskstracker.quests.DiaryAndMiniQuestData;
-import net.reldo.taskstracker.quests.QuestData;
-import net.reldo.taskstracker.tasktypes.AbstractTaskManager;
 import net.reldo.taskstracker.tasktypes.Task;
+import net.reldo.taskstracker.tasktypes.TaskManager;
 import net.reldo.taskstracker.tasktypes.TaskType;
-import net.reldo.taskstracker.tasktypes.combattask.CombatTaskManager;
-import net.reldo.taskstracker.tasktypes.league3.League3TaskManager;
-import net.runelite.api.ChatMessageType;
+import net.reldo.taskstracker.tasktypes.combattask.CombatTaskVarps;
+import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.Player;
-import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.ScriptPostFired;
-import net.runelite.api.events.WidgetLoaded;
+import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.callback.ClientThread;
-import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
-import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
@@ -65,10 +59,11 @@ import net.runelite.client.util.LinkBrowser;
 )
 public class TasksTrackerPlugin extends Plugin
 {
-	public int[] playerSkills;
-	public HashMap<TaskType, AbstractTaskManager> taskManagers = new HashMap<>();
+	public static final String CONFIG_GROUP_NAME = "tasks-tracker";
 
-	public TaskType selectedTaskType;
+	public int[] playerSkills;
+	public HashMap<TaskType, TaskManager> taskManagers = new HashMap<>();
+
 	public String taskTextFilter;
 
 	public TasksTrackerPluginPanel pluginPanel;
@@ -88,7 +83,6 @@ public class TasksTrackerPlugin extends Plugin
 
 	@Inject private TaskDataClient taskDataClient;
 	@Inject private TrackerDataStore trackerDataStore;
-	private boolean shouldGetName;
 	private RuneScapeProfileType currentProfileType;
 
 	@Provides
@@ -98,28 +92,30 @@ public class TasksTrackerPlugin extends Plugin
 	}
 
 	@Override
-	protected void startUp() throws Exception
+	protected void startUp()
 	{
-		// Load task managers
-		for (TaskType taskType : TaskType.values())
-		{
-			AbstractTaskManager taskManager = getTaskTypeManager(taskType);
-			if (taskManager == null)
-			{
-				continue;
-			}
-			taskManager.loadTaskSourceData();
-			taskManagers.put(taskType, taskManager);
-		}
-
 		pluginPanel = new TasksTrackerPluginPanel(this, config, clientThread, spriteManager, skillIconManager);
 
 		boolean isLoggedIn = isLoggedInState(client.getGameState());
-		if (isLoggedIn)
+		pluginPanel.setLoggedIn(isLoggedIn);
+
+		// Load task managers
+		for (TaskType taskType : TaskType.values())
 		{
-			loadProfile();
+			TaskManager taskManager = new TaskManager(taskType, taskDataClient);
+			taskManagers.put(taskType, taskManager);
+
+			taskManager.asyncLoadTaskSourceData((tasks) -> {
+				SwingUtilities.invokeLater(() -> {
+					if (isLoggedIn && taskType == config.taskType())
+					{
+						loadSavedTaskTypeData(taskType);
+						forceVarpUpdate();
+						pluginPanel.redraw();
+					}
+				});
+			});
 		}
-		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedIn));
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
 		navButton = NavigationButton.builder()
@@ -133,23 +129,42 @@ public class TasksTrackerPlugin extends Plugin
 		log.info("Tasks Tracker started!");
 	}
 
-	private void loadProfile()
+	private void loadSavedTaskTypeData(TaskType taskType)
 	{
-		shouldGetName = true;
-		trackerDataStore.loadProfile();
-
-		TaskType selectedType = trackerDataStore.currentData.settings.selectedTaskType;
-		setSelectedTaskType(selectedType != null ? selectedType : TaskType.COMBAT);
-
-		for (TaskType taskType : TaskType.values())
+		Type taskClassType = taskType.getClassType();
+		Type taskDeserializeType = TypeToken.getParameterized(HashMap.class, Integer.class, taskClassType).getType();
+		HashMap<Integer, Task> taskData;
+		// Check for old task name keyed data before loading new data
+		// TODO: Remove after Leagues III
+		if (trackerDataStore.hasStringKeyTaskData(taskType))
 		{
-			taskManagers.get(taskType).applyTrackerSave();
+			taskData = trackerDataStore.convertStringKeyDataToIdKeyData(taskType);
+			configManager.unsetRSProfileConfiguration("tasksTracker", TrackerDataStore.TASKS_PREFIX + "." + taskType.name());
 		}
-		pluginPanel.redraw();
+		else
+		{
+			taskData = trackerDataStore.getDataFromConfig(TrackerDataStore.TASKS_PREFIX + "." + taskType.name(), taskDeserializeType, new HashMap<>());
+		}
+
+		taskManagers.get(taskType).applyTrackerSave(taskData);
+
+		trackerDataStore.saveTaskTypeToConfig(taskType, taskManagers.get(taskType).tasks.values());
+	}
+
+	private void forceVarpUpdate()
+	{
+		List<Integer> allVarbitIds = new ArrayList<>();
+		allVarbitIds.addAll(League3TaskVarps.getIdToVarpMap().keySet());
+		allVarbitIds.addAll(CombatTaskVarps.getIdToVarpMap().keySet());
+		allVarbitIds.forEach(id -> {
+			VarbitChanged spoofedChange = new VarbitChanged();
+			spoofedChange.setIndex(id);
+			onVarbitChanged(spoofedChange);
+		});
 	}
 
 	@Override
-	protected void shutDown() throws Exception
+	protected void shutDown()
 	{
 		pluginPanel = null;
 		taskManagers = new HashMap<>();
@@ -158,28 +173,89 @@ public class TasksTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onChatMessage(ChatMessage chatMessage)
+	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
-		handleOnChatMessage(chatMessage);
+		processTaskVarp(varbitChanged.getIndex());
 	}
 
-	private void handleOnChatMessage(ChatMessage chatMessage)
+	private void processTaskVarp(int index)
 	{
-		taskManagers.values().forEach(tm -> tm.handleChatMessage(chatMessage));
+		int ordinal = -1;
+		TaskType taskType = null;
+
+		League3TaskVarps leagueVarp = League3TaskVarps.getIdToVarpMap().get(index);
+		if (leagueVarp != null)
+		{
+			ordinal = leagueVarp.ordinal();
+			taskType = TaskType.LEAGUE_3;
+		}
+
+		CombatTaskVarps combatTaskVarp = CombatTaskVarps.getIdToVarpMap().get(index);
+		if (combatTaskVarp != null)
+		{
+			ordinal = combatTaskVarp.ordinal();
+			taskType = TaskType.COMBAT;
+		}
+
+		if (taskType == null)
+		{
+			return;
+		}
+
+		HashMap<Integer, Boolean> completionById = new HashMap<>();
+
+		BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(index));
+		int minTaskId = ordinal * 32;
+		int maxTaskId = minTaskId + 31;
+		int taskProgressEnumIndex = minTaskId / 32;
+
+		for (int i = minTaskId; i <= maxTaskId; i++)
+		{
+			boolean isTaskVarbitCompleted;
+			int bitIndex = i % 32;
+			try
+			{
+				isTaskVarbitCompleted = varpValue.testBit(bitIndex);
+			}
+			catch (IllegalArgumentException ex)
+			{
+				log.error("League 3 task progress enum not found {}", taskProgressEnumIndex, ex);
+				isTaskVarbitCompleted = false;
+			}
+
+			completionById.put(i, isTaskVarbitCompleted);
+		}
+
+		for (Map.Entry<Integer, Boolean> taskCompletion : completionById.entrySet())
+		{
+			int id = taskCompletion.getKey();
+			boolean completed = taskCompletion.getValue();
+			Task task = taskManagers.get(taskType).tasks.get(id);
+			if (task == null)
+			{
+				continue;
+			}
+
+			task.setCompleted(completed);
+			if (completed && config.untrackUponCompletion())
+			{
+				task.setTracked(false);
+			}
+			SwingUtilities.invokeLater(() -> pluginPanel.refresh(task));
+		}
 	}
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged configChanged)
 	{
+		if (configChanged.getKey().equals("untrackUponCompletion") && config.untrackUponCompletion())
+		{
+			forceVarpUpdate();
+		}
 	}
 
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
-	{
-		handleOnGameStateChanged(gameStateChanged);
-	}
-
-	private void handleOnGameStateChanged(GameStateChanged gameStateChanged)
 	{
 		// FIXME: This entire logic being wrapped in invokeLater is a smell
 		SwingUtilities.invokeLater(() -> {
@@ -190,21 +266,19 @@ public class TasksTrackerPlugin extends Plugin
 
 			if (newGameState == GameState.LOGGING_IN || (isLoggedInState(newGameState) && currentProfileType != newProfileType))
 			{
-				loadProfile();
+				for (TaskType taskType : TaskType.values())
+				{
+					loadSavedTaskTypeData(taskType);
+					if (taskType == config.taskType())
+					{
+						forceVarpUpdate();
+						pluginPanel.redraw();
+					}
+				}
 			}
 
 			currentProfileType = newProfileType;
 		});
-	}
-
-	private String getDisplayName()
-	{
-		Player localPlayer = client.getLocalPlayer();
-		if (localPlayer == null)
-		{
-			return null;
-		}
-		return localPlayer.getName();
 	}
 
 	private boolean isLoggedInState(GameState gameState)
@@ -215,11 +289,6 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick gameTick)
 	{
-		handleOnGameTick(gameTick);
-	}
-
-	private void handleOnGameTick(GameTick gameTick)
-	{
 		int[] newSkills = client.getRealSkillLevels();
 		boolean changed = !Arrays.equals(playerSkills, newSkills);
 		if (changed)
@@ -227,84 +296,16 @@ public class TasksTrackerPlugin extends Plugin
 			playerSkills = client.getRealSkillLevels();
 			SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
 		}
-
-		if (shouldGetName)
-		{
-			trackerDataStore.currentData.settings.displayName = getDisplayName();
-			shouldGetName = false;
-		}
-	}
-
-	@Subscribe
-	public void onWidgetLoaded(WidgetLoaded widgetLoaded)
-	{
-		handleOnWidgetLoaded(widgetLoaded);
-	}
-
-	private void handleOnWidgetLoaded(WidgetLoaded widgetLoaded)
-	{
-		taskManagers.values().forEach(tm -> tm.handleOnWidgetLoaded(widgetLoaded));
-	}
-
-	@Subscribe
-	public void onScriptPostFired(ScriptPostFired scriptPostFired)
-	{
-		handleOnScriptPostFired(scriptPostFired);
-	}
-
-	private void handleOnScriptPostFired(ScriptPostFired scriptPostFired)
-	{
-		taskManagers.values().forEach(tm -> tm.handleOnScriptPostFired(scriptPostFired));
-	}
-
-	public void setSelectedTaskType(TaskType type)
-	{
-		selectedTaskType = type;
-		trackerDataStore.currentData.settings.selectedTaskType = type;
 	}
 
 	public void refresh()
 	{
-		taskManagers.get(selectedTaskType).refresh(null);
+		pluginPanel.refresh(null);
 	}
 
-	public void sendChatMessage(String chatMessage, Color color)
+	public void saveCurrentTaskData()
 	{
-		final String message = new ChatMessageBuilder()
-			.append(color, "Task Tracker: ")
-			.append(color, chatMessage)
-			.build();
-
-		chatMessageManager.queue(
-			QueuedMessage.builder()
-				.type(ChatMessageType.CONSOLE)
-				.runeLiteFormattedMessage(message)
-				.build());
-	}
-
-	private AbstractTaskManager getTaskTypeManager(TaskType type)
-	{
-		if (type == TaskType.COMBAT)
-		{
-			return new CombatTaskManager(client, clientThread, this, trackerDataStore, taskDataClient);
-		}
-		if (type == TaskType.LEAGUE_3)
-		{
-			return new League3TaskManager(client, clientThread, this, trackerDataStore, taskDataClient);
-		}
-		return null;
-	}
-
-	public void trackTask(Task task)
-	{
-		// TODO: Move this responsibility; not correct to be here
-		trackerDataStore.saveTask(task);
-	}
-
-	public void ignoreTask(Task task)
-	{
-		// TODO: Move this responsibility; not correct to be here
-		trackerDataStore.saveTask(task);
+		trackerDataStore.saveTaskTypeToConfig(config.taskType(), taskManagers.get(config.taskType()).tasks.values());
 	}
 
 	public void openImportJsonDialog()
@@ -346,7 +347,12 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (selectedValue.equals(JOptionPane.YES_OPTION))
 		{
-			trackerDataStore.importTasksFromReldo(reldoImport, (League3TaskManager) taskManagers.get(TaskType.LEAGUE_3));
+			// FIXME: Hardcoded for league 3 only
+			reldoImport.getTasks().forEach((id, reldoTaskSave) -> {
+				Task task = taskManagers.get(TaskType.LEAGUE_3).tasks.get(id);
+				task.loadReldoSave(reldoTaskSave);
+			});
+			trackerDataStore.saveTaskTypeToConfig(TaskType.LEAGUE_3, taskManagers.get(TaskType.LEAGUE_3).tasks.values());
 			pluginPanel.redraw();
 		}
 	}
@@ -371,38 +377,23 @@ public class TasksTrackerPlugin extends Plugin
 	private String exportToJson(TaskType taskType)
 	{
 		Gson gson = new GsonBuilder()
+			.excludeFieldsWithoutExposeAnnotation()
 			.registerTypeAdapter(float.class, new LongSerializer())
 			.create();
 
 		if (taskType == null)
 		{
-			return gson.toJson(trackerDataStore.currentData);
+			return gson.toJson(taskManagers);
 		}
 		else
 		{
-			Export export = new Export();
-			export.setQuests(new QuestData(client));
-			export.setDiariesAndMiniQuests(new DiaryAndMiniQuestData(client));
-			export.setBosses(new BossData(pluginManager, configManager));
-			export.setDisplayName(trackerDataStore.currentData.settings.displayName);
-			export.setRunescapeVersion(client.getRevision());
-			export.setRuneliteVersion(runeliteVersion);
-			export.setTimestamp(Instant.now().toEpochMilli());
-			export.setTaskType(taskType.name());
-			export.setVarbits(taskManagers.get(selectedTaskType).getVarbits());
-			export.setVarps(taskManagers.get(selectedTaskType).getVarps());
+			Export export = new Export(taskType, runeliteVersion, client, pluginManager, configManager);
 
-			// TODO: Hello God, I am so sorry for this code. I will clean it up.
-			// TODO: Grab ids for other task types and skip this kludge between string/int
-			HashMap<String, TaskSave> taskSaves = trackerDataStore.currentData.tasksByType.get(taskType);
-			if (taskType == TaskType.LEAGUE_3)
-			{
-				HashMap<String, TaskSave> tasksById = new HashMap<>();
-				taskSaves.forEach((key, value) -> tasksById.put(String.valueOf(value.getId()), value));
-				export.setTasks(tasksById);
-			} else {
-				export.setTasks(trackerDataStore.currentData.tasksByType.get(taskType));
-			}
+			// TODO: This is a holdover for tasks until the web is ready to accept varbits
+			// TODO: We already export the varbits, so ready to go
+			HashMap<String, Task> tasksById = new HashMap<>();
+			taskManagers.get(taskType).tasks.values().forEach((task) -> tasksById.put(String.valueOf(task.getId()), task));
+			export.setTasks(tasksById);
 
 			return gson.toJson(export);
 		}

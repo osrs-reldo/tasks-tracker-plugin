@@ -14,15 +14,10 @@ import net.runelite.client.ui.ColorScheme;
 
 public class SubFilterPanel extends FixedWidthPanel
 {
-    private final TasksTrackerPlugin plugin;
-    private final SpriteManager spriteManager;
     private final List<FilterButtonPanel> filterPanels = new ArrayList<>();
 
     public SubFilterPanel(TasksTrackerPlugin plugin, SpriteManager spriteManager)
     {
-        this.plugin = plugin;
-        this.spriteManager = spriteManager;
-
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(new EmptyBorder(0, 0, 0, 0));
         setBackground(ColorScheme.DARKER_GRAY_COLOR);

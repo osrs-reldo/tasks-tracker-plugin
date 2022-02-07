@@ -109,7 +109,7 @@ public abstract class FilterButtonPanel extends FixedWidthPanel
                 .map(e -> "f-" + e.getKey()) // prefix included to cover cases where one key name is contained in another (e.g. "Master" -> "Grandmaster")
                 .collect(Collectors.joining(","));
 
-        plugin.getConfigManager().setConfiguration("tasks-tracker", configKey, filterText);
+        plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, configKey, filterText);
     }
 
     protected void setAllSelected(boolean state)
