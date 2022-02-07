@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.swing.JDialog;
@@ -180,23 +181,28 @@ public class TasksTrackerPlugin extends Plugin
 	private void processTaskVarp(int index)
 	{
 		int ordinal = -1;
+		TaskType taskType = null;
 
 		League3TaskVarps leagueVarp = League3TaskVarps.getIdToVarpMap().get(index);
 		if (leagueVarp != null)
 		{
 			ordinal = leagueVarp.ordinal();
+			taskType = TaskType.LEAGUE_3;
 		}
 
 		CombatTaskVarps combatTaskVarp = CombatTaskVarps.getIdToVarpMap().get(index);
 		if (combatTaskVarp != null)
 		{
 			ordinal = combatTaskVarp.ordinal();
+			taskType = TaskType.COMBAT;
 		}
 
-		if (ordinal < 0)
+		if (taskType == null)
 		{
 			return;
 		}
+
+		HashMap<Integer, Boolean> completionById = new HashMap<>();
 
 		BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(index));
 		int minTaskId = ordinal * 32;
@@ -217,28 +223,25 @@ public class TasksTrackerPlugin extends Plugin
 				isTaskVarbitCompleted = false;
 			}
 
-			Task foundTask = null;
-			for (Task task : taskManagers.get(TaskType.LEAGUE_3).tasks.values())
-			{
-				if (task.getId() == i)
-				{
-					foundTask = task;
-					break;
-				}
-			}
+			completionById.put(i, isTaskVarbitCompleted);
+		}
 
-			if (foundTask == null)
+		for (Map.Entry<Integer, Boolean> taskCompletion : completionById.entrySet())
+		{
+			int id = taskCompletion.getKey();
+			boolean completed = taskCompletion.getValue();
+			Task task = taskManagers.get(taskType).tasks.get(id);
+			if (task == null)
 			{
 				continue;
 			}
 
-			foundTask.setCompleted(isTaskVarbitCompleted);
-			if (isTaskVarbitCompleted && config.untrackUponCompletion())
+			task.setCompleted(completed);
+			if (completed && config.untrackUponCompletion())
 			{
-				foundTask.setTracked(false);
+				task.setTracked(false);
 			}
-			Task finalFoundTask = foundTask; // FIXME: foundTask can be final somehow
-			SwingUtilities.invokeLater(() -> pluginPanel.refresh(finalFoundTask));
+			SwingUtilities.invokeLater(() -> pluginPanel.refresh(task));
 		}
 	}
 
