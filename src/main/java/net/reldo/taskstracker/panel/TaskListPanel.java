@@ -80,12 +80,13 @@ public class TaskListPanel extends JScrollPane
 				.filter(tp -> tp.task.getName().equalsIgnoreCase(task.getName()))
 				.findFirst();
 			panel.ifPresent(TaskPanel::refresh);
-			return;
 		}
-
-		for (TaskPanel taskPanel : taskPanels)
+		else
 		{
-			taskPanel.refresh();
+			for (TaskPanel taskPanel : taskPanels)
+			{
+				taskPanel.refresh();
+			}
 		}
 
 		Optional<TaskPanel> visibleTaskPanel = taskPanels.stream()
