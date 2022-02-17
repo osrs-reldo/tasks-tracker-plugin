@@ -22,11 +22,12 @@ public class SkillFilter extends Filter
         String skillFilter = config.skillFilter();
 
         if (task.getSkills().length > 0 && !Arrays.stream(task.getSkills())
+                .filter((RequiredSkill skill) -> !skill.getSkill().equalsIgnoreCase("combat")) //@todo replace with combat level requirement filtering
                 .allMatch((RequiredSkill skill) -> skillFilter.contains(skill.getSkill().toLowerCase())))
         {
             return false;
         }
 
-        return task.getSkills().length != 0 || skillFilter.contains("noskill");
+        return Arrays.stream(task.getSkills()).anyMatch((RequiredSkill skill) -> !skill.getSkill().equalsIgnoreCase("combat")) || skillFilter.contains("noskill");
     }
 }
