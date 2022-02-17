@@ -3,6 +3,8 @@ package net.reldo.taskstracker.tasktypes.league3;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.Util;
 import net.reldo.taskstracker.panel.TaskPanel;
+import net.reldo.taskstracker.panel.filters.SkillFilter;
+import net.reldo.taskstracker.panel.filters.TierFilter;
 import net.reldo.taskstracker.tasktypes.RequiredSkill;
 import net.reldo.taskstracker.tasktypes.Task;
 import java.awt.Color;
@@ -20,9 +22,9 @@ public class League3TaskPanel extends TaskPanel
 	public League3TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task)
 	{
 		super(plugin, clientThread, spriteManager, task);
+		filters.add(new SkillFilter(plugin.getConfig()));
+		filters.add(new TierFilter(plugin.getConfig()));
 	}
-
-	//TODO: This code is wet fucking spaghetti
 
 	@Override
 	public JPopupMenu getPopupMenu()
@@ -56,8 +58,9 @@ public class League3TaskPanel extends TaskPanel
 		return spriteManager.getSprite(tier.spriteId, 0);
 	}
 
-	// TODO: Fix this file because it makes me want to vomit
-
+	// TODO (1/29/22): The required skill loop code is repeated in getSkillSectionHtml
+	//  Ideally, checking skill requirements would be a responsibility of Task
+	//  Current issue is that Task is instantiated by Gson in multiple places, so plugin may not be injected/accessible
 	@Override
 	public Color getTaskBackgroundColor(Task task, int[] playerSkills)
 	{
@@ -71,7 +74,7 @@ public class League3TaskPanel extends TaskPanel
 			return COMPLETED_BACKGROUND_COLOR;
 		}
 
-		for (RequiredSkill requiredSkill : ((League3Task) task).skills)
+		for (RequiredSkill requiredSkill : ((League3Task) task).getSkills())
 		{
 			Skill skill;
 			// FIXME: Shouldn't use exception for control flow
@@ -104,13 +107,11 @@ public class League3TaskPanel extends TaskPanel
 		return ColorScheme.DARKER_GRAY_COLOR;
 	}
 
-	// TODO: Fix this later, league is in 6 hours and i need sleep
-
 	private String getSkillSectionHtml()
 	{
 		StringBuilder skillSection = new StringBuilder();
 		League3Task task = (League3Task) this.task;
-		for (RequiredSkill requiredSkill : task.skills)
+		for (RequiredSkill requiredSkill : task.getSkills())
 		{
 			Skill skill;
 			// FIXME: Shouldn't use exception for control flow
@@ -136,8 +137,7 @@ public class League3TaskPanel extends TaskPanel
 
 			skillSection.append(Util.HTML_LINE_BREAK);
 
-			//TODO: REMOVE THIS CRAP AND MAKE IT WAIT FOR SKILLS
-			int playerLevel = 99;
+			int playerLevel = 255;
 			if (this.plugin.playerSkills != null)
 			{
 				playerLevel = this.plugin.playerSkills[skill.ordinal()];
@@ -147,8 +147,6 @@ public class League3TaskPanel extends TaskPanel
 
 		return skillSection.toString();
 	}
-
-	// TODO: Yeeeeeehaw; move these responsibilities out like they're a 40 year old living w their mom
 
 	private String getSkillRequirementHtml(String skillName, int playerLevel, int requiredLevel)
 	{

@@ -16,9 +16,9 @@ public class CombatTask extends Task
 	@Getter
 	public String category;
 
-	public CombatTask(String name, String description, String tier)
+	public CombatTask(int id, String name, String description, String tier, int clientSortId)
 	{
-		super(name, description, tier);
+		super(id, name, description, tier, clientSortId);
 	}
 
 	@Override
