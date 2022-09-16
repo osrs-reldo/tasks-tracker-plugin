@@ -158,7 +158,7 @@ public class TasksTrackerPlugin extends Plugin
 		allVarbitIds.addAll(CombatTaskVarps.getIdToVarpMap().keySet());
 		allVarbitIds.forEach(id -> {
 			VarbitChanged spoofedChange = new VarbitChanged();
-			spoofedChange.setIndex(id);
+			spoofedChange.setVarpId(id);
 			onVarbitChanged(spoofedChange);
 		});
 	}
@@ -175,7 +175,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
-		processTaskVarp(varbitChanged.getIndex());
+		processTaskVarp(varbitChanged.getVarbitId());
 	}
 
 	private void processTaskVarp(int index)
