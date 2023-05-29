@@ -255,7 +255,6 @@ public class TasksTrackerPlugin extends Plugin
 		GameState newGameState = gameStateChanged.getGameState();
 		RuneScapeProfileType newProfileType = RuneScapeProfileType.getCurrent(client);
 
-		// FIXME: Smelly
 		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedInState(newGameState)));
 
 		if (newGameState == GameState.LOGGING_IN || (isLoggedInState(newGameState) && currentProfileType != newProfileType))
@@ -284,24 +283,17 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (checkVarbits)
 		{
-			// FIXME: This entire logic being wrapped in invokeLater is a smell
-			SwingUtilities.invokeLater(() -> {
-				checkVarbits = false;
+			checkVarbits = false;
 
-				BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(3116));
-				log.debug("first tick after onGameStateChanged, value of 3116: {}", varpValue);
-
-				for (TaskType taskType : TaskType.values())
+			for (TaskType taskType : TaskType.values())
+			{
+				loadSavedTaskTypeData(taskType);
+				if (taskType == config.taskType())
 				{
-					loadSavedTaskTypeData(taskType);
-					if (taskType == config.taskType())
-					{
-						log.debug("forceVarpUpdate for type {}", config.taskType().getDisplayString());
-						forceVarpUpdate();
-						pluginPanel.redraw();
-					}
+					forceVarpUpdate();
+					SwingUtilities.invokeLater(() -> pluginPanel.redraw());
 				}
-			});
+			}
 		}
 	}
 
