@@ -69,6 +69,7 @@ public class TasksTrackerPlugin extends Plugin
 	public TasksTrackerPluginPanel pluginPanel;
 
 	private NavigationButton navButton;
+	private boolean checkVarbits = false;
 
 	@Inject	@Named("runelite.version") private String runeliteVersion;
 	@Inject	private Client client;
@@ -105,16 +106,14 @@ public class TasksTrackerPlugin extends Plugin
 			TaskManager taskManager = new TaskManager(taskType, taskDataClient);
 			taskManagers.put(taskType, taskManager);
 
-			taskManager.asyncLoadTaskSourceData((tasks) -> {
-				SwingUtilities.invokeLater(() -> {
-					if (isLoggedIn && taskType == config.taskType())
-					{
-						loadSavedTaskTypeData(taskType);
-						forceVarpUpdate();
-						pluginPanel.redraw();
-					}
-				});
-			});
+			taskManager.asyncLoadTaskSourceData((tasks) -> SwingUtilities.invokeLater(() -> {
+				if (isLoggedIn && taskType == config.taskType())
+				{
+					loadSavedTaskTypeData(taskType);
+					forceVarpUpdate();
+					pluginPanel.redraw();
+				}
+			}));
 		}
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
@@ -253,28 +252,18 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
 	{
-		// FIXME: This entire logic being wrapped in invokeLater is a smell
-		SwingUtilities.invokeLater(() -> {
-			GameState newGameState = gameStateChanged.getGameState();
-			RuneScapeProfileType newProfileType = RuneScapeProfileType.getCurrent(client);
+		GameState newGameState = gameStateChanged.getGameState();
+		RuneScapeProfileType newProfileType = RuneScapeProfileType.getCurrent(client);
 
-			pluginPanel.setLoggedIn(isLoggedInState(newGameState));
+		// FIXME: Smelly
+		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedInState(newGameState)));
 
-			if (newGameState == GameState.LOGGING_IN || (isLoggedInState(newGameState) && currentProfileType != newProfileType))
-			{
-				for (TaskType taskType : TaskType.values())
-				{
-					loadSavedTaskTypeData(taskType);
-					if (taskType == config.taskType())
-					{
-						forceVarpUpdate();
-						pluginPanel.redraw();
-					}
-				}
-			}
+		if (newGameState == GameState.LOGGING_IN || (isLoggedInState(newGameState) && currentProfileType != newProfileType))
+		{
+			checkVarbits = true;
+		}
 
-			currentProfileType = newProfileType;
-		});
+		currentProfileType = newProfileType;
 	}
 
 	private boolean isLoggedInState(GameState gameState)
@@ -291,6 +280,28 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			playerSkills = client.getRealSkillLevels();
 			SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
+		}
+
+		if (checkVarbits)
+		{
+			// FIXME: This entire logic being wrapped in invokeLater is a smell
+			SwingUtilities.invokeLater(() -> {
+				checkVarbits = false;
+
+				BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(3116));
+				log.debug("first tick after onGameStateChanged, value of 3116: {}", varpValue);
+
+				for (TaskType taskType : TaskType.values())
+				{
+					loadSavedTaskTypeData(taskType);
+					if (taskType == config.taskType())
+					{
+						log.debug("forceVarpUpdate for type {}", config.taskType().getDisplayString());
+						forceVarpUpdate();
+						pluginPanel.redraw();
+					}
+				}
+			});
 		}
 	}
 
