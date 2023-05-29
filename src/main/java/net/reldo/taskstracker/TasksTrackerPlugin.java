@@ -156,11 +156,7 @@ public class TasksTrackerPlugin extends Plugin
 		List<Integer> allVarbitIds = new ArrayList<>();
 		allVarbitIds.addAll(League3TaskVarps.getIdToVarpMap().keySet());
 		allVarbitIds.addAll(CombatTaskVarps.getIdToVarpMap().keySet());
-		allVarbitIds.forEach(id -> {
-			VarbitChanged spoofedChange = new VarbitChanged();
-			spoofedChange.setVarpId(id);
-			onVarbitChanged(spoofedChange);
-		});
+		allVarbitIds.forEach(this::processTaskVarp);
 	}
 
 	@Override
