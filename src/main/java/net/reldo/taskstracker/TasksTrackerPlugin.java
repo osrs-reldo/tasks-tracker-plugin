@@ -170,7 +170,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
-		processTaskVarp(varbitChanged.getVarbitId());
+		processTaskVarp(varbitChanged.getVarpId());
 	}
 
 	private void processTaskVarp(int index)
@@ -259,6 +259,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (newGameState == GameState.LOGGING_IN || (isLoggedInState(newGameState) && currentProfileType != newProfileType))
 		{
+			// Cannot check varbits on GameState change; need to wait for 1st game tick; set boolean to check on 1st tick
 			checkVarbits = true;
 		}
 
@@ -281,6 +282,7 @@ public class TasksTrackerPlugin extends Plugin
 			SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
 		}
 
+		// Cannot check varbits on GameState change; need to wait for 1st game tick
 		if (checkVarbits)
 		{
 			checkVarbits = false;
