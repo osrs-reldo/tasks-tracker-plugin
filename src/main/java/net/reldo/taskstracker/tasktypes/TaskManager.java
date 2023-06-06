@@ -40,7 +40,7 @@ public class TaskManager
 			{
 				return;
 			}
-			task.loadSave(loadedTask);
+			task.loadConfigSave(loadedTask);
 		});
 	}
 }

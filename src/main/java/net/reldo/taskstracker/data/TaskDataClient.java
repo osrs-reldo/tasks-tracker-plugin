@@ -25,18 +25,18 @@ import okhttp3.Response;
 public class TaskDataClient
 {
 	@Inject	private OkHttpClient okHttpClient;
+	@Inject private Gson gson;
 
 	private static final String BASE_URL = "https://raw.githubusercontent.com/osrs-reldo/task-json-store/main/";
 	private static final String JSON_MIN_PATH = BASE_URL + "json/min/";
 
 	public void loadTaskSourceData(TaskType taskType, CallbackCommand<ArrayList<Task>> callback)
 	{
-		Gson gson = new Gson();
 		Type classType = taskType.getClassType();
 		Type listType = TypeToken.getParameterized(ArrayList.class, classType).getType();
 
 		getTaskJson(taskType.getDataFileName(), jsonResponse -> {
-			ArrayList<Task> result = gson.fromJson(new InputStreamReader(jsonResponse, StandardCharsets.UTF_8), listType);
+			ArrayList<Task> result = this.gson.fromJson(new InputStreamReader(jsonResponse, StandardCharsets.UTF_8), listType);
 			callback.execute(result);
 		});
 	}
