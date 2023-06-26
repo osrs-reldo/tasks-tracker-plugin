@@ -66,7 +66,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	public TasksTrackerPluginPanel pluginPanel;
 
-	private boolean loginFlag = false;
+	private boolean forceUpdateVarpsFlag = false;
 	private NavigationButton navButton;
 	private RuneScapeProfileType currentProfileType;
 
@@ -94,7 +94,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp()
 	{
-		loginFlag = false;
+		forceUpdateVarpsFlag = false;
 
 		pluginPanel = new TasksTrackerPluginPanel(this, config, clientThread, spriteManager, skillIconManager);
 
@@ -111,7 +111,7 @@ public class TasksTrackerPlugin extends Plugin
 				// If the player is already logged in when the plugin is started, treat like a new login
 				if (isLoggedIn && taskType == config.taskType())
 				{
-					loginFlag = true;
+					forceUpdateVarpsFlag = true;
 				}
 			});
 		}
@@ -128,30 +128,6 @@ public class TasksTrackerPlugin extends Plugin
 		log.info("Tasks Tracker started!");
 	}
 
-	private void loadSavedTaskTypeData(TaskType taskType)
-	{
-		log.debug("loadSavedTaskTypeData {}", taskType.name());
-		HashMap<Integer, Task> taskData = trackerDataStore.loadTaskTypeFromConfig(taskType);
-
-		taskManagers.get(taskType).applyTrackerSave(taskData);
-
-		trackerDataStore.saveTaskTypeToConfig(taskType, taskManagers.get(taskType).tasks.values());
-	}
-
-	private void forceVarpUpdate()
-	{
-		log.debug("forceVarpUpdate");
-		List<Integer> allVarbitIds = new ArrayList<>();
-		allVarbitIds.addAll(League3TaskVarps.getIdToVarpMap().keySet());
-		allVarbitIds.addAll(CombatTaskVarps.getIdToVarpMap().keySet());
-		allVarbitIds.forEach((id) -> this.processVarpAndUpdateTasks(id, processed -> {
-			if (processed)
-			{
-				this.saveCurrentTaskData();
-			}
-		}));
-	}
-
 	@Override
 	protected void shutDown()
 	{
@@ -164,6 +140,11 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
+		if (forceUpdateVarpsFlag)
+		{
+			// Force update is coming on next game tick, so ignore varbit change events
+			return;
+		}
 		processVarpAndUpdateTasks(varbitChanged.getVarpId(), processed -> {
 			if (processed)
 			{
@@ -172,86 +153,13 @@ public class TasksTrackerPlugin extends Plugin
 		});
 	}
 
-	private void processVarpAndUpdateTasks(int varpId, CallbackCommand<Boolean> result)
-	{
-		int ordinal = -1;
-		TaskType taskType = null;
-
-		League3TaskVarps leagueVarp = League3TaskVarps.getIdToVarpMap().get(varpId);
-		if (leagueVarp != null)
-		{
-			ordinal = leagueVarp.ordinal();
-			taskType = TaskType.LEAGUE_3;
-		}
-
-		CombatTaskVarps combatTaskVarp = CombatTaskVarps.getIdToVarpMap().get(varpId);
-		if (combatTaskVarp != null)
-		{
-			ordinal = combatTaskVarp.ordinal();
-			taskType = TaskType.COMBAT;
-		}
-
-		if (taskType == null)
-		{
-			result.execute(false);
-			return;
-		}
-
-		HashMap<Integer, Boolean> completionById = new HashMap<>();
-
-		int finalOrdinal = ordinal;
-		TaskType finalTaskType = taskType;
-		clientThread.invokeLater(() -> {
-			// We don't use the VarbitChanged event value because it may not be the latest value
-			// Instead we refetch the varp value
-			BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varpId));
-			log.debug("processVarpAndUpdateTasks {} {}", varpId, varpValue);
-			int minTaskId = finalOrdinal * 32;
-			int maxTaskId = minTaskId + 31;
-			int taskProgressEnumIndex = minTaskId / 32;
-
-			for (int i = minTaskId; i <= maxTaskId; i++)
-			{
-				boolean isTaskVarbitCompleted;
-				int bitIndex = i % 32;
-				try
-				{
-					isTaskVarbitCompleted = varpValue.testBit(bitIndex);
-				}
-				catch (IllegalArgumentException ex)
-				{
-					log.error("League 3 task progress enum not found {}", taskProgressEnumIndex, ex);
-					isTaskVarbitCompleted = false;
-				}
-
-				completionById.put(i, isTaskVarbitCompleted);
-			}
-
-			for (Map.Entry<Integer, Boolean> taskCompletion : completionById.entrySet())
-			{
-				int id = taskCompletion.getKey();
-				boolean completed = taskCompletion.getValue();
-				Task task = taskManagers.get(finalTaskType).tasks.get(id);
-				if (task == null)
-				{
-					continue;
-				}
-
-				task.setCompleted(completed);
-				if (completed && config.untrackUponCompletion())
-				{
-					task.setTracked(false);
-				}
-				SwingUtilities.invokeLater(() -> pluginPanel.refresh(task));
-			}
-
-			result.execute(true);
-		});
-	}
-
 	@Subscribe
 	public void onConfigChanged(ConfigChanged configChanged)
 	{
+		if (!configChanged.getGroup().equals(CONFIG_GROUP_NAME))
+		{
+			return;
+		}
 		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
 		if (configChanged.getKey().equals("untrackUponCompletion") && config.untrackUponCompletion())
 		{
@@ -271,12 +179,12 @@ public class TasksTrackerPlugin extends Plugin
 		// Logged in
 		if (newGameState == GameState.LOGGING_IN)
 		{
-			loginFlag = true;
+			forceUpdateVarpsFlag = true;
 		}
 		// Changed game mode
 		if (isLoggedInState(newGameState) && currentProfileType != null && currentProfileType != newProfileType)
 		{
-			loginFlag = true;
+			forceUpdateVarpsFlag = true;
 		}
 
 		currentProfileType = newProfileType;
@@ -290,13 +198,13 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick gameTick)
 	{
-		if (loginFlag)
+		if (forceUpdateVarpsFlag)
 		{
 			log.debug("loginFlag game tick");
 			loadSavedTaskTypeData(config.taskType());
 			forceVarpUpdate();
 			SwingUtilities.invokeLater(() -> pluginPanel.redraw());
-			loginFlag = false;
+			forceUpdateVarpsFlag = false;
 		}
 
 		int[] newSkills = client.getRealSkillLevels();
@@ -378,6 +286,106 @@ public class TasksTrackerPlugin extends Plugin
 			String message = "Exported " + taskType.getDisplayString() + " data copied to clipboard!";
 
 			showMessageBox("Data Exported!", message, JOptionPane.INFORMATION_MESSAGE, true);
+		});
+	}
+
+	private void loadSavedTaskTypeData(TaskType taskType)
+	{
+		log.debug("loadSavedTaskTypeData {}", taskType.name());
+		HashMap<Integer, Task> taskData = trackerDataStore.loadTaskTypeFromConfig(taskType);
+
+		taskManagers.get(taskType).applyTrackerSave(taskData);
+
+		trackerDataStore.saveTaskTypeToConfig(taskType, taskManagers.get(taskType).tasks.values());
+	}
+
+	private void forceVarpUpdate()
+	{
+		log.debug("forceVarpUpdate");
+		List<Integer> allVarbitIds = new ArrayList<>();
+		allVarbitIds.addAll(League3TaskVarps.getIdToVarpMap().keySet());
+		allVarbitIds.addAll(CombatTaskVarps.getIdToVarpMap().keySet());
+		allVarbitIds.forEach((id) -> this.processVarpAndUpdateTasks(id, processed -> {
+			if (processed)
+			{
+				this.saveCurrentTaskData();
+			}
+		}));
+	}
+
+	private void processVarpAndUpdateTasks(int varpId, CallbackCommand<Boolean> resultCallback)
+	{
+		int ordinal = -1;
+		TaskType taskType = null;
+
+		League3TaskVarps leagueVarp = League3TaskVarps.getIdToVarpMap().get(varpId);
+		if (leagueVarp != null)
+		{
+			ordinal = leagueVarp.ordinal();
+			taskType = TaskType.LEAGUE_3;
+		}
+
+		CombatTaskVarps combatTaskVarp = CombatTaskVarps.getIdToVarpMap().get(varpId);
+		if (combatTaskVarp != null)
+		{
+			ordinal = combatTaskVarp.ordinal();
+			taskType = TaskType.COMBAT;
+		}
+
+		if (taskType == null)
+		{
+			resultCallback.execute(false);
+			return;
+		}
+
+		HashMap<Integer, Boolean> completionById = new HashMap<>();
+
+		int finalOrdinal = ordinal;
+		TaskType finalTaskType = taskType;
+		clientThread.invokeLater(() -> {
+			// We don't use the VarbitChanged event value because it may not be the latest value
+			// Instead we refetch the varp value
+			BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varpId));
+			log.debug("processVarpAndUpdateTasks {} {}", varpId, varpValue);
+			int minTaskId = finalOrdinal * 32;
+			int maxTaskId = minTaskId + 31;
+
+			for (int i = minTaskId; i <= maxTaskId; i++)
+			{
+				boolean isTaskVarbitCompleted;
+				int bitIndex = i % 32;
+				try
+				{
+					isTaskVarbitCompleted = varpValue.testBit(bitIndex);
+				}
+				catch (IllegalArgumentException ex)
+				{
+					log.error("Bit test failed {} {}", varpId, bitIndex, ex);
+					isTaskVarbitCompleted = false;
+				}
+
+				completionById.put(i, isTaskVarbitCompleted);
+			}
+
+			for (Map.Entry<Integer, Boolean> taskCompletion : completionById.entrySet())
+			{
+				int id = taskCompletion.getKey();
+				boolean completed = taskCompletion.getValue();
+				Task task = taskManagers.get(finalTaskType).tasks.get(id);
+				if (task == null)
+				{
+					continue;
+				}
+
+				task.setCompleted(completed);
+				if (completed && config.untrackUponCompletion())
+				{
+					task.setTracked(false);
+				}
+				SwingUtilities.invokeLater(() -> pluginPanel.refresh(task));
+			}
+
+			resultCallback.execute(true);
 		});
 	}
 
