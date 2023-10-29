@@ -30,6 +30,8 @@ public abstract class Task
 	private RequiredSkill[] skills = null;
 
 	private String area;
+	private String category;
+
 	public boolean isCompleted()
 	{
 		return completedOn > 0;

@@ -115,4 +115,16 @@ public interface TasksTrackerConfig extends Config
     {
         return "";
     }
+
+    @ConfigItem(
+            position = 108,
+            keyName = "categoryFilter",
+            name = "Category Filter",
+            description = "Configures the category to filter tasks on.",
+            hidden = true
+    )
+    default String categoryFilter()
+    {
+        return "";
+    }
 }
