@@ -29,6 +29,7 @@ public abstract class Task
 
 	private RequiredSkill[] skills = null;
 
+	private String area;
 	public boolean isCompleted()
 	{
 		return completedOn > 0;

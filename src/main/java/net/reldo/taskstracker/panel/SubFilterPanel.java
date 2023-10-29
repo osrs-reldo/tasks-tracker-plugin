@@ -26,6 +26,8 @@ public class SubFilterPanel extends FixedWidthPanel
         addFilterButtonPanel(new SkillFilterPanel(plugin));
 
         addFilterButtonPanel(new DifficultyFilterPanel(plugin, spriteManager));
+
+        addFilterButtonPanel(new AreaFilterPanel(plugin, spriteManager));
     }
 
     public void addFilterButtonPanel(FilterButtonPanel panel)

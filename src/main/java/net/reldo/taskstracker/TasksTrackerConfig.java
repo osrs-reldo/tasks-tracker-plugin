@@ -104,4 +104,15 @@ public interface TasksTrackerConfig extends Config
 		return TaskType.COMBAT;
 	}
 
+    @ConfigItem(
+            position = 107,
+            keyName = "areaFilter",
+            name = "Area Filter",
+            description = "Configures the areas to filter tasks on.",
+            hidden = true
+    )
+    default String areaFilter()
+    {
+        return "";
+    }
 }
