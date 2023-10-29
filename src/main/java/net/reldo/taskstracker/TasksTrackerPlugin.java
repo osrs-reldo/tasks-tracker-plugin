@@ -165,6 +165,11 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			forceVarpUpdate();
 		}
+
+		if (configChanged.getKey().equals("filterPanelCollapsible"))
+		{
+			pluginPanel.redraw();
+		}
 	}
 
 	@Subscribe

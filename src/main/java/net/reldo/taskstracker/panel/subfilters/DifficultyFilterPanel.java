@@ -20,7 +20,7 @@ public class DifficultyFilterPanel extends FilterButtonPanel
 
     public DifficultyFilterPanel(TasksTrackerPlugin plugin, SpriteManager spriteManager)
     {
-        super(plugin);
+        super(plugin, "Tier");
         this.configKey = "tierFilter";
 
         setLayout(new BorderLayout());

@@ -35,7 +35,7 @@ public class SkillFilterPanel extends FilterButtonPanel
 
     public SkillFilterPanel(TasksTrackerPlugin plugin)
     {
-        super(plugin);
+        super(plugin, "Skill");
         this.configKey = "skillFilter";
 
         setLayout(new BorderLayout());

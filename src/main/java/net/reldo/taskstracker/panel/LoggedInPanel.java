@@ -111,6 +111,8 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 	public void redraw()
 	{
 		subFilterPanel.redraw();
+		updateCollapseButtonText();
+
 		taskListPanel.redraw();
 	}
 

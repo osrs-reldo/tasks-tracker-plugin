@@ -21,6 +21,17 @@ public interface TasksTrackerConfig extends Config
 	}
 
     @ConfigItem(
+            position = 11,
+            keyName = "filterPanelCollapsible",
+            name = "Filter Panels Collapsible",
+            description = "Shows button that allows filter panels to be hidden."
+    )
+    default boolean filterPanelCollapsible()
+    {
+        return true;
+    }
+
+    @ConfigItem(
             position = 100,
             keyName = "completedFilter",
             name = "Completed Tasks Filter",
