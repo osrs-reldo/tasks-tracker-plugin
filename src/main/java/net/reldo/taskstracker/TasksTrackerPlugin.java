@@ -271,12 +271,12 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (selectedValue.equals(JOptionPane.YES_OPTION))
 		{
-			// FIXME: Hardcoded for league 3 only
+			// FIXME: Hardcoded for league 4 only
 			reldoImport.getTasks().forEach((id, reldoTaskSave) -> {
-				Task task = taskManagers.get(TaskType.LEAGUE_3).tasks.get(id);
+				Task task = taskManagers.get(TaskType.LEAGUE_4).tasks.get(id);
 				task.loadReldoSave(reldoTaskSave);
 			});
-			trackerDataStore.saveTaskTypeToConfig(TaskType.LEAGUE_3, taskManagers.get(TaskType.LEAGUE_3).tasks.values());
+			trackerDataStore.saveTaskTypeToConfig(TaskType.LEAGUE_4, taskManagers.get(TaskType.LEAGUE_4).tasks.values());
 			pluginPanel.redraw();
 		}
 	}
