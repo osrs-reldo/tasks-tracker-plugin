@@ -4,6 +4,7 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.Util;
 import net.reldo.taskstracker.panel.TaskPanel;
 import net.reldo.taskstracker.panel.filters.AreaFilter;
+import net.reldo.taskstracker.panel.filters.CategoryFilter;
 import net.reldo.taskstracker.panel.filters.SkillFilter;
 import net.reldo.taskstracker.panel.filters.TierFilter;
 import net.reldo.taskstracker.tasktypes.RequiredSkill;
@@ -26,6 +27,7 @@ public class League4TaskPanel extends TaskPanel
 		filters.add(new SkillFilter(plugin.getConfig()));
 		filters.add(new TierFilter(plugin.getConfig()));
 		filters.add(new AreaFilter(plugin.getConfig()));
+		filters.add(new CategoryFilter(plugin.getConfig()));
 	}
 
 	@Override
