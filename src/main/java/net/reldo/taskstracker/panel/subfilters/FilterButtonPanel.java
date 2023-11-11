@@ -2,17 +2,22 @@ package net.reldo.taskstracker.panel.subfilters;
 
 import java.awt.BorderLayout;
 import java.awt.image.BufferedImage;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.MatteBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
-
 import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.panel.SubFilterPanel;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
-import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.util.ImageUtil;

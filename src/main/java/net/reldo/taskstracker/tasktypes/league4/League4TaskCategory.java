@@ -2,12 +2,13 @@ package net.reldo.taskstracker.tasktypes.league4;
 
 public enum League4TaskCategory
 {
-    ACHIEVEMENT(3739),
+    //@todo Add sprite IDs
+    ACHIEVEMENT(0),
     COMBAT(0),
-    QUEST(2316),
-    SKILL(2317),
-    MINIGAME(2318),
-    OTHER(2319);
+    QUEST(0),
+    SKILL(0),
+    MINIGAME(0),
+    OTHER(0);
 
     public final int spriteId;
 
