@@ -1,13 +1,10 @@
 package net.reldo.taskstracker;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.Provides;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
-import java.lang.reflect.Type;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,6 +18,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.data.CallbackCommand;
 import net.reldo.taskstracker.data.Export;
 import net.reldo.taskstracker.data.LongSerializer;
 import net.reldo.taskstracker.data.TaskDataClient;
@@ -68,23 +66,24 @@ public class TasksTrackerPlugin extends Plugin
 
 	public TasksTrackerPluginPanel pluginPanel;
 
+	private boolean forceUpdateVarpsFlag = false;
 	private NavigationButton navButton;
-	private boolean checkVarbits = false;
+	private RuneScapeProfileType currentProfileType;
 
 	@Inject	@Named("runelite.version") private String runeliteVersion;
+	@Inject private Gson gson;
 	@Inject	private Client client;
 	@Inject	private SpriteManager spriteManager;
 	@Inject	private PluginManager pluginManager;
-	@Getter @Inject	private ConfigManager configManager;
 	@Inject	private SkillIconManager skillIconManager;
 	@Inject	private ClientToolbar clientToolbar;
 	@Inject	private ClientThread clientThread;
 	@Inject	private ChatMessageManager chatMessageManager;
+	@Getter	@Inject	private ConfigManager configManager;
 	@Getter @Inject	private TasksTrackerConfig config;
 
 	@Inject private TaskDataClient taskDataClient;
 	@Inject private TrackerDataStore trackerDataStore;
-	private RuneScapeProfileType currentProfileType;
 
 	@Provides
 	TasksTrackerConfig getConfig(ConfigManager configManager)
@@ -95,6 +94,8 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp()
 	{
+		forceUpdateVarpsFlag = false;
+
 		pluginPanel = new TasksTrackerPluginPanel(this, config, clientThread, spriteManager, skillIconManager);
 
 		boolean isLoggedIn = isLoggedInState(client.getGameState());
@@ -106,14 +107,13 @@ public class TasksTrackerPlugin extends Plugin
 			TaskManager taskManager = new TaskManager(taskType, taskDataClient);
 			taskManagers.put(taskType, taskManager);
 
-			taskManager.asyncLoadTaskSourceData((tasks) -> SwingUtilities.invokeLater(() -> {
+			taskManager.asyncLoadTaskSourceData((tasks) -> {
+				// If the player is already logged in when the plugin is started, treat like a new login
 				if (isLoggedIn && taskType == config.taskType())
 				{
-					loadSavedTaskTypeData(taskType);
-					forceVarpUpdate();
-					pluginPanel.redraw();
+					forceUpdateVarpsFlag = true;
 				}
-			}));
+			});
 		}
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
@@ -128,36 +128,6 @@ public class TasksTrackerPlugin extends Plugin
 		log.info("Tasks Tracker started!");
 	}
 
-	private void loadSavedTaskTypeData(TaskType taskType)
-	{
-		Type taskClassType = taskType.getClassType();
-		Type taskDeserializeType = TypeToken.getParameterized(HashMap.class, Integer.class, taskClassType).getType();
-		HashMap<Integer, Task> taskData;
-		// Check for old task name keyed data before loading new data
-		// TODO: Remove after Leagues III
-		if (trackerDataStore.hasStringKeyTaskData(taskType))
-		{
-			taskData = trackerDataStore.convertStringKeyDataToIdKeyData(taskType);
-			configManager.unsetRSProfileConfiguration("tasksTracker", TrackerDataStore.TASKS_PREFIX + "." + taskType.name());
-		}
-		else
-		{
-			taskData = trackerDataStore.getDataFromConfig(TrackerDataStore.TASKS_PREFIX + "." + taskType.name(), taskDeserializeType, new HashMap<>());
-		}
-
-		taskManagers.get(taskType).applyTrackerSave(taskData);
-
-		trackerDataStore.saveTaskTypeToConfig(taskType, taskManagers.get(taskType).tasks.values());
-	}
-
-	private void forceVarpUpdate()
-	{
-		List<Integer> allVarbitIds = new ArrayList<>();
-		allVarbitIds.addAll(League3TaskVarps.getIdToVarpMap().keySet());
-		allVarbitIds.addAll(CombatTaskVarps.getIdToVarpMap().keySet());
-		allVarbitIds.forEach(this::processTaskVarp);
-	}
-
 	@Override
 	protected void shutDown()
 	{
@@ -170,97 +140,56 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
-		processTaskVarp(varbitChanged.getVarpId());
-	}
-
-	private void processTaskVarp(int index)
-	{
-		int ordinal = -1;
-		TaskType taskType = null;
-
-		League3TaskVarps leagueVarp = League3TaskVarps.getIdToVarpMap().get(index);
-		if (leagueVarp != null)
+		if (forceUpdateVarpsFlag)
 		{
-			ordinal = leagueVarp.ordinal();
-			taskType = TaskType.LEAGUE_3;
-		}
-
-		CombatTaskVarps combatTaskVarp = CombatTaskVarps.getIdToVarpMap().get(index);
-		if (combatTaskVarp != null)
-		{
-			ordinal = combatTaskVarp.ordinal();
-			taskType = TaskType.COMBAT;
-		}
-
-		if (taskType == null)
-		{
+			// Force update is coming on next game tick, so ignore varbit change events
 			return;
 		}
-
-		HashMap<Integer, Boolean> completionById = new HashMap<>();
-
-		BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(index));
-		int minTaskId = ordinal * 32;
-		int maxTaskId = minTaskId + 31;
-		int taskProgressEnumIndex = minTaskId / 32;
-
-		for (int i = minTaskId; i <= maxTaskId; i++)
-		{
-			boolean isTaskVarbitCompleted;
-			int bitIndex = i % 32;
-			try
+		processVarpAndUpdateTasks(varbitChanged.getVarpId(), processed -> {
+			if (processed)
 			{
-				isTaskVarbitCompleted = varpValue.testBit(bitIndex);
+				this.saveCurrentTaskData();
 			}
-			catch (IllegalArgumentException ex)
-			{
-				log.error("League 3 task progress enum not found {}", taskProgressEnumIndex, ex);
-				isTaskVarbitCompleted = false;
-			}
-
-			completionById.put(i, isTaskVarbitCompleted);
-		}
-
-		for (Map.Entry<Integer, Boolean> taskCompletion : completionById.entrySet())
-		{
-			int id = taskCompletion.getKey();
-			boolean completed = taskCompletion.getValue();
-			Task task = taskManagers.get(taskType).tasks.get(id);
-			if (task == null)
-			{
-				continue;
-			}
-
-			task.setCompleted(completed);
-			if (completed && config.untrackUponCompletion())
-			{
-				task.setTracked(false);
-			}
-			SwingUtilities.invokeLater(() -> pluginPanel.refresh(task));
-		}
+		});
 	}
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged configChanged)
 	{
+		if (!configChanged.getGroup().equals(CONFIG_GROUP_NAME))
+		{
+			return;
+		}
+		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
 		if (configChanged.getKey().equals("untrackUponCompletion") && config.untrackUponCompletion())
 		{
 			forceVarpUpdate();
+		}
+
+		if (configChanged.getKey().equals("filterPanelCollapsible"))
+		{
+			pluginPanel.redraw();
 		}
 	}
 
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
 	{
+		log.debug("onGameStateChanged {}", gameStateChanged.getGameState().toString());
 		GameState newGameState = gameStateChanged.getGameState();
 		RuneScapeProfileType newProfileType = RuneScapeProfileType.getCurrent(client);
 
 		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedInState(newGameState)));
 
-		if (newGameState == GameState.LOGGING_IN || (isLoggedInState(newGameState) && currentProfileType != newProfileType))
+		// Logged in
+		if (newGameState == GameState.LOGGING_IN)
 		{
-			// Cannot check varbits on GameState change; need to wait for 1st game tick; set boolean to check on 1st tick
-			checkVarbits = true;
+			forceUpdateVarpsFlag = true;
+		}
+		// Changed game mode
+		if (isLoggedInState(newGameState) && currentProfileType != null && currentProfileType != newProfileType)
+		{
+			forceUpdateVarpsFlag = true;
 		}
 
 		currentProfileType = newProfileType;
@@ -268,34 +197,27 @@ public class TasksTrackerPlugin extends Plugin
 
 	private boolean isLoggedInState(GameState gameState)
 	{
-		return gameState != GameState.LOGIN_SCREEN && gameState != GameState.LOGIN_SCREEN_AUTHENTICATOR;
+		return gameState == GameState.LOGGED_IN || gameState == GameState.HOPPING || gameState == GameState.LOADING;
 	}
 
 	@Subscribe
 	public void onGameTick(GameTick gameTick)
 	{
+		if (forceUpdateVarpsFlag)
+		{
+			log.debug("loginFlag game tick");
+			loadSavedTaskTypeData(config.taskType());
+			forceVarpUpdate();
+			SwingUtilities.invokeLater(() -> pluginPanel.redraw());
+			forceUpdateVarpsFlag = false;
+		}
+
 		int[] newSkills = client.getRealSkillLevels();
 		boolean changed = !Arrays.equals(playerSkills, newSkills);
 		if (changed)
 		{
 			playerSkills = client.getRealSkillLevels();
 			SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
-		}
-
-		// Cannot check varbits on GameState change; need to wait for 1st game tick
-		if (checkVarbits)
-		{
-			checkVarbits = false;
-
-			for (TaskType taskType : TaskType.values())
-			{
-				loadSavedTaskTypeData(taskType);
-				if (taskType == config.taskType())
-				{
-					forceVarpUpdate();
-					SwingUtilities.invokeLater(() -> pluginPanel.redraw());
-				}
-			}
 		}
 	}
 
@@ -306,6 +228,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void saveCurrentTaskData()
 	{
+		log.debug("saveCurrentTaskData");
 		trackerDataStore.saveTaskTypeToConfig(config.taskType(), taskManagers.get(config.taskType()).tasks.values());
 	}
 
@@ -328,13 +251,13 @@ public class TasksTrackerPlugin extends Plugin
 		try
 		{
 			json = (String) optionPane.getInputValue();
-			reldoImport = ReldoImport.fromJson(json);
+			reldoImport = this.gson.fromJson(json, ReldoImport.class);
 		}
 		catch (Exception ex)
 		{
 			showMessageBox("Import Tasks Error", "There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE, false);
 			log.error("There was an issue importing task tracker data.", ex);
-			log.info("reldoImport json: {}", json);
+			log.debug("reldoImport json: {}", json);
 			return;
 		}
 
@@ -344,16 +267,16 @@ public class TasksTrackerPlugin extends Plugin
 		confirmDialog.setVisible(true);
 
 		Object selectedValue = optionPane.getValue();
-		if(selectedValue == null) return;
+		if (selectedValue == null) return;
 
 		if (selectedValue.equals(JOptionPane.YES_OPTION))
 		{
-			// FIXME: Hardcoded for league 3 only
+			// FIXME: Hardcoded for league 4 only
 			reldoImport.getTasks().forEach((id, reldoTaskSave) -> {
-				Task task = taskManagers.get(TaskType.LEAGUE_3).tasks.get(id);
+				Task task = taskManagers.get(TaskType.LEAGUE_4).tasks.get(id);
 				task.loadReldoSave(reldoTaskSave);
 			});
-			trackerDataStore.saveTaskTypeToConfig(TaskType.LEAGUE_3, taskManagers.get(TaskType.LEAGUE_3).tasks.values());
+			trackerDataStore.saveTaskTypeToConfig(TaskType.LEAGUE_4, taskManagers.get(TaskType.LEAGUE_4).tasks.values());
 			pluginPanel.redraw();
 		}
 	}
@@ -367,17 +290,113 @@ public class TasksTrackerPlugin extends Plugin
 
 			String message = "Exported " + taskType.getDisplayString() + " data copied to clipboard!";
 
-			showMessageBox(
-				"Data Exported!",
-					message,
-					JOptionPane.INFORMATION_MESSAGE,
-					true);
+			showMessageBox("Data Exported!", message, JOptionPane.INFORMATION_MESSAGE, true);
+		});
+	}
+
+	private void loadSavedTaskTypeData(TaskType taskType)
+	{
+		log.debug("loadSavedTaskTypeData {}", taskType.name());
+		HashMap<Integer, Task> taskData = trackerDataStore.loadTaskTypeFromConfig(taskType);
+
+		taskManagers.get(taskType).applyTrackerSave(taskData);
+
+		trackerDataStore.saveTaskTypeToConfig(taskType, taskManagers.get(taskType).tasks.values());
+	}
+
+	private void forceVarpUpdate()
+	{
+		log.debug("forceVarpUpdate");
+		List<Integer> allVarbitIds = new ArrayList<>();
+		allVarbitIds.addAll(League3TaskVarps.getIdToVarpMap().keySet());
+		allVarbitIds.addAll(CombatTaskVarps.getIdToVarpMap().keySet());
+		allVarbitIds.forEach((id) -> this.processVarpAndUpdateTasks(id, processed -> {
+			if (processed)
+			{
+				this.saveCurrentTaskData();
+			}
+		}));
+	}
+
+	private void processVarpAndUpdateTasks(int varpId, CallbackCommand<Boolean> resultCallback)
+	{
+		int ordinal = -1;
+		TaskType taskType = null;
+
+		League3TaskVarps leagueVarp = League3TaskVarps.getIdToVarpMap().get(varpId);
+		if (leagueVarp != null)
+		{
+			ordinal = leagueVarp.ordinal();
+			taskType = TaskType.LEAGUE_3;
+		}
+
+		CombatTaskVarps combatTaskVarp = CombatTaskVarps.getIdToVarpMap().get(varpId);
+		if (combatTaskVarp != null)
+		{
+			ordinal = combatTaskVarp.ordinal();
+			taskType = TaskType.COMBAT;
+		}
+
+		if (taskType == null)
+		{
+			resultCallback.execute(false);
+			return;
+		}
+
+		HashMap<Integer, Boolean> completionById = new HashMap<>();
+
+		int finalOrdinal = ordinal;
+		TaskType finalTaskType = taskType;
+		clientThread.invokeLater(() -> {
+			// We don't use the VarbitChanged event value because it may not be the latest value
+			// Instead we refetch the varp value
+			BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varpId));
+			log.debug("processVarpAndUpdateTasks {} {}", varpId, varpValue);
+			int minTaskId = finalOrdinal * 32;
+			int maxTaskId = minTaskId + 31;
+
+			for (int i = minTaskId; i <= maxTaskId; i++)
+			{
+				boolean isTaskVarbitCompleted;
+				int bitIndex = i % 32;
+				try
+				{
+					isTaskVarbitCompleted = varpValue.testBit(bitIndex);
+				}
+				catch (IllegalArgumentException ex)
+				{
+					log.error("Bit test failed {} {}", varpId, bitIndex, ex);
+					isTaskVarbitCompleted = false;
+				}
+
+				completionById.put(i, isTaskVarbitCompleted);
+			}
+
+			for (Map.Entry<Integer, Boolean> taskCompletion : completionById.entrySet())
+			{
+				int id = taskCompletion.getKey();
+				boolean completed = taskCompletion.getValue();
+				Task task = taskManagers.get(finalTaskType).tasks.get(id);
+				if (task == null)
+				{
+					continue;
+				}
+
+				task.setCompleted(completed);
+				if (completed && config.untrackUponCompletion())
+				{
+					task.setTracked(false);
+				}
+				SwingUtilities.invokeLater(() -> pluginPanel.refresh(task));
+			}
+
+			resultCallback.execute(true);
 		});
 	}
 
 	private String exportToJson(TaskType taskType)
 	{
-		Gson gson = new GsonBuilder()
+		Gson gson = this.gson.newBuilder()
 			.excludeFieldsWithoutExposeAnnotation()
 			.registerTypeAdapter(float.class, new LongSerializer())
 			.create();

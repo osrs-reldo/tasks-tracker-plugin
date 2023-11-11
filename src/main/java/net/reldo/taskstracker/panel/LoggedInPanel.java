@@ -111,6 +111,8 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 	public void redraw()
 	{
 		subFilterPanel.redraw();
+		updateCollapseButtonText();
+
 		taskListPanel.redraw();
 	}
 
@@ -525,10 +527,20 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 
 		List<String> filterCounts = new ArrayList<>();
 
-		if(plugin.getConfig().taskType().equals(TaskType.LEAGUE_3))
+		if(plugin.getConfig().taskType().equals(TaskType.LEAGUE_3) ||
+		   plugin.getConfig().taskType().equals(TaskType.LEAGUE_4))
 		{
 			int count = config.skillFilter().equals("") ? 0 : config.skillFilter().split(",").length ;
 			filterCounts.add(count + " skill");
+		}
+
+		if(plugin.getConfig().taskType().equals(TaskType.LEAGUE_4))
+		{
+			int count = config.areaFilter().equals("") ? 0 : config.areaFilter().split(",").length ;
+			filterCounts.add(count + " area");
+
+			count = config.categoryFilter().equals("") ? 0 : config.categoryFilter().split(",").length ;
+			filterCounts.add(count + " cat");
 		}
 
 		int count = config.tierFilter().equals("") ? 0 : config.tierFilter().split(",").length;

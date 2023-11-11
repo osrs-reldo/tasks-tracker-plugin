@@ -20,7 +20,7 @@ public class DifficultyFilterPanel extends FilterButtonPanel
 
     public DifficultyFilterPanel(TasksTrackerPlugin plugin, SpriteManager spriteManager)
     {
-        super(plugin);
+        super(plugin, "Tier");
         this.configKey = "tierFilter";
 
         setLayout(new BorderLayout());
@@ -33,16 +33,16 @@ public class DifficultyFilterPanel extends FilterButtonPanel
     @Override
     protected JPanel makeButtonPanel()
     {
-        // Panel that holds skill icons
+        // Panel that holds tier icons
         JPanel buttonPanel = new JPanel();
         buttonPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
-        LinkedHashMap<String, BufferedImage> skillImages = getIconImages();
+        LinkedHashMap<String, BufferedImage> buttonImages = getIconImages();
 
-        buttonPanel.setLayout(new GridLayout(skillImages.size() / 3, 3));
+        buttonPanel.setLayout(new GridLayout(buttonImages.size() / 3, 3));
 
-        // For each skill on the in-game skill panel, create a button and add it to the UI
-        skillImages.forEach((name, image) -> {
+        // For each difficulty tier create a button and add it to the UI
+        buttonImages.forEach((name, image) -> {
             JToggleButton button = makeButton(name, image);
             buttons.put(name, button);
             buttonPanel.add(button);
@@ -62,7 +62,8 @@ public class DifficultyFilterPanel extends FilterButtonPanel
 
         if (plugin.getConfig().taskType() == null) return images;
 
-        if (plugin.getConfig().taskType().equals(TaskType.LEAGUE_3))
+        if (plugin.getConfig().taskType().equals(TaskType.LEAGUE_3) ||
+            plugin.getConfig().taskType().equals(TaskType.LEAGUE_4))
         {
             directory += "league3/";
 

@@ -21,6 +21,17 @@ public interface TasksTrackerConfig extends Config
 	}
 
     @ConfigItem(
+            position = 11,
+            keyName = "filterPanelCollapsible",
+            name = "Filter Panels Collapsible",
+            description = "Shows button that allows filter panels to be hidden."
+    )
+    default boolean filterPanelCollapsible()
+    {
+        return true;
+    }
+
+    @ConfigItem(
             position = 100,
             keyName = "completedFilter",
             name = "Completed Tasks Filter",
@@ -104,4 +115,27 @@ public interface TasksTrackerConfig extends Config
 		return TaskType.COMBAT;
 	}
 
+    @ConfigItem(
+            position = 107,
+            keyName = "areaFilter",
+            name = "Area Filter",
+            description = "Configures the areas to filter tasks on.",
+            hidden = true
+    )
+    default String areaFilter()
+    {
+        return "";
+    }
+
+    @ConfigItem(
+            position = 108,
+            keyName = "categoryFilter",
+            name = "Category Filter",
+            description = "Configures the category to filter tasks on.",
+            hidden = true
+    )
+    default String categoryFilter()
+    {
+        return "";
+    }
 }

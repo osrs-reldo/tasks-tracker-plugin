@@ -6,9 +6,7 @@ import javax.swing.BoxLayout;
 import javax.swing.border.EmptyBorder;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
-import net.reldo.taskstracker.panel.subfilters.DifficultyFilterPanel;
-import net.reldo.taskstracker.panel.subfilters.FilterButtonPanel;
-import net.reldo.taskstracker.panel.subfilters.SkillFilterPanel;
+import net.reldo.taskstracker.panel.subfilters.*;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 
@@ -26,6 +24,10 @@ public class SubFilterPanel extends FixedWidthPanel
         addFilterButtonPanel(new SkillFilterPanel(plugin));
 
         addFilterButtonPanel(new DifficultyFilterPanel(plugin, spriteManager));
+
+        addFilterButtonPanel(new AreaFilterPanel(plugin, spriteManager));
+
+        addFilterButtonPanel(new CategoryFilterPanel(plugin, spriteManager));
     }
 
     public void addFilterButtonPanel(FilterButtonPanel panel)

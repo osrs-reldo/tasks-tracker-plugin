@@ -12,7 +12,8 @@ public enum TaskType
 {
 
 	COMBAT("Combat Tasks", "combat_tasks.min.json", CombatTask.class),
-	LEAGUE_3("League III: Shattered Relics", "league3_tasks.min.json", League3Task.class);
+	LEAGUE_3("League III: Shattered Relics", "league3_tasks.min.json", League3Task.class),
+	LEAGUE_4("League IV: Trailblazer Reloaded", "league4_tasks.min.json", League3Task.class);
 	public final String displayString;
 	public final String dataFileName;
 	public final Type classType;

@@ -3,9 +3,11 @@ package net.reldo.taskstracker.tasktypes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.CallbackCommand;
 import net.reldo.taskstracker.data.TaskDataClient;
 
+@Slf4j
 public class TaskManager
 {
 	private final TaskDataClient taskDataClient;
@@ -29,6 +31,7 @@ public class TaskManager
 
 	public void applyTrackerSave(HashMap<Integer, Task> loadedTasks)
 	{
+		log.debug("applyTrackerSave");
 		if (loadedTasks == null)
 		{
 			return;
@@ -40,7 +43,7 @@ public class TaskManager
 			{
 				return;
 			}
-			task.loadSave(loadedTask);
+			task.loadConfigSave(loadedTask);
 		});
 	}
 }

@@ -29,6 +29,9 @@ public abstract class Task
 
 	private RequiredSkill[] skills = null;
 
+	private String area;
+	private String taskCategory;
+
 	public boolean isCompleted()
 	{
 		return completedOn > 0;
@@ -74,26 +77,37 @@ public abstract class Task
 		ignoredOn = state ? now : 0;
 	}
 
-	public void loadSave(Task loadedData)
+	public void loadConfigSave(Task loadedData)
 	{
-		loadData(loadedData.getCompletedOn(), loadedData.getIgnoredOn(), loadedData.getTrackedOn());
+		setDates(loadedData.getCompletedOn(), loadedData.getIgnoredOn(), loadedData.getTrackedOn());
 	}
 
 	public void loadReldoSave(ReldoTaskSave loadedData)
 	{
-		loadData(loadedData.getCompleted(), loadedData.getIgnored(), loadedData.getTodo());
+		setMostRecentDates(loadedData.getCompleted(), loadedData.getIgnored(), loadedData.getTodo());
 	}
 
-	private void loadData(long completedOn, long ignoredOn, long trackedOn)
+	private void setDates(long completedOn, long ignoredOn, long trackedOn)
 	{
-		if (completedOn > this.getCompletedOn())
+		// Set all dates regardless of how they compare
+		this.setCompletedOn(completedOn);
+		this.setIgnoredOn(ignoredOn);
+		this.setTrackedOn(trackedOn);
+	}
+
+	private void setMostRecentDates(long completedOn, long ignoredOn, long trackedOn)
+	{
+		// Older completions take priority; incomplete (0) also takes priority
+		if (completedOn < this.getCompletedOn())
 		{
 			this.setCompletedOn(completedOn);
 		}
+		// Newer ignores take priority
 		if (ignoredOn > this.getIgnoredOn())
 		{
 			this.setIgnoredOn(ignoredOn);
 		}
+		// Newer tracks take priority
 		if (trackedOn > this.getTrackedOn())
 		{
 			this.setTrackedOn(trackedOn);
