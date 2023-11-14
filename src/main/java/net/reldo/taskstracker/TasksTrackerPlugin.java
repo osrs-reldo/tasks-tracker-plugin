@@ -373,6 +373,7 @@ public class TasksTrackerPlugin extends Plugin
 			// Instead we refetch the varp value
 			BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varpId));
 			log.debug("processVarpAndUpdateTasks {} {}", varpId, varpValue);
+			boolean shouldUpdate = false;
 			int minTaskId = finalOrdinal * 32;
 			int maxTaskId = minTaskId + 31;
 
@@ -402,7 +403,10 @@ public class TasksTrackerPlugin extends Plugin
 				{
 					continue;
 				}
-
+				if(task.isCompleted() == completed) {
+					continue;
+				}
+				shouldUpdate = true;
 				task.setCompleted(completed);
 				if (completed && config.untrackUponCompletion())
 				{
@@ -411,7 +415,7 @@ public class TasksTrackerPlugin extends Plugin
 				SwingUtilities.invokeLater(() -> pluginPanel.refresh(task));
 			}
 
-			resultCallback.execute(true);
+			resultCallback.execute(shouldUpdate);
 		});
 	}
 
