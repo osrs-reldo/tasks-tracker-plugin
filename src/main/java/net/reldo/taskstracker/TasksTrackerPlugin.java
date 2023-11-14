@@ -9,8 +9,10 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.swing.JDialog;
@@ -66,7 +68,11 @@ public class TasksTrackerPlugin extends Plugin
 
 	public TasksTrackerPluginPanel pluginPanel;
 
+	private static final long VARP_UPDATE_THROTTLE_DELAY = 30000; // 30 sec in ms
+
 	private boolean forceUpdateVarpsFlag = false;
+	private Set<Integer> varpIdsToUpdate = new HashSet<>();
+	private long lastVarpUpdate = 0;
 	private NavigationButton navButton;
 	private RuneScapeProfileType currentProfileType;
 
@@ -145,12 +151,7 @@ public class TasksTrackerPlugin extends Plugin
 			// Force update is coming on next game tick, so ignore varbit change events
 			return;
 		}
-		processVarpAndUpdateTasks(varbitChanged.getVarpId(), processed -> {
-			if (processed)
-			{
-				this.saveCurrentTaskData();
-			}
-		});
+		varpIdsToUpdate.add(varbitChanged.getVarpId());
 	}
 
 	@Subscribe
@@ -210,6 +211,15 @@ public class TasksTrackerPlugin extends Plugin
 			forceVarpUpdate();
 			SwingUtilities.invokeLater(() -> pluginPanel.redraw());
 			forceUpdateVarpsFlag = false;
+		}
+
+		// Flush throttled varp updates
+		long currentTimeEpoch = System.currentTimeMillis();
+		if (currentTimeEpoch - lastVarpUpdate > VARP_UPDATE_THROTTLE_DELAY)
+		{
+			flushVarpUpdates(varpIdsToUpdate);
+			varpIdsToUpdate = new HashSet<>();
+			lastVarpUpdate = currentTimeEpoch;
 		}
 
 		int[] newSkills = client.getRealSkillLevels();
@@ -311,6 +321,17 @@ public class TasksTrackerPlugin extends Plugin
 		allVarbitIds.addAll(League3TaskVarps.getIdToVarpMap().keySet());
 		allVarbitIds.addAll(CombatTaskVarps.getIdToVarpMap().keySet());
 		allVarbitIds.forEach((id) -> this.processVarpAndUpdateTasks(id, processed -> {
+			if (processed)
+			{
+				this.saveCurrentTaskData();
+			}
+		}));
+	}
+
+	private void flushVarpUpdates(Set<Integer> varpIds)
+	{
+		log.debug("Flushing throttled varp updates {}", varpIds);
+		varpIds.forEach((id) -> this.processVarpAndUpdateTasks(id, processed -> {
 			if (processed)
 			{
 				this.saveCurrentTaskData();
