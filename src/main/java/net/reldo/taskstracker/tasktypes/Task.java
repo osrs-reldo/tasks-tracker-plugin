@@ -37,6 +37,11 @@ public abstract class Task
 		return completedOn > 0;
 	}
 
+	public int getPoints()
+	{
+		return 0;
+	}
+
 	public void setCompleted(boolean completed)
 	{
 		long now = Instant.now().toEpochMilli();

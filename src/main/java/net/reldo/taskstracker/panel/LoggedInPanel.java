@@ -265,6 +265,12 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		importButton.addActionListener(e -> plugin.openImportJsonDialog());
 		southPanel.add(importButton, BorderLayout.WEST);
 
+		JButton totalsButton = new JButton("Totals");
+		totalsButton.setBorder(new EmptyBorder(5, 5, 5, 5));
+		totalsButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
+		totalsButton.addActionListener(e -> plugin.sendTotalsToChat());
+		southPanel.add(totalsButton, BorderLayout.CENTER);
+
 		JButton exportButton = new JButton("Export");
 		exportButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 		exportButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));

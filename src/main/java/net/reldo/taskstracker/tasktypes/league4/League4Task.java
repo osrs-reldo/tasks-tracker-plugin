@@ -17,6 +17,13 @@ public class League4Task extends Task
 	}
 
 	@Override
+	public int getPoints()
+	{
+		League4TaskTier tierType = League4TaskTier.tiersByName.get(this.getTier().toLowerCase());
+		return tierType != null ? tierType.points : 0;
+	}
+
+	@Override
 	public TaskType getType()
 	{
 		return TaskType.LEAGUE_4;

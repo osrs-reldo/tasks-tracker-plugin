@@ -2,6 +2,7 @@ package net.reldo.taskstracker;
 
 import com.google.gson.Gson;
 import com.google.inject.Provides;
+import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
@@ -30,16 +31,20 @@ import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskManager;
 import net.reldo.taskstracker.tasktypes.TaskType;
+import net.reldo.taskstracker.tasktypes.TasksSummary;
 import net.reldo.taskstracker.tasktypes.combattask.CombatTaskVarps;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
 import net.reldo.taskstracker.tasktypes.league4.League4TaskVarps;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
@@ -290,6 +295,23 @@ public class TasksTrackerPlugin extends Plugin
 			trackerDataStore.saveTaskTypeToConfig(TaskType.LEAGUE_4, taskManagers.get(TaskType.LEAGUE_4).tasks.values());
 			pluginPanel.redraw();
 		}
+	}
+
+	public void sendTotalsToChat()
+	{
+		TasksSummary summary = taskManagers.get(config.taskType()).getSummary();
+		int trackedTasks = summary.trackedTasksCount;
+		int trackedPoints = summary.trackedTasksPoints;
+
+		final String message = new ChatMessageBuilder()
+			.append(Color.BLACK, String.format("Task Tracker - Tracked Tasks: %s | Tracked Points: %s", trackedTasks, trackedPoints))
+			.build();
+
+		chatMessageManager.queue(
+			QueuedMessage.builder()
+				.type(ChatMessageType.CONSOLE)
+				.runeLiteFormattedMessage(message)
+				.build());
 	}
 
 	public void copyJsonToClipboard(TaskType taskType)
