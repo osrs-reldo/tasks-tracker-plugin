@@ -15,11 +15,6 @@ public class CategoryFilter extends Filter
 
     @Override
     public boolean meetsCriteria(Task task) {
-        String areaFilter = config.areaFilter();
-        String area = task.getArea();
-        if (area == null) {
-        	return false;
-        }
-        return areaFilter.contains("f-" +task.getArea().toLowerCase());
+        return true;
     }
 }
