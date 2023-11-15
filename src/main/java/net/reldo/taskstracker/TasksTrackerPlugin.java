@@ -32,6 +32,7 @@ import net.reldo.taskstracker.tasktypes.TaskManager;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.combattask.CombatTaskVarps;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
+import net.reldo.taskstracker.tasktypes.league4.League4TaskVarps;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
@@ -344,11 +345,18 @@ public class TasksTrackerPlugin extends Plugin
 		int ordinal = -1;
 		TaskType taskType = null;
 
-		League3TaskVarps leagueVarp = League3TaskVarps.getIdToVarpMap().get(varpId);
-		if (leagueVarp != null)
+		League3TaskVarps league3Varp = League3TaskVarps.getIdToVarpMap().get(varpId);
+		if (league3Varp != null)
 		{
-			ordinal = leagueVarp.ordinal();
+			ordinal = league3Varp.ordinal();
 			taskType = TaskType.LEAGUE_3;
+		}
+
+		League4TaskVarps league4Varp = League4TaskVarps.getIdToVarpMap().get(varpId);
+		if (league4Varp != null)
+		{
+			ordinal = league4Varp.ordinal();
+			taskType = TaskType.LEAGUE_4;
 		}
 
 		CombatTaskVarps combatTaskVarp = CombatTaskVarps.getIdToVarpMap().get(varpId);
