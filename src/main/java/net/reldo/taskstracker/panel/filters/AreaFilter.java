@@ -17,6 +17,9 @@ public class AreaFilter extends Filter
     public boolean meetsCriteria(Task task) {
         String areaFilter = config.areaFilter();
 
-        return areaFilter.contains("f-" +task.getArea().toLowerCase());
+        boolean globalFilter = areaFilter.contains("f-" +task.getArea().toLowerCase());
+        boolean generalFilter = areaFilter.contains("f-" +task.getArea().replace("General", "Global").toLowerCase());
+
+        return globalFilter || generalFilter;
     }
 }
