@@ -14,6 +14,7 @@ import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
 import net.reldo.taskstracker.tasktypes.league3.League3Varbits;
 import net.reldo.taskstracker.tasktypes.league3.League3Varps;
+import net.reldo.taskstracker.tasktypes.league4.League4Varbits;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.client.config.ConfigManager;
@@ -64,6 +65,10 @@ public class Export
 		if (taskType == TaskType.LEAGUE_3)
 		{
 			varbitIds = League3Varbits.getAllVarbitIds();
+		}
+		if (taskType == TaskType.LEAGUE_4)
+		{
+			varbitIds = League4Varbits.getAllVarbitIds();
 		}
 
 		if (varbitIds == null)
