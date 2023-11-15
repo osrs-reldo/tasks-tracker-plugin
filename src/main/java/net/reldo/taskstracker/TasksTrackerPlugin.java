@@ -319,7 +319,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		log.debug("forceVarpUpdate");
 		List<Integer> allVarbitIds = new ArrayList<>();
-		allVarbitIds.addAll(League3TaskVarps.getIdToVarpMap().keySet());
+		allVarbitIds.addAll(League4TaskVarps.getIdToVarpMap().keySet());
 		allVarbitIds.addAll(CombatTaskVarps.getIdToVarpMap().keySet());
 		allVarbitIds.forEach((id) -> this.processVarpAndUpdateTasks(id, processed -> {
 			if (processed)
