@@ -69,7 +69,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	public TasksTrackerPluginPanel pluginPanel;
 
-	private static final long VARP_UPDATE_THROTTLE_DELAY = 30000; // 30 sec in ms
+	private static final long VARP_UPDATE_THROTTLE_DELAY_MS = 7 * 1000;
 
 	private boolean forceUpdateVarpsFlag = false;
 	private Set<Integer> varpIdsToUpdate = new HashSet<>();
@@ -216,7 +216,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		// Flush throttled varp updates
 		long currentTimeEpoch = System.currentTimeMillis();
-		if (currentTimeEpoch - lastVarpUpdate > VARP_UPDATE_THROTTLE_DELAY)
+		if (currentTimeEpoch - lastVarpUpdate > VARP_UPDATE_THROTTLE_DELAY_MS)
 		{
 			flushVarpUpdates(varpIdsToUpdate);
 			varpIdsToUpdate = new HashSet<>();
