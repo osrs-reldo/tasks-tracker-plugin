@@ -2,8 +2,7 @@ package net.reldo.taskstracker.tasktypes.league4;
 
 public enum League4TaskTier
 {
-	BEGINNER(2316),
-	EASY(2317),
+	EASY(2316),
 	MEDIUM(2318),
 	HARD(2319),
 	ELITE(2320),
