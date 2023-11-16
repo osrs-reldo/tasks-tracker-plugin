@@ -53,7 +53,7 @@ public class League4TaskPanel extends TaskPanel
 	@Override
 	public BufferedImage getIcon()
 	{
-		League4TaskTier tier = League4TaskTier.tiersByName.get(task.getTier());
+		League4TaskTier tier = League4TaskTier.tiersByName.get(task.getTier().toLowerCase());
 		if (tier == null)
 		{
 			return null;
