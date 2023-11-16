@@ -148,6 +148,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		// wrapper for the task list and tab buttons
 		final JPanel taskListPanel = new JPanel(new BorderLayout());
 		taskListPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		taskListPanel.setBorder(new MatteBorder(0, 0, 1, 0, ColorScheme.MEDIUM_GRAY_COLOR));
 
 		tabbedPane.setBorder(new EmptyBorder(0,0,0,0));
 		tabbedPane.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH,24));
@@ -258,6 +259,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 	private JPanel getSouthPanel()
 	{
 		JPanel southPanel = new JPanel(new BorderLayout());
+		southPanel.setBorder(new EmptyBorder(5,0,2,0));
 
 		JButton importButton = new JButton("Import");
 		importButton.setBorder(new EmptyBorder(5, 5, 5, 5));

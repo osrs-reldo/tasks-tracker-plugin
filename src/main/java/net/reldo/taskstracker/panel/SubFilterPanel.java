@@ -27,7 +27,8 @@ public class SubFilterPanel extends FixedWidthPanel
 
         addFilterButtonPanel(new AreaFilterPanel(plugin, spriteManager));
 
-        addFilterButtonPanel(new CategoryFilterPanel(plugin, spriteManager));
+//  @todo Category filters disabled due to lack of data
+//        addFilterButtonPanel(new CategoryFilterPanel(plugin, spriteManager));
     }
 
     public void addFilterButtonPanel(FilterButtonPanel panel)
