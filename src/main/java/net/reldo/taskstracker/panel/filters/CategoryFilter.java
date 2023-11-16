@@ -15,6 +15,7 @@ public class CategoryFilter extends Filter
 
     @Override
     public boolean meetsCriteria(Task task) {
+        //@todo Criteria check removed while category filter is disabled.
         return true;
     }
 }
