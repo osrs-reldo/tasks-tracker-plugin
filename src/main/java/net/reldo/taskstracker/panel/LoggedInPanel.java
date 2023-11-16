@@ -547,8 +547,9 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 			int count = config.areaFilter().equals("") ? 0 : config.areaFilter().split(",").length ;
 			filterCounts.add(count + " area");
 
-			count = config.categoryFilter().equals("") ? 0 : config.categoryFilter().split(",").length ;
-			filterCounts.add(count + " cat");
+//  @todo Category filters disabled due to lack of data
+//			count = config.categoryFilter().equals("") ? 0 : config.categoryFilter().split(",").length ;
+//			filterCounts.add(count + " cat");
 		}
 
 		int count = config.tierFilter().equals("") ? 0 : config.tierFilter().split(",").length;
