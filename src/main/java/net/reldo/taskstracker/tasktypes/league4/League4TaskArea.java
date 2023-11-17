@@ -9,7 +9,7 @@ public enum League4TaskArea
     ASGARNIA(0),
     FREMENNIK(0),
     KANDARIN(0),
-    KHARIDIAN_DESERT(0),
+    DESERT(0),
     KOUREND(0),
     MORYTANIA(0),
     TIRANNWN(0),
