@@ -2,6 +2,7 @@ package net.reldo.taskstracker.quests;
 
 import java.util.HashMap;
 import net.runelite.api.Client;
+import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 
 // FIXME: Moved diary & minis into another class so chaiin could quickly build out quest data with ids.
@@ -10,12 +11,9 @@ public class QuestData extends HashMap<Integer, QuestState>
 {
 	public QuestData(Client client)
 	{
-		for (QuestHelperQuest quest : QuestHelperQuest.values())
+		for (Quest quest : Quest.values())
 		{
-			if (quest.getId() != -1)
-			{
-				this.put(quest.getId(), quest.getState(client));
-			}
+			this.put(quest.getId(), quest.getState(client));
 		}
 	}
 }
