@@ -1,5 +1,9 @@
 package net.reldo.taskstracker.tasktypes.league4;
 
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.net.URL;
+import javax.swing.JPopupMenu;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.Util;
 import net.reldo.taskstracker.panel.TaskPanel;
@@ -9,10 +13,6 @@ import net.reldo.taskstracker.panel.filters.SkillFilter;
 import net.reldo.taskstracker.panel.filters.TierFilter;
 import net.reldo.taskstracker.tasktypes.RequiredSkill;
 import net.reldo.taskstracker.tasktypes.Task;
-import java.awt.Color;
-import java.awt.image.BufferedImage;
-import java.net.URL;
-import javax.swing.JPopupMenu;
 import net.runelite.api.Skill;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SkillIconManager;
@@ -41,7 +41,7 @@ public class League4TaskPanel extends TaskPanel
 	{
 		League4Task task = (League4Task) this.task;
 		String text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
-			task.getTier() + Util.HTML_LINE_BREAK +
+			task.getTier() + getPointsTooltipText() + Util.HTML_LINE_BREAK +
 			task.getDescription() +
 			getSkillSectionHtml();
 
@@ -111,6 +111,16 @@ public class League4TaskPanel extends TaskPanel
 		return ColorScheme.DARKER_GRAY_COLOR;
 	}
 
+	private String getPointsTooltipText()
+	{
+		int points = this.task.getPoints();
+		if (points == 0)
+		{
+			return "";
+		}
+		return " - " + points + " points";
+	}
+
 	private String getSkillSectionHtml()
 	{
 		StringBuilder skillSection = new StringBuilder();
@@ -156,7 +166,7 @@ public class League4TaskPanel extends TaskPanel
 	{
 		String skillIconPath = "/skill_icons_small/" + skillName + ".png";
 		URL url = SkillIconManager.class.getResource(skillIconPath);
-		Color color = playerLevel > requiredLevel ? QUALIFIED_TEXT_COLOR : UNQUALIFIED_TEXT_COLOR;
+		Color color = playerLevel >= requiredLevel ? QUALIFIED_TEXT_COLOR : UNQUALIFIED_TEXT_COLOR;
 		return Util.imageTag(url) + " " + Util.colorTag(color, playerLevel + "/" + requiredLevel);
 	}
 }

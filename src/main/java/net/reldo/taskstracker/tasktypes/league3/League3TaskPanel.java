@@ -152,7 +152,7 @@ public class League3TaskPanel extends TaskPanel
 	{
 		String skillIconPath = "/skill_icons_small/" + skillName + ".png";
 		URL url = SkillIconManager.class.getResource(skillIconPath);
-		Color color = playerLevel > requiredLevel ? QUALIFIED_TEXT_COLOR : UNQUALIFIED_TEXT_COLOR;
+		Color color = playerLevel >= requiredLevel ? QUALIFIED_TEXT_COLOR : UNQUALIFIED_TEXT_COLOR;
 		return Util.imageTag(url) + " " + Util.colorTag(color, playerLevel + "/" + requiredLevel);
 	}
 }
