@@ -27,7 +27,7 @@ public class TaskDataClient
 	@Inject	private OkHttpClient okHttpClient;
 	@Inject private Gson gson;
 
-	private static final String BASE_URL = "https://raw.githubusercontent.com/osrs-reldo/task-json-store/develop/";
+	private static final String BASE_URL = "https://raw.githubusercontent.com/osrs-reldo/task-json-store/main/";
 	private static final String JSON_MIN_PATH = BASE_URL + "json/min/";
 
 	public void loadTaskSourceData(TaskType taskType, CallbackCommand<ArrayList<Task>> callback)
