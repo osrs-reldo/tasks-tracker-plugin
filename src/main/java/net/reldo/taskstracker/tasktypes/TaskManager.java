@@ -46,4 +46,9 @@ public class TaskManager
 			task.loadConfigSave(loadedTask);
 		});
 	}
+
+	public TasksSummary getSummary()
+	{
+		return new TasksSummary(tasks.values());
+	}
 }

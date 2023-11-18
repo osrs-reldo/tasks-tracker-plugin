@@ -148,6 +148,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		// wrapper for the task list and tab buttons
 		final JPanel taskListPanel = new JPanel(new BorderLayout());
 		taskListPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		taskListPanel.setBorder(new MatteBorder(0, 0, 1, 0, ColorScheme.MEDIUM_GRAY_COLOR));
 
 		tabbedPane.setBorder(new EmptyBorder(0,0,0,0));
 		tabbedPane.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH,24));
@@ -258,12 +259,19 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 	private JPanel getSouthPanel()
 	{
 		JPanel southPanel = new JPanel(new BorderLayout());
+		southPanel.setBorder(new EmptyBorder(5,0,2,0));
 
 		JButton importButton = new JButton("Import");
 		importButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 		importButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
 		importButton.addActionListener(e -> plugin.openImportJsonDialog());
 		southPanel.add(importButton, BorderLayout.WEST);
+
+		JButton totalsButton = new JButton("Totals");
+		totalsButton.setBorder(new EmptyBorder(5, 5, 5, 5));
+		totalsButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
+		totalsButton.addActionListener(e -> plugin.sendTotalsToChat());
+		southPanel.add(totalsButton, BorderLayout.CENTER);
 
 		JButton exportButton = new JButton("Export");
 		exportButton.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -539,8 +547,9 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 			int count = config.areaFilter().equals("") ? 0 : config.areaFilter().split(",").length ;
 			filterCounts.add(count + " area");
 
-			count = config.categoryFilter().equals("") ? 0 : config.categoryFilter().split(",").length ;
-			filterCounts.add(count + " cat");
+//  @todo Category filters disabled due to lack of data
+//			count = config.categoryFilter().equals("") ? 0 : config.categoryFilter().split(",").length ;
+//			filterCounts.add(count + " cat");
 		}
 
 		int count = config.tierFilter().equals("") ? 0 : config.tierFilter().split(",").length;

@@ -15,8 +15,7 @@ public class CategoryFilter extends Filter
 
     @Override
     public boolean meetsCriteria(Task task) {
-        String areaFilter = config.areaFilter();
-
-        return areaFilter.contains("f-" +task.getTaskCategory().toLowerCase());
+        //@todo Criteria check removed while category filter is disabled.
+        return true;
     }
 }

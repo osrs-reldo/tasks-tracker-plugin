@@ -50,7 +50,7 @@ public class CombatTaskPanel extends TaskPanel
 	@Override
 	public BufferedImage getIcon()
 	{
-		CombatTaskTier tier = CombatTaskTier.getTierByName(task.getTier());
+		CombatTaskTier tier = CombatTaskTier.tiersByName.get(task.getTier().toLowerCase());
 		if (tier == null)
 		{
 			return null;

@@ -2,6 +2,7 @@ package net.reldo.taskstracker;
 
 import com.google.gson.Gson;
 import com.google.inject.Provides;
+import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
@@ -30,15 +31,20 @@ import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskManager;
 import net.reldo.taskstracker.tasktypes.TaskType;
+import net.reldo.taskstracker.tasktypes.TasksSummary;
 import net.reldo.taskstracker.tasktypes.combattask.CombatTaskVarps;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
+import net.reldo.taskstracker.tasktypes.league4.League4TaskVarps;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
@@ -68,7 +74,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	public TasksTrackerPluginPanel pluginPanel;
 
-	private static final long VARP_UPDATE_THROTTLE_DELAY = 30000; // 30 sec in ms
+	private static final long VARP_UPDATE_THROTTLE_DELAY_MS = 7 * 1000;
 
 	private boolean forceUpdateVarpsFlag = false;
 	private Set<Integer> varpIdsToUpdate = new HashSet<>();
@@ -215,7 +221,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		// Flush throttled varp updates
 		long currentTimeEpoch = System.currentTimeMillis();
-		if (currentTimeEpoch - lastVarpUpdate > VARP_UPDATE_THROTTLE_DELAY)
+		if (currentTimeEpoch - lastVarpUpdate > VARP_UPDATE_THROTTLE_DELAY_MS)
 		{
 			flushVarpUpdates(varpIdsToUpdate);
 			varpIdsToUpdate = new HashSet<>();
@@ -291,6 +297,23 @@ public class TasksTrackerPlugin extends Plugin
 		}
 	}
 
+	public void sendTotalsToChat()
+	{
+		TasksSummary summary = taskManagers.get(config.taskType()).getSummary();
+		int trackedTasks = summary.trackedTasksCount;
+		int trackedPoints = summary.trackedTasksPoints;
+
+		final String message = new ChatMessageBuilder()
+			.append(Color.BLACK, String.format("Task Tracker - Tracked Tasks: %s | Tracked Points: %s", trackedTasks, trackedPoints))
+			.build();
+
+		chatMessageManager.queue(
+			QueuedMessage.builder()
+				.type(ChatMessageType.CONSOLE)
+				.runeLiteFormattedMessage(message)
+				.build());
+	}
+
 	public void copyJsonToClipboard(TaskType taskType)
 	{
 		clientThread.invokeLater(() -> {
@@ -318,7 +341,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		log.debug("forceVarpUpdate");
 		List<Integer> allVarbitIds = new ArrayList<>();
-		allVarbitIds.addAll(League3TaskVarps.getIdToVarpMap().keySet());
+		allVarbitIds.addAll(League4TaskVarps.getIdToVarpMap().keySet());
 		allVarbitIds.addAll(CombatTaskVarps.getIdToVarpMap().keySet());
 		allVarbitIds.forEach((id) -> this.processVarpAndUpdateTasks(id, processed -> {
 			if (processed)
@@ -344,11 +367,18 @@ public class TasksTrackerPlugin extends Plugin
 		int ordinal = -1;
 		TaskType taskType = null;
 
-		League3TaskVarps leagueVarp = League3TaskVarps.getIdToVarpMap().get(varpId);
-		if (leagueVarp != null)
+		League3TaskVarps league3Varp = League3TaskVarps.getIdToVarpMap().get(varpId);
+		if (league3Varp != null)
 		{
-			ordinal = leagueVarp.ordinal();
+			ordinal = league3Varp.ordinal();
 			taskType = TaskType.LEAGUE_3;
+		}
+
+		League4TaskVarps league4Varp = League4TaskVarps.getIdToVarpMap().get(varpId);
+		if (league4Varp != null)
+		{
+			ordinal = league4Varp.ordinal();
+			taskType = TaskType.LEAGUE_4;
 		}
 
 		CombatTaskVarps combatTaskVarp = CombatTaskVarps.getIdToVarpMap().get(varpId);

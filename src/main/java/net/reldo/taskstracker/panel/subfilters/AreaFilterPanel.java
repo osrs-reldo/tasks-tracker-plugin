@@ -15,7 +15,6 @@ import java.util.LinkedHashMap;
 
 public class AreaFilterPanel extends FilterButtonPanel
 {
-
     public AreaFilterPanel(TasksTrackerPlugin plugin, SpriteManager spriteManager)
     {
         super(plugin, "Area");
@@ -85,6 +84,36 @@ public class AreaFilterPanel extends FilterButtonPanel
         if (plugin.getConfig().taskType() != null)
             this.setVisible(plugin.getConfig().taskType().equals(TaskType.LEAGUE_4));
 
-        super.redraw();
+        //@todo remove duplication by generalising save/load to all subfilters
+        assert SwingUtilities.isEventDispatchThread();
+
+        buttons.clear();
+        removeAll();
+
+        collapseBtn = makeCollapseButton();
+        buttonPanel = makeButtonPanel();
+
+        add(collapseBtn, BorderLayout.NORTH);
+        add(buttonPanel, BorderLayout.CENTER);
+        add(allOrNoneButtons(), BorderLayout.SOUTH);
+
+        if(plugin.getConfig().saveAreaFilterState())
+        {
+            String filterText = plugin.getConfig().areaFilter();
+
+            buttons.forEach((key, value) -> value.setSelected(filterText.contains("f-" + key)));
+        }
+        else
+        {
+            updateFilterText();
+        }
+
+        updateCollapseButtonText();
+
+        collapseBtn.setVisible(plugin.getConfig().filterPanelCollapsible());
+
+        validate();
+        repaint();
     }
+
 }

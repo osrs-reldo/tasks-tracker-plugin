@@ -3,13 +3,13 @@ package net.reldo.taskstracker.tasktypes.league4;
 public enum League4TaskArea
 {
     //@todo Add sprite IDs
-    COMMON(0),
+    GLOBAL(0),
     MISTHALIN(0),
     KARAMJA(0),
     ASGARNIA(0),
     FREMENNIK(0),
     KANDARIN(0),
-    KHARIDIAN_DESERT(0),
+    DESERT(0),
     KOUREND(0),
     MORYTANIA(0),
     TIRANNWN(0),

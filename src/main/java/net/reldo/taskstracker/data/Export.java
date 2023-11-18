@@ -7,13 +7,14 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import net.reldo.taskstracker.bosses.BossData;
-import net.reldo.taskstracker.quests.DiaryAndMiniQuestData;
+import net.reldo.taskstracker.quests.DiaryData;
 import net.reldo.taskstracker.quests.QuestData;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
 import net.reldo.taskstracker.tasktypes.league3.League3Varbits;
 import net.reldo.taskstracker.tasktypes.league3.League3Varps;
+import net.reldo.taskstracker.tasktypes.league4.League4Varbits;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.client.config.ConfigManager;
@@ -25,7 +26,7 @@ public class Export
 	private final Client client;
 
 	@Expose	private final QuestData quests;
-	@Expose	private final DiaryAndMiniQuestData diariesAndMiniQuests;
+	@Expose	private final DiaryData diaries;
 	@Expose	private final BossData bosses;
 	@Expose	private String displayName;
 	@Expose	private final int runescapeVersion;
@@ -46,7 +47,7 @@ public class Export
 			this.displayName = localPlayer.getName();
 		}
 		quests = new QuestData(client);
-		diariesAndMiniQuests = new DiaryAndMiniQuestData(client);
+		diaries = new DiaryData(client);
 		bosses = new BossData(pluginManager, configManager);
 		runescapeVersion = client.getRevision();
 		this.runeliteVersion = runeliteVersion;
@@ -64,6 +65,10 @@ public class Export
 		if (taskType == TaskType.LEAGUE_3)
 		{
 			varbitIds = League3Varbits.getAllVarbitIds();
+		}
+		if (taskType == TaskType.LEAGUE_4)
+		{
+			varbitIds = League4Varbits.getAllVarbitIds();
 		}
 
 		if (varbitIds == null)
