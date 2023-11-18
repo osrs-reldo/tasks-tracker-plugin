@@ -30,9 +30,9 @@ public abstract class FilterButtonPanel extends FixedWidthPanel
 
     protected final Map<String, JToggleButton> buttons = new HashMap<>();
     protected String configKey;
-    private JPanel buttonPanel;
+    protected JPanel buttonPanel;
 
-    private JToggleButton collapseBtn;
+    protected JToggleButton collapseBtn;
     private final String expandBtnPath = "panel/components/";
     private final BufferedImage collapseImg = ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "filter_buttons_collapsed.png");
     private final Icon MENU_COLLAPSED_ICON = new ImageIcon(ImageUtil.alphaOffset(collapseImg, -180));
@@ -160,7 +160,7 @@ public abstract class FilterButtonPanel extends FixedWidthPanel
         buttons.values().forEach(button -> button.setSelected(state));
     }
 
-    private void updateCollapseButtonText()
+    protected void updateCollapseButtonText()
     {
         collapseBtn.setText(name + " - " + buttons.values().stream().filter(JToggleButton::isSelected).count() + " / " + buttons.size());
     }

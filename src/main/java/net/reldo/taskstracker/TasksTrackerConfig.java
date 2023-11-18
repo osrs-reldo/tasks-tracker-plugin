@@ -32,6 +32,17 @@ public interface TasksTrackerConfig extends Config
     }
 
     @ConfigItem(
+            position = 12,
+            keyName = "saveAreaFilterState", //@todo generalise this to all sub-filters
+            name = "Save Area Filter State",
+            description = "Configures whether the state of area filters should be saved and recalled when switching task type or restarting the plugin."
+    )
+    default boolean saveAreaFilterState()
+    {
+        return true;
+    }
+
+    @ConfigItem(
             position = 100,
             keyName = "completedFilter",
             name = "Completed Tasks Filter",
