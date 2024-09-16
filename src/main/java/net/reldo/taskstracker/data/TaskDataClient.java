@@ -35,7 +35,7 @@ public class TaskDataClient
 		Type classType = taskType.getClassType();
 		Type listType = TypeToken.getParameterized(ArrayList.class, classType).getType();
 
-		getTaskJson(taskType.getDataFileName(), jsonResponse -> {
+		this.getTaskJson(taskType.getDataFileName(), jsonResponse -> {
 			ArrayList<Task> result = this.gson.fromJson(new InputStreamReader(jsonResponse, StandardCharsets.UTF_8), listType);
 			callback.execute(result);
 		});
@@ -50,7 +50,7 @@ public class TaskDataClient
 			Request request = new Request.Builder()
 				.url(url)
 				.build();
-			okHttpClient.newCall(request).enqueue(new Callback()
+			this.okHttpClient.newCall(request).enqueue(new Callback()
 			{
 				@Override
 				public void onFailure(@NonNull Call call, @NonNull IOException e)
