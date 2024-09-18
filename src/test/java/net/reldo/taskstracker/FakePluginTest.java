@@ -58,7 +58,7 @@ public class FakePluginTest
 		TaskTypeDefinition taskTypeDefinition = taskTypes.get("LEAGUE_3");
 		System.out.println("taskTypeDefinition = " + taskTypeDefinition);
 		// load tasks TaskFromStruct[]
-		this.taskService.setTaskType("LEAGUE_3");
+		this.taskService.setTaskType("COMBAT");
 		List<TaskV2> tasks = this.taskService.getTasks();
 		System.out.println("task size = " + tasks.size());
 		// check task completion

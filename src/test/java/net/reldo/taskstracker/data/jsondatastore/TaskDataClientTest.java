@@ -88,7 +88,7 @@ public class TaskDataClientTest
 
 		// TODO: Let this fail until tasks are refactored
 		List<TaskV2> result = this.taskDataClient.getTasks("COMBAT");
-		assertEquals(5, result.size());
+		assertEquals(568, result.size());
 	}
 
 	@Test

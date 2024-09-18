@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskFromStruct;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskV2;
 import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
 import okhttp3.OkHttpClient;
@@ -50,7 +51,7 @@ public class TaskDataClient
 	{
 		InputStream stream = this.dataStoreReader.readTasks(jsonFilename);
 		InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
-		Type listType = TypeToken.getParameterized(ArrayList.class, TaskV2.class).getType();
+		Type listType = TypeToken.getParameterized(ArrayList.class, TaskFromStruct.class).getType();
 		return this.gson.fromJson(responseReader, listType);
 	}
 }
