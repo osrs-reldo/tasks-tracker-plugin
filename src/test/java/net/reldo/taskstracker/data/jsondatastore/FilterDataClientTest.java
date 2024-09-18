@@ -20,6 +20,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class FilterDataClientTest
 {
+	private final String oldBaseUrl = JsonDataStore.baseUrl;
+
 	@Rule
 	public MockWebServer server;
 
@@ -38,6 +40,7 @@ public class FilterDataClientTest
 	public void after() throws Exception
 	{
 		this.server.shutdown();
+		JsonDataStore.baseUrl = this.oldBaseUrl;
 	}
 
 	@Test

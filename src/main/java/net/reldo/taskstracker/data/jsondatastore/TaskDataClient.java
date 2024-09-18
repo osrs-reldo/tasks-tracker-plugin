@@ -73,7 +73,7 @@ public class TaskDataClient
 
 	public List<TaskV2> getTasks(String jsonFilename) throws Exception
 	{
-		String taskJsonUrl = JsonDataStore.baseUrl + "/tasks/" + jsonFilename;
+		String taskJsonUrl = JsonDataStore.baseUrl + "/" + jsonFilename; // TODO: Use /tasks/ in here, and remove from the filename
 		log.debug("getTasks json from {} ...", taskJsonUrl);
 		Request request = new Request.Builder()
 			.url(taskJsonUrl)
@@ -110,7 +110,7 @@ public class TaskDataClient
 		try
 		{
 			Manifest manifest = this.manifestClient.getManifest();
-			this._taskTypesJsonFilename = manifest.taskTypeMetadataFilename;
+			this._taskTypesJsonFilename = manifest.taskTypeMetadata;
 			return this._taskTypesJsonFilename;
 		} catch (Exception ex) {
 			log.error("Could not get manifest", ex);

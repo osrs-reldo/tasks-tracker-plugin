@@ -5,8 +5,8 @@ import lombok.Data;
 @Data
 public class Manifest
 {
-	public String taskTypeMetadataFilename;
-	public String filterMetadataFilename;
+	public String taskTypeMetadata;
+	public String filterMetadata;
 	public int[] diaryVarbits;
 	public int[] additionalVarbits;
 }

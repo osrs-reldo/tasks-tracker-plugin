@@ -1,8 +1,12 @@
 package net.reldo.taskstracker.data.jsondatastore;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import javax.inject.Inject;
+import net.reldo.taskstracker.data.jsondatastore.jsonreader.DataStoreReader;
+import net.reldo.taskstracker.data.jsondatastore.jsonreader.HttpDataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.types.Manifest;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -19,6 +23,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ManifestClientTest
 {
+	private final String oldBaseUrl = JsonDataStore.baseUrl;
+
 	@Rule
 	public MockWebServer server;
 
@@ -30,13 +36,22 @@ public class ManifestClientTest
 		this.server = new MockWebServer();
 		this.server.start();
 		JsonDataStore.baseUrl = this.server.url("/").toString();
-		Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
+
+		Injector injector = Guice.createInjector(new AbstractModule() {
+			@Override
+			protected void configure() {
+				this.bind(DataStoreReader.class).to(HttpDataStoreReader.class);
+			}
+		}, BoundFieldModule.of(this));
+
+		injector.injectMembers(this);
 	}
 
 	@After
 	public void after() throws Exception
 	{
 		this.server.shutdown();
+		JsonDataStore.baseUrl = this.oldBaseUrl;
 	}
 
 	@Test
@@ -48,7 +63,7 @@ public class ManifestClientTest
 	@Test
 	public void getManifest()
 	{
-		String mockResponse = "{\"taskTypeMetadataFilename\":\"task-types.json\",\"filterMetadataFilename\":\"filters.json\",\"diaryVarbits\":[1234, 5678],\"additionalVarbits\":[123, 456]}";
+		String mockResponse = "{\"taskTypeMetadata\":\"task-types.json\",\"filterMetadata\":\"filters.json\",\"diaryVarbits\":[1234, 5678],\"additionalVarbits\":[123, 456]}";
 		this.server.enqueue(new MockResponse().setBody(mockResponse));
 
 		Manifest result;
@@ -56,8 +71,8 @@ public class ManifestClientTest
 		{
 			result = this.client.getManifest();
 
-			assertEquals("filters.json", result.filterMetadataFilename);
-			assertEquals("task-types.json", result.taskTypeMetadataFilename);
+			assertEquals("filters.json", result.filterMetadata);
+			assertEquals("task-types.json", result.taskTypeMetadata);
 			assertEquals(1234, result.diaryVarbits[0]);
 			assertEquals(5678, result.diaryVarbits[1]);
 			assertEquals(123, result.additionalVarbits[0]);
@@ -65,6 +80,7 @@ public class ManifestClientTest
 		}
 		catch (Exception e)
 		{
+			System.out.println(e);
 			fail();
 		}
 	}

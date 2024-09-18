@@ -4,9 +4,12 @@ import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.util.HashMap;
 import java.util.List;
 import javax.inject.Inject;
+import net.reldo.taskstracker.data.jsondatastore.jsonreader.DataStoreReader;
+import net.reldo.taskstracker.data.jsondatastore.jsonreader.HttpDataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.types.Manifest;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypePropertyDefinition;
@@ -31,50 +34,50 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class TaskDataClientTest
 {
+	private final String oldBaseUrl = JsonDataStore.baseUrl;
+
 	@Rule
 	public MockWebServer server;
 
 	@Inject
-	TaskDataClient client;
+	TaskDataClient taskDataClient;
 
 	@Inject
 	ManifestClient manifestClient;
 
-	@Inject
-	Gson gson;
-
 	@Before
-	public void before() throws Exception {
+	public void before() throws Exception
+	{
 		this.server = new MockWebServer();
 		this.server.start();
 		JsonDataStore.baseUrl = this.server.url("/").toString();
 
-		// Create an Injector with inline module configuration
-		Injector injector = Guice.createInjector(new AbstractModule() {
+		Injector injector = Guice.createInjector(new AbstractModule()
+		{
 			@Override
-			protected void configure() {
-				bind(OkHttpClient.class).toInstance(new OkHttpClient());
-				bind(Gson.class).toInstance(new Gson());
-				bind(ManifestClient.class).toInstance(mock(ManifestClient.class));
+			protected void configure()
+			{
+				this.bind(OkHttpClient.class).toInstance(new OkHttpClient());
+				this.bind(Gson.class).toInstance(new Gson());
+				this.bind(DataStoreReader.class).to(HttpDataStoreReader.class);
+				this.bind(ManifestClient.class).toInstance(mock(ManifestClient.class));
 			}
-		});
+		}, BoundFieldModule.of(this));
 
-		// Inject dependencies into this test class
 		injector.injectMembers(this);
-
-		// Optionally configure the behavior of the mock
-		when(this.manifestClient.getManifest()).thenReturn(this.getMockManifest());
 	}
 
 	@After
-	public void after() throws Exception {
+	public void after() throws Exception
+	{
 		this.server.shutdown();
+		JsonDataStore.baseUrl = this.oldBaseUrl;
 	}
 
 	@Test
 	public void clientInitializes()
 	{
-		assertNotNull(this.client);
+		assertNotNull(this.taskDataClient);
 	}
 
 	@Test
@@ -86,7 +89,7 @@ public class TaskDataClientTest
 		List<TaskV2> result;
 		try
 		{
-			result = this.client.getTasks("fake.json");
+			result = this.taskDataClient.getTasks("fake.json");
 
 			TaskV2 resultTask = result.get(0);
 			assertEquals(766, resultTask.getId());
@@ -96,8 +99,8 @@ public class TaskDataClientTest
 			assertEquals(1, resultTask.getPoints());
 
 			RequiredSkillV2 resultSkill = resultTask.getSkills().get(0);
-			assertEquals(resultSkill.skill,"Thieving");
-			assertEquals(resultSkill.level,5);
+			assertEquals(resultSkill.skill, "Thieving");
+			assertEquals(resultSkill.level, 5);
 
 			assertEquals("Misthalin", resultTask.getPropertyValue("area"));
 			assertEquals("Skill", resultTask.getPropertyValue("type"));
@@ -111,15 +114,17 @@ public class TaskDataClientTest
 	}
 
 	@Test
-	public void getTaskTypes()
+	public void getTaskTypes() throws Exception
 	{
-		String mockTypesResponse = "[{\"slug\":\"LEAGUE_3\",\"name\":\"League III: Shattered Relics\",\"jsonFilename\":\"LEAGUE_3.json\",\"enabled\":true,\"skillFilter\":true,\"properties\":[{\"key\":\"tier\",\"name\":\"Tier\",\"filter\":\"LEAGUE3_TIER\"},{\"key\":\"area\",\"name\":\"Area\",\"filter\":\"LEAGUE3_AREA\"},{\"key\":\"type\",\"name\":\"Task Type\",\"filter\":\"LEAGUE3_TYPE\"},{\"key\":\"category\",\"name\":\"Skill Category\",\"filter\":\"LEAGUE3_SKILL_CATEGORY\"},{\"key\":\"other\",\"name\":\"Addl. Wiki Information\"}],\"taskVarps\":[ 2616, 2617, 2618, 2619],\"otherVarps\":[2614, 3276],\"varbits\":[ 13395, 13396, 13397, 13398]}]";
+		when(this.manifestClient.getManifest()).thenReturn(this.getMockManifest());
+
+		String mockTypesResponse = "[{\"slug\":\"LEAGUE_3\",\"name\":\"League III: Shattered Relics\",\"json\":\"LEAGUE_3.json\",\"enabled\":true,\"skillFilter\":true,\"properties\":[{\"key\":\"tier\",\"name\":\"Tier\",\"filter\":\"LEAGUE3_TIER\"},{\"key\":\"area\",\"name\":\"Area\",\"filter\":\"LEAGUE3_AREA\"},{\"key\":\"type\",\"name\":\"Task Type\",\"filter\":\"LEAGUE3_TYPE\"},{\"key\":\"category\",\"name\":\"Skill Category\",\"filter\":\"LEAGUE3_SKILL_CATEGORY\"},{\"key\":\"other\",\"name\":\"Addl. Wiki Information\"}],\"taskVarps\":[ 2616, 2617, 2618, 2619],\"otherVarps\":[2614, 3276],\"varbits\":[ 13395, 13396, 13397, 13398]}]";
 		this.server.enqueue(new MockResponse().setBody(mockTypesResponse));
 
 		HashMap<String, TaskTypeDefinition> result;
 		try
 		{
-			result = this.client.getTaskTypes();
+			result = this.taskDataClient.getTaskTypes();
 
 			TaskTypeDefinition resultTaskType = result.get("LEAGUE_3");
 			assertEquals("LEAGUE_3", resultTaskType.getSlug());
@@ -149,10 +154,10 @@ public class TaskDataClientTest
 	private Manifest getMockManifest()
 	{
 		Manifest mockManifest = new Manifest();
-		mockManifest.additionalVarbits = new int[] { 123, 456 };
-		mockManifest.diaryVarbits = new int[] {1234, 5678};
-		mockManifest.filterMetadataFilename = "filters.json";
-		mockManifest.taskTypeMetadataFilename = "task-types.json";
+		mockManifest.additionalVarbits = new int[]{123, 456};
+		mockManifest.diaryVarbits = new int[]{1234, 5678};
+		mockManifest.filterMetadata = "filters.json";
+		mockManifest.taskTypeMetadata = "task-types.json";
 		return mockManifest;
 	}
 }
