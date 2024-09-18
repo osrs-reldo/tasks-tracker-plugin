@@ -13,8 +13,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskFromStruct;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskV2;
+import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
 import okhttp3.OkHttpClient;
 
@@ -39,19 +38,19 @@ public class TaskDataClient
 		Type listType = TypeToken.getParameterized(ArrayList.class, TaskTypeDefinition.class).getType();
 
 		List<TaskTypeDefinition> taskTypes = this.gson.fromJson(responseReader, listType);
-		HashMap<String, TaskTypeDefinition> taskTypesBySlug = new HashMap<>();
+		HashMap<String, TaskTypeDefinition> taskTypesByJsonName = new HashMap<>();
 		for (TaskTypeDefinition taskType : taskTypes)
 		{
-			taskTypesBySlug.put(taskType.getTaskJsonName(), taskType);
+			taskTypesByJsonName.put(taskType.getTaskJsonName(), taskType);
 		}
-		return taskTypesBySlug;
+		return taskTypesByJsonName;
 	}
 
-	public List<TaskV2> getTasks(String jsonFilename) throws Exception
+	public List<TaskDefinition> getTasks(String jsonFilename) throws Exception
 	{
 		InputStream stream = this.dataStoreReader.readTasks(jsonFilename);
 		InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
-		Type listType = TypeToken.getParameterized(ArrayList.class, TaskFromStruct.class).getType();
+		Type listType = TypeToken.getParameterized(ArrayList.class, TaskDefinition.class).getType();
 		return this.gson.fromJson(responseReader, listType);
 	}
 }

@@ -11,8 +11,8 @@ import javax.inject.Inject;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.reader.FileDataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.types.Manifest;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskV2;
 import net.reldo.taskstracker.data.jsondatastore.types.definitions.FilterConfig;
+import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
@@ -87,8 +87,9 @@ public class TaskDataClientTest
 		this.server.enqueue(new MockResponse().setBody(mockResponse));
 
 		// TODO: Let this fail until tasks are refactored
-		List<TaskV2> result = this.taskDataClient.getTasks("COMBAT");
+		List<TaskDefinition> result = this.taskDataClient.getTasks("COMBAT");
 		assertEquals(568, result.size());
+		// TODO: Assert one
 	}
 
 	@Test

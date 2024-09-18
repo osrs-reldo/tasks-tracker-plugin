@@ -55,10 +55,10 @@ public class FakePluginTest
 		HashMap<String, TaskTypeDefinition> taskTypes = this.taskService.getTaskTypes();
 		System.out.println("taskTypes = " + taskTypes);
 		// load a task type TaskTypeDefinition
-		TaskTypeDefinition taskTypeDefinition = taskTypes.get("LEAGUE_3");
+		TaskTypeDefinition taskTypeDefinition = taskTypes.get("COMBAT");
 		System.out.println("taskTypeDefinition = " + taskTypeDefinition);
 		// load tasks TaskFromStruct[]
-		this.taskService.setTaskType("COMBAT");
+		this.taskService.setTaskType(taskTypeDefinition);
 		List<TaskV2> tasks = this.taskService.getTasks();
 		System.out.println("task size = " + tasks.size());
 		// check task completion
