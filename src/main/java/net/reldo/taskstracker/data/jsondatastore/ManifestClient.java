@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import net.reldo.taskstracker.data.jsondatastore.jsonreader.DataStoreReader;
+import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.types.Manifest;
 import okhttp3.OkHttpClient;
 

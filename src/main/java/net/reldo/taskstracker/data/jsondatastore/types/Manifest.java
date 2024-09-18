@@ -7,6 +7,5 @@ public class Manifest
 {
 	public String taskTypeMetadata;
 	public String filterMetadata;
-	public int[] diaryVarbits;
 	public int[] additionalVarbits;
 }

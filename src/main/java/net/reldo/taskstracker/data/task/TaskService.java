@@ -9,7 +9,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
 import net.reldo.taskstracker.data.jsondatastore.TaskDataClient;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskV2;
+import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
 
 @Singleton
 @Slf4j
@@ -34,7 +35,7 @@ public class TaskService
 			{
 				throw new Exception("Invalid task slug " + taskSlug);
 			}
-			this.tasks = this.taskDataClient.getTasks(taskType.jsonFilename);
+			this.tasks = this.taskDataClient.getTasks(taskType.getTaskJsonName());
 		} catch (Exception ex) {
 			log.error("Unable to set task type");
 		}

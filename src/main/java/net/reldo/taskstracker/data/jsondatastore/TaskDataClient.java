@@ -12,12 +12,10 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import net.reldo.taskstracker.data.jsondatastore.types.Manifest;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
-import net.reldo.taskstracker.data.task.TaskV2;
+import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskV2;
+import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 @Singleton
 @Slf4j
@@ -26,8 +24,7 @@ public class TaskDataClient
 	@Inject private ManifestClient manifestClient;
 	@Inject	private OkHttpClient okHttpClient;
 	@Inject private Gson gson;
-
-	private String _taskTypesJsonFilename;
+	@Inject private DataStoreReader dataStoreReader;
 
 	public TaskDataClient()
 	{
@@ -36,29 +33,7 @@ public class TaskDataClient
 
 	public HashMap<String, TaskTypeDefinition> getTaskTypes() throws Exception
 	{
-		String taskJsonUrl = JsonDataStore.baseUrl + "/" + this.getTaskTypesJsonFilename();
-		log.debug("getTaskTypes json from {} ...", taskJsonUrl);
-		Request request = new Request.Builder()
-			.url(taskJsonUrl)
-			.build();
-		Response response = this.okHttpClient.newCall(request).execute();
-		if (!response.isSuccessful())
-		{
-			String unsuccessful = "getTaskTypes json request unsuccessful with status " + response.code();
-			if (response.body() != null)
-			{
-				unsuccessful += " and body \n" + response.body();
-			}
-			log.error(unsuccessful);
-			throw new Exception(unsuccessful);
-		}
-		if (response.body() == null)
-		{
-			log.error("getTaskTypes returned without body");
-			throw new Exception("getTaskTypes returned without body");
-		}
-		log.debug("getTaskTypes json fetched successfully, deserializing result");
-		InputStream stream = response.body().byteStream();
+		InputStream stream = this.dataStoreReader.readTaskTypes(this.manifestClient.getManifest().taskTypeMetadata);
 		InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
 		Type listType = TypeToken.getParameterized(ArrayList.class, TaskTypeDefinition.class).getType();
 
@@ -66,55 +41,16 @@ public class TaskDataClient
 		HashMap<String, TaskTypeDefinition> taskTypesBySlug = new HashMap<>();
 		for (TaskTypeDefinition taskType : taskTypes)
 		{
-			taskTypesBySlug.put(taskType.slug, taskType);
+			taskTypesBySlug.put(taskType.getTaskJsonName(), taskType);
 		}
 		return taskTypesBySlug;
 	}
 
 	public List<TaskV2> getTasks(String jsonFilename) throws Exception
 	{
-		String taskJsonUrl = JsonDataStore.baseUrl + "/" + jsonFilename; // TODO: Use /tasks/ in here, and remove from the filename
-		log.debug("getTasks json from {} ...", taskJsonUrl);
-		Request request = new Request.Builder()
-			.url(taskJsonUrl)
-			.build();
-		Response response = this.okHttpClient.newCall(request).execute();
-		if (!response.isSuccessful())
-		{
-			String unsuccessful = "getTasks json request unsuccessful with status " + response.code();
-			if (response.body() != null)
-			{
-				unsuccessful += " and body \n" + response.body();
-			}
-			log.error(unsuccessful);
-			throw new Exception(unsuccessful);
-		}
-		if (response.body() == null)
-		{
-			log.error("getTasks returned without body");
-			throw new Exception("getTasks returned without body");
-		}
-		log.debug("getTasks json fetched successfully, deserializing result");
-		InputStream stream = response.body().byteStream();
+		InputStream stream = this.dataStoreReader.readTasks(jsonFilename);
 		InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
 		Type listType = TypeToken.getParameterized(ArrayList.class, TaskV2.class).getType();
 		return this.gson.fromJson(responseReader, listType);
-	}
-
-	private String getTaskTypesJsonFilename() throws Exception
-	{
-		if (this._taskTypesJsonFilename != null && !this._taskTypesJsonFilename.isEmpty())
-		{
-			return this._taskTypesJsonFilename;
-		}
-		try
-		{
-			Manifest manifest = this.manifestClient.getManifest();
-			this._taskTypesJsonFilename = manifest.taskTypeMetadata;
-			return this._taskTypesJsonFilename;
-		} catch (Exception ex) {
-			log.error("Could not get manifest", ex);
-			throw ex;
-		}
 	}
 }

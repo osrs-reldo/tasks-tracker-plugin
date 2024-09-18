@@ -8,12 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import javax.inject.Inject;
 import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
-import net.reldo.taskstracker.data.jsondatastore.jsonreader.DataStoreReader;
-import net.reldo.taskstracker.data.jsondatastore.jsonreader.FileDataStoreReader;
+import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
+import net.reldo.taskstracker.data.jsondatastore.reader.FileDataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.types.Manifest;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskV2;
+import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
 import net.reldo.taskstracker.data.task.TaskService;
-import net.reldo.taskstracker.data.task.TaskV2;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,7 +57,7 @@ public class FakePluginTest
 		// load a task type TaskTypeDefinition
 		TaskTypeDefinition taskTypeDefinition = taskTypes.get("LEAGUE_3");
 		System.out.println("taskTypeDefinition = " + taskTypeDefinition);
-		// load tasks TaskV2[]
+		// load tasks TaskFromStruct[]
 		this.taskService.setTaskType("LEAGUE_3");
 		List<TaskV2> tasks = this.taskService.getTasks();
 		System.out.println("task size = " + tasks.size());
