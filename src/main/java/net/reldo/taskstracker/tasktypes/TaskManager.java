@@ -2,9 +2,9 @@ package net.reldo.taskstracker.tasktypes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import net.reldo.taskstracker.data.CallbackCommand;
 import net.reldo.taskstracker.data.TaskDataClient;
 
 @Slf4j
@@ -20,12 +20,11 @@ public class TaskManager
 		this.taskDataClient = taskDataClient;
 	}
 
-	public void asyncLoadTaskSourceData(CallbackCommand<ArrayList<Task>> callback)
+	public CompletableFuture<ArrayList<Task>> asyncLoadTaskSourceData()
 	{
-		taskDataClient.loadTaskSourceData(taskType, (tasks) -> {
+		return this.taskDataClient.loadTaskSourceData(taskType).thenApply((tasks) -> {
 			this.tasks = tasks.stream().collect(Collectors.toMap(Task::getId, v -> v, (prev, next) -> next, HashMap::new));
-
-			callback.execute(tasks);
+			return tasks;
 		});
 	}
 

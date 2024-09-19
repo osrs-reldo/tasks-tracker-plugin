@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
 import net.reldo.taskstracker.data.jsondatastore.TaskDataClient;
@@ -25,6 +26,8 @@ public class TaskService
 
 	private List<TaskV2> tasks = new ArrayList<>();
 	private HashMap<String, TaskTypeDefinition> _taskTypes = new HashMap<>();
+	@Getter
+	private TaskTypeDefinition currentTaskType;
 
 	public List<TaskV2> getTasks()
 
@@ -36,11 +39,12 @@ public class TaskService
 	{
 		try
 		{
+			this.currentTaskType = taskType;
+
 			List<TaskDefinition> taskDefinitions = this.taskDataClient.getTasks(taskType.getTaskJsonName());
 			this.tasks = taskDefinitions.stream()
 				.map(definition -> new TaskFromStruct(taskType, definition))
 				.collect(Collectors.toList());
-
 		}
 		catch (Exception ex)
 		{

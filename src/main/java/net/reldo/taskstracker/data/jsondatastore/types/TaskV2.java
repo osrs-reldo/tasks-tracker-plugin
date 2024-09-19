@@ -1,15 +1,16 @@
 package net.reldo.taskstracker.data.jsondatastore.types;
 
+import java.util.concurrent.CompletableFuture;
 import net.runelite.api.Client;
 import net.runelite.client.callback.ClientThread;
 
 public interface TaskV2
 {
-	Integer getId(Client client, ClientThread clientThread);
 	Integer getSortId();
 	Integer getStructId();
-	String getName(Client client, ClientThread clientThread);
-	String getDescription(Client client, ClientThread clientThread);
-	String getStringParam(Client client, ClientThread clientThread, String paramName);
-	Integer getIntParam(Client client, ClientThread clientThread, String paramName);
+	CompletableFuture<Integer> getIdAsync(Client client, ClientThread clientThread);
+	CompletableFuture<String> getNameAsync(Client client, ClientThread clientThread);
+	CompletableFuture<String> getDescriptionAsync(Client client, ClientThread clientThread);
+	CompletableFuture<String> getStringParamAsync(Client client, ClientThread clientThread, String paramName);
+	CompletableFuture<Integer> getIntParamAsync(Client client, ClientThread clientThread, String paramName);
 }

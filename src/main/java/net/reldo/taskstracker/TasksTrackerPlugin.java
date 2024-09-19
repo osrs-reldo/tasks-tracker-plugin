@@ -1,19 +1,19 @@
 package net.reldo.taskstracker;
 
 import com.google.gson.Gson;
+import com.google.inject.Binder;
 import com.google.inject.Provides;
 import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.swing.JDialog;
@@ -21,20 +21,21 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import net.reldo.taskstracker.data.CallbackCommand;
 import net.reldo.taskstracker.data.Export;
 import net.reldo.taskstracker.data.LongSerializer;
 import net.reldo.taskstracker.data.TaskDataClient;
 import net.reldo.taskstracker.data.TrackerDataStore;
+import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
+import net.reldo.taskstracker.data.jsondatastore.reader.FileDataStoreReader;
+import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
+import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskManager;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.TasksSummary;
 import net.reldo.taskstracker.tasktypes.combattask.CombatTaskVarps;
-import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
-import net.reldo.taskstracker.tasktypes.league4.League4TaskVarps;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -82,20 +83,47 @@ public class TasksTrackerPlugin extends Plugin
 	private NavigationButton navButton;
 	private RuneScapeProfileType currentProfileType;
 
-	@Inject	@Named("runelite.version") private String runeliteVersion;
-	@Inject private Gson gson;
-	@Inject	private Client client;
-	@Inject	private SpriteManager spriteManager;
-	@Inject	private PluginManager pluginManager;
-	@Inject	private SkillIconManager skillIconManager;
-	@Inject	private ClientToolbar clientToolbar;
-	@Inject	private ClientThread clientThread;
-	@Inject	private ChatMessageManager chatMessageManager;
-	@Getter	@Inject	private ConfigManager configManager;
-	@Getter @Inject	private TasksTrackerConfig config;
+	@Inject
+	@Named("runelite.version")
+	private String runeliteVersion;
+	@Inject
+	private Gson gson;
+	@Inject
+	private Client client;
+	@Inject
+	private SpriteManager spriteManager;
+	@Inject
+	private PluginManager pluginManager;
+	@Inject
+	private SkillIconManager skillIconManager;
+	@Inject
+	private ClientToolbar clientToolbar;
+	@Inject
+	private ClientThread clientThread;
+	@Inject
+	private ChatMessageManager chatMessageManager;
+	@Getter
+	@Inject
+	private ConfigManager configManager;
+	@Getter
+	@Inject
+	private TasksTrackerConfig config;
 
-	@Inject private TaskDataClient taskDataClient;
-	@Inject private TrackerDataStore trackerDataStore;
+	@Inject
+	private TaskDataClient taskDataClient;
+	@Inject
+	private TrackerDataStore trackerDataStore;
+
+	@Inject
+	private TaskService taskService;
+	@Inject
+	private net.reldo.taskstracker.data.jsondatastore.TaskDataClient taskDataClientV2;
+	@Override
+	public void configure(Binder binder)
+	{
+		binder.bind(DataStoreReader.class).to(FileDataStoreReader.class);
+		super.configure(binder);
+	}
 
 	@Provides
 	TasksTrackerConfig getConfig(ConfigManager configManager)
@@ -103,9 +131,20 @@ public class TasksTrackerPlugin extends Plugin
 		return configManager.getConfig(TasksTrackerConfig.class);
 	}
 
+
 	@Override
 	protected void startUp()
 	{
+		try
+		{
+			TaskTypeDefinition combatTaskType = this.taskDataClientV2.getTaskTypes().get("COMBAT");
+			this.taskService.setTaskType(combatTaskType);
+		}
+		catch (Exception ex)
+		{
+			log.error("error using new task services", ex);
+		}
+
 		this.forceUpdateVarpsFlag = false;
 
 		this.pluginPanel = new TasksTrackerPluginPanel(this, this.config, this.clientThread, this.spriteManager, this.skillIconManager);
@@ -119,7 +158,7 @@ public class TasksTrackerPlugin extends Plugin
 			TaskManager taskManager = new TaskManager(taskType, this.taskDataClient);
 			this.taskManagers.put(taskType, taskManager);
 
-			taskManager.asyncLoadTaskSourceData((tasks) -> {
+			taskManager.asyncLoadTaskSourceData().thenAccept((tasks) -> {
 				// If the player is already logged in when the plugin is started, treat like a new login
 				if (isLoggedIn && taskType == this.config.taskType())
 				{
@@ -256,7 +295,7 @@ public class TasksTrackerPlugin extends Plugin
 		inputDialog.setAlwaysOnTop(true);
 		inputDialog.setVisible(true);
 
-		if(optionPane.getInputValue().equals("") || optionPane.getInputValue().equals("uninitializedValue"))
+		if (optionPane.getInputValue().equals("") || optionPane.getInputValue().equals("uninitializedValue"))
 		{
 			this.showMessageBox("Import Tasks Error", "Input was empty so no data has been imported.", JOptionPane.ERROR_MESSAGE, false);
 			return;
@@ -283,7 +322,10 @@ public class TasksTrackerPlugin extends Plugin
 		confirmDialog.setVisible(true);
 
 		Object selectedValue = optionPane.getValue();
-		if (selectedValue == null) return;
+		if (selectedValue == null)
+		{
+			return;
+		}
 
 		if (selectedValue.equals(JOptionPane.YES_OPTION))
 		{
@@ -340,21 +382,21 @@ public class TasksTrackerPlugin extends Plugin
 	private void forceVarpUpdate()
 	{
 		log.debug("forceVarpUpdate");
-		List<Integer> allVarbitIds = new ArrayList<>();
-		allVarbitIds.addAll(League4TaskVarps.getIdToVarpMap().keySet());
-		allVarbitIds.addAll(CombatTaskVarps.getIdToVarpMap().keySet());
-		allVarbitIds.forEach((id) -> this.processVarpAndUpdateTasks(id, processed -> {
-			if (processed)
-			{
-				this.saveCurrentTaskData();
-			}
-		}));
+		for (int varpId : this.taskService.getCurrentTaskType().getTaskVarps())
+		{
+			this.processVarpAndUpdateTasks(varpId).thenAccept((processed) -> {
+				if (processed)
+				{
+					this.saveCurrentTaskData();
+				}
+			});
+		}
 	}
 
 	private void flushVarpUpdates(Set<Integer> varpIds)
 	{
 		log.debug("Flushing throttled varp updates {}", varpIds);
-		varpIds.forEach((id) -> this.processVarpAndUpdateTasks(id, processed -> {
+		varpIds.forEach((id) -> this.processVarpAndUpdateTasks(id).thenAccept(processed -> {
 			if (processed)
 			{
 				this.saveCurrentTaskData();
@@ -362,24 +404,10 @@ public class TasksTrackerPlugin extends Plugin
 		}));
 	}
 
-	private void processVarpAndUpdateTasks(int varpId, CallbackCommand<Boolean> resultCallback)
+	private CompletableFuture<Boolean> processVarpAndUpdateTasks(int varpId)
 	{
 		int ordinal = -1;
 		TaskType taskType = null;
-
-		League3TaskVarps league3Varp = League3TaskVarps.getIdToVarpMap().get(varpId);
-		if (league3Varp != null)
-		{
-			ordinal = league3Varp.ordinal();
-			taskType = TaskType.LEAGUE_3;
-		}
-
-		League4TaskVarps league4Varp = League4TaskVarps.getIdToVarpMap().get(varpId);
-		if (league4Varp != null)
-		{
-			ordinal = league4Varp.ordinal();
-			taskType = TaskType.LEAGUE_4;
-		}
 
 		CombatTaskVarps combatTaskVarp = CombatTaskVarps.getIdToVarpMap().get(varpId);
 		if (combatTaskVarp != null)
@@ -390,15 +418,13 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (taskType == null)
 		{
-			resultCallback.execute(false);
-			return;
+			return CompletableFuture.completedFuture(false);
 		}
 
-		HashMap<Integer, Boolean> completionById = new HashMap<>();
-
-		int finalOrdinal = ordinal;
-		TaskType finalTaskType = taskType;
-		this.clientThread.invokeLater(() -> {
+		final HashMap<Integer, Boolean> completionById = new HashMap<>();
+		final int finalOrdinal = ordinal;
+		final TaskType finalTaskType = taskType;
+		return CompletableFuture.supplyAsync(() -> {
 			// We don't use the VarbitChanged event value because it may not be the latest value
 			// Instead we refetch the varp value
 			BigInteger varpValue = BigInteger.valueOf(this.client.getVarpValue(varpId));
@@ -441,8 +467,8 @@ public class TasksTrackerPlugin extends Plugin
 				SwingUtilities.invokeLater(() -> this.pluginPanel.refresh(task));
 			}
 
-			resultCallback.execute(true);
-		});
+			return true;
+		}, this.clientThread::invokeLater);
 	}
 
 	private String exportToJson(TaskType taskType)
@@ -476,7 +502,7 @@ public class TasksTrackerPlugin extends Plugin
 			JOptionPane optionPane;
 			JDialog dialog;
 
-			if(showOpenLeagueTools)
+			if (showOpenLeagueTools)
 			{
 				String[] options = {"Open OS League Tools", "Ok"};
 
@@ -492,7 +518,10 @@ public class TasksTrackerPlugin extends Plugin
 			dialog.setVisible(true);
 
 			Object selectedValue = optionPane.getValue();
-			if(selectedValue == null) return;
+			if (selectedValue == null)
+			{
+				return;
+			}
 
 			if (selectedValue.equals("Open OS League Tools"))
 			{

@@ -3,7 +3,6 @@ package net.reldo.taskstracker.data.jsondatastore.types;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import lombok.Getter;
 import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
@@ -23,121 +22,122 @@ public class TaskFromStruct implements TaskV2
 	private final TaskDefinition taskDefinition;
 
 	private StructComposition _struct;
-	private Integer _id;
-	private String _name;
-	private String _description;
 	private final Map<String, String> _stringParams = new HashMap<>();
 	private final Map<String, Integer> _intParams = new HashMap<>();
 
-	public TaskFromStruct(TaskTypeDefinition taskTypeDefinition, TaskDefinition taskDefinition)
-	{
+	public TaskFromStruct(TaskTypeDefinition taskTypeDefinition, TaskDefinition taskDefinition) {
 		this.taskTypeDefinition = taskTypeDefinition;
 		this.taskDefinition = taskDefinition;
 		this.structId = taskDefinition.getStructId();
 		this.sortId = taskDefinition.getSortId();
 	}
 
-	public StructComposition loadStruct(Client client, ClientThread clientThread)
-	{
-		if (this._struct != null)
-		{
-			return this._struct;
+	public int getTaskVarpPosition() {
+		return this.getSortId() / 32;
+	}
+
+	public int getTaskVarp() {
+		int ordinal = this.getTaskVarpPosition();
+		return this.taskTypeDefinition.getTaskVarps()[ordinal];
+	}
+
+	public CompletableFuture<Integer> getIdAsync(Client client, ClientThread clientThread) {
+		Integer cachedId = this._intParams.get("id");
+		if (cachedId != null) {
+			return CompletableFuture.completedFuture(cachedId);
 		}
+
+		int paramId = this.taskTypeDefinition.getParamMap().get("id");
+		return this.getIntValueAsync(client, clientThread, paramId)
+			.thenApply(id -> {
+				this._intParams.put("id", id);
+				return id;
+			});
+	}
+
+	public CompletableFuture<String> getNameAsync(Client client, ClientThread clientThread) {
+		String cachedName = this._stringParams.get("name");
+		if (cachedName != null) {
+			return CompletableFuture.completedFuture(cachedName);
+		}
+
+		int paramId = this.taskTypeDefinition.getParamMap().get("name");
+		return this.getStringValueAsync(client, clientThread, paramId)
+			.thenApply(name -> {
+				this._stringParams.put("name", name);
+				return name;
+			});
+	}
+
+	public CompletableFuture<String> getDescriptionAsync(Client client, ClientThread clientThread) {
+		String cachedDescription = this._stringParams.get("description");
+		if (cachedDescription != null) {
+			return CompletableFuture.completedFuture(cachedDescription);
+		}
+
+		int paramId = this.taskTypeDefinition.getParamMap().get("description");
+		return this.getStringValueAsync(client, clientThread, paramId)
+			.thenApply(description -> {
+				this._stringParams.put("description", description);
+				return description;
+			});
+	}
+
+	public CompletableFuture<String> getStringParamAsync(Client client, ClientThread clientThread, String paramName) {
+		String paramValue = this._stringParams.get(paramName);
+		if (paramValue != null) {
+			return CompletableFuture.completedFuture(paramValue);
+		}
+
+		int paramId = this.taskTypeDefinition.getParamMap().get(paramName);
+		return this.getStringValueAsync(client, clientThread, paramId)
+			.thenApply(value -> {
+				this._stringParams.put(paramName, value);
+				return value;
+			});
+	}
+
+	public CompletableFuture<Integer> getIntParamAsync(Client client, ClientThread clientThread, String paramName) {
+		Integer paramValue = this._intParams.get(paramName);
+		if (paramValue != null) {
+			return CompletableFuture.completedFuture(paramValue);
+		}
+
+		int paramId = this.taskTypeDefinition.getParamMap().get(paramName);
+		return this.getIntValueAsync(client, clientThread, paramId)
+			.thenApply(value -> {
+				this._intParams.put(paramName, value);
+				return value;
+			});
+	}
+
+	private CompletableFuture<StructComposition> loadStructAsync(Client client, ClientThread clientThread) {
 		CompletableFuture<StructComposition> future = new CompletableFuture<>();
 		clientThread.invoke(() -> {
 			this._struct = client.getStructComposition(this.structId);
 			future.complete(this._struct);
 		});
-		try
-		{
-			StructComposition struct = future.get();
-			if (struct == null)
-			{
-				throw new Error(String.format(
-					"struct %s not found for %s task",
-					this.structId,
-					this.taskTypeDefinition.getTaskJsonName()
-				));
-			}
-			return future.get();
-		}
-		catch (InterruptedException | ExecutionException e)
-		{
-			e.printStackTrace();
-			throw new Error(String.format(
-				"error while executing get struct %s from client for %s task",
-				this.structId,
-				this.taskTypeDefinition.getTaskJsonName()
-			));
-		}
+		return future;
 	}
 
-	public Integer getId(Client client, ClientThread clientThread)
-	{
-		if (this._id != null)
-		{
-			return this._id;
+	private CompletableFuture<StructComposition> getStructAsync(Client client, ClientThread clientThread) {
+		if (this._struct != null) {
+			return CompletableFuture.completedFuture(this._struct);
 		}
-
-		StructComposition struct = this.loadStruct(client, clientThread);
-		int paramId = this.taskTypeDefinition.getParamMap().get("id");
-		this._id = struct.getIntValue(paramId);
-		return this._id;
+		return this.loadStructAsync(client, clientThread);
 	}
 
-	public String getName(Client client, ClientThread clientThread)
-	{
-		if (this._name != null)
-		{
-			return this._name;
-		}
-
-		StructComposition struct = this.loadStruct(client, clientThread);
-		int paramId = this.taskTypeDefinition.getParamMap().get("name");
-		this._name = struct.getStringValue(paramId);
-		return this._name;
+	private CompletableFuture<Integer> getIntValueAsync(Client client, ClientThread clientThread, int paramId) {
+		return CompletableFuture.supplyAsync(() -> {
+			StructComposition struct = this.getStructAsync(client, clientThread).join();
+			return struct.getIntValue(paramId);
+		}, clientThread::invoke);
 	}
 
-	public String getDescription(Client client, ClientThread clientThread)
-	{
-		if (this._description != null)
-		{
-			return this._description;
-		}
-
-		StructComposition struct = this.loadStruct(client, clientThread);
-		int paramId = this.taskTypeDefinition.getParamMap().get("description");
-		this._description = struct.getStringValue(paramId);
-		return this._description;
-	}
-
-	public String getStringParam(Client client, ClientThread clientThread, String paramName)
-	{
-		String paramValue = this._stringParams.get(paramName);
-		if (paramValue != null)
-		{
-			return paramValue;
-		}
-
-		StructComposition struct = this.loadStruct(client, clientThread);
-		int paramId = this.taskTypeDefinition.getParamMap().get(paramName);
-		paramValue = struct.getStringValue(paramId);
-		this._stringParams.put(paramName, paramValue);
-		return paramValue;
-	}
-
-	public Integer getIntParam(Client client, ClientThread clientThread, String paramName)
-	{
-		Integer paramValue = this._intParams.get(paramName);
-		if (paramValue != null)
-		{
-			return paramValue;
-		}
-
-		StructComposition struct = this.loadStruct(client, clientThread);
-		int paramId = this.taskTypeDefinition.getParamMap().get(paramName);
-		paramValue = struct.getIntValue(paramId);
-		this._intParams.put(paramName, paramValue);
-		return paramValue;
+	private CompletableFuture<String> getStringValueAsync(Client client, ClientThread clientThread, int paramId) {
+		return CompletableFuture.supplyAsync(() -> {
+			StructComposition struct = this.getStructAsync(client, clientThread).join();
+			return struct.getStringValue(paramId);
+		}, clientThread::invoke);
 	}
 }

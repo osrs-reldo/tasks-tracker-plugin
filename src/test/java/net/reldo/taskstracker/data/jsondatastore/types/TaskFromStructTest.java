@@ -83,14 +83,14 @@ public class TaskFromStructTest
 	}
 
 	@Test
-	public void getId()
+	public void getId() throws Exception
 	{
 		TaskFromStruct task = new TaskFromStruct(this.mockTypeDefinition, this.mockTaskDefinition);
 
-		int id = task.getId(this.client, this.clientThread);
+		int id = task.getIdAsync(this.client, this.clientThread).get();
 		assertEquals(55, id);
 
-		int idAgain = task.getId(this.client, this.clientThread);
+		int idAgain = task.getIdAsync(this.client, this.clientThread).get();
 		assertEquals(55, idAgain);
 
 		verify(this.clientThread, times(ONCE_EVEN_THOUGH_TWO_GETS)).invoke(any(Runnable.class));
@@ -111,55 +111,58 @@ public class TaskFromStructTest
 	}
 
 	@Test
-	public void getName()
+	public void getName() throws Exception
 	{
 		TaskFromStruct task = new TaskFromStruct(this.mockTypeDefinition, this.mockTaskDefinition);
 
-		String name = task.getName(this.client, this.clientThread);
+		String name = task.getNameAsync(this.client, this.clientThread).get();
 		assertEquals("task name", name);
+
+		String nameAgain = task.getNameAsync(this.client, this.clientThread).get();
+		assertEquals("task name", nameAgain);
 
 		verify(this.clientThread, times(ONCE_EVEN_THOUGH_TWO_GETS)).invoke(any(Runnable.class));
 	}
 
 	@Test
-	public void getDescription()
+	public void getDescription() throws Exception
 	{
 		TaskFromStruct task = new TaskFromStruct(this.mockTypeDefinition, this.mockTaskDefinition);
 
-		String description = task.getDescription(this.client, this.clientThread);
+		String description = task.getDescriptionAsync(this.client, this.clientThread).get();
 		assertEquals("task description", description);
 
-		String descriptionAgain = task.getDescription(this.client, this.clientThread);
+		String descriptionAgain = task.getDescriptionAsync(this.client, this.clientThread).get();
 		assertEquals("task description", descriptionAgain);
 
 		verify(this.clientThread, times(ONCE_EVEN_THOUGH_TWO_GETS)).invoke(any(Runnable.class));
 	}
 
 	@Test
-	public void getStringParam()
+	public void getStringParam() throws Exception
 	{
 		TaskFromStruct task = new TaskFromStruct(this.mockTypeDefinition, this.mockTaskDefinition);
 
 		String paramName = "a_string_param";
-		String value = task.getStringParam(this.client, this.clientThread, paramName);
+		String value = task.getStringParamAsync(this.client, this.clientThread, paramName).get();
 		assertEquals("stringo bingo", value);
 
-		String valueAgain = task.getStringParam(this.client, this.clientThread, paramName);
+		String valueAgain = task.getStringParamAsync(this.client, this.clientThread, paramName).get();
 		assertEquals("stringo bingo", valueAgain);
 
 		verify(this.clientThread, times(ONCE_EVEN_THOUGH_TWO_GETS)).invoke(any(Runnable.class));
 	}
 
 	@Test
-	public void getIntParam()
+	public void getIntParam() throws Exception
 	{
 		TaskFromStruct task = new TaskFromStruct(this.mockTypeDefinition, this.mockTaskDefinition);
 
 		String paramName = "an_int_param";
-		int value = task.getIntParam(this.client, this.clientThread, paramName);
+		int value = task.getIntParamAsync(this.client, this.clientThread, paramName).get();
 		assertEquals(123, value);
 
-		int valueAgain = task.getIntParam(this.client, this.clientThread, paramName);
+		int valueAgain = task.getIntParamAsync(this.client, this.clientThread, paramName).get();
 		assertEquals(123, valueAgain);
 
 		verify(this.clientThread, times(ONCE_EVEN_THOUGH_TWO_GETS)).invoke(any(Runnable.class));

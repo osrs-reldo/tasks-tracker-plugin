@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.NonNull;
@@ -24,69 +25,73 @@ import okhttp3.Response;
 @Slf4j
 public class TaskDataClient
 {
-	@Inject	private OkHttpClient okHttpClient;
-	@Inject private Gson gson;
+	@Inject
+	private OkHttpClient okHttpClient;
+	@Inject
+	private Gson gson;
 
 	private static final String BASE_URL = "https://raw.githubusercontent.com/osrs-reldo/task-json-store/main/";
 	private static final String JSON_MIN_PATH = BASE_URL + "json/min/";
 
-	public void loadTaskSourceData(TaskType taskType, CallbackCommand<ArrayList<Task>> callback)
+	public CompletableFuture<ArrayList<Task>> loadTaskSourceData(TaskType taskType)
 	{
 		Type classType = taskType.getClassType();
 		Type listType = TypeToken.getParameterized(ArrayList.class, classType).getType();
 
-		this.getTaskJson(taskType.getDataFileName(), jsonResponse -> {
+		return this.getTaskJson(taskType.getDataFileName()).thenApply(jsonResponse -> {
 			ArrayList<Task> result = this.gson.fromJson(new InputStreamReader(jsonResponse, StandardCharsets.UTF_8), listType);
-			callback.execute(result);
+			return result;
 		});
 	}
 
-	private void getTaskJson(String jsonName, CallbackCommand<InputStream> command)
+	private CompletableFuture<InputStream> getTaskJson(String jsonName)
 	{
-		try
+		CompletableFuture<InputStream> future = new CompletableFuture<>();
+		String url = JSON_MIN_PATH + jsonName;
+		log.debug("Fetching task json {} from {}...", jsonName, url);
+
+		Request request = new Request.Builder()
+			.url(url)
+			.build();
+
+		this.okHttpClient.newCall(request).enqueue(new Callback()
 		{
-			String url = JSON_MIN_PATH + jsonName;
-			log.debug("Fetching task json {} from {}...", jsonName, url);
-			Request request = new Request.Builder()
-				.url(url)
-				.build();
-			this.okHttpClient.newCall(request).enqueue(new Callback()
+			@Override
+			public void onFailure(@NonNull Call call, @NonNull IOException e)
 			{
-				@Override
-				public void onFailure(@NonNull Call call, @NonNull IOException e)
-				{
-					log.error("Error retrieving task json {}", jsonName, e);
-				}
+				log.error("Error retrieving task json {}", jsonName, e);
+				future.completeExceptionally(e);
+			}
 
-				@Override
-				public void onResponse(@NonNull Call call,@NonNull Response response)
+			@Override
+			public void onResponse(@NonNull Call call, @NonNull Response response)
+			{
+				if (response.isSuccessful())
 				{
-					if (response.isSuccessful())
+					if (response.body() == null)
 					{
-						if (response.body() == null)
-						{
-							log.error("Task json request returned no body");
-							response.close();
-							return;
-						}
-
-						log.debug("Task json {} fetched successfully, executing callback", jsonName);
-						command.execute(response.body().byteStream());
-					} else {
-						String unsuccessful = "Task json request unsuccessful with status {}" + response.code();
-						if (response.body() != null)
-						{
-							unsuccessful += " and body \n" + response.body();
-						}
-						log.error(unsuccessful);
+						log.error("Task json request returned no body");
+						future.completeExceptionally(new IOException("Response body is null"));
 					}
-					response.close();
+					else
+					{
+						log.debug("Task json {} fetched successfully", jsonName);
+						future.complete(response.body().byteStream());
+					}
 				}
-			});
-		}
-		catch (IllegalArgumentException e)
-		{
-			log.error("Failed to get task json: {}", e.getLocalizedMessage());
-		}
+				else
+				{
+					String unsuccessful = "Task json request unsuccessful with status {}" + response.code();
+					if (response.body() != null)
+					{
+						unsuccessful += " and body \n" + response.body();
+					}
+					log.error(unsuccessful);
+					future.completeExceptionally(new IOException(unsuccessful));
+				}
+				response.close();
+			}
+		});
+		return future;
 	}
 }
