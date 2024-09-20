@@ -7,13 +7,13 @@ import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.swing.JDialog;
@@ -27,6 +27,7 @@ import net.reldo.taskstracker.data.TaskDataClient;
 import net.reldo.taskstracker.data.TrackerDataStore;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.reader.FileDataStoreReader;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskFromStruct;
 import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.data.task.TaskService;
@@ -35,7 +36,6 @@ import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskManager;
 import net.reldo.taskstracker.tasktypes.TaskType;
 import net.reldo.taskstracker.tasktypes.TasksSummary;
-import net.reldo.taskstracker.tasktypes.combattask.CombatTaskVarps;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -118,6 +118,7 @@ public class TasksTrackerPlugin extends Plugin
 	private TaskService taskService;
 	@Inject
 	private net.reldo.taskstracker.data.jsondatastore.TaskDataClient taskDataClientV2;
+
 	@Override
 	public void configure(Binder binder)
 	{
@@ -194,6 +195,11 @@ public class TasksTrackerPlugin extends Plugin
 		if (this.forceUpdateVarpsFlag)
 		{
 			// Force update is coming on next game tick, so ignore varbit change events
+			return;
+		}
+		int varpId = varbitChanged.getVarpId();
+		if (!this.taskService.getCurrentTaskTypeVarps().contains(varpId))
+		{
 			return;
 		}
 		this.varpIdsToUpdate.add(varbitChanged.getVarpId());
@@ -382,15 +388,12 @@ public class TasksTrackerPlugin extends Plugin
 	private void forceVarpUpdate()
 	{
 		log.debug("forceVarpUpdate");
-		for (int varpId : this.taskService.getCurrentTaskType().getTaskVarps())
-		{
-			this.processVarpAndUpdateTasks(varpId).thenAccept((processed) -> {
-				if (processed)
-				{
-					this.saveCurrentTaskData();
-				}
-			});
-		}
+		this.processVarpAndUpdateTasks(null).thenAccept((processed) -> {
+			if (processed)
+			{
+				this.saveCurrentTaskData();
+			}
+		});
 	}
 
 	private void flushVarpUpdates(Set<Integer> varpIds)
@@ -404,69 +407,45 @@ public class TasksTrackerPlugin extends Plugin
 		}));
 	}
 
-	private CompletableFuture<Boolean> processVarpAndUpdateTasks(int varpId)
+	private CompletableFuture<Boolean> processVarpAndUpdateTasks(@Nullable Integer varpId)
 	{
-		int ordinal = -1;
-		TaskType taskType = null;
+		log.info("processVarpAndUpdateTasks: " + (varpId != null ? varpId : "all"));
 
-		CombatTaskVarps combatTaskVarp = CombatTaskVarps.getIdToVarpMap().get(varpId);
-		if (combatTaskVarp != null)
+		// TaskTypes for V1 and V2
+		final TaskType taskTypeV1 = TaskType.COMBAT;
+		if (!this.taskService.getCurrentTaskType().getName().equals("COMBAT"))
 		{
-			ordinal = combatTaskVarp.ordinal();
-			taskType = TaskType.COMBAT;
+			TaskTypeDefinition taskTypeV2 = this.taskService.getTaskTypes().get("COMBAT");
+			this.taskService.setTaskType(taskTypeV2);
 		}
 
-		if (taskType == null)
-		{
-			return CompletableFuture.completedFuture(false);
-		}
+		// If varpId specified, only get those tasks, otherwise get all
+		List<TaskFromStruct> tasks = varpId != null ?
+			this.taskService.getCurrentTasksByVarp().get(varpId) :
+			this.taskService.getTasks();
 
-		final HashMap<Integer, Boolean> completionById = new HashMap<>();
-		final int finalOrdinal = ordinal;
-		final TaskType finalTaskType = taskType;
 		return CompletableFuture.supplyAsync(() -> {
-			// We don't use the VarbitChanged event value because it may not be the latest value
-			// Instead we refetch the varp value
-			BigInteger varpValue = BigInteger.valueOf(this.client.getVarpValue(varpId));
-			log.debug("processVarpAndUpdateTasks {} {}", varpId, varpValue);
-			int minTaskId = finalOrdinal * 32;
-			int maxTaskId = minTaskId + 31;
-
-			for (int i = minTaskId; i <= maxTaskId; i++)
+			try
 			{
-				boolean isTaskVarbitCompleted;
-				int bitIndex = i % 32;
-				try
+				for (TaskFromStruct taskV2 : tasks)
 				{
-					isTaskVarbitCompleted = varpValue.testBit(bitIndex);
+					Task taskV1 = this.taskManagers.get(taskTypeV1).tasks.get(taskV2.getSortId());
+					int CA_TASK_COMPLETED_SCRIPT_ID = 4834;
+					log.debug("{}", taskV2.getSortId());
+					this.client.runScript(CA_TASK_COMPLETED_SCRIPT_ID, taskV2.getSortId());
+					boolean isTaskCompleted = this.client.getIntStack()[0] > 0;
+					taskV1.setCompleted(isTaskCompleted);
+					if (isTaskCompleted && this.config.untrackUponCompletion())
+					{
+						taskV1.setTracked(false);
+					}
+					SwingUtilities.invokeLater(() -> this.pluginPanel.refresh(taskV1));
 				}
-				catch (IllegalArgumentException ex)
-				{
-					log.error("Bit test failed {} {}", varpId, bitIndex, ex);
-					isTaskVarbitCompleted = false;
-				}
-
-				completionById.put(i, isTaskVarbitCompleted);
 			}
-
-			for (Map.Entry<Integer, Boolean> taskCompletion : completionById.entrySet())
+			catch (Exception ex)
 			{
-				int id = taskCompletion.getKey();
-				boolean completed = taskCompletion.getValue();
-				Task task = this.taskManagers.get(finalTaskType).tasks.get(id);
-				if (task == null)
-				{
-					continue;
-				}
-
-				task.setCompleted(completed);
-				if (completed && this.config.untrackUponCompletion())
-				{
-					task.setTracked(false);
-				}
-				SwingUtilities.invokeLater(() -> this.pluginPanel.refresh(task));
+				log.error("exception occurred while processing task completions", ex);
 			}
-
 			return true;
 		}, this.clientThread::invokeLater);
 	}

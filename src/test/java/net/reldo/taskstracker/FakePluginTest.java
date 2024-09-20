@@ -11,7 +11,7 @@ import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.reader.FileDataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.types.Manifest;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskV2;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskFromStruct;
 import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
 import net.reldo.taskstracker.data.task.TaskService;
 import org.junit.Before;
@@ -59,10 +59,10 @@ public class FakePluginTest
 		System.out.println("taskTypeDefinition = " + taskTypeDefinition);
 		// load tasks TaskFromStruct[]
 		this.taskService.setTaskType(taskTypeDefinition);
-		List<TaskV2> tasks = this.taskService.getTasks();
+		List<TaskFromStruct> tasks = this.taskService.getTasks();
 		System.out.println("task size = " + tasks.size());
 		// check task completion
-		TaskV2 taskV2 = tasks.get(0);
+		TaskFromStruct taskV2 = tasks.get(0);
 		System.out.println("taskV2 = " + taskV2);
 	}
 }

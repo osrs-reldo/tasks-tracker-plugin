@@ -22,7 +22,7 @@ public class TaskManager
 
 	public CompletableFuture<ArrayList<Task>> asyncLoadTaskSourceData()
 	{
-		return this.taskDataClient.loadTaskSourceData(taskType).thenApply((tasks) -> {
+		return this.taskDataClient.loadTaskSourceData(this.taskType).thenApply((tasks) -> {
 			this.tasks = tasks.stream().collect(Collectors.toMap(Task::getId, v -> v, (prev, next) -> next, HashMap::new));
 			return tasks;
 		});
@@ -36,7 +36,7 @@ public class TaskManager
 			return;
 		}
 
-		tasks.values().forEach(task -> {
+		this.tasks.values().forEach(task -> {
 			Task loadedTask = loadedTasks.get(task.getId());
 			if (loadedTask == null)
 			{
@@ -48,6 +48,6 @@ public class TaskManager
 
 	public TasksSummary getSummary()
 	{
-		return new TasksSummary(tasks.values());
+		return new TasksSummary(this.tasks.values());
 	}
 }

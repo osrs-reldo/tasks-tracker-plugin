@@ -47,6 +47,7 @@ public class TaskTypeDefinition
 	/**
 	 * Varps used to store task progress
 	 * Used for exports from the plugin
+	 * TODO: Use a hashset? and deprecate TaskService::getTaskVarps
 	 */
 	private int[] taskVarps;
 

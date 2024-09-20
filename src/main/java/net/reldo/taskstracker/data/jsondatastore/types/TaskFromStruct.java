@@ -10,7 +10,7 @@ import net.runelite.api.Client;
 import net.runelite.api.StructComposition;
 import net.runelite.client.callback.ClientThread;
 
-public class TaskFromStruct implements TaskV2
+public class TaskFromStruct
 {
 	@Getter
 	private final Integer structId;

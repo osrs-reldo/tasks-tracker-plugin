@@ -2,8 +2,10 @@ package net.reldo.taskstracker.data.task;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.Getter;
@@ -11,8 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
 import net.reldo.taskstracker.data.jsondatastore.TaskDataClient;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskFromStruct;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskV2;
-import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
 
 @Singleton
@@ -24,16 +24,16 @@ public class TaskService
 	@Inject
 	private TaskDataClient taskDataClient;
 
-	private List<TaskV2> tasks = new ArrayList<>();
-	private HashMap<String, TaskTypeDefinition> _taskTypes = new HashMap<>();
 	@Getter
 	private TaskTypeDefinition currentTaskType;
+	@Getter
+	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
+	@Getter
+	private HashMap<Integer, List<TaskFromStruct>> currentTasksByVarp = new HashMap<>();
+	@Getter
+	private List<TaskFromStruct> tasks = new ArrayList<>();
 
-	public List<TaskV2> getTasks()
-
-	{
-		return this.tasks;
-	}
+	private HashMap<String, TaskTypeDefinition> _taskTypes = new HashMap<>();
 
 	public void setTaskType(TaskTypeDefinition taskType)
 	{
@@ -41,10 +41,21 @@ public class TaskService
 		{
 			this.currentTaskType = taskType;
 
-			List<TaskDefinition> taskDefinitions = this.taskDataClient.getTasks(taskType.getTaskJsonName());
-			this.tasks = taskDefinitions.stream()
+			this.tasks = this.taskDataClient.getTasks(taskType.getTaskJsonName()).stream()
 				.map(definition -> new TaskFromStruct(taskType, definition))
 				.collect(Collectors.toList());
+
+			// TODO: Simplify
+			this.currentTaskTypeVarps = IntStream.of(taskType.getTaskVarps())
+				.boxed()
+				.collect(Collectors.toCollection(HashSet::new));
+
+			this.currentTasksByVarp = this.tasks.stream()
+				.collect(Collectors.groupingBy(
+					TaskFromStruct::getTaskVarp,
+					HashMap::new,
+					Collectors.toList()
+				));
 		}
 		catch (Exception ex)
 		{
