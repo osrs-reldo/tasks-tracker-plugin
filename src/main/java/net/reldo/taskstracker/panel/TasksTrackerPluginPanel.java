@@ -17,11 +17,6 @@ import net.runelite.client.ui.PluginPanel;
 @Slf4j
 public class TasksTrackerPluginPanel extends PluginPanel
 {
-	private final ClientThread clientThread;
-	private final SpriteManager spriteManager;
-	private final TasksTrackerPlugin plugin;
-	private final SkillIconManager skillIconManager;
-
 	private final LoggedInPanel loggedInPanel;
 	private final LoggedOutPanel loggedOutPanel = new LoggedOutPanel();
 
@@ -29,19 +24,15 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	private boolean loggedIn = false;
 
-	public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
+	public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager, TaskPanelFactory taskPanelFactory)
 	{
 		super(false);
-		this.plugin = plugin;
-		this.clientThread = clientThread;
-		this.spriteManager = spriteManager;
-		this.skillIconManager = skillIconManager;
 
 		setBorder(new EmptyBorder(6, 6, 6, 6));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 		setLayout(new BorderLayout());
 
-		loggedInPanel = new LoggedInPanel(plugin, config, clientThread, spriteManager, skillIconManager);
+		loggedInPanel = new LoggedInPanel(plugin, config, clientThread, spriteManager, skillIconManager, taskPanelFactory);
 		taskListPanel = loggedInPanel.taskListPanel;
 		add(loggedInPanel, BorderLayout.NORTH);
 		loggedInPanel.setVisible(false);

@@ -58,9 +58,7 @@ public class CategoryFilterPanel extends FilterButtonPanel
         BufferedImage categoryImage;
         String directory = "panel/components/task_categories/";
 
-        if (plugin.getConfig().taskType() == null ||
-            plugin.getConfig().taskType().equals(TaskType.COMBAT) ||
-            plugin.getConfig().taskType().equals(TaskType.LEAGUE_3)) return images;
+        if (plugin.getConfig().taskType() == null) return images;
 
         if (plugin.getConfig().taskType().equals(TaskType.LEAGUE_4))
         {
@@ -83,7 +81,9 @@ public class CategoryFilterPanel extends FilterButtonPanel
     public void redraw()
     {
         if (plugin.getConfig().taskType() != null)
-            this.setVisible(plugin.getConfig().taskType().equals(TaskType.LEAGUE_4));
+        {
+	        setVisible(plugin.getConfig().taskType().equals(TaskType.LEAGUE_4));
+        }
 
         super.redraw();
     }

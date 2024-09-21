@@ -3,15 +3,12 @@ package net.reldo.taskstracker.panel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -40,7 +37,6 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
-import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.SwingUtil;
 
 @Slf4j
@@ -49,10 +45,9 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 	public TaskListPanel taskListPanel;
 	private JComboBox<TaskType> taskTypeDropdown;
 
+	private final TaskPanelFactory taskPanelFactory;
 	private final TasksTrackerPlugin plugin;
-	private final ClientThread clientThread;
 	private final SpriteManager spriteManager;
-	private final SkillIconManager skillIconManager;
 	private final TasksTrackerConfig config;
 
 	// Filter buttons
@@ -61,22 +56,6 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 	private final TriToggleButton ignoredFilterBtn = new TriToggleButton();
 	private final JPanel titlePanel = new JPanel();
 
-	private final String completeBtnPath = "panel/components/complete_button/style_2a/";
-	private final Icon COMPLETE_INCOMPLETE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, completeBtnPath + "complete_and_incomplete_icon.png"));
-	private final Icon COMPLETE_ONLY_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, completeBtnPath + "complete_only_icon.png"));
-	private final Icon INCOMPLETE_ONLY_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, completeBtnPath + "incomplete_only_icon.png"));
-
-	private final String ignoredBtnPath = "panel/components/ignored_button/";
-	private final Icon VISIBLE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, ignoredBtnPath + "visible_icon.png"));
-	private final Icon INVISIBLE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, ignoredBtnPath + "invisible_icon.png"));
-	private final BufferedImage semivisibleimg = ImageUtil.loadImageResource(TasksTrackerPlugin.class, ignoredBtnPath + "semivisible_icon.png");
-	private final Icon SEMIVISIBLE_ICON = new ImageIcon(ImageUtil.alphaOffset(semivisibleimg, -180));
-
-	private final String trackedBtnPath = "panel/components/tracked_button/";
-	private final Icon TRACKED_UNTRACKED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, trackedBtnPath + "tracked_and_untracked_icon.png"));
-	private final Icon TRACKED_ONLY_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, trackedBtnPath + "tracked_icon.png"));
-	private final Icon UNTRACKED_ONLY_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, trackedBtnPath + "untracked_icon.png"));
-
 	// Task list tabs
 	private final JTabbedPane tabbedPane = new JTabbedPane();
 
@@ -84,28 +63,21 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 	private SubFilterPanel subFilterPanel;
 	private final JToggleButton collapseBtn = new JToggleButton();
 
-	private final String expandBtnPath = "panel/components/";
-	private final BufferedImage collapseImg = ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "filter_menu_collapsed.png");
-	private final Icon MENU_COLLAPSED_ICON = new ImageIcon(ImageUtil.alphaOffset(collapseImg, -180));
-	private final Icon MENU_ICON_HOVER = new ImageIcon(collapseImg);
-	private final Icon MENU_EXPANDED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "filter_menu_expanded.png"));
-
-	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
+	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager, TaskPanelFactory taskPanelFactory)
 	{
 		super(false);
 		this.plugin = plugin;
-		this.clientThread = clientThread;
 		this.spriteManager = spriteManager;
-		this.skillIconManager = skillIconManager;
+		this.taskPanelFactory = taskPanelFactory;
 		this.config = config;
 
-		createPanel(this);
+		createPanel(clientThread, skillIconManager);
 	}
 
 	@Override
 	public Dimension getPreferredSize()
 	{
-		return this.getParent().getSize();
+		return getParent().getSize();
 	}
 
 	public void redraw()
@@ -119,21 +91,23 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 	public void refresh(Task task)
 	{
 		if(task == null)
+		{
 			updateCollapseButtonText();
+		}
 
 		taskListPanel.refresh(task);
 	}
 
-	private void createPanel(JPanel parent)
+	private void createPanel(ClientThread clientThread, SkillIconManager skillIconManager)
 	{
-		parent.setLayout(new BorderLayout());
-		parent.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		setLayout(new BorderLayout());
+		setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		taskListPanel = new TaskListPanel(plugin, clientThread, spriteManager, skillIconManager);
+		taskListPanel = new TaskListPanel(plugin, clientThread, spriteManager, skillIconManager, taskPanelFactory);
 
-		parent.add(getNorthPanel(), BorderLayout.NORTH);
-		parent.add(getCenterPanel(), BorderLayout.CENTER);
-		parent.add(getSouthPanel(), BorderLayout.SOUTH);
+		add(getNorthPanel(), BorderLayout.NORTH);
+		add(getCenterPanel(), BorderLayout.CENTER);
+		add(getSouthPanel(), BorderLayout.SOUTH);
 
 		loadAndApplyFilters(config.taskListTab());
 		if(config.taskListTab().equals(ConfigValues.TaskListTabs.TRACKED))
@@ -220,9 +194,9 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		ConfigValues.TaskListTabs tab = config.taskListTab();
 
 		Map<String, Integer> filterStates = new HashMap<>();
-		filterStates.put("completed",config.completedFilter().ordinal());
-		filterStates.put("tracked",config.trackedFilter().ordinal());
-		filterStates.put("ignored",config.ignoredFilter().ordinal());
+		filterStates.put("completed", config.completedFilter().ordinal());
+		filterStates.put("tracked", config.trackedFilter().ordinal());
+		filterStates.put("ignored", config.ignoredFilter().ordinal());
 
 		filterStore.put(tab, filterStates);
 	}
@@ -303,9 +277,9 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 
 		// collapse button
 		SwingUtil.removeButtonDecorations(collapseBtn);
-		collapseBtn.setIcon(MENU_COLLAPSED_ICON);
-		collapseBtn.setSelectedIcon(MENU_EXPANDED_ICON);
-		collapseBtn.setRolloverIcon(MENU_ICON_HOVER);
+		collapseBtn.setIcon(Icons.MENU_COLLAPSED_ICON);
+		collapseBtn.setSelectedIcon(Icons.MENU_EXPANDED_ICON);
+		collapseBtn.setRolloverIcon(Icons.MENU_ICON_HOVER);
 		SwingUtil.addModalTooltip(collapseBtn, "Collapse filters", "Expand filters");
 		collapseBtn.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		collapseBtn.setAlignmentX(LEFT_ALIGNMENT);
@@ -317,8 +291,8 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 
 		// filter button
 		SwingUtil.removeButtonDecorations(collapseBtn);
-		collapseBtn.setIcon(MENU_COLLAPSED_ICON);
-		collapseBtn.setSelectedIcon(MENU_EXPANDED_ICON);
+		collapseBtn.setIcon(Icons.MENU_COLLAPSED_ICON);
+		collapseBtn.setSelectedIcon(Icons.MENU_EXPANDED_ICON);
 
 		// panel to hold sub-filters
 		subFilterPanel = new SubFilterPanel(plugin, spriteManager);
@@ -355,7 +329,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 
 		// Completed tasks filter button
 		SwingUtil.removeButtonDecorations(completedFilterBtn);
-		completedFilterBtn.setIcons(COMPLETE_INCOMPLETE_ICON, COMPLETE_ONLY_ICON, INCOMPLETE_ONLY_ICON);
+		completedFilterBtn.setIcons(Icons.COMPLETE_INCOMPLETE_ICON, Icons.COMPLETE_ONLY_ICON, Icons.INCOMPLETE_ONLY_ICON);
 		completedFilterBtn.setToolTips("All tasks", "Completed tasks only", "Incomplete tasks only");
 		completedFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		completedFilterBtn.addActionListener(e -> {
@@ -394,7 +368,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 
 		// Tracked tasks filter button
 		SwingUtil.removeButtonDecorations(trackedFilterBtn);
-		trackedFilterBtn.setIcons(TRACKED_UNTRACKED_ICON, TRACKED_ONLY_ICON, UNTRACKED_ONLY_ICON);
+		trackedFilterBtn.setIcons(Icons.TRACKED_UNTRACKED_ICON, Icons.TRACKED_ONLY_ICON, Icons.UNTRACKED_ONLY_ICON);
 		trackedFilterBtn.setToolTips("All tasks", "Tracked tasks only", "Untracked tasks only");
 		trackedFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		trackedFilterBtn.addActionListener(e -> {
@@ -433,7 +407,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 
 		// Ignored tasks filter button
 		SwingUtil.removeButtonDecorations(ignoredFilterBtn);
-		ignoredFilterBtn.setIcons(SEMIVISIBLE_ICON, VISIBLE_ICON, INVISIBLE_ICON);
+		ignoredFilterBtn.setIcons(Icons.SEMIVISIBLE_ICON, Icons.VISIBLE_ICON, Icons.INVISIBLE_ICON);
 		ignoredFilterBtn.setToolTips("Hide ignored tasks", "All tasks", "Ignored tasks only");
 		ignoredFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		ignoredFilterBtn.addActionListener(e -> {
@@ -535,8 +509,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 
 		List<String> filterCounts = new ArrayList<>();
 
-		if(plugin.getConfig().taskType().equals(TaskType.LEAGUE_3) ||
-		   plugin.getConfig().taskType().equals(TaskType.LEAGUE_4))
+		if(plugin.getConfig().taskType().equals(TaskType.LEAGUE_4))
 		{
 			int count = config.skillFilter().equals("") ? 0 : config.skillFilter().split(",").length ;
 			filterCounts.add(count + " skill");

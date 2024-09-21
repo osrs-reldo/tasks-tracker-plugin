@@ -31,6 +31,8 @@ import net.reldo.taskstracker.data.jsondatastore.types.TaskFromStruct;
 import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.data.task.TaskService;
+import net.reldo.taskstracker.panel.TaskPanelFactory;
+import net.reldo.taskstracker.panel.TaskTrackerPanelModule;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskManager;
@@ -118,11 +120,13 @@ public class TasksTrackerPlugin extends Plugin
 	private TaskService taskService;
 	@Inject
 	private net.reldo.taskstracker.data.jsondatastore.TaskDataClient taskDataClientV2;
-
+	@Inject
+	private TaskPanelFactory taskPanelFactory;
 	@Override
 	public void configure(Binder binder)
 	{
 		binder.bind(DataStoreReader.class).to(FileDataStoreReader.class);
+		binder.install(new TaskTrackerPanelModule());
 		super.configure(binder);
 	}
 
@@ -148,7 +152,8 @@ public class TasksTrackerPlugin extends Plugin
 
 		this.forceUpdateVarpsFlag = false;
 
-		this.pluginPanel = new TasksTrackerPluginPanel(this, this.config, this.clientThread, this.spriteManager, this.skillIconManager);
+		// TODO: inject panel
+		this.pluginPanel = new TasksTrackerPluginPanel(this, this.config, this.clientThread, this.spriteManager, this.skillIconManager, this.taskPanelFactory);
 
 		boolean isLoggedIn = this.isLoggedInState(this.client.getGameState());
 		this.pluginPanel.setLoggedIn(isLoggedIn);

@@ -1,19 +1,14 @@
 package net.reldo.taskstracker.panel;
 
-import java.util.ArrayList;
-import net.reldo.taskstracker.TasksTrackerConfig;
-import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.Util;
-import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
-import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
-import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
-import net.reldo.taskstracker.panel.filters.Filter;
-import net.reldo.taskstracker.tasktypes.Task;
+import com.google.inject.assistedinject.Assisted;
+import com.google.inject.assistedinject.AssistedInject;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.net.URL;
+import java.util.ArrayList;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -24,29 +19,30 @@ import javax.swing.JToolTip;
 import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.TasksTrackerConfig;
+import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.Util;
+import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
+import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
+import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
+import net.reldo.taskstracker.panel.filters.Filter;
+import net.reldo.taskstracker.tasktypes.RequiredSkill;
+import net.reldo.taskstracker.tasktypes.Task;
+import net.reldo.taskstracker.tasktypes.league4.League4Task;
 import net.runelite.api.Constants;
+import net.runelite.api.Skill;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
-import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.SwingUtil;
 
 @Slf4j
-public abstract class TaskPanel extends JPanel
+public class TaskPanel extends JPanel
 {
-	public static Color QUALIFIED_TEXT_COLOR = new Color(34, 177, 77);
-	public static Color UNQUALIFIED_TEXT_COLOR = new Color(251, 93, 93);
-	public static Color COMPLETED_BACKGROUND_COLOR = new Color(0, 50, 0);
-	public static Color UNQUALIFIED_BACKGROUND_COLOR = new Color(70, 30, 0);
-
-	public static ImageIcon PLUS_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "plus.png"));
-	public static ImageIcon MINUS_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "minus.png"));
-	public static ImageIcon EYE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "eye.png"));
-	public static ImageIcon EYE_CROSS_GREY = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "eye-cross-grey.png"));
-
 	public final SpriteManager spriteManager;
 	public final Task task;
 	private final ClientThread clientThread;
@@ -64,7 +60,8 @@ public abstract class TaskPanel extends JPanel
 
 	protected TasksTrackerPlugin plugin;
 
-	public TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, Task task)
+	@AssistedInject
+	public TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, @Assisted Task task)
 	{
 		super(new BorderLayout());
 		this.plugin = plugin;
@@ -75,17 +72,118 @@ public abstract class TaskPanel extends JPanel
 		setComponentPopupMenu(getPopupMenu());
 		ToolTipManager.sharedInstance().registerComponent(this);
 		refresh();
+//		this.filters.add(new SkillFilter(plugin.getConfig()));
+//		this.filters.add(new TierFilter(plugin.getConfig()));
+//		this.filters.add(new AreaFilter(plugin.getConfig()));
+//		this.filters.add(new CategoryFilter(plugin.getConfig()));
 	}
 
-	public abstract JPopupMenu getPopupMenu();
+	public JPopupMenu getPopupMenu()
+	{
+		return null;
+	}
 
-	public abstract String getTaskTooltip();
+	public String getTaskTooltip()
+	{
+//		League4Task task = (League4Task) this.task;
+//		String text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
+//			task.getTier() + getPointsTooltipText() + Util.HTML_LINE_BREAK +
+//			task.getDescription() +
+//			getSkillSectionHtml();
+//
+//		text = Util.wrapWithWrappingParagraph(text, 200);
 
-	public abstract BufferedImage getIcon();
+//		String datePattern = "MM-dd-yyyy hh:mma";
+//		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(datePattern);
+//		CombatTask task = (CombatTask) this.task;
+//		String text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
+//			task.getTier() + Util.HTML_LINE_BREAK +
+//			task.getMonster() + Util.HTML_LINE_BREAK +
+//			task.getDescription();
+//
+//		if (task.isCompleted())
+//		{
+//			text += Util.HTML_LINE_BREAK + Util.HTML_LINE_BREAK + "✔ " + simpleDateFormat.format(new Date(task.getCompletedOn()));
+//		}
+//
+//		text = Util.wrapWithWrappingParagraph(text, 200);
+
+		String text = "tooltip"; // TODO: this
+		return Util.wrapWithHtml(text);
+	}
+
+	public BufferedImage getIcon()
+	{
+//		League4TaskTier tier = League4TaskTier.tiersByName.get(task.getTier().toLowerCase());
+//		if (tier == null)
+//		{
+//			return null;
+//		}
+//
+//		return spriteManager.getSprite(tier.spriteId, 0);
+
+//		CombatTaskTier tier = CombatTaskTier.tiersByName.get(task.getTier().toLowerCase());
+//		if (tier == null)
+//		{
+//			return null;
+//		}
+//
+//		return spriteManager.getSprite(tier.spriteId, 0);
+		// TODO: this
+		return spriteManager.getSprite(3399, 0);
+	}
 
 	public Color getTaskBackgroundColor(Task task, int[] playerSkills)
 	{
-		return task.isCompleted() ? COMPLETED_BACKGROUND_COLOR : ColorScheme.DARKER_GRAY_COLOR;
+//		// TODO (1/29/22): The required skill loop code is repeated in getSkillSectionHtml
+//		//  Ideally, checking skill requirements would be a responsibility of Task
+//		//  Current issue is that Task is instantiated by Gson in multiple places, so plugin may not be injected/accessible
+//		@Override
+//		public Color getTaskBackgroundColor(Task task, int[] playerSkills)
+//		{
+//			if (playerSkills == null)
+//			{
+//				return ColorScheme.DARKER_GRAY_COLOR;
+//			}
+//
+//			if (task.isCompleted())
+//			{
+//				return Colors.COMPLETED_BACKGROUND_COLOR;
+//			}
+//
+//			for (RequiredSkill requiredSkill : ((League4Task) task).getSkills())
+//			{
+//				Skill skill;
+//				// FIXME: Shouldn't use exception for control flow
+//				try
+//				{
+//					skill = Skill.valueOf(requiredSkill.skill.toUpperCase());
+//				}
+//				catch (IllegalArgumentException ex)
+//				{
+//					continue;
+//				}
+//
+//				int level;
+//				// FIXME: Shouldn't use exception for control flow
+//				try
+//				{
+//					level = Integer.parseInt(requiredSkill.level);
+//				}
+//				catch (NumberFormatException ex)
+//				{
+//					continue;
+//				}
+//
+//				if (playerSkills[skill.ordinal()] < level)
+//				{
+//					return Colors.UNQUALIFIED_BACKGROUND_COLOR;
+//				}
+//			}
+//
+//			return ColorScheme.DARKER_GRAY_COLOR;
+//		}
+		return task.isCompleted() ? Colors.COMPLETED_BACKGROUND_COLOR : ColorScheme.DARKER_GRAY_COLOR;
 	}
 
 	public void createPanel(Task task)
@@ -110,8 +208,8 @@ public abstract class TaskPanel extends JPanel
 		buttons.setBorder(new EmptyBorder(0, 0, 0, 7));
 
 		toggleTrack.setPreferredSize(new Dimension(8, 8));
-		toggleTrack.setIcon(PLUS_ICON);
-		toggleTrack.setSelectedIcon(MINUS_ICON);
+		toggleTrack.setIcon(Icons.PLUS_ICON);
+		toggleTrack.setSelectedIcon(Icons.MINUS_ICON);
 		toggleTrack.setBorder(new EmptyBorder(5, 0, 5, 0));
 		toggleTrack.addActionListener(e -> {
 			task.setTracked(toggleTrack.isSelected());
@@ -121,8 +219,8 @@ public abstract class TaskPanel extends JPanel
 		SwingUtil.removeButtonDecorations(toggleTrack);
 
 		toggleIgnore.setPreferredSize(new Dimension(8, 8));
-		toggleIgnore.setIcon(EYE_CROSS_GREY);
-		toggleIgnore.setSelectedIcon(EYE_ICON);
+		toggleIgnore.setIcon(Icons.EYE_CROSS_GREY);
+		toggleIgnore.setSelectedIcon(Icons.EYE_ICON);
 		SwingUtil.addModalTooltip(toggleIgnore, "Unignore", "Ignore");
 		toggleIgnore.setBorder(new EmptyBorder(5, 0, 5, 0));
 		toggleIgnore.addActionListener(e -> {
@@ -182,9 +280,12 @@ public abstract class TaskPanel extends JPanel
 
 		TasksTrackerConfig config = plugin.getConfig();
 
-		for(Filter filter : filters)
+		for (Filter filter : filters)
 		{
-			if(!filter.meetsCriteria(task)) return false;
+			if (!filter.meetsCriteria(task))
+			{
+				return false;
+			}
 		}
 
 		if (config.completedFilter().equals(CompletedFilterValues.INCOMPLETE) && task.isCompleted())
@@ -237,5 +338,54 @@ public abstract class TaskPanel extends JPanel
 	public String getToolTipText(MouseEvent mouseEvent)
 	{
 		return getTaskTooltip();
+	}
+
+	private String getSkillSectionHtml()
+	{
+		StringBuilder skillSection = new StringBuilder();
+		League4Task task = (League4Task) this.task;
+		for (RequiredSkill requiredSkill : task.getSkills())
+		{
+			Skill skill;
+			// FIXME: Shouldn't use exception for control flow
+			try
+			{
+				skill = Skill.valueOf(requiredSkill.skill.toUpperCase());
+			}
+			catch (IllegalArgumentException ex)
+			{
+				continue;
+			}
+
+			int level;
+			// FIXME: Shouldn't use exception for control flow
+			try
+			{
+				level = Integer.parseInt(requiredSkill.level);
+			}
+			catch (NumberFormatException ex)
+			{
+				continue;
+			}
+
+			skillSection.append(Util.HTML_LINE_BREAK);
+
+			int playerLevel = 255;
+			if (this.plugin.playerSkills != null)
+			{
+				playerLevel = this.plugin.playerSkills[skill.ordinal()];
+			}
+			skillSection.append(getSkillRequirementHtml(requiredSkill.getSkill().toLowerCase(), playerLevel, level));
+		}
+
+		return skillSection.toString();
+	}
+
+	private String getSkillRequirementHtml(String skillName, int playerLevel, int requiredLevel)
+	{
+		String skillIconPath = "/skill_icons_small/" + skillName + ".png";
+		URL url = SkillIconManager.class.getResource(skillIconPath);
+		Color color = playerLevel >= requiredLevel ? Colors.QUALIFIED_TEXT_COLOR : Colors.UNQUALIFIED_TEXT_COLOR;
+		return Util.imageTag(url) + " " + Util.colorTag(color, playerLevel + "/" + requiredLevel);
 	}
 }

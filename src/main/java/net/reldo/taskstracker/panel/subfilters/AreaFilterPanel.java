@@ -48,7 +48,7 @@ public class AreaFilterPanel extends FilterButtonPanel
         return buttonPanel;
     }
 
-    //@todo (maybe) change this to use SpriteManager after it has apologised to me
+    //@TODO: (maybe) change this to use SpriteManager after it has apologised to me
     @Override
     protected LinkedHashMap<String, BufferedImage> getIconImages()
     {
@@ -57,9 +57,7 @@ public class AreaFilterPanel extends FilterButtonPanel
         BufferedImage areaImage;
         String directory = "panel/components/task_areas/";
 
-        if (plugin.getConfig().taskType() == null ||
-            plugin.getConfig().taskType().equals(TaskType.COMBAT) ||
-            plugin.getConfig().taskType().equals(TaskType.LEAGUE_3)) return images;
+        if (plugin.getConfig().taskType() == null) return images;
 
         if (plugin.getConfig().taskType().equals(TaskType.LEAGUE_4))
         {
@@ -82,7 +80,7 @@ public class AreaFilterPanel extends FilterButtonPanel
     public void redraw()
     {
         if (plugin.getConfig().taskType() != null)
-            this.setVisible(plugin.getConfig().taskType().equals(TaskType.LEAGUE_4));
+            setVisible(plugin.getConfig().taskType().equals(TaskType.LEAGUE_4));
 
         //@todo remove duplication by generalising save/load to all subfilters
         assert SwingUtilities.isEventDispatchThread();

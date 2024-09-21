@@ -11,9 +11,6 @@ import net.reldo.taskstracker.quests.DiaryData;
 import net.reldo.taskstracker.quests.QuestData;
 import net.reldo.taskstracker.tasktypes.Task;
 import net.reldo.taskstracker.tasktypes.TaskType;
-import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
-import net.reldo.taskstracker.tasktypes.league3.League3Varbits;
-import net.reldo.taskstracker.tasktypes.league3.League3Varps;
 import net.reldo.taskstracker.tasktypes.league4.League4Varbits;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
@@ -62,10 +59,6 @@ public class Export
 		assert client.isClientThread();
 
 		List<Integer> varbitIds = null;
-		if (taskType == TaskType.LEAGUE_3)
-		{
-			varbitIds = League3Varbits.getAllVarbitIds();
-		}
 		if (taskType == TaskType.LEAGUE_4)
 		{
 			varbitIds = League4Varbits.getAllVarbitIds();
@@ -89,17 +82,13 @@ public class Export
 	{
 		assert client.isClientThread();
 
+		// TODO: THIS
 		List<Integer> varpIds = null;
-		if (taskType == TaskType.LEAGUE_3)
-		{
-			varpIds = League3Varps.getAllVarpIds();
-			varpIds.addAll(League3TaskVarps.getAllVarpIds());
-		}
-		if (taskType == TaskType.COMBAT)
-		{
-			varpIds = League3Varps.getAllVarpIds();
-		}
-
+//		if (taskType == TaskType.COMBAT)
+//		{
+//			varpIds = League3Varps.getAllVarpIds();
+//		}
+//
 		if (varpIds == null)
 		{
 			return null;

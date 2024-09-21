@@ -62,8 +62,7 @@ public class DifficultyFilterPanel extends FilterButtonPanel
 
         if (plugin.getConfig().taskType() == null) return images;
 
-        if (plugin.getConfig().taskType().equals(TaskType.LEAGUE_3) ||
-            plugin.getConfig().taskType().equals(TaskType.LEAGUE_4))
+        if (plugin.getConfig().taskType().equals(TaskType.LEAGUE_4))
         {
             directory += "league3/";
 
