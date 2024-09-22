@@ -42,7 +42,15 @@ public class TaskTypeDefinition
 	 * The value is an array of OSRS cache Struct ParamIDs that match with the plain English parameter
 	 * Generally, there is only 1 value in the array, but multiple are available for fallback
 	 */
-	private Map<String, Integer> paramMap;
+	private Map<String, Integer> intParamMap;
+
+	/**
+	 * A dictionary of parameters relevant to the task, with required id, name, description, tier
+	 * The key is the plain English name for the parameter
+	 * The value is an array of OSRS cache Struct ParamIDs that match with the plain English parameter
+	 * Generally, there is only 1 value in the array, but multiple are available for fallback
+	 */
+	private Map<String, Integer> stringParamMap;
 
 	/**
 	 * Varps used to store task progress

@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -412,6 +413,28 @@ public class TasksTrackerPlugin extends Plugin
 		}));
 	}
 
+	private CompletableFuture<Boolean> processTaskStatus(Task taskV1, TaskFromStruct taskV2) {
+		CompletableFuture<Boolean> future = new CompletableFuture<>();
+		this.clientThread.invokeLater(() -> {
+			try {
+				int CA_TASK_COMPLETED_SCRIPT_ID = 4834;
+//				log.debug("getting status taskFromStruct {}", taskV2.getSortId());
+				this.client.runScript(CA_TASK_COMPLETED_SCRIPT_ID, taskV2.getSortId());
+				boolean isTaskCompleted = this.client.getIntStack()[0] > 0;
+				taskV1.setCompleted(isTaskCompleted);
+				if (isTaskCompleted && this.config.untrackUponCompletion())
+				{
+					taskV1.setTracked(false);
+				}
+				future.complete(isTaskCompleted);
+			} catch (Exception ex) {
+				log.error("Error processing task status", ex);
+				future.completeExceptionally(ex);
+			}
+		});
+		return future;
+	}
+
 	private CompletableFuture<Boolean> processVarpAndUpdateTasks(@Nullable Integer varpId)
 	{
 		log.info("processVarpAndUpdateTasks: " + (varpId != null ? varpId : "all"));
@@ -429,30 +452,16 @@ public class TasksTrackerPlugin extends Plugin
 			this.taskService.getCurrentTasksByVarp().get(varpId) :
 			this.taskService.getTasks();
 
-		return CompletableFuture.supplyAsync(() -> {
-			try
-			{
-				for (TaskFromStruct taskV2 : tasks)
-				{
-					Task taskV1 = this.taskManagers.get(taskTypeV1).tasks.get(taskV2.getSortId());
-					int CA_TASK_COMPLETED_SCRIPT_ID = 4834;
-					log.debug("{}", taskV2.getSortId());
-					this.client.runScript(CA_TASK_COMPLETED_SCRIPT_ID, taskV2.getSortId());
-					boolean isTaskCompleted = this.client.getIntStack()[0] > 0;
-					taskV1.setCompleted(isTaskCompleted);
-					if (isTaskCompleted && this.config.untrackUponCompletion())
-					{
-						taskV1.setTracked(false);
-					}
-					SwingUtilities.invokeLater(() -> this.pluginPanel.refresh(taskV1));
-				}
-			}
-			catch (Exception ex)
-			{
-				log.error("exception occurred while processing task completions", ex);
-			}
-			return true;
-		}, this.clientThread::invokeLater);
+		List<CompletableFuture<Boolean>> taskFutures = new ArrayList<>();
+		for (TaskFromStruct taskV2 : tasks)
+		{
+			Task taskV1 = this.taskManagers.get(taskTypeV1).tasks.get(taskV2.getSortId());
+			CompletableFuture<Boolean> taskFuture = processTaskStatus(taskV1, taskV2);
+			taskFutures.add(taskFuture);
+		}
+
+		CompletableFuture<Void> allTasksFuture = CompletableFuture.allOf(taskFutures.toArray(new CompletableFuture[0]));
+		return allTasksFuture.thenApply(v -> true);
 	}
 
 	private String exportToJson(TaskType taskType)

@@ -8,7 +8,9 @@ import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -28,7 +30,11 @@ import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
 import net.reldo.taskstracker.panel.filters.Filter;
 import net.reldo.taskstracker.tasktypes.RequiredSkill;
 import net.reldo.taskstracker.tasktypes.Task;
+import net.reldo.taskstracker.tasktypes.TaskType;
+import net.reldo.taskstracker.tasktypes.combattask.CombatTask;
+import net.reldo.taskstracker.tasktypes.combattask.CombatTaskTier;
 import net.reldo.taskstracker.tasktypes.league4.League4Task;
+import net.reldo.taskstracker.tasktypes.league4.League4TaskTier;
 import net.runelite.api.Constants;
 import net.runelite.api.Skill;
 import net.runelite.client.callback.ClientThread;
@@ -85,52 +91,83 @@ public class TaskPanel extends JPanel
 
 	public String getTaskTooltip()
 	{
-//		League4Task task = (League4Task) this.task;
-//		String text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
-//			task.getTier() + getPointsTooltipText() + Util.HTML_LINE_BREAK +
-//			task.getDescription() +
-//			getSkillSectionHtml();
-//
-//		text = Util.wrapWithWrappingParagraph(text, 200);
+		String text = null;
+		if (task.getType() == TaskType.LEAGUE_4) {
+			League4Task task = (League4Task) this.task;
+			text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
+				task.getTier() + getPointsTooltipText() + Util.HTML_LINE_BREAK +
+				task.getDescription() +
+				getSkillSectionHtml();
 
-//		String datePattern = "MM-dd-yyyy hh:mma";
-//		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(datePattern);
-//		CombatTask task = (CombatTask) this.task;
-//		String text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
-//			task.getTier() + Util.HTML_LINE_BREAK +
-//			task.getMonster() + Util.HTML_LINE_BREAK +
-//			task.getDescription();
-//
-//		if (task.isCompleted())
-//		{
-//			text += Util.HTML_LINE_BREAK + Util.HTML_LINE_BREAK + "✔ " + simpleDateFormat.format(new Date(task.getCompletedOn()));
-//		}
-//
-//		text = Util.wrapWithWrappingParagraph(text, 200);
+			text = Util.wrapWithWrappingParagraph(text, 200);
+		} else if (task.getType() == TaskType.COMBAT) {
+			String datePattern = "MM-dd-yyyy hh:mma";
+			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(datePattern);
+			CombatTask task = (CombatTask) this.task;
+			text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
+				task.getTier() + Util.HTML_LINE_BREAK +
+				task.getMonster() + Util.HTML_LINE_BREAK +
+				task.getDescription();
 
-		String text = "tooltip"; // TODO: this
+			if (task.isCompleted())
+			{
+				text += Util.HTML_LINE_BREAK + Util.HTML_LINE_BREAK + "✔ " + simpleDateFormat.format(new Date(task.getCompletedOn()));
+			}
+
+			text = Util.wrapWithWrappingParagraph(text, 200);
+		}
+
 		return Util.wrapWithHtml(text);
 	}
 
 	public BufferedImage getIcon()
 	{
-//		League4TaskTier tier = League4TaskTier.tiersByName.get(task.getTier().toLowerCase());
-//		if (tier == null)
-//		{
-//			return null;
-//		}
-//
-//		return spriteManager.getSprite(tier.spriteId, 0);
-
-//		CombatTaskTier tier = CombatTaskTier.tiersByName.get(task.getTier().toLowerCase());
-//		if (tier == null)
-//		{
-//			return null;
-//		}
-//
-//		return spriteManager.getSprite(tier.spriteId, 0);
+		int archiveId = -1;
+		if (task.getType() == TaskType.COMBAT) {
+			switch (task.getTier().toLowerCase()) {
+				case "easy":
+					archiveId = CombatTaskTier.EASY.spriteId;
+					break;
+				case "medium":
+					archiveId = CombatTaskTier.MEDIUM.spriteId;
+					break;
+				case "hard":
+					archiveId = CombatTaskTier.HARD.spriteId;
+					break;
+				case "elite":
+					archiveId = CombatTaskTier.ELITE.spriteId;
+					break;
+				case "master":
+					archiveId = CombatTaskTier.MASTER.spriteId;
+					break;
+				case "grandmaster":
+					archiveId = CombatTaskTier.GRANDMASTER.spriteId;
+					break;
+			}
+		} else if (task.getType() == TaskType.LEAGUE_4) {
+			switch (task.getTier().toLowerCase()) {
+				case "easy":
+					archiveId = League4TaskTier.EASY.spriteId;
+					break;
+				case "medium":
+					archiveId = League4TaskTier.MEDIUM.spriteId;
+					break;
+				case "hard":
+					archiveId = League4TaskTier.HARD.spriteId;
+					break;
+				case "elite":
+					archiveId = League4TaskTier.ELITE.spriteId;
+					break;
+				case "master":
+					archiveId = League4TaskTier.MASTER.spriteId;
+					break;
+			}
+		}
 		// TODO: this
-		return spriteManager.getSprite(3399, 0);
+		if (archiveId == -1) {
+			return null;
+		}
+		return spriteManager.getSprite(archiveId, 0);
 	}
 
 	public Color getTaskBackgroundColor(Task task, int[] playerSkills)
@@ -387,5 +424,15 @@ public class TaskPanel extends JPanel
 		URL url = SkillIconManager.class.getResource(skillIconPath);
 		Color color = playerLevel >= requiredLevel ? Colors.QUALIFIED_TEXT_COLOR : Colors.UNQUALIFIED_TEXT_COLOR;
 		return Util.imageTag(url) + " " + Util.colorTag(color, playerLevel + "/" + requiredLevel);
+	}
+
+	private String getPointsTooltipText()
+	{
+		int points = this.task.getPoints();
+		if (points == 0)
+		{
+			return "";
+		}
+		return " - " + points + " points";
 	}
 }
