@@ -1,6 +1,6 @@
 # Tasks Tracker
-![image](https://img.shields.io/endpoint?url=https://i.pluginhub.info/shields/installs/plugin/tasks-tracker)
-![image](https://img.shields.io/endpoint?url=https://i.pluginhub.info/shields/rank/plugin/tasks-tracker)
+![image](https://img.shields.io/endpoint?url=https://api.runelite.net/pluginhub/shields/installs/plugin/tasks-tracker)
+![image](https://img.shields.io/endpoint?url=https://api.runelite.net/pluginhub/shields/rank/plugin/tasks-tracker)
 
 
 Provides a RuneLite panel to track & filter tasks for Combat Achievements and Leagues.
