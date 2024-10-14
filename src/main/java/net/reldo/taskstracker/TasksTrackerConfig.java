@@ -1,7 +1,6 @@
 package net.reldo.taskstracker;
 
 import net.reldo.taskstracker.config.ConfigValues;
-import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -114,17 +113,17 @@ public interface TasksTrackerConfig extends Config
         return "";
     }
 
-	@ConfigItem(
-		position = 106,
-		keyName = "taskType",
-		name = "Task Type",
-		description = "Configures the task type which is displayed in the panel.",
-		hidden = true
-	)
-	default TaskType taskType()
-	{
-		return TaskType.COMBAT;
-	}
+//	@ConfigItem( // TODO: reimplement this, but it will have to be a string since types are now dynamic
+//		position = 106,
+//		keyName = "taskType",
+//		name = "Task Type",
+//		description = "Configures the task type which is displayed in the panel.",
+//		hidden = true
+//	)
+//	default TaskTypeDefinition taskType()
+//	{
+//		return TaskType.COMBAT;
+//	}
 
     @ConfigItem(
             position = 107,
@@ -149,4 +148,16 @@ public interface TasksTrackerConfig extends Config
     {
         return "";
     }
+
+	@ConfigItem(
+		position = 109,
+		keyName = "dropdownFilter",
+		name = "Dropdown Filter",
+		description = "Configures the dropdown to filter tasks on.",
+		hidden = true
+	)
+	default String dropdownFilter()
+	{
+		return "";
+	}
 }

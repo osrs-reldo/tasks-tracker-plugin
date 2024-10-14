@@ -13,8 +13,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
-import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskDefinition;
-import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import okhttp3.OkHttpClient;
 
 @Singleton
@@ -31,7 +31,7 @@ public class TaskDataClient
 		System.out.println("init task data client");
 	}
 
-	public HashMap<String, TaskTypeDefinition> getTaskTypes() throws Exception
+	public HashMap<String, TaskTypeDefinition> getTaskTypeDefinitions() throws Exception
 	{
 		InputStream stream = this.dataStoreReader.readTaskTypes(this.manifestClient.getManifest().taskTypeMetadata);
 		InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
@@ -46,7 +46,7 @@ public class TaskDataClient
 		return taskTypesByJsonName;
 	}
 
-	public List<TaskDefinition> getTasks(String jsonFilename) throws Exception
+	public List<TaskDefinition> getTaskDefinitions(String jsonFilename) throws Exception
 	{
 		InputStream stream = this.dataStoreReader.readTasks(jsonFilename);
 		InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8);

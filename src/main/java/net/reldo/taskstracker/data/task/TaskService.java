@@ -1,19 +1,23 @@
 package net.reldo.taskstracker.data.task;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
 import net.reldo.taskstracker.data.jsondatastore.TaskDataClient;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskFromStruct;
-import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
+import net.runelite.api.Client;
+import net.runelite.api.EnumComposition;
+import net.runelite.client.callback.ClientThread;
 
 @Singleton
 @Slf4j
@@ -23,44 +27,71 @@ public class TaskService
 	private ManifestClient manifestClient;
 	@Inject
 	private TaskDataClient taskDataClient;
+	@Inject
+	private TaskTypeFactory taskTypeFactory;
+	@Inject
+	private ClientThread clientThread;
+	@Inject
+	private Client client;
 
 	@Getter
-	private TaskTypeDefinition currentTaskType;
+	@Setter
+	private boolean taskTypeChanged = false;
+	// TODO: deprecate one of these. additionally and separate thought: & cache all task types?
 	@Getter
-	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
+	private TaskTypeDefinition currentTaskTypeDefinition;
 	@Getter
-	private HashMap<Integer, List<TaskFromStruct>> currentTasksByVarp = new HashMap<>();
+	private TaskType currentTaskType;
 	@Getter
-	private List<TaskFromStruct> tasks = new ArrayList<>();
-
+	private final HashMap<Integer, List<TaskFromStruct>> currentTasksByVarp = new HashMap<>();
+	// TODO: Build the filter on getTasks
+	@Getter
+	private final List<TaskFromStruct> tasks = new ArrayList<>();
 	private HashMap<String, TaskTypeDefinition> _taskTypes = new HashMap<>();
+	private HashSet currentTaskTypeVarps = new HashSet<>();
 
-	public void setTaskType(TaskTypeDefinition taskType)
+	public void setTaskType(TaskTypeDefinition taskTypeDefinition)
 	{
 		try
 		{
-			this.currentTaskType = taskType;
+			tasks.clear();
+			currentTaskTypeDefinition = taskTypeDefinition;
+			currentTaskType = taskTypeFactory.create(taskTypeDefinition);
+			boolean loaded = currentTaskType.loadTaskTypeDataAsync().get(); // TODO: blocking
+			if (!loaded)
+			{
+				throw new Exception("LOADING TASKTYPE ERROR");
+			}
 
-			this.tasks = this.taskDataClient.getTasks(taskType.getTaskJsonName()).stream()
-				.map(definition -> new TaskFromStruct(taskType, definition))
-				.collect(Collectors.toList());
+			currentTaskTypeVarps.clear();
+			currentTaskTypeVarps = new HashSet<>(taskTypeDefinition.getTaskVarps());
 
-			// TODO: Simplify
-			this.currentTaskTypeVarps = IntStream.of(taskType.getTaskVarps())
-				.boxed()
-				.collect(Collectors.toCollection(HashSet::new));
+			currentTasksByVarp.clear();
+			Collection<TaskDefinition> taskDefinitions = taskDataClient.getTaskDefinitions(taskTypeDefinition.getTaskJsonName());
+			for (TaskDefinition definition : taskDefinitions)
+			{
+				TaskFromStruct task = new TaskFromStruct(taskTypeDefinition, definition);
+				tasks.add(task);
+				clientThread.invoke(() -> task.loadStructData(client));
+				addVarpLookup(task);
+			}
 
-			this.currentTasksByVarp = this.tasks.stream()
-				.collect(Collectors.groupingBy(
-					TaskFromStruct::getTaskVarp,
-					HashMap::new,
-					Collectors.toList()
-				));
+			taskTypeChanged = true;
 		}
 		catch (Exception ex)
 		{
-			log.error("Unable to set task type");
+			log.error("Unable to set task type", ex);
 		}
+	}
+
+	public boolean isVarpInCurrentTaskType(int varpId)
+	{
+		return currentTaskTypeVarps.contains(varpId);
+	}
+
+	public void clearTaskTypes()
+	{
+		this._taskTypes.clear();
 	}
 
 	/**
@@ -77,7 +108,7 @@ public class TaskService
 
 		try
 		{
-			this._taskTypes = this.taskDataClient.getTaskTypes();
+			this._taskTypes = this.taskDataClient.getTaskTypeDefinitions();
 			return this._taskTypes;
 		}
 		catch (Exception ex)
@@ -85,5 +116,44 @@ public class TaskService
 			log.error("Unable to populate task types from data client", ex);
 			return new HashMap<>();
 		}
+	}
+
+	public CompletableFuture<HashMap<Integer, String>> getStringEnumValuesAsync(String enumName)
+	{
+		Integer enumId = currentTaskTypeDefinition.getStringEnumMap().get(enumName);
+		if (enumId == null)
+		{
+			return CompletableFuture.completedFuture(new HashMap<>());
+		}
+
+		CompletableFuture<HashMap<Integer, String>> future = new CompletableFuture<>();
+		clientThread.invoke(() -> {
+			try
+			{
+				EnumComposition enumComposition = client.getEnum(enumId);
+				int[] keys = enumComposition.getKeys();
+				HashMap<Integer, String> map = new HashMap<>();
+				for (int i = 0; i < keys.length; i++)
+				{
+					map.put(keys[i], enumComposition.getStringValue(keys[i]));
+				}
+				future.complete(map);
+			}
+			catch (Exception ex)
+			{
+				log.error("Error getting string enum values", ex);
+				future.completeExceptionally(ex);
+			}
+		});
+		return future;
+	}
+
+	private void addVarpLookup(TaskFromStruct task)
+	{
+		if (!currentTasksByVarp.containsKey(task.getTaskVarp()))
+		{
+			currentTasksByVarp.put(task.getTaskVarp(), new ArrayList<>());
+		}
+		currentTasksByVarp.get(task.getTaskVarp()).add(task);
 	}
 }

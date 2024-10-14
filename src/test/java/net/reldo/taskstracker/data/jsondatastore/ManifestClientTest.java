@@ -73,7 +73,7 @@ public class ManifestClientTest
 
 		assertEquals("filters.json", result.filterMetadata);
 		assertEquals("task-types.json", result.taskTypeMetadata);
-		assertEquals(4458, result.additionalVarbits[0]);
-		assertEquals(4459, result.additionalVarbits[1]);
+		assertEquals(4458, result.exportVarbits[0]);
+		assertEquals(4459, result.exportVarbits[1]);
 	}
 }

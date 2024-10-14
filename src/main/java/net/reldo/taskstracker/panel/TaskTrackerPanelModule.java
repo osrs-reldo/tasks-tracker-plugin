@@ -8,9 +8,5 @@ public class TaskTrackerPanelModule extends AbstractModule {
 		this.install(new FactoryModuleBuilder()
 			.implement(TaskPanel.class, TaskPanel.class)
 			.build(TaskPanelFactory.class));
-
-		this.install(new FactoryModuleBuilder()
-			.implement(TaskPanel.class, TaskPanel.class)
-			.build(TaskPanelFactory.class));
 	}
 }

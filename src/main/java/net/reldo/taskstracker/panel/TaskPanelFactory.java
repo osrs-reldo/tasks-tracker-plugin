@@ -1,8 +1,8 @@
 package net.reldo.taskstracker.panel;
 
-import net.reldo.taskstracker.tasktypes.Task;
+import net.reldo.taskstracker.data.task.TaskFromStruct;
 
 public interface TaskPanelFactory
 {
-	TaskPanel create(Task task);
+	TaskPanel create(TaskFromStruct task);
 }

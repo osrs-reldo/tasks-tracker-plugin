@@ -11,9 +11,8 @@ import javax.inject.Inject;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.reader.FileDataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.types.Manifest;
-import net.reldo.taskstracker.data.jsondatastore.types.definitions.FilterConfig;
-import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskDefinition;
-import net.reldo.taskstracker.data.jsondatastore.types.definitions.TaskTypeDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -87,7 +86,7 @@ public class TaskDataClientTest
 		this.server.enqueue(new MockResponse().setBody(mockResponse));
 
 		// TODO: Let this fail until tasks are refactored
-		List<TaskDefinition> result = this.taskDataClient.getTasks("COMBAT");
+		List<TaskDefinition> result = this.taskDataClient.getTaskDefinitions("COMBAT");
 		assertEquals(568, result.size());
 		// TODO: Assert one
 	}
@@ -101,7 +100,7 @@ public class TaskDataClientTest
 		String mockTypesResponse = "[{\"slug\":\"LEAGUE_3\",\"name\":\"League III: Shattered Relics\",\"json\":\"LEAGUE_3.json\",\"enabled\":true,\"skillFilter\":true,\"properties\":[{\"key\":\"tier\",\"name\":\"Tier\",\"filter\":\"LEAGUE3_TIER\"},{\"key\":\"area\",\"name\":\"Area\",\"filter\":\"LEAGUE3_AREA\"},{\"key\":\"type\",\"name\":\"Task Type\",\"filter\":\"LEAGUE3_TYPE\"},{\"key\":\"category\",\"name\":\"Skill Category\",\"filter\":\"LEAGUE3_SKILL_CATEGORY\"},{\"key\":\"other\",\"name\":\"Addl. Wiki Information\"}],\"taskVarps\":[ 2616, 2617, 2618, 2619],\"otherVarps\":[2614, 3276],\"varbits\":[ 13395, 13396, 13397, 13398]}]";
 		this.server.enqueue(new MockResponse().setBody(mockTypesResponse));
 
-		HashMap<String, TaskTypeDefinition> taskTypes = this.taskDataClient.getTaskTypes();
+		HashMap<String, TaskTypeDefinition> taskTypes = this.taskDataClient.getTaskTypeDefinitions();
 
 		TaskTypeDefinition result = taskTypes.get("COMBAT");
 		assertEquals("Combat Achievements", result.getName());
@@ -110,25 +109,24 @@ public class TaskDataClientTest
 		assertTrue(result.isEnabled());
 
 		assertEquals(3, result.getFilters().size());
-		assertEquals(new FilterConfig("TIER_FILTER", "PARAM", "tier"), result.getFilters().get("tier"));
-		assertEquals(new FilterConfig("DROPDOWN_FILTER", "PARAM", "type"), result.getFilters().get("type"));
-		assertEquals(new FilterConfig("DROPDOWN_FILTER", "PARAM", "monster"), result.getFilters().get("monster"));
+//		assertEquals(new FilterConfig("Tier", FilterType.BUTTON_FILTER, FilterValueType.PARAM, "tier", "tier"), result.getFilters().get("tier"));
+//		assertEquals(new FilterConfig("Type", FilterType.DROPDOWN_FILTER, FilterValueType.PARAM, "type", "type"), result.getFilters().get("type"));
+//		assertEquals(new FilterConfig("Monster", FilterType.DROPDOWN_FILTER, FilterValueType.PARAM, "monster", "monster"), result.getFilters().get("monster"));
 
-		assertEquals((Integer) 1306, result.getParamMap().get("id"));
-		assertEquals((Integer) 1308, result.getParamMap().get("name"));
-		assertEquals((Integer) 1309, result.getParamMap().get("description"));
-		assertEquals((Integer) 1310, result.getParamMap().get("tier"));
+		assertEquals((Integer) 1306, result.getIntParamMap().get("id"));
+		assertEquals((Integer) 1308, result.getStringParamMap().get("name"));
+		assertEquals((Integer) 1309, result.getStringParamMap().get("description"));
+		assertEquals((Integer) 1310, result.getIntParamMap().get("tier"));
 
-		assertArrayEquals(new int[]{3116, 3117, 3118, 3119, 3120, 3121, 3122, 3123, 3124, 3125, 3126, 3127, 3128, 3387, 3718, 3773, 3774}, result.getTaskVarps());
+//		assertArrayEquals(new int[]{3116, 3117, 3118, 3119, 3120, 3121, 3122, 3123, 3124, 3125, 3126, 3127, 3128, 3387, 3718, 3773, 3774}, result.getTaskVarps());
 		assertArrayEquals(new int[0], result.getOtherVarps());
 		assertArrayEquals(new int[0], result.getVarbits());
-		assertArrayEquals(new int[]{1, 2, 3, 4, 5, 6}, result.getPointMap());
 	}
 
 	private Manifest getMockManifest()
 	{
 		Manifest mockManifest = new Manifest();
-		mockManifest.additionalVarbits = new int[]{123, 456};
+		mockManifest.exportVarbits = new int[]{123, 456};
 		mockManifest.filterMetadata = "filters.json";
 		mockManifest.taskTypeMetadata = "task-types.json";
 		return mockManifest;

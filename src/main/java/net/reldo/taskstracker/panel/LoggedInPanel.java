@@ -27,12 +27,12 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
+import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.panel.components.SearchBox;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
-import net.reldo.taskstracker.tasktypes.Task;
-import net.reldo.taskstracker.tasktypes.TaskType;
-import net.runelite.client.callback.ClientThread;
-import net.runelite.client.game.SkillIconManager;
+import net.reldo.taskstracker.panel.filters.ComboItem;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
@@ -43,8 +43,9 @@ import net.runelite.client.util.SwingUtil;
 public class LoggedInPanel extends JPanel  implements ChangeListener
 {
 	public TaskListPanel taskListPanel;
-	private JComboBox<TaskType> taskTypeDropdown;
+	private JComboBox<ComboItem<TaskTypeDefinition>> taskTypeDropdown;
 
+	private TaskService taskService;
 	private final TaskPanelFactory taskPanelFactory;
 	private final TasksTrackerPlugin plugin;
 	private final SpriteManager spriteManager;
@@ -63,15 +64,16 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 	private SubFilterPanel subFilterPanel;
 	private final JToggleButton collapseBtn = new JToggleButton();
 
-	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager, TaskPanelFactory taskPanelFactory)
+	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, SpriteManager spriteManager, TaskService taskService, TaskPanelFactory taskPanelFactory)
 	{
 		super(false);
 		this.plugin = plugin;
 		this.spriteManager = spriteManager;
+		this.taskService = taskService;
 		this.taskPanelFactory = taskPanelFactory;
 		this.config = config;
 
-		createPanel(clientThread, skillIconManager);
+		createPanel();
 	}
 
 	@Override
@@ -88,7 +90,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		taskListPanel.redraw();
 	}
 
-	public void refresh(Task task)
+	public void refresh(TaskFromStruct task)
 	{
 		if(task == null)
 		{
@@ -98,12 +100,12 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		taskListPanel.refresh(task);
 	}
 
-	private void createPanel(ClientThread clientThread, SkillIconManager skillIconManager)
+	private void createPanel()
 	{
 		setLayout(new BorderLayout());
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		taskListPanel = new TaskListPanel(plugin, clientThread, spriteManager, skillIconManager, taskPanelFactory);
+		taskListPanel = new TaskListPanel(plugin, taskPanelFactory, taskService);
 
 		add(getNorthPanel(), BorderLayout.NORTH);
 		add(getCenterPanel(), BorderLayout.CENTER);
@@ -250,7 +252,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		JButton exportButton = new JButton("Export");
 		exportButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 		exportButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
-		exportButton.addActionListener(e -> plugin.copyJsonToClipboard(plugin.getConfig().taskType()));
+		exportButton.addActionListener(e -> plugin.copyJsonToClipboard(taskTypeDropdown.getItemAt(0).getValue())); // TODO: reimplement config
 		southPanel.add(exportButton, BorderLayout.EAST);
 
 		return southPanel;
@@ -263,10 +265,15 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		northPanel.setLayout(layout);
 		northPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-		taskTypeDropdown = new JComboBox<>(TaskType.values());
+		ArrayList<ComboItem<TaskTypeDefinition>> taskTypeItems = new ArrayList<>();
+		taskService.getTaskTypes().forEach((taskTypeJsonName, taskType) -> {
+			taskTypeItems.add(new ComboItem<>(taskType, taskType.getName()));
+		});
+		ComboItem<TaskTypeDefinition>[] comboItemsArray = taskTypeItems.toArray(new ComboItem[0]);
+		taskTypeDropdown = new JComboBox<>(comboItemsArray);
 		taskTypeDropdown.setAlignmentX(LEFT_ALIGNMENT);
-		taskTypeDropdown.setSelectedItem(plugin.getConfig().taskType());
-		taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex())));
+		taskTypeDropdown.setSelectedItem(comboItemsArray[0]); // TODO: reimplement config
+		taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue()));
 
 		// Wrapper for collapsible sub-filter menu
 		JPanel subFilterWrapper = new JPanel();
@@ -295,7 +302,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		collapseBtn.setSelectedIcon(Icons.MENU_EXPANDED_ICON);
 
 		// panel to hold sub-filters
-		subFilterPanel = new SubFilterPanel(plugin, spriteManager);
+		subFilterPanel = new SubFilterPanel(plugin, taskService);
 
 		subFilterWrapper.add(collapseBtn, BorderLayout.NORTH);
 		subFilterWrapper.add(subFilterPanel, BorderLayout.CENTER);
@@ -496,38 +503,28 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		return filtersPanel;
 	}
 
-	private void updateWithNewTaskType(TaskType taskType)
+	private void updateWithNewTaskType(TaskTypeDefinition taskType)
 	{
-		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskType", taskType);
+//		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskType", taskType); // TODO: reimplement
+		this.taskService.setTaskType(taskType);
 		redraw();
 		refresh(null);
 	}
 
 	private void updateCollapseButtonText()
 	{
-		if(plugin.getConfig().taskType() == null) return;
+		// TODO: needs to be updated to support dynamic filters, can just be a total, "X filters"
+		if(getSelectedTaskType() == null) return;
 
 		List<String> filterCounts = new ArrayList<>();
-
-		if(plugin.getConfig().taskType().equals(TaskType.LEAGUE_4))
-		{
-			int count = config.skillFilter().equals("") ? 0 : config.skillFilter().split(",").length ;
-			filterCounts.add(count + " skill");
-		}
-
-		if(plugin.getConfig().taskType().equals(TaskType.LEAGUE_4))
-		{
-			int count = config.areaFilter().equals("") ? 0 : config.areaFilter().split(",").length ;
-			filterCounts.add(count + " area");
-
-//  @todo Category filters disabled due to lack of data
-//			count = config.categoryFilter().equals("") ? 0 : config.categoryFilter().split(",").length ;
-//			filterCounts.add(count + " cat");
-		}
-
 		int count = config.tierFilter().equals("") ? 0 : config.tierFilter().split(",").length;
 		filterCounts.add(count + " tier");
 
 		collapseBtn.setText(String.join(", ", filterCounts) + " filters");
+	}
+
+	private TaskTypeDefinition getSelectedTaskType()
+	{
+		return taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
 	}
 }

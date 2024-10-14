@@ -27,15 +27,15 @@ import net.reldo.taskstracker.Util;
 import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
-import net.reldo.taskstracker.panel.filters.Filter;
-import net.reldo.taskstracker.tasktypes.RequiredSkill;
-import net.reldo.taskstracker.tasktypes.Task;
-import net.reldo.taskstracker.tasktypes.TaskType;
-import net.reldo.taskstracker.tasktypes.combattask.CombatTask;
-import net.reldo.taskstracker.tasktypes.combattask.CombatTaskTier;
-import net.reldo.taskstracker.tasktypes.league4.League4Task;
-import net.reldo.taskstracker.tasktypes.league4.League4TaskTier;
+import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
+import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.filters.Filter;
+import net.reldo.taskstracker.data.task.filters.ParamButtonFilter;
+import net.reldo.taskstracker.data.task.filters.ParamDropdownFilter;
+import net.runelite.api.Client;
 import net.runelite.api.Constants;
+import net.runelite.api.EnumComposition;
 import net.runelite.api.Skill;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SkillIconManager;
@@ -49,11 +49,12 @@ import net.runelite.client.util.SwingUtil;
 @Slf4j
 public class TaskPanel extends JPanel
 {
+	private Client client;
 	public final SpriteManager spriteManager;
-	public final Task task;
+	public final TaskFromStruct task;
 	private final ClientThread clientThread;
 
-	private final JLabel icon = new JLabel();
+	private final JLabel tierIcon = new JLabel();
 	private final JPanel container = new JPanel(new BorderLayout());
 	private final JPanel body = new JPanel(new BorderLayout());
 	private final JShadowedLabel name = new JShadowedLabel();
@@ -67,21 +68,34 @@ public class TaskPanel extends JPanel
 	protected TasksTrackerPlugin plugin;
 
 	@AssistedInject
-	public TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, @Assisted Task task)
+	public TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, Client client, SpriteManager spriteManager, @Assisted TaskFromStruct task)
 	{
 		super(new BorderLayout());
 		this.plugin = plugin;
 		this.clientThread = clientThread;
+		this.client = client;
 		this.spriteManager = spriteManager;
 		this.task = task;
-		createPanel(task);
+		createPanel();
 		setComponentPopupMenu(getPopupMenu());
 		ToolTipManager.sharedInstance().registerComponent(this);
 		refresh();
-//		this.filters.add(new SkillFilter(plugin.getConfig()));
-//		this.filters.add(new TierFilter(plugin.getConfig()));
-//		this.filters.add(new AreaFilter(plugin.getConfig()));
-//		this.filters.add(new CategoryFilter(plugin.getConfig()));
+		// TODO: profile why filtering has a very laggy list redraw (it technically shouldnt be redrawing, only show/hiding)
+		// TODO: move filtering into task service, so we don't have to create these per task
+		// TODO: DEPRECATE filterKey in favor of config.key
+		task.getTaskTypeDefinition().getFilters().forEach((filterConfig) -> {
+			String paramName = filterConfig.getValueName();
+			if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER))
+			{
+				Filter filter = new ParamButtonFilter(plugin.getConfigManager(), paramName, task.getTaskTypeDefinition().getTaskJsonName() + "." + filterConfig.getConfigKey());
+				filters.add(filter);
+			}
+			else if (filterConfig.getFilterType().equals(FilterType.DROPDOWN_FILTER))
+			{
+				Filter filter = new ParamDropdownFilter(plugin.getConfigManager(), paramName, task.getTaskTypeDefinition().getTaskJsonName() + "." + filterConfig.getConfigKey());
+				filters.add(filter);
+			}
+		});
 	}
 
 	public JPopupMenu getPopupMenu()
@@ -91,139 +105,99 @@ public class TaskPanel extends JPanel
 
 	public String getTaskTooltip()
 	{
-		String text = null;
-		if (task.getType() == TaskType.LEAGUE_4) {
-			League4Task task = (League4Task) this.task;
-			text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
-				task.getTier() + getPointsTooltipText() + Util.HTML_LINE_BREAK +
-				task.getDescription() +
-				getSkillSectionHtml();
+		String datePattern = "MM-dd-yyyy hh:mma";
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(datePattern);
+		String text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
+			task.getDescription() + Util.HTML_LINE_BREAK +
+			task.getStringParam("monster") + Util.HTML_LINE_BREAK +
+			getSkillSectionHtml();
 
-			text = Util.wrapWithWrappingParagraph(text, 200);
-		} else if (task.getType() == TaskType.COMBAT) {
-			String datePattern = "MM-dd-yyyy hh:mma";
-			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(datePattern);
-			CombatTask task = (CombatTask) this.task;
-			text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
-				task.getTier() + Util.HTML_LINE_BREAK +
-				task.getMonster() + Util.HTML_LINE_BREAK +
-				task.getDescription();
-
-			if (task.isCompleted())
-			{
-				text += Util.HTML_LINE_BREAK + Util.HTML_LINE_BREAK + "✔ " + simpleDateFormat.format(new Date(task.getCompletedOn()));
-			}
-
-			text = Util.wrapWithWrappingParagraph(text, 200);
+		if (task.isCompleted())
+		{
+			text += Util.HTML_LINE_BREAK + Util.HTML_LINE_BREAK + "✔ " + simpleDateFormat.format(new Date(task.getCompletedOn()));
 		}
+
+		text = Util.wrapWithWrappingParagraph(text, 200);
 
 		return Util.wrapWithHtml(text);
 	}
 
-	public BufferedImage getIcon()
+	public BufferedImage getTierIcon()
 	{
-		int archiveId = -1;
-		if (task.getType() == TaskType.COMBAT) {
-			switch (task.getTier().toLowerCase()) {
-				case "easy":
-					archiveId = CombatTaskTier.EASY.spriteId;
-					break;
-				case "medium":
-					archiveId = CombatTaskTier.MEDIUM.spriteId;
-					break;
-				case "hard":
-					archiveId = CombatTaskTier.HARD.spriteId;
-					break;
-				case "elite":
-					archiveId = CombatTaskTier.ELITE.spriteId;
-					break;
-				case "master":
-					archiveId = CombatTaskTier.MASTER.spriteId;
-					break;
-				case "grandmaster":
-					archiveId = CombatTaskTier.GRANDMASTER.spriteId;
-					break;
-			}
-		} else if (task.getType() == TaskType.LEAGUE_4) {
-			switch (task.getTier().toLowerCase()) {
-				case "easy":
-					archiveId = League4TaskTier.EASY.spriteId;
-					break;
-				case "medium":
-					archiveId = League4TaskTier.MEDIUM.spriteId;
-					break;
-				case "hard":
-					archiveId = League4TaskTier.HARD.spriteId;
-					break;
-				case "elite":
-					archiveId = League4TaskTier.ELITE.spriteId;
-					break;
-				case "master":
-					archiveId = League4TaskTier.MASTER.spriteId;
-					break;
-			}
+		Integer iconsEnumId = task.getTaskTypeDefinition().getIntEnumMap().get("tierSprites");
+		if (iconsEnumId == null)
+		{
+			log.warn("no tier sprites enum found {}", iconsEnumId);
+			return null;
 		}
-		// TODO: this
-		if (archiveId == -1) {
+		EnumComposition iconsEnum = client.getEnum(iconsEnumId);
+		if (iconsEnum == null)
+		{
+			log.warn("no tier sprites enum found {}", iconsEnumId);
+			return null;
+		}
+		int[] tierSpriteIds = iconsEnum.getIntVals();
+		if (tierSpriteIds == null || tierSpriteIds.length == 0)
+		{
+			log.warn("tier sprites enum ids empty or null {}", iconsEnumId);
+			return null;
+		}
+		int taskTierIdx = task.getTier();
+		if (taskTierIdx > tierSpriteIds.length)
+		{
+			log.warn("task tier idx above array length {} > {}", taskTierIdx, tierSpriteIds.length);
+			return null;
+		}
+		int archiveId = tierSpriteIds[taskTierIdx - 1];
+		if (archiveId == -1)
+		{
+			log.warn("archiveId = -1 {}", taskTierIdx);
 			return null;
 		}
 		return spriteManager.getSprite(archiveId, 0);
 	}
 
-	public Color getTaskBackgroundColor(Task task, int[] playerSkills)
+	public Color getTaskBackgroundColor()
 	{
-//		// TODO (1/29/22): The required skill loop code is repeated in getSkillSectionHtml
-//		//  Ideally, checking skill requirements would be a responsibility of Task
-//		//  Current issue is that Task is instantiated by Gson in multiple places, so plugin may not be injected/accessible
-//		@Override
-//		public Color getTaskBackgroundColor(Task task, int[] playerSkills)
-//		{
-//			if (playerSkills == null)
-//			{
-//				return ColorScheme.DARKER_GRAY_COLOR;
-//			}
-//
-//			if (task.isCompleted())
-//			{
-//				return Colors.COMPLETED_BACKGROUND_COLOR;
-//			}
-//
-//			for (RequiredSkill requiredSkill : ((League4Task) task).getSkills())
-//			{
-//				Skill skill;
-//				// FIXME: Shouldn't use exception for control flow
-//				try
-//				{
-//					skill = Skill.valueOf(requiredSkill.skill.toUpperCase());
-//				}
-//				catch (IllegalArgumentException ex)
-//				{
-//					continue;
-//				}
-//
-//				int level;
-//				// FIXME: Shouldn't use exception for control flow
-//				try
-//				{
-//					level = Integer.parseInt(requiredSkill.level);
-//				}
-//				catch (NumberFormatException ex)
-//				{
-//					continue;
-//				}
-//
-//				if (playerSkills[skill.ordinal()] < level)
-//				{
-//					return Colors.UNQUALIFIED_BACKGROUND_COLOR;
-//				}
-//			}
-//
-//			return ColorScheme.DARKER_GRAY_COLOR;
-//		}
-		return task.isCompleted() ? Colors.COMPLETED_BACKGROUND_COLOR : ColorScheme.DARKER_GRAY_COLOR;
+		if (plugin.playerSkills == null)
+		{
+			return ColorScheme.DARKER_GRAY_COLOR;
+		}
+
+		if (task.isCompleted())
+		{
+			return Colors.COMPLETED_BACKGROUND_COLOR;
+		}
+
+		if (task.getTaskDefinition().getSkills() == null || task.getTaskDefinition().getSkills().size() == 0)
+		{
+			return ColorScheme.DARKER_GRAY_COLOR;
+		}
+
+		for (TaskDefinitionSkill requiredSkill : task.getTaskDefinition().getSkills())
+		{
+			Skill skill;
+			String requiredSkillName = requiredSkill.getSkill().toUpperCase();
+			try
+			{
+				skill = Skill.valueOf(requiredSkillName);
+			}
+			catch (IllegalArgumentException ex)
+			{
+				log.error("invalid skill name " + requiredSkillName);
+				continue;
+			}
+
+			if (plugin.playerSkills[skill.ordinal()] < requiredSkill.getLevel())
+			{
+				return Colors.UNQUALIFIED_BACKGROUND_COLOR;
+			}
+		}
+
+		return ColorScheme.DARKER_GRAY_COLOR;
 	}
 
-	public void createPanel(Task task)
+	public void createPanel()
 	{
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(0, 0, 7, 0));
@@ -271,20 +245,21 @@ public class TaskPanel extends JPanel
 		buttons.add(toggleIgnore);
 
 		// Full
-		container.add(icon, BorderLayout.WEST);
+		container.add(tierIcon, BorderLayout.WEST);
 		container.add(body, BorderLayout.CENTER);
 		container.add(buttons, BorderLayout.EAST);
 
 		clientThread.invoke(() -> {
-			if (getIcon() != null)
+			// TODO: Move into task definition set, so we're accessing cached icons rather than running this per task on thread
+			if (getTierIcon() != null)
 			{
-				icon.setMinimumSize(new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT));
-				icon.setIcon(new ImageIcon(getIcon()));
-				icon.setBorder(new EmptyBorder(0, 0, 0, 5));
+				tierIcon.setMinimumSize(new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT));
+				tierIcon.setIcon(new ImageIcon(getTierIcon()));
+				tierIcon.setBorder(new EmptyBorder(0, 0, 0, 5));
 			}
 			else
 			{
-				icon.setBorder(new EmptyBorder(0, 0, 0, 0));
+				tierIcon.setBorder(new EmptyBorder(0, 0, 0, 0));
 			}
 		});
 
@@ -293,9 +268,9 @@ public class TaskPanel extends JPanel
 
 	public void refresh()
 	{
+		setBackgroundColor(getTaskBackgroundColor());
 		name.setText(Util.wrapWithHtml(task.getName()));
 		description.setText(Util.wrapWithHtml(task.getDescription()));
-		setBackgroundColor(getTaskBackgroundColor(task, plugin.playerSkills));
 		toggleTrack.setSelected(task.isTracked());
 		toggleIgnore.setSelected(task.isIgnored());
 
@@ -380,40 +355,39 @@ public class TaskPanel extends JPanel
 	private String getSkillSectionHtml()
 	{
 		StringBuilder skillSection = new StringBuilder();
-		League4Task task = (League4Task) this.task;
-		for (RequiredSkill requiredSkill : task.getSkills())
-		{
-			Skill skill;
-			// FIXME: Shouldn't use exception for control flow
-			try
-			{
-				skill = Skill.valueOf(requiredSkill.skill.toUpperCase());
-			}
-			catch (IllegalArgumentException ex)
-			{
-				continue;
-			}
-
-			int level;
-			// FIXME: Shouldn't use exception for control flow
-			try
-			{
-				level = Integer.parseInt(requiredSkill.level);
-			}
-			catch (NumberFormatException ex)
-			{
-				continue;
-			}
-
-			skillSection.append(Util.HTML_LINE_BREAK);
-
-			int playerLevel = 255;
-			if (this.plugin.playerSkills != null)
-			{
-				playerLevel = this.plugin.playerSkills[skill.ordinal()];
-			}
-			skillSection.append(getSkillRequirementHtml(requiredSkill.getSkill().toLowerCase(), playerLevel, level));
-		}
+//		for (RequiredSkill requiredSkill : task.getSkills())
+//		{
+//			Skill skill;
+//			// FIXME: Shouldn't use exception for control flow
+//			try
+//			{
+//				skill = Skill.valueOf(requiredSkill.skill.toUpperCase());
+//			}
+//			catch (IllegalArgumentException ex)
+//			{
+//				continue;
+//			}
+//
+//			int level;
+//			// FIXME: Shouldn't use exception for control flow
+//			try
+//			{
+//				level = Integer.parseInt(requiredSkill.level);
+//			}
+//			catch (NumberFormatException ex)
+//			{
+//				continue;
+//			}
+//
+//			skillSection.append(Util.HTML_LINE_BREAK);
+//
+//			int playerLevel = 255;
+//			if (this.plugin.playerSkills != null)
+//			{
+//				playerLevel = this.plugin.playerSkills[skill.ordinal()];
+//			}
+//			skillSection.append(getSkillRequirementHtml(requiredSkill.getSkill().toLowerCase(), playerLevel, level));
+//		}
 
 		return skillSection.toString();
 	}
