@@ -42,13 +42,9 @@ import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.filters.Filter;
 import net.reldo.taskstracker.data.task.filters.ParamButtonFilter;
 import net.reldo.taskstracker.data.task.filters.ParamDropdownFilter;
-import net.runelite.api.Client;
 import net.runelite.api.Constants;
-import net.runelite.api.EnumComposition;
 import net.runelite.api.Skill;
-import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SkillIconManager;
-import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
@@ -58,10 +54,7 @@ import net.runelite.client.util.SwingUtil;
 @Slf4j
 public class TaskPanel extends JPanel
 {
-	private Client client;
-	public final SpriteManager spriteManager;
 	public final TaskFromStruct task;
-	private final ClientThread clientThread;
 
 	private final JLabel tierIcon = new JLabel();
 	private final JPanel container = new JPanel(new BorderLayout());
@@ -77,13 +70,10 @@ public class TaskPanel extends JPanel
 	protected TasksTrackerPlugin plugin;
 
 	@AssistedInject
-	public TaskPanel(TasksTrackerPlugin plugin, ClientThread clientThread, Client client, SpriteManager spriteManager, @Assisted TaskFromStruct task)
+	public TaskPanel(TasksTrackerPlugin plugin, @Assisted TaskFromStruct task)
 	{
 		super(new BorderLayout());
 		this.plugin = plugin;
-		this.clientThread = clientThread;
-		this.client = client;
-		this.spriteManager = spriteManager;
 		this.task = task;
 		createPanel();
 		setComponentPopupMenu(getPopupMenu());
@@ -135,41 +125,6 @@ public class TaskPanel extends JPanel
 		return Util.wrapWithHtml(
 			Util.wrapWithWrappingParagraph(tooltipText.toString(), 200)
 		);
-	}
-
-	public BufferedImage getTierIcon()
-	{
-		Integer iconsEnumId = task.getTaskTypeDefinition().getIntEnumMap().get("tierSprites");
-		if (iconsEnumId == null)
-		{
-			log.warn("no tier sprites enum found {}", iconsEnumId);
-			return null;
-		}
-		EnumComposition iconsEnum = client.getEnum(iconsEnumId);
-		if (iconsEnum == null)
-		{
-			log.warn("no tier sprites enum found {}", iconsEnumId);
-			return null;
-		}
-		int[] tierSpriteIds = iconsEnum.getIntVals();
-		if (tierSpriteIds == null || tierSpriteIds.length == 0)
-		{
-			log.warn("tier sprites enum ids empty or null {}", iconsEnumId);
-			return null;
-		}
-		int taskTierIdx = task.getTier();
-		if (taskTierIdx > tierSpriteIds.length)
-		{
-			log.warn("task tier idx above array length {} > {}", taskTierIdx, tierSpriteIds.length);
-			return null;
-		}
-		int archiveId = tierSpriteIds[taskTierIdx - 1];
-		if (archiveId == -1)
-		{
-			log.warn("archiveId = -1 {}", taskTierIdx);
-			return null;
-		}
-		return spriteManager.getSprite(archiveId, 0);
 	}
 
 	public Color getTaskBackgroundColor()
@@ -264,19 +219,17 @@ public class TaskPanel extends JPanel
 		container.add(body, BorderLayout.CENTER);
 		container.add(buttons, BorderLayout.EAST);
 
-		clientThread.invoke(() -> {
-			// TODO: Move into task definition set, so we're accessing cached icons rather than running this per task on thread
-			if (getTierIcon() != null)
-			{
-				tierIcon.setMinimumSize(new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT));
-				tierIcon.setIcon(new ImageIcon(getTierIcon()));
-				tierIcon.setBorder(new EmptyBorder(0, 0, 0, 5));
-			}
-			else
-			{
-				tierIcon.setBorder(new EmptyBorder(0, 0, 0, 0));
-			}
-		});
+		BufferedImage tierSprite = task.getTaskType().getTierSprites().get(task.getTier());
+		if (tierSprite != null)
+		{
+			tierIcon.setMinimumSize(new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT));
+			tierIcon.setIcon(new ImageIcon(tierSprite));
+			tierIcon.setBorder(new EmptyBorder(0, 0, 0, 5));
+		}
+		else
+		{
+			tierIcon.setBorder(new EmptyBorder(0, 0, 0, 0));
+		}
 
 		add(container, BorderLayout.NORTH);
 

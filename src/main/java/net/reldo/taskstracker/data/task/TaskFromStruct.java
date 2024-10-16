@@ -23,6 +23,8 @@ public class TaskFromStruct
 	@Getter
 	private final TaskTypeDefinition taskTypeDefinition;
 	@Getter
+	private TaskType taskType;
+	@Getter
 	private final TaskDefinition taskDefinition;
 	@Getter
 	private boolean structLoaded;
@@ -37,9 +39,10 @@ public class TaskFromStruct
 	private final Map<String, String> _stringParams = new HashMap<>();
 	private final Map<String, Integer> _intParams = new HashMap<>();
 
-	public TaskFromStruct(TaskTypeDefinition taskTypeDefinition, TaskDefinition taskDefinition)
+	public TaskFromStruct(TaskTypeDefinition taskTypeDefinition, TaskType taskType, TaskDefinition taskDefinition)
 	{
 		this.taskTypeDefinition = taskTypeDefinition;
+		this.taskType = taskType;
 		this.taskDefinition = taskDefinition;
 		this.structId = taskDefinition.getStructId();
 		this.sortId = taskDefinition.getSortId();

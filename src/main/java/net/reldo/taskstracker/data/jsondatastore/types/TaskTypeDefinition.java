@@ -65,6 +65,11 @@ public class TaskTypeDefinition
 	private HashMap<String, Integer> stringEnumMap;
 
 	/**
+	 * TODO
+	 */
+	private HashMap<String, Integer> tierSpriteIdMap = new HashMap<>();
+
+	/**
 	 * Varps used to store task progress
 	 * Used for exports from the plugin
 	 */

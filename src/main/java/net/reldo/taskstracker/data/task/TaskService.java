@@ -70,7 +70,7 @@ public class TaskService
 			Collection<TaskDefinition> taskDefinitions = taskDataClient.getTaskDefinitions(taskTypeDefinition.getTaskJsonName());
 			for (TaskDefinition definition : taskDefinitions)
 			{
-				TaskFromStruct task = new TaskFromStruct(taskTypeDefinition, definition);
+				TaskFromStruct task = new TaskFromStruct(taskTypeDefinition, currentTaskType, definition);
 				tasks.add(task);
 				clientThread.invoke(() -> task.loadStructData(client));
 				addVarpLookup(task);
