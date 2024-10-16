@@ -55,17 +55,25 @@ public class TaskTypeDefinition
 	private Map<String, Integer> stringParamMap;
 
 	/**
-	 * TODO
+	 * A dictionary of integer enums relevant to the task type
+	 * The key is the plain English name describing the enum
+	 * The value is an integer representing the enum id
+	 * e.g. "tierSprites": 3213 (tier id maps to a sprite id)
 	 */
 	private HashMap<String, Integer> intEnumMap;
 
 	/**
-	 * TODO
+	 * A dictionary of string enums relevant to the task type
+	 * The key is the plain English name describing the enum
+	 * The value is an integer representing the enum id
+	 * e.g. "tierNames": 4757 (tier id maps to a sprite id)
 	 */
 	private HashMap<String, Integer> stringEnumMap;
 
 	/**
-	 * TODO
+	 * A dictionary of tier sprite ids
+	 * The key is a string representation of the tier id integer
+	 * The value is an integer representing the sprite id
 	 */
 	private HashMap<String, Integer> tierSpriteIdMap = new HashMap<>();
 
