@@ -4,16 +4,25 @@ import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
@@ -105,21 +114,27 @@ public class TaskPanel extends JPanel
 
 	public String getTaskTooltip()
 	{
-		String datePattern = "MM-dd-yyyy hh:mma";
-		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(datePattern);
-		String text = Util.wrapWithBold(task.getName()) + Util.HTML_LINE_BREAK +
-			task.getDescription() + Util.HTML_LINE_BREAK +
-			task.getStringParam("monster") + Util.HTML_LINE_BREAK +
-			getSkillSectionHtml();
+		StringBuilder tooltipText = new StringBuilder();
+		tooltipText.append(Util.wrapWithBold(task.getName())).append(Util.HTML_LINE_BREAK);
+		tooltipText.append(task.getDescription()).append(Util.HTML_LINE_BREAK);
+
+		String skillSection = getSkillSectionHtml();
+		if (skillSection != null)
+		{
+			tooltipText.append(skillSection).append(Util.HTML_LINE_BREAK);
+		}
 
 		if (task.isCompleted())
 		{
-			text += Util.HTML_LINE_BREAK + Util.HTML_LINE_BREAK + "✔ " + simpleDateFormat.format(new Date(task.getCompletedOn()));
+			tooltipText.append(Util.HTML_LINE_BREAK);
+			String datePattern = "MM-dd-yyyy hh:mma";
+			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(datePattern);
+			tooltipText.append("✔ ").append(simpleDateFormat.format(new Date(task.getCompletedOn())));
 		}
 
-		text = Util.wrapWithWrappingParagraph(text, 200);
-
-		return Util.wrapWithHtml(text);
+		return Util.wrapWithHtml(
+			Util.wrapWithWrappingParagraph(tooltipText.toString(), 200)
+		);
 	}
 
 	public BufferedImage getTierIcon()
@@ -264,6 +279,48 @@ public class TaskPanel extends JPanel
 		});
 
 		add(container, BorderLayout.NORTH);
+
+		addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseReleased(MouseEvent e)
+			{
+				if (e.isPopupTrigger())
+				{
+					JPopupMenu menu = createWikiPopupMenu();
+					menu.show(e.getComponent(), e.getX(), e.getY());
+				}
+			}
+		});
+	}
+
+	public JPopupMenu createWikiPopupMenu()
+	{
+		JPopupMenu popupMenu = new JPopupMenu();
+		JMenuItem openWikiItem = new JMenuItem("Wiki");
+		openWikiItem.addActionListener(e -> openRuneScapeWiki());
+		popupMenu.add(openWikiItem);
+		return popupMenu;
+	}
+
+	private void openRuneScapeWiki()
+	{
+		String wikiUrl = String.format("https://oldschool.runescape.wiki/%s", URLEncoder.encode(task.getName().replace(' ', '_'), StandardCharsets.UTF_8));
+		if (Desktop.isDesktopSupported())
+		{
+			try
+			{
+				Desktop.getDesktop().browse(new URI(wikiUrl));
+			}
+			catch (IOException | URISyntaxException ex)
+			{
+				ex.printStackTrace();
+			}
+		}
+		else
+		{
+			System.out.println("Desktop browsing is not supported on this system.");
+		}
 	}
 
 	public void refresh()
@@ -354,45 +411,45 @@ public class TaskPanel extends JPanel
 
 	private String getSkillSectionHtml()
 	{
+		List<TaskDefinitionSkill> requiredSkills = task.getTaskDefinition().getSkills();
+		if (requiredSkills == null)
+		{
+			return null;
+		}
 		StringBuilder skillSection = new StringBuilder();
-//		for (RequiredSkill requiredSkill : task.getSkills())
-//		{
-//			Skill skill;
-//			// FIXME: Shouldn't use exception for control flow
-//			try
-//			{
-//				skill = Skill.valueOf(requiredSkill.skill.toUpperCase());
-//			}
-//			catch (IllegalArgumentException ex)
-//			{
-//				continue;
-//			}
-//
-//			int level;
-//			// FIXME: Shouldn't use exception for control flow
-//			try
-//			{
-//				level = Integer.parseInt(requiredSkill.level);
-//			}
-//			catch (NumberFormatException ex)
-//			{
-//				continue;
-//			}
-//
-//			skillSection.append(Util.HTML_LINE_BREAK);
-//
-//			int playerLevel = 255;
-//			if (this.plugin.playerSkills != null)
-//			{
-//				playerLevel = this.plugin.playerSkills[skill.ordinal()];
-//			}
-//			skillSection.append(getSkillRequirementHtml(requiredSkill.getSkill().toLowerCase(), playerLevel, level));
-//		}
+		skillSection.append(Util.HTML_LINE_BREAK);
+		for (TaskDefinitionSkill requiredSkill : requiredSkills)
+		{
+			Skill skill;
+			try
+			{
+				skill = Skill.valueOf(requiredSkill.getSkill().toUpperCase());
+			}
+			catch (IllegalArgumentException ex)
+			{
+				log.warn("unknown skill: {}", requiredSkill.getSkill().toUpperCase(), ex);
+				continue;
+			}
+
+
+			Integer requiredLevel = requiredSkill.getLevel();
+			Integer playerLevel = null;
+			if (requiredLevel == null)
+			{
+				continue;
+			}
+			if (plugin.playerSkills != null)
+			{
+				playerLevel = plugin.playerSkills[skill.ordinal()];
+			}
+			String skillMessage = getSkillRequirementHtml(requiredSkill.getSkill().toLowerCase(), playerLevel, requiredLevel);
+			skillSection.append(skillMessage);
+		}
 
 		return skillSection.toString();
 	}
 
-	private String getSkillRequirementHtml(String skillName, int playerLevel, int requiredLevel)
+	private String getSkillRequirementHtml(String skillName, Integer playerLevel, int requiredLevel)
 	{
 		String skillIconPath = "/skill_icons_small/" + skillName + ".png";
 		URL url = SkillIconManager.class.getResource(skillIconPath);

@@ -16,5 +16,5 @@ public class TaskDefinitionSkill
 	/**
 	 * The level required
 	 */
-	private int level;
+	private Integer level;
 }
