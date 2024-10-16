@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -16,6 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.basic.BasicBorders;
 import javax.swing.plaf.basic.BasicButtonUI;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.runelite.client.ui.ColorScheme;
@@ -57,7 +59,10 @@ public abstract class FilterButtonPanel extends FilterPanel
     {
         JToggleButton button = new JToggleButton();
         button.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        button.setBorder(new EmptyBorder(2, 0, 2, 0));
+        button.setBorder(new BasicBorders.ToggleButtonBorder(ColorScheme.DARKER_GRAY_COLOR,
+                                                             ColorScheme.DARKER_GRAY_COLOR.darker(),
+                                                             ColorScheme.MEDIUM_GRAY_COLOR.darker(),
+                                                             ColorScheme.MEDIUM_GRAY_COLOR));
         button.setFocusable(false);
 
         if (image != null) {
@@ -69,7 +74,7 @@ public abstract class FilterButtonPanel extends FilterPanel
         } else {
 	        button.setPreferredSize(new Dimension(button.getPreferredSize().width, 50));
         }
-
+        button.setPreferredSize(new Dimension(image.getWidth(), image.getHeight() + 10));
         button.setToolTipText(tooltip.substring(0,1).toUpperCase() + tooltip.substring(1).toLowerCase());
 
         button.addActionListener(e -> {
@@ -95,6 +100,7 @@ public abstract class FilterButtonPanel extends FilterPanel
         all.setFocusable(false);
         all.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
         all.setFont(FontManager.getRunescapeSmallFont());
+        all.setPreferredSize(new Dimension(50, 0));
         all.addActionListener(e -> {
             setAllSelected(true);
             updateFilterText();
@@ -107,6 +113,7 @@ public abstract class FilterButtonPanel extends FilterPanel
         none.setFocusable(false);
         none.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
         none.setFont(FontManager.getRunescapeSmallFont());
+        none.setPreferredSize(new Dimension(50, 0));
         none.addActionListener(e -> {
             setAllSelected(false);
             updateFilterText();
@@ -117,9 +124,13 @@ public abstract class FilterButtonPanel extends FilterPanel
         JLabel separator = new JLabel("|");
         separator.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
 
+        buttonWrapper.add(Box.createHorizontalGlue());
         buttonWrapper.add(all);
+        buttonWrapper.add(Box.createHorizontalGlue());
         buttonWrapper.add(separator);
+        buttonWrapper.add(Box.createHorizontalGlue());
         buttonWrapper.add(none);
+        buttonWrapper.add(Box.createHorizontalGlue());
 
         return buttonWrapper;
     }
@@ -142,6 +153,8 @@ public abstract class FilterButtonPanel extends FilterPanel
         collapseBtn.setHorizontalTextPosition(JButton.CENTER);
         collapseBtn.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         collapseBtn.setFont(FontManager.getRunescapeSmallFont());
+        collapseBtn.setBorder(new EmptyBorder(2, 0, 2, 0));
+        collapseBtn.setFocusable(false);
         collapseBtn.setSelected(true);
 
         return collapseBtn;
