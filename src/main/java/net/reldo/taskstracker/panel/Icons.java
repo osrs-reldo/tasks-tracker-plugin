@@ -8,7 +8,7 @@ import net.runelite.client.util.ImageUtil;
 
 public class Icons
 {
-	private static final String completeBtnPath = "panel/components/complete_button/style_2a/";
+	private static final String completeBtnPath = "panel/components/complete_button/";
 	public static final Icon INCOMPLETE_ONLY_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, completeBtnPath + "incomplete_only_icon.png"));
 	public static final Icon COMPLETE_ONLY_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, completeBtnPath + "complete_only_icon.png"));
 	public static final Icon COMPLETE_INCOMPLETE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, completeBtnPath + "complete_and_incomplete_icon.png"));
