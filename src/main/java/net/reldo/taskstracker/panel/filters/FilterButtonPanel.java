@@ -164,7 +164,7 @@ public abstract class FilterButtonPanel extends FilterPanel
     {
         String filterText = buttons.entrySet().stream()
                 .filter(e -> e.getValue().isSelected())
-                .map(e -> "f-" + e.getKey()) // prefix included to cover cases where one key name is contained in another (e.g. "Master" -> "Grandmaster")
+                .map(e -> "f-" + e.getKey() + "-f") // prefix included to cover cases where one key name is contained in another (e.g. "Master" -> "Grandmaster")
                 .collect(Collectors.joining(","));
 
         plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, configKey, filterText);

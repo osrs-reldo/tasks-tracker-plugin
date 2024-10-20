@@ -1,5 +1,8 @@
 package net.reldo.taskstracker.data.jsondatastore.reader;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -98,6 +101,34 @@ public class HttpDataStoreReader implements DataStoreReader
 			throw new Exception("getTasks returned without body");
 		}
 		log.debug("getTasks json fetched successfully, deserializing result");
+		return response.body().byteStream();
+	}
+
+	@Override
+	public InputStream readFilterConfigs(String filterFilename)  throws Exception
+	{
+		String filterJsonUrl = JsonDataStore.baseUrl + "/" + filterFilename;
+		log.debug("getTaskTypes json from {} ...", filterJsonUrl);
+		Request request = new Request.Builder()
+				.url(filterJsonUrl)
+				.build();
+		Response response = this.okHttpClient.newCall(request).execute();
+		if (!response.isSuccessful())
+		{
+			String unsuccessful = "getFilters json request unsuccessful with status " + response.code();
+			if (response.body() != null)
+			{
+				unsuccessful += " and body \n" + response.body();
+			}
+			log.error(unsuccessful);
+			throw new Exception(unsuccessful);
+		}
+		if (response.body() == null)
+		{
+			log.error("getFilters returned without body");
+			throw new Exception("getFilters returned without body");
+		}
+		log.debug("getFilters json fetched successfully, deserializing result");
 		return response.body().byteStream();
 	}
 }

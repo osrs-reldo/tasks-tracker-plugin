@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -28,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
+import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
@@ -568,12 +571,25 @@ public class LoggedInPanel extends JPanel
 	{
 		// TODO: needs to be updated to support dynamic filters, can just be a total, "X filters"
 		if(getSelectedTaskType() == null) return;
+		ArrayList<FilterConfig> filters = taskService.getCurrentTaskType().getTaskTypeDefinition().getFilters();
 
-		List<String> filterCounts = new ArrayList<>();
-		int count = config.tierFilter().equals("") ? 0 : config.tierFilter().split(",").length;
-		filterCounts.add(count + " tier");
+		int countInclusive = 0;
+		int countExclusive = 0;
 
-		collapseBtn.setText(String.join(", ", filterCounts) + " filters");
+		for (FilterConfig filterConfig : filters)
+		{
+			String filterText = Optional.ofNullable(plugin.getConfigManager()
+					.getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME,
+							taskService.getCurrentTaskType().getConfigPrefix() + filterConfig.getConfigKey()))
+					.orElse("");
+
+			int count = (filterText.isEmpty() || filterText.equals("-1")) ? 0 : filterText.split(",").length;
+
+			if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER)) countInclusive += count;
+			if (filterConfig.getFilterType().equals(FilterType.DROPDOWN_FILTER)) countExclusive += count;
+		}
+
+		collapseBtn.setText(countInclusive + " inclusive, "  + countExclusive + " exclusive filters");
 	}
 
 	private TaskTypeDefinition getSelectedTaskType()

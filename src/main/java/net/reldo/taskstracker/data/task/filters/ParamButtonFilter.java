@@ -30,6 +30,6 @@ public class ParamButtonFilter extends Filter
 			return false;
 		}
 
-		return configValue.contains("f-" + task.getIntParam(paramName));
+		return configValue.contains("f-" + task.getIntParam(paramName) + "-f");
 	}
 }

@@ -5,16 +5,21 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.data.jsondatastore.FilterDataClient;
 import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
 import net.reldo.taskstracker.data.jsondatastore.TaskDataClient;
+import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
+import net.reldo.taskstracker.data.jsondatastore.types.FilterValueType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
+import net.reldo.taskstracker.data.task.filters.FilterService;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
 import net.runelite.client.callback.ClientThread;
@@ -33,6 +38,8 @@ public class TaskService
 	private ClientThread clientThread;
 	@Inject
 	private Client client;
+	@Inject
+	private FilterService filterService;
 
 	@Getter
 	@Setter
@@ -57,6 +64,25 @@ public class TaskService
 			tasks.clear();
 			currentTaskTypeDefinition = taskTypeDefinition;
 			currentTaskType = taskTypeFactory.create(taskTypeDefinition);
+
+            // Complete creation of any GLOBAL value type filterConfigs
+			for (FilterConfig filterConfig : currentTaskTypeDefinition.getFilters())
+			{
+				if (filterConfig.getValueType().equals(FilterValueType.GLOBAL))
+				{
+					// Set valueType to the one required by the global filter
+					FilterConfig globalFilterConfig = filterService.getGlobalFilterByKey(filterConfig.getConfigKey());
+					filterConfig.setValueType(globalFilterConfig.getValueType());
+
+					// Set any filterConfig fields not already specified
+					Optional.ofNullable(filterConfig.getLabel()).ifPresentOrElse(val -> {}, () -> filterConfig.setLabel(globalFilterConfig.getLabel()));
+					Optional.ofNullable(filterConfig.getFilterType()).ifPresentOrElse(val -> {}, () -> filterConfig.setFilterType(globalFilterConfig.getFilterType()));
+					Optional.ofNullable(filterConfig.getValueName()).ifPresentOrElse(val -> {}, () -> filterConfig.setValueName(globalFilterConfig.getValueName()));
+					Optional.ofNullable(filterConfig.getOptionLabelEnum()).ifPresentOrElse(val -> {}, () -> filterConfig.setOptionLabelEnum(globalFilterConfig.getOptionLabelEnum()));
+					Optional.ofNullable(filterConfig.getCustomItems()).ifPresentOrElse(val -> {}, () -> filterConfig.setCustomItems(globalFilterConfig.getCustomItems()));
+				}
+			}
+
 			boolean loaded = currentTaskType.loadTaskTypeDataAsync().get(); // TODO: blocking
 			if (!loaded)
 			{

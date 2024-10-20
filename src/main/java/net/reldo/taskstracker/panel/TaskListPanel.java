@@ -100,7 +100,7 @@ public class TaskListPanel extends JScrollPane
 
 		public void redraw()
 		{
-			System.out.println("TaskListPanel.redraw");
+			log.debug("TaskListPanel.redraw");
 			assert SwingUtilities.isEventDispatchThread();
 			removeAll();
 			taskPanels.clear();
