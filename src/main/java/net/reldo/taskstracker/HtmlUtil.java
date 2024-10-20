@@ -3,7 +3,7 @@ package net.reldo.taskstracker;
 import java.awt.Color;
 import java.net.URL;
 
-public class Util
+public class HtmlUtil
 {
 	public static String HTML_LINE_BREAK = "<br>";
 

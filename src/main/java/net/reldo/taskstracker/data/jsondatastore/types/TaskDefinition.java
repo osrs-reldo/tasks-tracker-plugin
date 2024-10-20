@@ -33,4 +33,14 @@ public class TaskDefinition
 	 * - category = an extra category type that isn't a param
 	 */
 	private Map<String, Object> metadata;
+
+	/**
+	 * Notes from the OSRS wiki
+	 */
+	private String wikiNotes;
+
+	/**
+	 * Completion percent from the OSRS wiki
+	 */
+	private Float completionPercent;
 }

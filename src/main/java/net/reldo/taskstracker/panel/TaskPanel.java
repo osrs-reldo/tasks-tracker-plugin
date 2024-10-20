@@ -32,7 +32,7 @@ import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.Util;
+import net.reldo.taskstracker.HtmlUtil;
 import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
@@ -105,25 +105,37 @@ public class TaskPanel extends JPanel
 	public String getTaskTooltip()
 	{
 		StringBuilder tooltipText = new StringBuilder();
-		tooltipText.append(Util.wrapWithBold(task.getName())).append(Util.HTML_LINE_BREAK);
-		tooltipText.append(task.getDescription()).append(Util.HTML_LINE_BREAK);
+		tooltipText.append(HtmlUtil.wrapWithBold(task.getName())).append(HtmlUtil.HTML_LINE_BREAK);
+		tooltipText.append(task.getDescription()).append(HtmlUtil.HTML_LINE_BREAK);
 
 		String skillSection = getSkillSectionHtml();
 		if (skillSection != null)
 		{
-			tooltipText.append(skillSection).append(Util.HTML_LINE_BREAK);
+			tooltipText.append(skillSection).append(HtmlUtil.HTML_LINE_BREAK);
+		}
+
+		String wikiNotes = task.getTaskDefinition().getWikiNotes();
+		if (wikiNotes != null)
+		{
+			tooltipText.append(HtmlUtil.HTML_LINE_BREAK).append(wikiNotes).append(HtmlUtil.HTML_LINE_BREAK);
 		}
 
 		if (task.isCompleted())
 		{
-			tooltipText.append(Util.HTML_LINE_BREAK);
+			tooltipText.append(HtmlUtil.HTML_LINE_BREAK);
 			String datePattern = "MM-dd-yyyy hh:mma";
 			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(datePattern);
 			tooltipText.append("✔ ").append(simpleDateFormat.format(new Date(task.getCompletedOn())));
 		}
 
-		return Util.wrapWithHtml(
-			Util.wrapWithWrappingParagraph(tooltipText.toString(), 200)
+		Float completionPercent = task.getTaskDefinition().getCompletionPercent();
+		if (completionPercent != null)
+		{
+			tooltipText.append(HtmlUtil.HTML_LINE_BREAK).append("Players Completed: ").append(completionPercent).append('%');
+		}
+
+		return HtmlUtil.wrapWithHtml(
+			HtmlUtil.wrapWithWrappingParagraph(tooltipText.toString(), 200)
 		);
 	}
 
@@ -279,8 +291,8 @@ public class TaskPanel extends JPanel
 	public void refresh()
 	{
 		setBackgroundColor(getTaskBackgroundColor());
-		name.setText(Util.wrapWithHtml(task.getName()));
-		description.setText(Util.wrapWithHtml(task.getDescription()));
+		name.setText(HtmlUtil.wrapWithHtml(task.getName()));
+		description.setText(HtmlUtil.wrapWithHtml(task.getDescription()));
 		toggleTrack.setSelected(task.isTracked());
 		toggleIgnore.setSelected(task.isIgnored());
 
@@ -370,7 +382,7 @@ public class TaskPanel extends JPanel
 			return null;
 		}
 		StringBuilder skillSection = new StringBuilder();
-		skillSection.append(Util.HTML_LINE_BREAK);
+		skillSection.append(HtmlUtil.HTML_LINE_BREAK);
 		for (TaskDefinitionSkill requiredSkill : requiredSkills)
 		{
 			Skill skill;
@@ -386,7 +398,7 @@ public class TaskPanel extends JPanel
 
 
 			Integer requiredLevel = requiredSkill.getLevel();
-			Integer playerLevel = null;
+			int playerLevel = -1;
 			if (requiredLevel == null)
 			{
 				continue;
@@ -396,7 +408,7 @@ public class TaskPanel extends JPanel
 				playerLevel = plugin.playerSkills[skill.ordinal()];
 			}
 			String skillMessage = getSkillRequirementHtml(requiredSkill.getSkill().toLowerCase(), playerLevel, requiredLevel);
-			skillSection.append(skillMessage);
+			skillSection.append(skillMessage).append(" ");
 		}
 
 		return skillSection.toString();
@@ -407,7 +419,7 @@ public class TaskPanel extends JPanel
 		String skillIconPath = "/skill_icons_small/" + skillName + ".png";
 		URL url = SkillIconManager.class.getResource(skillIconPath);
 		Color color = playerLevel >= requiredLevel ? Colors.QUALIFIED_TEXT_COLOR : Colors.UNQUALIFIED_TEXT_COLOR;
-		return Util.imageTag(url) + " " + Util.colorTag(color, playerLevel + "/" + requiredLevel);
+		return HtmlUtil.imageTag(url) + " " + HtmlUtil.colorTag(color, playerLevel + "/" + requiredLevel);
 	}
 
 	private String getPointsTooltipText()
