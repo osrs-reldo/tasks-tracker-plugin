@@ -1,8 +1,6 @@
 package net.reldo.taskstracker.panel.components;
 
 import javax.swing.Icon;
-import javax.swing.JButton;
-import lombok.Getter;
 
 public class TriToggleButton extends MultiToggleButton
 {
