@@ -47,7 +47,7 @@ public class TaskType
 			taskTypeDefinition.getTierSpriteIdMap().forEach((idKey, spriteId) -> {
 				Integer tierId = Integer.parseInt(idKey);
 				BufferedImage spriteImage = spriteManager.getSprite(spriteId, 0);
-				this.tierSprites.put(tierId, spriteImage);
+				tierSprites.put(tierId, spriteImage);
 			});
 			future.complete(true);
 		});

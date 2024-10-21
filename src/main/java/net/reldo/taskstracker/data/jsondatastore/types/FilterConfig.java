@@ -11,7 +11,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class FilterConfig {
 	/**
-	 * TODO
+	 * Key under which to store the filter's selected values, generally prefixed by task type
 	 */
 	private String configKey;
 
@@ -44,7 +44,7 @@ public class FilterConfig {
 	private String optionLabelEnum;
 
 	/**
-	 * TODO
+	 * Item values in a button filter (dropdown not yet supported)
 	 */
 	private ArrayList<FilterCustomItem> customItems;
 
