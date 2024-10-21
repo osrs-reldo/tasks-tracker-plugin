@@ -6,8 +6,8 @@ import java.util.HashMap;
 import lombok.Getter;
 import lombok.Setter;
 import net.reldo.taskstracker.bosses.BossData;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.quests.DiaryData;
 import net.reldo.taskstracker.quests.QuestData;
 import net.runelite.api.Actor;
@@ -33,7 +33,7 @@ public class Export
 	// TODO: Setter until property is ready to deprecate when web accepts varbits
 	@Setter @Expose	private HashMap<String, TaskFromStruct> tasks;
 
-	public Export(TaskTypeDefinition taskType, String runeliteVersion, Client client, PluginManager pluginManager, ConfigManager configManager)
+	public Export(TaskType taskType, String runeliteVersion, Client client, PluginManager pluginManager, ConfigManager configManager)
 	{
 		this.client = client;
 		Actor localPlayer = client.getLocalPlayer();
@@ -52,7 +52,7 @@ public class Export
 		varps = getVarps(taskType);
 	}
 
-	private HashMap<Integer, Integer> getVarbits(TaskTypeDefinition taskType)
+	private HashMap<Integer, Integer> getVarbits(TaskType taskType)
 	{
 		assert client.isClientThread();
 
@@ -65,7 +65,7 @@ public class Export
 		return varbitValueMap;
 	}
 
-	public HashMap<Integer, Integer> getVarps(TaskTypeDefinition taskType)
+	public HashMap<Integer, Integer> getVarps(TaskType taskType)
 	{
 		assert client.isClientThread();
 

@@ -23,11 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.TasksSummary;
 import net.reldo.taskstracker.data.TrackerDataStore;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
-import net.reldo.taskstracker.data.jsondatastore.reader.FileDataStoreReader;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
+import net.reldo.taskstracker.data.jsondatastore.reader.HttpDataStoreReader;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskTrackerTaskModule;
+import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.panel.TaskPanelFactory;
 import net.reldo.taskstracker.panel.TaskTrackerPanelModule;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
@@ -45,7 +45,6 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
-import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -89,8 +88,6 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject
 	private PluginManager pluginManager;
 	@Inject
-	private SkillIconManager skillIconManager;
-	@Inject
 	private ClientToolbar clientToolbar;
 	@Inject
 	private ClientThread clientThread;
@@ -113,7 +110,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	public void configure(Binder binder)
 	{
-		binder.bind(DataStoreReader.class).to(FileDataStoreReader.class);
+		binder.bind(DataStoreReader.class).to(HttpDataStoreReader.class);
 		binder.install(new TaskTrackerPanelModule());
 		binder.install(new TaskTrackerTaskModule());
 		super.configure(binder);
@@ -131,8 +128,8 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		try
 		{
-			TaskTypeDefinition combatTaskType = this.taskService.getTaskTypes().get("COMBAT");
-			this.taskService.setTaskType(combatTaskType);
+			String taskTypeName = config.taskTypeName();
+			taskService.setTaskType(taskTypeName);
 		}
 		catch (Exception ex)
 		{
@@ -141,9 +138,9 @@ public class TasksTrackerPlugin extends Plugin
 
 		this.forceUpdateVarpsFlag = false;
 
-		this.pluginPanel = new TasksTrackerPluginPanel(this, this.config, this.spriteManager, this.taskService, this.taskPanelFactory);
+		this.pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService, taskPanelFactory);
 
-		boolean isLoggedIn = this.isLoggedInState(this.client.getGameState());
+		boolean isLoggedIn = isLoggedInState(client.getGameState());
 		this.pluginPanel.setLoggedIn(isLoggedIn);
 		if (isLoggedIn) {
 			forceUpdateVarpsFlag = true;
@@ -347,7 +344,7 @@ public class TasksTrackerPlugin extends Plugin
 	}
 
 	// TODO: reimplement
-	public void copyJsonToClipboard(TaskTypeDefinition taskType)
+	public void copyJsonToClipboard(TaskType taskType)
 	{
 //		this.clientThread.invokeLater(() -> {
 //			String exportJson = this.exportToJson(taskType);
@@ -361,7 +358,7 @@ public class TasksTrackerPlugin extends Plugin
 	}
 
 	// TODO: reimplement
-	private void loadSavedTaskTypeData(TaskTypeDefinition taskType)
+	private void loadSavedTaskTypeData(TaskType taskType)
 	{
 		log.debug("loadSavedTaskTypeData {}", taskType.getName());
 		HashMap<Integer, TaskFromStruct> taskData = this.trackerDataStore.loadTaskTypeFromConfig(taskType);

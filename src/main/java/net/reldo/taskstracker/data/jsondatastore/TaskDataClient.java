@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
+import net.reldo.taskstracker.data.task.TaskType;
+import net.reldo.taskstracker.data.task.TaskTypeFactory;
 import okhttp3.OkHttpClient;
 
 @Singleton
@@ -24,6 +26,7 @@ public class TaskDataClient
 	@Inject private ManifestClient manifestClient;
 	@Inject	private OkHttpClient okHttpClient;
 	@Inject private Gson gson;
+	@Inject private TaskTypeFactory taskTypeFactory;
 	@Inject private DataStoreReader dataStoreReader;
 
 	public TaskDataClient()
@@ -31,19 +34,20 @@ public class TaskDataClient
 		System.out.println("init task data client");
 	}
 
-	public HashMap<String, TaskTypeDefinition> getTaskTypeDefinitions() throws Exception
+	public HashMap<String, TaskType> getTaskTypes() throws Exception
 	{
 		InputStream stream = this.dataStoreReader.readTaskTypes(this.manifestClient.getManifest().taskTypeMetadata);
 		InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
 		Type listType = TypeToken.getParameterized(ArrayList.class, TaskTypeDefinition.class).getType();
 
-		List<TaskTypeDefinition> taskTypes = this.gson.fromJson(responseReader, listType);
-		HashMap<String, TaskTypeDefinition> taskTypesByJsonName = new HashMap<>();
-		for (TaskTypeDefinition taskType : taskTypes)
+		List<TaskTypeDefinition> taskTypeDefinitions = this.gson.fromJson(responseReader, listType);
+
+		HashMap<String, TaskType> taskTypes = new HashMap<>();
+		for (TaskTypeDefinition taskTypeDefinition : taskTypeDefinitions)
 		{
-			taskTypesByJsonName.put(taskType.getTaskJsonName(), taskType);
+			taskTypes.put(taskTypeDefinition.getTaskJsonName(), taskTypeFactory.create(taskTypeDefinition));
 		}
-		return taskTypesByJsonName;
+		return taskTypes;
 	}
 
 	public List<TaskDefinition> getTaskDefinitions(String jsonFilename) throws Exception

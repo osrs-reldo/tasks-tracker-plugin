@@ -3,11 +3,13 @@ package net.reldo.taskstracker.data.task;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import lombok.Getter;
+import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.runelite.api.Client;
@@ -24,16 +26,16 @@ public class TaskType
 	private SpriteManager spriteManager;
 
 	@Getter
-	private final TaskTypeDefinition taskTypeDefinition;
-	@Getter
 	private final HashMap<Integer, BufferedImage> spritesById = new HashMap<>();
 	@Getter
 	private final HashMap<Integer, BufferedImage> tierSprites = new HashMap<>();
 
+	private final TaskTypeDefinition _taskTypeDefinition;
+
 	@AssistedInject
 	public TaskType(@Assisted TaskTypeDefinition taskTypeDefinition)
 	{
-		this.taskTypeDefinition = taskTypeDefinition;
+		this._taskTypeDefinition = taskTypeDefinition;
 	}
 
 	public CompletableFuture<Boolean> loadTaskTypeDataAsync()
@@ -44,7 +46,7 @@ public class TaskType
 				BufferedImage spriteImage = spriteManager.getSprite(spriteId, 0);
 				spritesById.put(spriteId, spriteImage);
 			});
-			taskTypeDefinition.getTierSpriteIdMap().forEach((idKey, spriteId) -> {
+			_taskTypeDefinition.getTierSpriteIdMap().forEach((idKey, spriteId) -> {
 				Integer tierId = Integer.parseInt(idKey);
 				BufferedImage spriteImage = spriteManager.getSprite(spriteId, 0);
 				tierSprites.put(tierId, spriteImage);
@@ -57,13 +59,13 @@ public class TaskType
 
 	public String getConfigPrefix()
 	{
-		return taskTypeDefinition.getTaskJsonName() + ".";
+		return _taskTypeDefinition.getTaskJsonName() + ".";
 	}
 
 	private HashSet<Integer> getButtonFiltersSpriteIds()
 	{
 		HashSet<Integer> sprites = new HashSet<>();
-		taskTypeDefinition.getFilters().stream().filter(
+		_taskTypeDefinition.getFilters().stream().filter(
 			(filterConfig) -> filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER)
 		).forEach((filterConfig) -> {
 			if (filterConfig.getCustomItems() != null)
@@ -79,5 +81,50 @@ public class TaskType
 			}
 		});
 		return sprites;
+	}
+
+	public ArrayList<Integer> getTaskVarps()
+	{
+		return _taskTypeDefinition.getTaskVarps();
+	}
+
+	public String getTaskJsonName()
+	{
+		return _taskTypeDefinition.getTaskJsonName();
+	}
+
+	public HashMap<String, Integer> getIntParamMap()
+	{
+		return _taskTypeDefinition.getIntParamMap();
+	}
+
+	public HashMap<String, Integer> getStringParamMap()
+	{
+		return _taskTypeDefinition.getStringParamMap();
+	}
+
+	public HashMap<String, Integer> getStringEnumMap()
+	{
+		return _taskTypeDefinition.getStringEnumMap();
+	}
+
+	public String getName()
+	{
+		return _taskTypeDefinition.getName();
+	}
+
+	public ArrayList<FilterConfig> getFilters()
+	{
+		return _taskTypeDefinition.getFilters();
+	}
+
+	public int[] getOtherVarps()
+	{
+		return _taskTypeDefinition.getOtherVarps();
+	}
+
+	public int[] getVarbits()
+	{
+		return _taskTypeDefinition.getVarbits();
 	}
 }

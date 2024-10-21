@@ -113,17 +113,17 @@ public interface TasksTrackerConfig extends Config
         return "";
     }
 
-//	@ConfigItem( // TODO: reimplement this, but it will have to be a string since types are now dynamic
-//		position = 106,
-//		keyName = "taskType",
-//		name = "Task Type",
-//		description = "Configures the task type which is displayed in the panel.",
-//		hidden = true
-//	)
-//	default TaskTypeDefinition taskType()
-//	{
-//		return TaskType.COMBAT;
-//	}
+	@ConfigItem(
+		position = 106,
+		keyName = "taskTypeName",
+		name = "Task Type",
+		description = "Configures the task type which is displayed in the panel.",
+		hidden = true
+	)
+	default String taskTypeName()
+	{
+		return "COMBAT";
+	}
 
     @ConfigItem(
             position = 107,

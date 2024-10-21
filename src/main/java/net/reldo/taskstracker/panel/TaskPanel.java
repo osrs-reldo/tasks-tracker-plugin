@@ -82,16 +82,16 @@ public class TaskPanel extends JPanel
 		// TODO: profile why filtering has a very laggy list redraw (it technically shouldnt be redrawing, only show/hiding)
 		// TODO: move filtering into task service, so we don't have to create these per task
 		// TODO: DEPRECATE filterKey in favor of config.key
-		task.getTaskTypeDefinition().getFilters().forEach((filterConfig) -> {
+		task.getTaskType().getFilters().forEach((filterConfig) -> {
 			String paramName = filterConfig.getValueName();
 			if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER))
 			{
-				Filter filter = new ParamButtonFilter(plugin.getConfigManager(), paramName, task.getTaskTypeDefinition().getTaskJsonName() + "." + filterConfig.getConfigKey());
+				Filter filter = new ParamButtonFilter(plugin.getConfigManager(), paramName, task.getTaskType().getTaskJsonName() + "." + filterConfig.getConfigKey());
 				filters.add(filter);
 			}
 			else if (filterConfig.getFilterType().equals(FilterType.DROPDOWN_FILTER))
 			{
-				Filter filter = new ParamDropdownFilter(plugin.getConfigManager(), paramName, task.getTaskTypeDefinition().getTaskJsonName() + "." + filterConfig.getConfigKey());
+				Filter filter = new ParamDropdownFilter(plugin.getConfigManager(), paramName, task.getTaskType().getTaskJsonName() + "." + filterConfig.getConfigKey());
 				filters.add(filter);
 			}
 		});

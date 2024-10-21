@@ -44,7 +44,7 @@ public class SubFilterPanel extends FixedWidthPanel
 		removeAll();
 
 		filterPanels.clear();
-		filterPanels.addAll(getFilterPanels(taskService.getCurrentTaskTypeDefinition().getFilters()));
+		filterPanels.addAll(getFilterPanels(taskService.getCurrentTaskType().getFilters()));
 		filterPanels.forEach((filterPanel) -> {
 			add(filterPanel);
 			filterPanel.redraw();
@@ -100,8 +100,8 @@ public class SubFilterPanel extends FixedWidthPanel
 			if (!enumName.isEmpty())
 			{
 				HashMap<Integer, String> enumEntries = taskService.getStringEnumValuesAsync(enumName).get(); // TODO: blocking call
-				ArrayList<ComboItem> options = new ArrayList<>();
-				options.add(new ComboItem(-1, ""));
+				ArrayList<ComboItem<Integer>> options = new ArrayList<>();
+				options.add(new ComboItem<>(-1, ""));
 				for (Map.Entry<Integer, String> entry : enumEntries.entrySet())
 				{
 					if (filterConfig.getValueName().equals("tier"))
@@ -111,9 +111,9 @@ public class SubFilterPanel extends FixedWidthPanel
 							continue;
 						}
 					}
-					options.add(new ComboItem(entry.getKey(), entry.getValue()));
+					options.add(new ComboItem<>(entry.getKey(), entry.getValue()));
 				}
-				return options.toArray(new ComboItem[options.size()]);
+				return options.toArray(new ComboItem[0]);
 			}
 		}
 

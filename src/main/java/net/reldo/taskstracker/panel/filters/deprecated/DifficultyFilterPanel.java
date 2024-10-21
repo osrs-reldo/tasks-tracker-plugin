@@ -59,7 +59,7 @@
 //
 //        if (taskType == null) return images;
 //
-//        if (taskType.getTaskTypeDefinition().getTaskJsonName().equals("LEAGUE_4"))
+//        if (taskType.getTaskJsonName().equals("LEAGUE_4"))
 //        {
 //            directory += "league3/";
 //

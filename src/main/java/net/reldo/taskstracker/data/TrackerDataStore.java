@@ -6,8 +6,8 @@ import java.util.HashMap;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.TaskType;
 import net.runelite.client.config.ConfigManager;
 
 @Slf4j
@@ -32,7 +32,7 @@ public class TrackerDataStore
 	}
 
 	// TODO: reimplement
-	public HashMap<Integer, TaskFromStruct> loadTaskTypeFromConfig(TaskTypeDefinition taskType)
+	public HashMap<Integer, TaskFromStruct> loadTaskTypeFromConfig(TaskType taskType)
 	{
 //		log.debug("loadTaskTypeFromConfig {}", taskType.getName());
 //		String key = CONFIG_TASKS_PREFIX + CONFIG_GROUP_PREFIX_SEPARATOR + taskType.getTaskJsonName();
@@ -59,7 +59,7 @@ public class TrackerDataStore
 	}
 
 	// TODO: reimplement
-	public void saveTaskTypeToConfig(TaskTypeDefinition taskType, Collection<TaskFromStruct> tasks)
+	public void saveTaskTypeToConfig(TaskType taskType, Collection<TaskFromStruct> tasks)
 	{
 //		log.debug("saveTaskTypeToConfig");
 //		Map<Integer, TaskFromStruct> tasksWithData = tasks.stream()

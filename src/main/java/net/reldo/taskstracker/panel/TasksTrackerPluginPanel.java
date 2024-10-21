@@ -33,13 +33,13 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 		setLayout(new BorderLayout());
 
-		loggedInPanel = new LoggedInPanel(plugin, config, spriteManager, taskService, taskPanelFactory);
+		loggedInPanel = new LoggedInPanel(plugin, config, taskService, taskPanelFactory);
 		taskListPanel = loggedInPanel.taskListPanel;
 		add(loggedInPanel, BorderLayout.NORTH);
-		loggedInPanel.setVisible(false);
+		loggedInPanel.setVisible(true);
 
 		// Add error pane
-		add(loggedOutPanel);
+//		add(loggedOutPanel);
 	}
 
 	@Override
@@ -58,10 +58,10 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	public void refresh(TaskFromStruct task)
 	{
-		if (loggedIn)
-		{
+//		if (loggedIn)
+//		{
 			loggedInPanel.refresh(task);
-		}
+//		}
 	}
 
 	public void setLoggedIn(boolean loggedIn)
