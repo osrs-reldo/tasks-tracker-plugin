@@ -81,7 +81,7 @@ public class MultiToggleButton extends JButton
 
     public void changeState()
     {
-        setState((state++) % stateCount);
+        setState((++state) % stateCount);
     }
 
     private void setIconState()

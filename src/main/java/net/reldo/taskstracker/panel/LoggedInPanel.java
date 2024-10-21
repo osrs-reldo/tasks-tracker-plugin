@@ -569,7 +569,6 @@ public class LoggedInPanel extends JPanel
 
 	private void updateCollapseButtonText()
 	{
-		// TODO: needs to be updated to support dynamic filters, can just be a total, "X filters"
 		if(getSelectedTaskType() == null) return;
 		ArrayList<FilterConfig> filters = taskService.getCurrentTaskType().getTaskTypeDefinition().getFilters();
 
