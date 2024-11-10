@@ -160,4 +160,28 @@ public interface TasksTrackerConfig extends Config
 	{
 		return "";
 	}
+
+    @ConfigItem(
+            position = 110,
+            keyName = "sortCriteria",
+            name = "Sort Criteria",
+            description = "Configures the criteria to sort tasks on.",
+            hidden = true
+    )
+    default String sortCriteria()
+    {
+        return "";
+    }
+
+    @ConfigItem(
+            position = 111,
+            keyName = "sortDirection",
+            name = "Sort Direction",
+            description = "Configures the direction to sort tasks.",
+            hidden = true
+    )
+    default ConfigValues.SortDirections sortDirection()
+    {
+        return ConfigValues.SortDirections.ASCENDING;
+    }
 }

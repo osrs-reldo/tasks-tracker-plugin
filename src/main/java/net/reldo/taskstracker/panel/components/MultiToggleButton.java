@@ -1,8 +1,14 @@
 package net.reldo.taskstracker.panel.components;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.border.EmptyBorder;
 import lombok.Getter;
+import lombok.Setter;
 
 public class MultiToggleButton extends JButton
 {
@@ -12,8 +18,12 @@ public class MultiToggleButton extends JButton
     // Tooltips
     private final String[] tooltips;
     private final int stateCount;
+    @Setter
+    private ActionListener stateChangedAction = null;
     @Getter
     private int state = 0;
+    final JPopupMenu popupMenu = new JPopupMenu();
+    private boolean popupMenuEnabled = false;
 
     public MultiToggleButton(int stateCount)
     {
@@ -21,9 +31,25 @@ public class MultiToggleButton extends JButton
         this.stateCount = stateCount;
         icons = new Icon[stateCount];
         tooltips = new String[stateCount];
+        popupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
+        addActionListener(e -> changeStateThenAction());
     }
 
-    /* Action listener must include changeState() */
+    public void popupMenuEnabled(boolean enabled)
+    {
+        if(popupMenuEnabled != enabled)
+        {
+            popupMenuEnabled = enabled;
+            if(popupMenuEnabled)
+            {
+                this.setComponentPopupMenu(popupMenu);
+            }
+            else
+            {
+                this.remove(popupMenu);
+            }
+        }
+    }
 
     public void setIcon(Icon icon, int state)
     {
@@ -60,6 +86,7 @@ public class MultiToggleButton extends JButton
         }
 
         tooltips[state] = tooltip;
+        addPopupMenuItem(tooltip, state);
 
         if (state == this.state) setTooltipState();
     }
@@ -84,6 +111,11 @@ public class MultiToggleButton extends JButton
         setState((++state) % stateCount);
     }
 
+    public void changeStateThenAction()
+    {
+        setStateThenAction((++state) % stateCount);
+    }
+
     private void setIconState()
     {
         super.setIcon(icons[state]);
@@ -99,5 +131,18 @@ public class MultiToggleButton extends JButton
         this.state = state;
         setIconState();
         setTooltipState();
+    }
+
+    public void setStateThenAction(int state)
+    {
+        setState(state);
+        if(stateChangedAction != null) this.stateChangedAction.actionPerformed(new ActionEvent(this, 0, ""));
+    }
+
+    private void addPopupMenuItem(String text, int state)
+    {
+        JMenuItem menuItem = new JMenuItem();
+        menuItem.addActionListener(e -> this.setState(state));
+        popupMenu.add(menuItem);
     }
 }

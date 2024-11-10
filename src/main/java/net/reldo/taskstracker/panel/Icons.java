@@ -24,6 +24,10 @@ public class Icons
 	public static final Icon TRACKED_ONLY_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, trackedBtnPath + "tracked_icon.png"));
 	public static final Icon TRACKED_UNTRACKED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, trackedBtnPath + "tracked_and_untracked_icon.png"));
 
+	private static final String sortBtnPath = "panel/components/sort_button/";
+	public static final Icon ASCENDING_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, sortBtnPath + "ascending_icon.png"));
+	public static final Icon DESCENDING_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, sortBtnPath + "descending_icon.png"));
+
 	private static final String expandBtnPath = "panel/components/";
 	public static final Icon MENU_EXPANDED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "filter_menu_expanded.png"));
 	public static final BufferedImage collapseImg = ImageUtil.loadImageResource(TasksTrackerPlugin.class, expandBtnPath + "filter_menu_collapsed.png");

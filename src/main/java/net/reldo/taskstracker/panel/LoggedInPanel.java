@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.swing.Box;
@@ -14,16 +13,11 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicButtonUI;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
@@ -66,6 +60,7 @@ public class LoggedInPanel extends JPanel
 
 	// sub-filter panel
 	private SubFilterPanel subFilterPanel;
+	private SortPanel sortPanel;
 	private final JToggleButton collapseBtn = new JToggleButton();
 
 	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, SpriteManager spriteManager, TaskService taskService, TaskPanelFactory taskPanelFactory)
@@ -89,6 +84,7 @@ public class LoggedInPanel extends JPanel
 	public void redraw()
 	{
 		subFilterPanel.redraw();
+		sortPanel.redraw();
 		updateCollapseButtonText();
 
 		taskListPanel.redraw();
@@ -350,12 +346,16 @@ public class LoggedInPanel extends JPanel
 		subFilterWrapper.add(collapseBtn, BorderLayout.NORTH);
 		subFilterWrapper.add(subFilterPanel, BorderLayout.CENTER);
 
+		sortPanel = new SortPanel(plugin, taskService, taskListPanel);
+
 		northPanel.add(getTitleAndButtonPanel());
 		northPanel.add(Box.createVerticalStrut(10));
 		northPanel.add(taskTypeDropdown);
 		northPanel.add(Box.createVerticalStrut(2));
 		northPanel.add(getSearchPanel());
-		northPanel.add(Box.createVerticalStrut(5));
+		northPanel.add(Box.createVerticalStrut(2));
+		northPanel.add(sortPanel);
+		northPanel.add(Box.createVerticalStrut(2));
 		northPanel.add(subFilterWrapper);
 
 		return northPanel;
@@ -382,37 +382,9 @@ public class LoggedInPanel extends JPanel
 		completedFilterBtn.setIcons(Icons.COMPLETE_INCOMPLETE_ICON, Icons.COMPLETE_ONLY_ICON, Icons.INCOMPLETE_ONLY_ICON);
 		completedFilterBtn.setToolTips("All tasks", "Completed tasks only", "Incomplete tasks only");
 		completedFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		completedFilterBtn.addActionListener(e -> {
-			completedFilterBtn.changeState();
-			filterButtonAction("completed");
-		});
+		completedFilterBtn.setStateChangedAction(e -> filterButtonAction("completed"));
+		completedFilterBtn.popupMenuEnabled(true);
 		completedFilterBtn.setState(config.completedFilter().ordinal());
-
-		// Create popup menu for manually setting the button state
-		final JPopupMenu completedFilterBtnPopupMenu = new JPopupMenu();
-		completedFilterBtnPopupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
-		completedFilterBtn.setComponentPopupMenu(completedFilterBtnPopupMenu);
-
-		final JMenuItem allTasksC = new JMenuItem("All tasks");
-		allTasksC.addActionListener(e -> {
-			completedFilterBtn.setState(0);
-			filterButtonAction("completed");
-		});
-		completedFilterBtnPopupMenu.add(allTasksC);
-
-		final JMenuItem completedTasks = new JMenuItem("Completed tasks only");
-		completedTasks.addActionListener(e -> {
-			completedFilterBtn.setState(1);
-			filterButtonAction("completed");
-		});
-		completedFilterBtnPopupMenu.add(completedTasks);
-
-		final JMenuItem incompleteTasks = new JMenuItem("Incomplete tasks only");
-		incompleteTasks.addActionListener(e -> {
-			completedFilterBtn.setState(2);
-			filterButtonAction("completed");
-		});
-		completedFilterBtnPopupMenu.add(incompleteTasks);
 
 		viewControls.add(completedFilterBtn);
 
@@ -421,37 +393,9 @@ public class LoggedInPanel extends JPanel
 		trackedFilterBtn.setIcons(Icons.TRACKED_UNTRACKED_ICON, Icons.TRACKED_ONLY_ICON, Icons.UNTRACKED_ONLY_ICON);
 		trackedFilterBtn.setToolTips("All tasks", "Tracked tasks only", "Untracked tasks only");
 		trackedFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		trackedFilterBtn.addActionListener(e -> {
-			trackedFilterBtn.changeState();
-			filterButtonAction("tracked");
-		});
+		trackedFilterBtn.setStateChangedAction(e -> filterButtonAction("tracked"));
+		trackedFilterBtn.popupMenuEnabled(true);
 		trackedFilterBtn.setState(config.trackedFilter().ordinal());
-
-		// Create popup menu for manually setting the button state
-		final JPopupMenu trackedFilterBtnPopupMenu = new JPopupMenu();
-		trackedFilterBtnPopupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
-		trackedFilterBtn.setComponentPopupMenu(trackedFilterBtnPopupMenu);
-
-		final JMenuItem allTasksT = new JMenuItem("All tasks");
-		allTasksT.addActionListener(e -> {
-			trackedFilterBtn.setState(0);
-			filterButtonAction("tracked");
-		});
-		trackedFilterBtnPopupMenu.add(allTasksT);
-
-		final JMenuItem trackedTasks = new JMenuItem("Tracked tasks only");
-		trackedTasks.addActionListener(e -> {
-			trackedFilterBtn.setState(1);
-			filterButtonAction("tracked");
-		});
-		trackedFilterBtnPopupMenu.add(trackedTasks);
-
-		final JMenuItem untrackedTasks = new JMenuItem("Untracked tasks only");
-		untrackedTasks.addActionListener(e -> {
-			trackedFilterBtn.setState(2);
-			filterButtonAction("tracked");
-		});
-		trackedFilterBtnPopupMenu.add(untrackedTasks);
 
 		viewControls.add(trackedFilterBtn);
 
@@ -460,37 +404,9 @@ public class LoggedInPanel extends JPanel
 		ignoredFilterBtn.setIcons(Icons.SEMIVISIBLE_ICON, Icons.VISIBLE_ICON, Icons.INVISIBLE_ICON);
 		ignoredFilterBtn.setToolTips("Hide ignored tasks", "All tasks", "Ignored tasks only");
 		ignoredFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		ignoredFilterBtn.addActionListener(e -> {
-			ignoredFilterBtn.changeState();
-			filterButtonAction("ignored");
-		});
+		ignoredFilterBtn.setStateChangedAction(e -> filterButtonAction("ignored"));
+		ignoredFilterBtn.popupMenuEnabled(true);
 		ignoredFilterBtn.setState(config.ignoredFilter().ordinal());
-
-		// Create popup menu for manually setting the button state
-		final JPopupMenu ignoredFilterBtnPopupMenu = new JPopupMenu();
-		ignoredFilterBtnPopupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
-		ignoredFilterBtn.setComponentPopupMenu(ignoredFilterBtnPopupMenu);
-
-		final JMenuItem allTasksI = new JMenuItem("All tasks");
-		allTasksI.addActionListener(e -> {
-			ignoredFilterBtn.setState(1);
-			filterButtonAction("ignored");
-		});
-		ignoredFilterBtnPopupMenu.add(allTasksI);
-
-		final JMenuItem unignoredTasks = new JMenuItem("Hide ignored tasks");
-		unignoredTasks.addActionListener(e -> {
-			ignoredFilterBtn.setState(0);
-			filterButtonAction("ignored");
-		});
-		ignoredFilterBtnPopupMenu.add(unignoredTasks);
-
-		final JMenuItem ignoredTasks = new JMenuItem("Ignored tasks only");
-		ignoredTasks.addActionListener(e -> {
-			ignoredFilterBtn.setState(2);
-			filterButtonAction("ignored");
-		});
-		ignoredFilterBtnPopupMenu.add(ignoredTasks);
 
 		viewControls.add(ignoredFilterBtn);
 

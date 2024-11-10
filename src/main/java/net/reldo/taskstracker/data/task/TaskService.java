@@ -2,17 +2,18 @@ package net.reldo.taskstracker.data.task;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import net.reldo.taskstracker.data.jsondatastore.FilterDataClient;
 import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
 import net.reldo.taskstracker.data.jsondatastore.TaskDataClient;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
@@ -56,6 +57,8 @@ public class TaskService
 	private final List<TaskFromStruct> tasks = new ArrayList<>();
 	private HashMap<String, TaskTypeDefinition> _taskTypes = new HashMap<>();
 	private HashSet currentTaskTypeVarps = new HashSet<>();
+	@Getter
+	private HashMap<String, int[]> sortedIndexes = new HashMap<>();;
 
 	public void setTaskType(TaskTypeDefinition taskTypeDefinition)
 	{
@@ -102,11 +105,49 @@ public class TaskService
 				addVarpLookup(task);
 			}
 
+			// Index task list for each property @todo check if clientThread.invoke guarantees all task data will be loaded before sorting
+			sortedIndexes.clear();
+			currentTaskTypeDefinition.getIntParamMap().keySet().forEach(paramName ->
+					clientThread.invoke(() ->
+							addSortedIndex(paramName, Comparator.comparingInt((TaskFromStruct task) -> task.getIntParam(paramName)))
+					)
+			);
+			currentTaskTypeDefinition.getStringParamMap().keySet().forEach(paramName ->
+					clientThread.invoke(() ->
+							addSortedIndex(paramName, Comparator.comparing((TaskFromStruct task) -> task.getStringParam(paramName)))
+					)
+			);
+
 			taskTypeChanged = true;
 		}
 		catch (Exception ex)
 		{
 			log.error("Unable to set task type", ex);
+		}
+	}
+
+	private void addSortedIndex(String paramName, Comparator<TaskFromStruct> comparator)
+	{
+		List<TaskFromStruct> sortedTasks = tasks.stream()
+				.sorted(comparator)
+				.collect(Collectors.toCollection(ArrayList::new));
+		int[] sortedIndex = new int[tasks.size()];
+		for(int i = 0; i < sortedTasks.size(); i++)
+		{
+			sortedIndex[i] = tasks.indexOf(sortedTasks.get(i));
+		}
+		sortedIndexes.put(paramName, sortedIndex);
+	}
+
+	public int getSortedTaskIndex(String sortCriteria, int position)
+	{
+		if(sortedIndexes.containsKey(sortCriteria))
+		{
+			return sortedIndexes.get(sortCriteria)[position];
+		}
+		else
+		{
+			return position;
 		}
 	}
 
