@@ -70,7 +70,7 @@ public class TaskService
 			currentTaskType = newTaskType;
 
             // Complete creation of any GLOBAL value type filterConfigs
-			for (FilterConfig filterConfig : currentTaskTypeDefinition.getFilters())
+			for (FilterConfig filterConfig : currentTaskType.getFilters())
 			{
 				if (filterConfig.getValueType().equals(FilterValueType.GLOBAL))
 				{
@@ -108,12 +108,12 @@ public class TaskService
 
 			// Index task list for each property @todo check if clientThread.invoke guarantees all task data will be loaded before sorting
 			sortedIndexes.clear();
-			currentTaskTypeDefinition.getIntParamMap().keySet().forEach(paramName ->
+			currentTaskType.getIntParamMap().keySet().forEach(paramName ->
 					clientThread.invoke(() ->
 							addSortedIndex(paramName, Comparator.comparingInt((TaskFromStruct task) -> task.getIntParam(paramName)))
 					)
 			);
-			currentTaskTypeDefinition.getStringParamMap().keySet().forEach(paramName ->
+			currentTaskType.getStringParamMap().keySet().forEach(paramName ->
 					clientThread.invoke(() ->
 							addSortedIndex(paramName, Comparator.comparing((TaskFromStruct task) -> task.getStringParam(paramName)))
 					)
