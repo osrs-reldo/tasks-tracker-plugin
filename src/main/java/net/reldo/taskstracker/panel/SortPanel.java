@@ -50,6 +50,7 @@ public class SortPanel extends FixedWidthPanel
                 .flatMap(Set::stream)
                 .map((str) -> str.substring(0, 1).toUpperCase() + str.substring(1))
                 .collect(Collectors.toList());
+        criteriaList.add("Completion %");
         criteriaList.add("Default");
         String[] criteriaArray = criteriaList.toArray(new String[0]);
         sortDropdown = new JComboBox<>(criteriaArray);

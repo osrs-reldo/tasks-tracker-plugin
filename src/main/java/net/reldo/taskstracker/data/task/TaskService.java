@@ -58,7 +58,7 @@ public class TaskService
 	private HashMap<String, TaskTypeDefinition> _taskTypes = new HashMap<>();
 	private HashSet currentTaskTypeVarps = new HashSet<>();
 	@Getter
-	private HashMap<String, int[]> sortedIndexes = new HashMap<>();;
+	private final HashMap<String, int[]> sortedIndexes = new HashMap<>();
 
 	public void setTaskType(TaskTypeDefinition taskTypeDefinition)
 	{
@@ -116,6 +116,19 @@ public class TaskService
 					clientThread.invoke(() ->
 							addSortedIndex(paramName, Comparator.comparing((TaskFromStruct task) -> task.getStringParam(paramName)))
 					)
+			);
+//			clientThread.invoke(() ->
+//						addSortedIndex("completion %",
+//								Comparator.comparing((TaskFromStruct task) -> task.getTaskDefinition().getCompletionPercent()))
+//			);
+			clientThread.invoke(() ->// todo: make this less of a special case.
+					addSortedIndex("completion %",
+							(TaskFromStruct task1, TaskFromStruct task2) ->
+							{
+								Float comp1 = task1.getTaskDefinition().getCompletionPercent() != null ? task1.getTaskDefinition().getCompletionPercent() : 0;
+								Float comp2 = task2.getTaskDefinition().getCompletionPercent() != null ? task2.getTaskDefinition().getCompletionPercent() : 0;
+								return comp1.compareTo(comp2);
+							})
 			);
 
 			taskTypeChanged = true;
