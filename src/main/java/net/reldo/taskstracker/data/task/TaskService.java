@@ -35,7 +35,7 @@ public class TaskService
 	@Setter
 	private boolean taskTypeChanged = false;
 	@Getter
-	private TaskType currentTaskType;
+	private TaskType currentTaskType; // TODO: should be config driven
 	@Getter
 	private final HashMap<Integer, List<TaskFromStruct>> currentTasksByVarp = new HashMap<>();
 	// TODO: Build the filter on getTasks
@@ -156,5 +156,22 @@ public class TaskService
 			currentTasksByVarp.put(task.getTaskVarp(), new ArrayList<>());
 		}
 		currentTasksByVarp.get(task.getTaskVarp()).add(task);
+	}
+
+	public void applySave(TaskType saveTaskType, HashMap<Integer, ConfigTaskSave> saveData)
+	{
+		String currentTaskTypeName = currentTaskType.getTaskJsonName();
+		String saveTaskTypeName = saveTaskType.getTaskJsonName();
+		if (!currentTaskTypeName.equals(saveTaskTypeName))
+		{
+			log.warn("cannot apply save, task types do not match current={} save={}", currentTaskTypeName, saveTaskTypeName);
+			return;
+		}
+
+		for (TaskFromStruct task : getTasks())
+		{
+			ConfigTaskSave configTaskSave = saveData.get(task.getStructId());
+			task.loadConfigSave(configTaskSave);
+		}
 	}
 }

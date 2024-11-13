@@ -1,6 +1,5 @@
 package net.reldo.taskstracker.data.task;
 
-import com.google.gson.annotations.Expose;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,11 +24,11 @@ public class TaskFromStruct
 	private final TaskDefinition taskDefinition;
 	@Getter
 	private boolean structLoaded;
-	@Expose @Getter @Setter
+	@Getter @Setter
 	private long completedOn;
-	@Expose @Getter @Setter
+	@Getter @Setter
 	private long trackedOn;
-	@Expose @Getter @Setter
+	@Getter @Setter
 	private long ignoredOn;
 
 	private StructComposition _struct;
@@ -148,10 +147,9 @@ public class TaskFromStruct
 		ignoredOn = state ? now : 0;
 	}
 
-	// TODO: reimplement
-	public void loadConfigSave(TaskFromStruct loadedData)
+	public void loadConfigSave(ConfigTaskSave loadedData)
 	{
-//		setDates(loadedData.getCompletedOn(), loadedData.getIgnoredOn(), loadedData.getTrackedOn());
+		setDates(loadedData.completed, loadedData.ignored, loadedData.tracked);
 	}
 
 	public void loadReldoSave(ReldoTaskSave loadedData)
@@ -199,5 +197,10 @@ public class TaskFromStruct
 	public String getDescription()
 	{
 		return getStringParam("description");
+	}
+
+	public ConfigTaskSave getSaveData()
+	{
+		return new ConfigTaskSave(this);
 	}
 }

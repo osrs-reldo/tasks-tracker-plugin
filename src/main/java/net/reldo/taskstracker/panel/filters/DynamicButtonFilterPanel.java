@@ -23,7 +23,7 @@ public class DynamicButtonFilterPanel extends FilterButtonPanel
 		super(plugin, filterConfig.getLabel());
 		this.filterConfig = filterConfig;
 		this.taskType = taskType;
-		this.configKey = taskType.getConfigPrefix() + filterConfig.getConfigKey();
+		this.configKey = taskType.getFilterConfigPrefix() + filterConfig.getConfigKey();
 
 		setLayout(new BorderLayout());
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);

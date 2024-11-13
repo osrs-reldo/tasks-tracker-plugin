@@ -249,7 +249,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		JButton exportButton = new JButton("Export");
 		exportButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 		exportButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
-		exportButton.addActionListener(e -> plugin.copyJsonToClipboard(taskTypeDropdown.getItemAt(0).getValue())); // TODO: reimplement config
+		exportButton.addActionListener(e -> plugin.copyJsonToClipboard());
 		southPanel.add(exportButton, BorderLayout.EAST);
 
 		return southPanel;
@@ -267,7 +267,7 @@ public class LoggedInPanel extends JPanel  implements ChangeListener
 		ComboItem<TaskType>[] comboItemsArray = taskTypeItems.toArray(new ComboItem[0]);
 		taskTypeDropdown = new JComboBox<>(comboItemsArray);
 		taskTypeDropdown.setAlignmentX(LEFT_ALIGNMENT);
-		taskTypeDropdown.setSelectedItem(comboItemsArray[0]); // TODO: reimplement config
+		taskTypeDropdown.setSelectedItem(taskService.getCurrentTaskType()); // TODO: kinda gross
 		taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue()));
 
 		// Wrapper for collapsible sub-filter menu

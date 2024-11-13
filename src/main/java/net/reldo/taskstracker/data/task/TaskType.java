@@ -57,7 +57,7 @@ public class TaskType
 		return future;
 	}
 
-	public String getConfigPrefix()
+	public String getFilterConfigPrefix()
 	{
 		return _taskTypeDefinition.getTaskJsonName() + ".";
 	}

@@ -4,9 +4,6 @@ import com.google.gson.annotations.Expose;
 import java.time.Instant;
 import java.util.HashMap;
 import lombok.Getter;
-import lombok.Setter;
-import net.reldo.taskstracker.bosses.BossData;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.quests.DiaryData;
 import net.reldo.taskstracker.quests.QuestData;
@@ -22,7 +19,6 @@ public class Export
 
 	@Expose	private final QuestData quests;
 	@Expose	private final DiaryData diaries;
-	@Expose	private final BossData bosses;
 	@Expose	private String displayName;
 	@Expose	private final int runescapeVersion;
 	@Expose	private final String runeliteVersion;
@@ -30,8 +26,6 @@ public class Export
 	@Expose	private final String taskType;
 	@Expose	private final HashMap<Integer, Integer> varbits;
 	@Expose	private final HashMap<Integer, Integer> varps;
-	// TODO: Setter until property is ready to deprecate when web accepts varbits
-	@Setter @Expose	private HashMap<String, TaskFromStruct> tasks;
 
 	public Export(TaskType taskType, String runeliteVersion, Client client, PluginManager pluginManager, ConfigManager configManager)
 	{
@@ -43,7 +37,6 @@ public class Export
 		}
 		quests = new QuestData(client);
 		diaries = new DiaryData(client);
-		bosses = new BossData(pluginManager, configManager);
 		runescapeVersion = client.getRevision();
 		this.runeliteVersion = runeliteVersion;
 		timestamp = Instant.now().toEpochMilli();

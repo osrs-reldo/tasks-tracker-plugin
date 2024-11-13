@@ -207,7 +207,7 @@ public class TaskPanel extends JPanel
 		toggleTrack.addActionListener(e -> {
 			task.setTracked(toggleTrack.isSelected());
 			plugin.pluginPanel.taskListPanel.refresh(task);
-			plugin.saveCurrentTaskData();
+			plugin.saveCurrentTaskTypeData();
 		});
 		SwingUtil.removeButtonDecorations(toggleTrack);
 
@@ -219,7 +219,7 @@ public class TaskPanel extends JPanel
 		toggleIgnore.addActionListener(e -> {
 			task.setIgnored(!task.isIgnored());
 			plugin.pluginPanel.taskListPanel.refresh(task);
-			plugin.saveCurrentTaskData();
+			plugin.saveCurrentTaskTypeData();
 		});
 		SwingUtil.removeButtonDecorations(toggleIgnore);
 

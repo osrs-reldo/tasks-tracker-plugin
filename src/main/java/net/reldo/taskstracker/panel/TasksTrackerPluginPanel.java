@@ -36,10 +36,10 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		loggedInPanel = new LoggedInPanel(plugin, config, taskService, taskPanelFactory);
 		taskListPanel = loggedInPanel.taskListPanel;
 		add(loggedInPanel, BorderLayout.NORTH);
-		loggedInPanel.setVisible(true);
+		loggedInPanel.setVisible(false);
 
 		// Add error pane
-//		add(loggedOutPanel);
+		add(loggedOutPanel);
 	}
 
 	@Override
@@ -58,10 +58,10 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	public void refresh(TaskFromStruct task)
 	{
-//		if (loggedIn)
-//		{
+		if (loggedIn)
+		{
 			loggedInPanel.refresh(task);
-//		}
+		}
 	}
 
 	public void setLoggedIn(boolean loggedIn)
