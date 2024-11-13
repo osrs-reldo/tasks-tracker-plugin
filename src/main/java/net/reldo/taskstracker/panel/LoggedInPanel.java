@@ -482,7 +482,7 @@ public class LoggedInPanel extends JPanel
 	private void updateCollapseButtonText()
 	{
 		if(getSelectedTaskType() == null) return;
-		ArrayList<FilterConfig> filters = taskService.getCurrentTaskType().getTaskTypeDefinition().getFilters();
+		ArrayList<FilterConfig> filters = taskService.getCurrentTaskType().getFilters();
 
 		int countInclusive = 0;
 		int countExclusive = 0;
@@ -491,7 +491,7 @@ public class LoggedInPanel extends JPanel
 		{
 			String filterText = Optional.ofNullable(plugin.getConfigManager()
 					.getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME,
-							taskService.getCurrentTaskType().getConfigPrefix() + filterConfig.getConfigKey()))
+							taskService.getCurrentTaskType().getFilterConfigPrefix() + filterConfig.getConfigKey()))
 					.orElse("");
 
 			int count = (filterText.isEmpty() || filterText.equals("-1")) ? 0 : filterText.split(",").length;

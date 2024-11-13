@@ -118,19 +118,19 @@ public class TaskService
 							addSortedIndex(paramName, Comparator.comparing((TaskFromStruct task) -> task.getStringParam(paramName)))
 					)
 			);
-//			clientThread.invoke(() ->
-//						addSortedIndex("completion %",
-//								Comparator.comparing((TaskFromStruct task) -> task.getTaskDefinition().getCompletionPercent()))
-//			);
 			clientThread.invoke(() ->// todo: make this less of a special case.
+			{
+				if (tasks.stream().anyMatch(taskFromStruct -> taskFromStruct.getTaskDefinition().getCompletionPercent() != null))
+				{
 					addSortedIndex("completion %",
 							(TaskFromStruct task1, TaskFromStruct task2) ->
 							{
 								Float comp1 = task1.getTaskDefinition().getCompletionPercent() != null ? task1.getTaskDefinition().getCompletionPercent() : 0;
 								Float comp2 = task2.getTaskDefinition().getCompletionPercent() != null ? task2.getTaskDefinition().getCompletionPercent() : 0;
 								return comp1.compareTo(comp2);
-							})
-			);
+							});
+				}
+			});
 
 			taskTypeChanged = true;
 		}
