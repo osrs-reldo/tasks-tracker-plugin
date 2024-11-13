@@ -170,7 +170,7 @@ public interface TasksTrackerConfig extends Config
     )
     default String sortCriteria()
     {
-        return "";
+        return "Default";
     }
 
     @ConfigItem(

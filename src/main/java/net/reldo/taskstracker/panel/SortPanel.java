@@ -44,18 +44,16 @@ public class SortPanel extends FixedWidthPanel
     {
         removeAll();
 
-        List<String> criteriaList =
-                Stream.of(taskService.getCurrentTaskType().getIntParamMap().keySet(),
-                        taskService.getCurrentTaskType().getStringParamMap().keySet())
-                .flatMap(Set::stream)
+        List<String> criteriaList = taskService.getSortedIndexes().keySet().stream()
+                .sorted()
                 .map((str) -> str.substring(0, 1).toUpperCase() + str.substring(1))
                 .collect(Collectors.toList());
-        criteriaList.add("Completion %");
-        criteriaList.add("Default");
+        criteriaList.add(0,"Default");
+
         String[] criteriaArray = criteriaList.toArray(new String[0]);
         sortDropdown = new JComboBox<>(criteriaArray);
         sortDropdown.setAlignmentX(LEFT_ALIGNMENT);
-        sortDropdown.setSelectedItem(criteriaArray[criteriaArray.length - 1]);
+        sortDropdown.setSelectedIndex(0);
         sortDropdown.addActionListener(e -> {
             updateConfig();
             SwingUtilities.invokeLater(() -> {

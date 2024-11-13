@@ -109,28 +109,33 @@ public class TaskService
 			// Index task list for each property @todo check if clientThread.invoke guarantees all task data will be loaded before sorting
 			sortedIndexes.clear();
 			currentTaskType.getIntParamMap().keySet().forEach(paramName ->
-					clientThread.invoke(() ->
-							addSortedIndex(paramName, Comparator.comparingInt((TaskFromStruct task) -> task.getIntParam(paramName)))
-					)
-			);
-			currentTaskType.getStringParamMap().keySet().forEach(paramName ->
-					clientThread.invoke(() ->
-							addSortedIndex(paramName, Comparator.comparing((TaskFromStruct task) -> task.getStringParam(paramName)))
-					)
-			);
-			clientThread.invoke(() ->// todo: make this less of a special case.
 			{
-				if (tasks.stream().anyMatch(taskFromStruct -> taskFromStruct.getTaskDefinition().getCompletionPercent() != null))
-				{
-					addSortedIndex("completion %",
-							(TaskFromStruct task1, TaskFromStruct task2) ->
-							{
-								Float comp1 = task1.getTaskDefinition().getCompletionPercent() != null ? task1.getTaskDefinition().getCompletionPercent() : 0;
-								Float comp2 = task2.getTaskDefinition().getCompletionPercent() != null ? task2.getTaskDefinition().getCompletionPercent() : 0;
-								return comp1.compareTo(comp2);
-							});
-				}
+				sortedIndexes.put(paramName, null);
+				clientThread.invoke(() ->
+						addSortedIndex(paramName, Comparator.comparingInt((TaskFromStruct task) -> task.getIntParam(paramName)))
+				);
 			});
+			currentTaskType.getStringParamMap().keySet().forEach(paramName ->
+			{
+				sortedIndexes.put(paramName, null);
+				clientThread.invoke(() ->
+						addSortedIndex(paramName, Comparator.comparing((TaskFromStruct task) -> task.getStringParam(paramName)))
+				);
+			});
+			// todo: make this less of a special case.
+			if (taskDefinitions.stream().anyMatch(task -> task.getCompletionPercent() != null))
+			{
+				sortedIndexes.put("completion %", null);
+				clientThread.invoke(() ->
+					 addSortedIndex("completion %",
+						 (TaskFromStruct task1, TaskFromStruct task2) ->
+						 {
+							 Float comp1 = task1.getTaskDefinition().getCompletionPercent() != null ? task1.getTaskDefinition().getCompletionPercent() : 0;
+							 Float comp2 = task2.getTaskDefinition().getCompletionPercent() != null ? task2.getTaskDefinition().getCompletionPercent() : 0;
+							 return comp1.compareTo(comp2);
+						 })
+				);
+			}
 
 			taskTypeChanged = true;
 		}
