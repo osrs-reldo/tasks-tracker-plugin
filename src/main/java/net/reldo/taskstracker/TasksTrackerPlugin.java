@@ -4,10 +4,11 @@ import com.google.gson.Gson;
 import com.google.inject.Binder;
 import com.google.inject.Provides;
 import java.awt.Color;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,14 +21,16 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.data.Export;
+import net.reldo.taskstracker.data.LongSerializer;
 import net.reldo.taskstracker.data.TasksSummary;
-import net.reldo.taskstracker.data.TrackerDataStore;
+import net.reldo.taskstracker.data.TrackerConfigStore;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
-import net.reldo.taskstracker.data.jsondatastore.reader.FileDataStoreReader;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
+import net.reldo.taskstracker.data.jsondatastore.reader.HttpDataStoreReader;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskTrackerTaskModule;
+import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.panel.TaskPanelFactory;
 import net.reldo.taskstracker.panel.TaskTrackerPanelModule;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
@@ -45,7 +48,6 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
-import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -89,8 +91,6 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject
 	private PluginManager pluginManager;
 	@Inject
-	private SkillIconManager skillIconManager;
-	@Inject
 	private ClientToolbar clientToolbar;
 	@Inject
 	private ClientThread clientThread;
@@ -104,7 +104,7 @@ public class TasksTrackerPlugin extends Plugin
 	private TasksTrackerConfig config;
 
 	@Inject
-	private TrackerDataStore trackerDataStore;
+	private TrackerConfigStore trackerConfigStore;
 
 	@Inject
 	private TaskService taskService;
@@ -113,7 +113,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	public void configure(Binder binder)
 	{
-		binder.bind(DataStoreReader.class).to(FileDataStoreReader.class);
+		binder.bind(DataStoreReader.class).to(HttpDataStoreReader.class);
 		binder.install(new TaskTrackerPanelModule());
 		binder.install(new TaskTrackerTaskModule());
 		super.configure(binder);
@@ -131,8 +131,8 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		try
 		{
-			TaskTypeDefinition combatTaskType = this.taskService.getTaskTypes().get("COMBAT");
-			this.taskService.setTaskType(combatTaskType);
+			String taskTypeName = config.taskTypeName();
+			taskService.setTaskType(taskTypeName);
 		}
 		catch (Exception ex)
 		{
@@ -141,9 +141,9 @@ public class TasksTrackerPlugin extends Plugin
 
 		this.forceUpdateVarpsFlag = false;
 
-		this.pluginPanel = new TasksTrackerPluginPanel(this, this.config, this.spriteManager, this.taskService, this.taskPanelFactory);
+		this.pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService, taskPanelFactory);
 
-		boolean isLoggedIn = this.isLoggedInState(this.client.getGameState());
+		boolean isLoggedIn = isLoggedInState(client.getGameState());
 		this.pluginPanel.setLoggedIn(isLoggedIn);
 		if (isLoggedIn) {
 			forceUpdateVarpsFlag = true;
@@ -189,6 +189,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged configChanged)
 	{
+		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
 		if (!configChanged.getGroup().equals(CONFIG_GROUP_NAME))
 		{
 			return;
@@ -239,7 +240,7 @@ public class TasksTrackerPlugin extends Plugin
 		if (this.forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
 		{
 			log.debug("forceUpdateVarpsFlag game tick");
-//			this.loadSavedTaskTypeData(this.config.taskType());
+			this.loadCurrentTaskTypeData();
 			this.forceVarpUpdate();
 			SwingUtilities.invokeLater(() -> this.pluginPanel.redraw());
 			this.forceUpdateVarpsFlag = false;
@@ -269,11 +270,10 @@ public class TasksTrackerPlugin extends Plugin
 		this.pluginPanel.refresh(null);
 	}
 
-	// TODO: reimplement
-	public void saveCurrentTaskData()
+	public void saveCurrentTaskTypeData()
 	{
-		log.debug("saveCurrentTaskData");
-//		this.trackerDataStore.saveTaskTypeToConfig(this.config.taskType(), this.taskManagers.get(this.config.taskType()).tasks.values());
+		log.debug("saveCurrentTaskTypeData");
+		trackerConfigStore.saveCurrentTaskTypeData();
 	}
 
 	// TODO: reimplement
@@ -324,7 +324,7 @@ public class TasksTrackerPlugin extends Plugin
 //				Task task = this.taskManagers.get(TaskType.LEAGUE_4).tasks.get(id);
 //				task.loadReldoSave(reldoTaskSave);
 //			});
-//			this.trackerDataStore.saveTaskTypeToConfig(TaskType.LEAGUE_4, this.taskManagers.get(TaskType.LEAGUE_4).tasks.values());
+//			this.trackerConfigStore.saveTaskTypeToConfig(TaskType.LEAGUE_4, this.taskManagers.get(TaskType.LEAGUE_4).tasks.values());
 //			this.pluginPanel.redraw();
 //		}
 	}
@@ -346,29 +346,24 @@ public class TasksTrackerPlugin extends Plugin
 				.build());
 	}
 
-	// TODO: reimplement
-	public void copyJsonToClipboard(TaskTypeDefinition taskType)
+	public void copyJsonToClipboard()
 	{
-//		this.clientThread.invokeLater(() -> {
-//			String exportJson = this.exportToJson(taskType);
-//			final StringSelection stringSelection = new StringSelection(exportJson);
-//			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
-//
-//			String message = "Exported " + taskType.getDisplayString() + " data copied to clipboard!";
-//
-//			this.showMessageBox("Data Exported!", message, JOptionPane.INFORMATION_MESSAGE, true);
-//		});
+		TaskType taskType = taskService.getCurrentTaskType();
+		this.clientThread.invokeLater(() -> {
+			// Not worried with this complexity on the client thread because it's from an infrequent button press
+			String json = this.exportToJson(taskType);
+			final StringSelection stringSelection = new StringSelection(json);
+			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+
+			String message = "Copied " + taskType.getName() + " data to clipboard!";
+			showMessageBox("Data Exported!", message, JOptionPane.INFORMATION_MESSAGE, true);
+		});
 	}
 
-	// TODO: reimplement
-	private void loadSavedTaskTypeData(TaskTypeDefinition taskType)
+	private void loadCurrentTaskTypeData()
 	{
-		log.debug("loadSavedTaskTypeData {}", taskType.getName());
-		HashMap<Integer, TaskFromStruct> taskData = this.trackerDataStore.loadTaskTypeFromConfig(taskType);
-
-//		this.taskManagers.get(taskType).applyTrackerSave(taskData);
-//
-//		this.trackerDataStore.saveTaskTypeToConfig(taskType, this.taskManagers.get(taskType).tasks.values());
+		log.debug("loadCurrentTaskTypeData");
+		trackerConfigStore.loadCurrentTaskTypeFromConfig();
 	}
 
 	private void forceVarpUpdate()
@@ -377,7 +372,7 @@ public class TasksTrackerPlugin extends Plugin
 		this.processVarpAndUpdateTasks(null).thenAccept((processed) -> {
 			if (processed)
 			{
-				this.saveCurrentTaskData();
+				saveCurrentTaskTypeData();
 			}
 		});
 	}
@@ -388,7 +383,7 @@ public class TasksTrackerPlugin extends Plugin
 		varpIds.forEach((id) -> this.processVarpAndUpdateTasks(id).thenAccept(processed -> {
 			if (processed)
 			{
-				this.saveCurrentTaskData();
+				saveCurrentTaskTypeData();
 			}
 		}));
 	}
@@ -436,31 +431,25 @@ public class TasksTrackerPlugin extends Plugin
 		return allTasksFuture.thenApply(v -> true);
 	}
 
-	// TODO: reimplement
-//	private String exportToJson(TaskType taskType)
-//	{
-//		Gson gson = this.gson.newBuilder()
-//			.excludeFieldsWithoutExposeAnnotation()
-//			.registerTypeAdapter(float.class, new LongSerializer())
-//			.create();
-//
-//		if (taskType == null)
-//		{
-//			return gson.toJson(this.taskManagers);
-//		}
-//		else
-//		{
-//			Export export = new Export(taskType, this.runeliteVersion, this.client, this.pluginManager, this.configManager);
-//
-//			// TODO: This is a holdover for tasks until the web is ready to accept varbits
-//			// TODO: We already export the varbits, so ready to go
-//			HashMap<String, Task> tasksById = new HashMap<>();
-//			this.taskManagers.get(taskType).tasks.values().forEach((task) -> tasksById.put(String.valueOf(task.getId()), task));
-//			export.setTasks(tasksById);
-//
-//			return gson.toJson(export);
-//		}
-//	}
+	private String exportToJson(TaskType taskType)
+	{
+		Gson gson = this.gson.newBuilder()
+			.excludeFieldsWithoutExposeAnnotation()
+			.registerTypeAdapter(float.class, new LongSerializer())
+			.create();
+
+		if (taskType == null)
+		{
+			String error = "Cannot export to JSON; no task type selected.";
+			log.error(error);
+			return error;
+		}
+		else
+		{
+			Export export = new Export(taskType, this.runeliteVersion, this.client, this.pluginManager, this.configManager);
+			return gson.toJson(export);
+		}
+	}
 
 	private void showMessageBox(final String title, final String message, int messageType, boolean showOpenLeagueTools)
 	{

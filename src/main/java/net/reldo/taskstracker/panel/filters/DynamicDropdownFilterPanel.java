@@ -29,7 +29,7 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 		this.plugin = plugin;
 		this.filterConfig = filterConfig;
 		this.items = items;
-		this.configKey = taskType.getConfigPrefix() + filterConfig.getConfigKey();
+		this.configKey = taskType.getFilterConfigPrefix() + filterConfig.getConfigKey();
 
 		setLayout(new GridLayout(1,2));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);

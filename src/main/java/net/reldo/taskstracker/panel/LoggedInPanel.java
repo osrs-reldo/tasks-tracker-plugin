@@ -28,10 +28,10 @@ import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
+import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.panel.components.SearchBox;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
 import net.reldo.taskstracker.panel.filters.ComboItem;
-import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
@@ -41,12 +41,11 @@ import net.runelite.client.util.SwingUtil;
 public class LoggedInPanel extends JPanel
 {
 	public TaskListPanel taskListPanel;
-	private JComboBox<ComboItem<TaskTypeDefinition>> taskTypeDropdown;
+	private JComboBox<ComboItem<TaskType>> taskTypeDropdown;
 
 	private TaskService taskService;
 	private final TaskPanelFactory taskPanelFactory;
 	private final TasksTrackerPlugin plugin;
-	private final SpriteManager spriteManager;
 	private final TasksTrackerConfig config;
 
 	// Filter buttons
@@ -63,11 +62,10 @@ public class LoggedInPanel extends JPanel
 	private SortPanel sortPanel;
 	private final JToggleButton collapseBtn = new JToggleButton();
 
-	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, SpriteManager spriteManager, TaskService taskService, TaskPanelFactory taskPanelFactory)
+	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, TaskService taskService, TaskPanelFactory taskPanelFactory)
 	{
 		super(false);
 		this.plugin = plugin;
-		this.spriteManager = spriteManager;
 		this.taskService = taskService;
 		this.taskPanelFactory = taskPanelFactory;
 		this.config = config;
@@ -293,7 +291,7 @@ public class LoggedInPanel extends JPanel
 		JButton exportButton = new JButton("Export");
 		exportButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 		exportButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
-		exportButton.addActionListener(e -> plugin.copyJsonToClipboard(taskTypeDropdown.getItemAt(0).getValue())); // TODO: reimplement config
+		exportButton.addActionListener(e -> plugin.copyJsonToClipboard());
 		southPanel.add(exportButton, BorderLayout.EAST);
 
 		return southPanel;
@@ -306,14 +304,12 @@ public class LoggedInPanel extends JPanel
 		northPanel.setLayout(layout);
 		northPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-		ArrayList<ComboItem<TaskTypeDefinition>> taskTypeItems = new ArrayList<>();
-		taskService.getTaskTypes().forEach((taskTypeJsonName, taskType) -> {
-			taskTypeItems.add(new ComboItem<>(taskType, taskType.getName()));
-		});
-		ComboItem<TaskTypeDefinition>[] comboItemsArray = taskTypeItems.toArray(new ComboItem[0]);
+		ArrayList<ComboItem<TaskType>> taskTypeItems = new ArrayList<>();
+		taskService.getTaskTypes().forEach((taskTypeJsonName, taskType) -> taskTypeItems.add(new ComboItem(taskType, taskType.getName())));
+		ComboItem<TaskType>[] comboItemsArray = taskTypeItems.toArray(new ComboItem[0]);
 		taskTypeDropdown = new JComboBox<>(comboItemsArray);
 		taskTypeDropdown.setAlignmentX(LEFT_ALIGNMENT);
-		taskTypeDropdown.setSelectedItem(comboItemsArray[0]); // TODO: reimplement config
+		taskTypeDropdown.setSelectedItem(taskService.getCurrentTaskType()); // TODO: kinda gross
 		taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue()));
 		taskTypeDropdown.setFocusable(false);
 
@@ -475,10 +471,10 @@ public class LoggedInPanel extends JPanel
 		return filtersPanel;
 	}
 
-	private void updateWithNewTaskType(TaskTypeDefinition taskType)
+	private void updateWithNewTaskType(TaskType taskType)
 	{
-//		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskType", taskType); // TODO: reimplement
-		this.taskService.setTaskType(taskType);
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskTypeName", taskType.getTaskJsonName());
+		taskService.setTaskType(taskType.getTaskJsonName());
 		redraw();
 		refresh(null);
 	}
@@ -507,7 +503,7 @@ public class LoggedInPanel extends JPanel
 		collapseBtn.setText(countInclusive + " inclusive, "  + countExclusive + " exclusive filters");
 	}
 
-	private TaskTypeDefinition getSelectedTaskType()
+	private TaskType getSelectedTaskType()
 	{
 		return taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
 	}

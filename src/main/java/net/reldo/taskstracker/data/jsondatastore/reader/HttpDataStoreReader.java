@@ -79,7 +79,7 @@ public class HttpDataStoreReader implements DataStoreReader
 	@Override
 	public InputStream readTasks(String jsonFilename) throws Exception
 	{
-		String taskJsonUrl = String.format("%s/tasks/%s.min.json", JsonDataStore.baseUrl, jsonFilename);// TODO: Use /tasks/ in here, and remove from the filename
+		String taskJsonUrl = String.format("%s/tasks/%s.min.json", JsonDataStore.baseUrl, jsonFilename);
 		log.debug("getTasks json from {} ...", taskJsonUrl);
 		Request request = new Request.Builder()
 			.url(taskJsonUrl)

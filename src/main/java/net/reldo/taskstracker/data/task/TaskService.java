@@ -34,8 +34,6 @@ public class TaskService
 	@Inject
 	private TaskDataClient taskDataClient;
 	@Inject
-	private TaskTypeFactory taskTypeFactory;
-	@Inject
 	private ClientThread clientThread;
 	@Inject
 	private Client client;
@@ -45,28 +43,31 @@ public class TaskService
 	@Getter
 	@Setter
 	private boolean taskTypeChanged = false;
-	// TODO: deprecate one of these. additionally and separate thought: & cache all task types?
 	@Getter
-	private TaskTypeDefinition currentTaskTypeDefinition;
-	@Getter
-	private TaskType currentTaskType;
+	private TaskType currentTaskType; // TODO: should be config driven
 	@Getter
 	private final HashMap<Integer, List<TaskFromStruct>> currentTasksByVarp = new HashMap<>();
 	// TODO: Build the filter on getTasks
 	@Getter
 	private final List<TaskFromStruct> tasks = new ArrayList<>();
-	private HashMap<String, TaskTypeDefinition> _taskTypes = new HashMap<>();
-	private HashSet currentTaskTypeVarps = new HashSet<>();
 	@Getter
 	private final HashMap<String, int[]> sortedIndexes = new HashMap<>();
+	private HashMap<String, TaskType> _taskTypes = new HashMap<>();
+	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
 
-	public void setTaskType(TaskTypeDefinition taskTypeDefinition)
+	public void setTaskType(String taskTypeName)
 	{
+		// TODO: cache all task types?
 		try
 		{
+			TaskType newTaskType = getTaskTypes().get(taskTypeName);
+			if (newTaskType == null)
+			{
+				log.error("unsupported task type {}, falling back to COMBAT", taskTypeName);
+				newTaskType = getTaskTypes().get("COMBAT");
+			}
 			tasks.clear();
-			currentTaskTypeDefinition = taskTypeDefinition;
-			currentTaskType = taskTypeFactory.create(taskTypeDefinition);
+			currentTaskType = newTaskType;
 
             // Complete creation of any GLOBAL value type filterConfigs
 			for (FilterConfig filterConfig : currentTaskTypeDefinition.getFilters())
@@ -93,13 +94,13 @@ public class TaskService
 			}
 
 			currentTaskTypeVarps.clear();
-			currentTaskTypeVarps = new HashSet<>(taskTypeDefinition.getTaskVarps());
+			currentTaskTypeVarps = new HashSet<>(currentTaskType.getTaskVarps());
 
 			currentTasksByVarp.clear();
-			Collection<TaskDefinition> taskDefinitions = taskDataClient.getTaskDefinitions(taskTypeDefinition.getTaskJsonName());
+			Collection<TaskDefinition> taskDefinitions = taskDataClient.getTaskDefinitions(currentTaskType.getTaskJsonName());
 			for (TaskDefinition definition : taskDefinitions)
 			{
-				TaskFromStruct task = new TaskFromStruct(taskTypeDefinition, currentTaskType, definition);
+				TaskFromStruct task = new TaskFromStruct(currentTaskType, definition);
 				tasks.add(task);
 				clientThread.invoke(() -> task.loadStructData(client));
 				addVarpLookup(task);
@@ -175,21 +176,22 @@ public class TaskService
 	}
 
 	/**
-	 * Get a map of task type json names to task definition
+	 * Get a map of task type json names to task type
 	 *
-	 * @return Hashmap of TaskTypeDefinition indexed by task type json name
+	 * @return Hashmap of TaskType indexed by task type json name
 	 */
-	public HashMap<String, TaskTypeDefinition> getTaskTypes()
+	public HashMap<String, TaskType> getTaskTypes()
 	{
-		if (this._taskTypes.size() > 0)
+		// TODO: Consider a cache refresh on a regular-interval
+		if (_taskTypes.size() > 0)
 		{
-			return this._taskTypes;
+			return _taskTypes;
 		}
 
 		try
 		{
-			this._taskTypes = this.taskDataClient.getTaskTypeDefinitions();
-			return this._taskTypes;
+			_taskTypes = taskDataClient.getTaskTypes();
+			return _taskTypes;
 		}
 		catch (Exception ex)
 		{
@@ -200,7 +202,7 @@ public class TaskService
 
 	public CompletableFuture<HashMap<Integer, String>> getStringEnumValuesAsync(String enumName)
 	{
-		Integer enumId = currentTaskTypeDefinition.getStringEnumMap().get(enumName);
+		Integer enumId = currentTaskType.getStringEnumMap().get(enumName);
 		if (enumId == null)
 		{
 			return CompletableFuture.completedFuture(new HashMap<>());
@@ -213,9 +215,9 @@ public class TaskService
 				EnumComposition enumComposition = client.getEnum(enumId);
 				int[] keys = enumComposition.getKeys();
 				HashMap<Integer, String> map = new HashMap<>();
-				for (int i = 0; i < keys.length; i++)
+				for (int key : keys)
 				{
-					map.put(keys[i], enumComposition.getStringValue(keys[i]));
+					map.put(key, enumComposition.getStringValue(key));
 				}
 				future.complete(map);
 			}
@@ -235,5 +237,22 @@ public class TaskService
 			currentTasksByVarp.put(task.getTaskVarp(), new ArrayList<>());
 		}
 		currentTasksByVarp.get(task.getTaskVarp()).add(task);
+	}
+
+	public void applySave(TaskType saveTaskType, HashMap<Integer, ConfigTaskSave> saveData)
+	{
+		String currentTaskTypeName = currentTaskType.getTaskJsonName();
+		String saveTaskTypeName = saveTaskType.getTaskJsonName();
+		if (!currentTaskTypeName.equals(saveTaskTypeName))
+		{
+			log.warn("cannot apply save, task types do not match current={} save={}", currentTaskTypeName, saveTaskTypeName);
+			return;
+		}
+
+		for (TaskFromStruct task : getTasks())
+		{
+			ConfigTaskSave configTaskSave = saveData.get(task.getStructId());
+			task.loadConfigSave(configTaskSave);
+		}
 	}
 }

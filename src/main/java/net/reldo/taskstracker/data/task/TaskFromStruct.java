@@ -1,6 +1,5 @@
 package net.reldo.taskstracker.data.task;
 
-import com.google.gson.annotations.Expose;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.reldo.taskstracker.data.reldo.ReldoTaskSave;
 import net.runelite.api.Client;
 import net.runelite.api.StructComposition;
@@ -21,27 +19,24 @@ public class TaskFromStruct
 	@Getter
 	private final Integer sortId;
 	@Getter
-	private final TaskTypeDefinition taskTypeDefinition;
-	@Getter
 	private TaskType taskType;
 	@Getter
 	private final TaskDefinition taskDefinition;
 	@Getter
 	private boolean structLoaded;
-	@Expose @Getter @Setter
+	@Getter @Setter
 	private long completedOn;
-	@Expose @Getter @Setter
+	@Getter @Setter
 	private long trackedOn;
-	@Expose @Getter @Setter
+	@Getter @Setter
 	private long ignoredOn;
 
 	private StructComposition _struct;
 	private final Map<String, String> _stringParams = new HashMap<>();
 	private final Map<String, Integer> _intParams = new HashMap<>();
 
-	public TaskFromStruct(TaskTypeDefinition taskTypeDefinition, TaskType taskType, TaskDefinition taskDefinition)
+	public TaskFromStruct(TaskType taskType, TaskDefinition taskDefinition)
 	{
-		this.taskTypeDefinition = taskTypeDefinition;
 		this.taskType = taskType;
 		this.taskDefinition = taskDefinition;
 		this.structId = taskDefinition.getStructId();
@@ -66,7 +61,7 @@ public class TaskFromStruct
 	public int getTaskVarp()
 	{
 		int index = getTaskTypeVarpIndex();
-		return taskTypeDefinition.getTaskVarps().get(index);
+		return taskType.getTaskVarps().get(index);
 	}
 
 	// TODO: Remove client from params
@@ -81,12 +76,12 @@ public class TaskFromStruct
 		{
 			log.debug("LOADING STRUCT DATA " + structId);
 			_struct = client.getStructComposition(structId);
-			taskTypeDefinition.getIntParamMap().forEach((paramName, paramId) -> {
+			taskType.getIntParamMap().forEach((paramName, paramId) -> {
 				int value = _struct.getIntValue(paramId);
 				log.debug("{} {}", paramName, value);
 				_intParams.put(paramName, value);
 			});
-			taskTypeDefinition.getStringParamMap().forEach((paramName, paramId) -> {
+			taskType.getStringParamMap().forEach((paramName, paramId) -> {
 				String value = _struct.getStringValue(paramId);
 				log.debug("{} {}", paramName, value);
 				_stringParams.put(paramName, value);
@@ -152,10 +147,9 @@ public class TaskFromStruct
 		ignoredOn = state ? now : 0;
 	}
 
-	// TODO: reimplement
-	public void loadConfigSave(TaskFromStruct loadedData)
+	public void loadConfigSave(ConfigTaskSave loadedData)
 	{
-//		setDates(loadedData.getCompletedOn(), loadedData.getIgnoredOn(), loadedData.getTrackedOn());
+		setDates(loadedData.completed, loadedData.ignored, loadedData.tracked);
 	}
 
 	public void loadReldoSave(ReldoTaskSave loadedData)
@@ -203,5 +197,10 @@ public class TaskFromStruct
 	public String getDescription()
 	{
 		return getStringParam("description");
+	}
+
+	public ConfigTaskSave getSaveData()
+	{
+		return new ConfigTaskSave(this);
 	}
 }
