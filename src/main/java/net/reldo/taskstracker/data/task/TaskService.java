@@ -19,7 +19,6 @@ import net.reldo.taskstracker.data.jsondatastore.TaskDataClient;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterValueType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.reldo.taskstracker.data.task.filters.FilterService;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
@@ -256,6 +255,10 @@ public class TaskService
 		for (TaskFromStruct task : getTasks())
 		{
 			ConfigTaskSave configTaskSave = saveData.get(task.getStructId());
+			if (configTaskSave == null)
+			{
+				continue;
+			}
 			task.loadConfigSave(configTaskSave);
 		}
 	}
