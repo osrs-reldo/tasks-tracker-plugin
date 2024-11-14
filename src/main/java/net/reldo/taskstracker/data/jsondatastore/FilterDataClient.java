@@ -27,7 +27,7 @@ public class FilterDataClient
 
     public FilterDataClient()
     {
-        System.out.println("init filter data client");
+        log.debug("init filter data client");
     }
 
     public HashMap<String, FilterConfig> getFilterConfigs() throws Exception

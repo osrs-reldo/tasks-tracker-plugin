@@ -187,7 +187,6 @@ public class TaskService
 	 */
 	public HashMap<String, TaskType> getTaskTypes()
 	{
-		// TODO: Consider a cache refresh on a regular-interval
 		if (_taskTypes.size() > 0)
 		{
 			return _taskTypes;
@@ -250,7 +249,7 @@ public class TaskService
 		String saveTaskTypeName = saveTaskType.getTaskJsonName();
 		if (!currentTaskTypeName.equals(saveTaskTypeName))
 		{
-			log.warn("cannot apply save, task types do not match current={} save={}", currentTaskTypeName, saveTaskTypeName);
+			log.warn("Cannot apply save, task types do not match current={} save={}", currentTaskTypeName, saveTaskTypeName);
 			return;
 		}
 

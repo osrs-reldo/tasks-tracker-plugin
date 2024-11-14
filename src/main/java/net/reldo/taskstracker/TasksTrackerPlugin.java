@@ -136,7 +136,7 @@ public class TasksTrackerPlugin extends Plugin
 		}
 		catch (Exception ex)
 		{
-			log.error("error using new task services", ex);
+			log.error("error setting task type in startUp", ex);
 		}
 
 		this.forceUpdateVarpsFlag = false;
