@@ -9,6 +9,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,6 +28,7 @@ import net.reldo.taskstracker.data.TasksSummary;
 import net.reldo.taskstracker.data.TrackerConfigStore;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.reader.HttpDataStoreReader;
+import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskTrackerTaskModule;
@@ -173,7 +175,6 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged configChanged)
 	{
-		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
 		if (!configChanged.getGroup().equals(CONFIG_GROUP_NAME))
 		{
 			return;
@@ -224,7 +225,7 @@ public class TasksTrackerPlugin extends Plugin
 		if (forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
 		{
 			log.debug("forceUpdateVarpsFlag game tick");
-			loadCurrentTaskTypeData();
+			trackerConfigStore.loadCurrentTaskTypeFromConfig();
 			forceVarpUpdate();
 			SwingUtilities.invokeLater(() -> pluginPanel.redraw());
 			forceUpdateVarpsFlag = false;
@@ -260,57 +261,65 @@ public class TasksTrackerPlugin extends Plugin
 		trackerConfigStore.saveCurrentTaskTypeData();
 	}
 
-	// TODO: reimplement
 	public void openImportJsonDialog()
 	{
-//		JOptionPane optionPane = new JOptionPane("Paste import data into the text field below to import task tracker data.", JOptionPane.INFORMATION_MESSAGE);
-//		optionPane.setWantsInput(true);
-//		JDialog inputDialog = optionPane.createDialog(pluginPanel, "Import Tasks Input");
-//		inputDialog.setAlwaysOnTop(true);
-//		inputDialog.setVisible(true);
-//
-//		if (optionPane.getInputValue().equals("") || optionPane.getInputValue().equals("uninitializedValue"))
-//		{
-//			showMessageBox("Import Tasks Error", "Input was empty so no data has been imported.", JOptionPane.ERROR_MESSAGE, false);
-//			return;
-//		}
-//
-//		String json = "";
-//		ReldoImport reldoImport;
-//		try
-//		{
-//			json = (String) optionPane.getInputValue();
-//			reldoImport = gson.fromJson(json, ReldoImport.class);
-//		}
-//		catch (Exception ex)
-//		{
-//			showMessageBox("Import Tasks Error", "There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE, false);
-//			log.error("There was an issue importing task tracker data.", ex);
-//			log.debug("reldoImport json: {}", json);
-//			return;
-//		}
-//
-//		optionPane = new JOptionPane("Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
-//		JDialog confirmDialog = optionPane.createDialog(pluginPanel, "Import Tasks Overwrite Confirmation");
-//		confirmDialog.setAlwaysOnTop(true);
-//		confirmDialog.setVisible(true);
-//
-//		Object selectedValue = optionPane.getValue();
-//		if (selectedValue == null)
-//		{
-//			return;
-//		}
-//
-//		if (selectedValue.equals(JOptionPane.YES_OPTION))
-//		{
-//			// FIXME: Hardcoded for league 4 only
-//			reldoImport.getTasks().forEach((id, reldoTaskSave) -> {
-//				Task task = taskManagers.get(TaskType.LEAGUE_4).tasks.get(id);
-//				task.loadReldoSave(reldoTaskSave);
-//			});
-//			trackerConfigStore.saveTaskTypeToConfig(TaskType.LEAGUE_4, taskManagers.get(TaskType.LEAGUE_4).tasks.values());
-//			pluginPanel.redraw();
-//		}
+		JOptionPane optionPane = new JOptionPane("Paste import data into the text field below to import task tracker data.", JOptionPane.INFORMATION_MESSAGE);
+		optionPane.setWantsInput(true);
+		JDialog inputDialog = optionPane.createDialog(this.pluginPanel, "Import Tasks Input");
+		inputDialog.setAlwaysOnTop(true);
+		inputDialog.setVisible(true);
+
+		if (optionPane.getInputValue().equals("") || optionPane.getInputValue().equals("uninitializedValue"))
+		{
+			this.showMessageBox("Import Tasks Error", "Input was empty so no data has been imported.", JOptionPane.ERROR_MESSAGE, false);
+			return;
+		}
+
+		String json = "";
+		ReldoImport reldoImport;
+		try
+		{
+			json = (String) optionPane.getInputValue();
+			reldoImport = this.gson.fromJson(json, ReldoImport.class);
+		}
+		catch (Exception ex)
+		{
+			this.showMessageBox("Import Tasks Error", "There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE, false);
+			log.error("There was an issue importing task tracker data.", ex);
+			log.debug("reldoImport json: {}", json);
+			return;
+		}
+
+		if (!reldoImport.taskTypeName.equalsIgnoreCase(config.taskTypeName()))
+		{
+			this.showMessageBox("Import Tasks Error", String.format("Wrong task type. Select the %s task type to import this data.", reldoImport.taskTypeName), JOptionPane.ERROR_MESSAGE, false);
+			return;
+		}
+
+		optionPane = new JOptionPane("Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
+		JDialog confirmDialog = optionPane.createDialog(this.pluginPanel, "Import Tasks Overwrite Confirmation");
+		confirmDialog.setAlwaysOnTop(true);
+		confirmDialog.setVisible(true);
+
+		Object selectedValue = optionPane.getValue();
+		if (selectedValue == null)
+		{
+			return;
+		}
+
+		if (selectedValue.equals(JOptionPane.YES_OPTION))
+		{
+			HashMap<Integer, TaskFromStruct> tasksById = new HashMap<>();
+			taskService.getTasks().forEach((task) -> tasksById.put(task.getIntParam("id"), task));
+
+			reldoImport.getTasks().forEach((id, reldoTaskSave) -> {
+				TaskFromStruct task = tasksById.get(id);
+				task.loadReldoSave(reldoTaskSave);
+			});
+
+			trackerConfigStore.saveCurrentTaskTypeData();
+			pluginPanel.redraw();
+		}
 	}
 
 	public void sendTotalsToChat()
@@ -332,22 +341,15 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void copyJsonToClipboard()
 	{
-		TaskType taskType = taskService.getCurrentTaskType();
 		clientThread.invokeLater(() -> {
 			// Not worried with this complexity on the client thread because it's from an infrequent button press
-			String json = exportToJson(taskType);
+			String json = getCurrentTaskTypeExportJson();
 			final StringSelection stringSelection = new StringSelection(json);
 			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
 
-			String message = "Copied " + taskType.getName() + " data to clipboard!";
+			String message = "Copied " + taskService.getCurrentTaskType().getName() + " data to clipboard!";
 			showMessageBox("Data Exported!", message, JOptionPane.INFORMATION_MESSAGE, true);
 		});
-	}
-
-	private void loadCurrentTaskTypeData()
-	{
-		log.debug("loadCurrentTaskTypeData");
-		trackerConfigStore.loadCurrentTaskTypeFromConfig();
 	}
 
 	private void forceVarpUpdate()
@@ -356,6 +358,7 @@ public class TasksTrackerPlugin extends Plugin
 		processVarpAndUpdateTasks(null).thenAccept((processed) -> {
 			if (processed)
 			{
+				log.debug("forceVarpUpdate processed complete, saving");
 				saveCurrentTaskTypeData();
 			}
 		});
@@ -367,15 +370,18 @@ public class TasksTrackerPlugin extends Plugin
 		varpIds.forEach((id) -> processVarpAndUpdateTasks(id).thenAccept(processed -> {
 			if (processed)
 			{
+				log.debug("flushVarpUpdates processed complete, saving");
 				saveCurrentTaskTypeData();
 			}
 		}));
 	}
 
-	private CompletableFuture<Boolean> processTaskStatus(TaskFromStruct taskV2) {
+	private CompletableFuture<Boolean> processTaskStatus(TaskFromStruct taskV2)
+	{
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
 		clientThread.invokeLater(() -> {
-			try {
+			try
+			{
 				int CA_TASK_COMPLETED_SCRIPT_ID = 4834;
 				client.runScript(CA_TASK_COMPLETED_SCRIPT_ID, taskV2.getIntParam("id"));
 				boolean isTaskCompleted = client.getIntStack()[0] > 0;
@@ -387,7 +393,9 @@ public class TasksTrackerPlugin extends Plugin
 				log.debug("process taskFromStruct {} {}", taskV2.getStringParam("name"), isTaskCompleted);
 				SwingUtilities.invokeLater(() -> pluginPanel.refresh(taskV2));
 				future.complete(isTaskCompleted);
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				log.error("Error processing task status", ex);
 				future.completeExceptionally(ex);
 			}
@@ -415,9 +423,10 @@ public class TasksTrackerPlugin extends Plugin
 		return allTasksFuture.thenApply(v -> true);
 	}
 
-	private String exportToJson(TaskType taskType)
+	private String getCurrentTaskTypeExportJson()
 	{
-		Gson gson = gson.newBuilder()
+		TaskType taskType = taskService.getCurrentTaskType();
+		Gson gson = this.gson.newBuilder()
 			.excludeFieldsWithoutExposeAnnotation()
 			.registerTypeAdapter(float.class, new LongSerializer())
 			.create();
@@ -430,7 +439,7 @@ public class TasksTrackerPlugin extends Plugin
 		}
 		else
 		{
-			Export export = new Export(taskType, runeliteVersion, client, pluginManager, configManager);
+			Export export = new Export(taskType, taskService.getTasks(), runeliteVersion, client);
 			return gson.toJson(export);
 		}
 	}

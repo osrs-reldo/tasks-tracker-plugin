@@ -1,11 +1,13 @@
 package net.reldo.taskstracker.data.task;
 
+import com.google.gson.annotations.Expose;
+
 public class ConfigTaskSave
 {
-	public final long completed;
-	public final long tracked;
-	public final Integer structId;
-	public final long ignored;
+	@Expose public final long completed;
+	@Expose public final long tracked;
+	@Expose public final Integer structId;
+	@Expose public final long ignored;
 
 	public ConfigTaskSave(TaskFromStruct task)
 	{
