@@ -29,10 +29,10 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 		this.plugin = plugin;
 		this.filterConfig = filterConfig;
 		this.items = items;
-		this.configKey = taskType.getConfigPrefix() + filterConfig.getConfigKey();
+		this.configKey = taskType.getFilterConfigPrefix() + filterConfig.getConfigKey();
 
 		setLayout(new GridLayout(1,2));
-		setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
+		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		setBorder(new EmptyBorder(5, 10, 5, 10));
 	}
 
@@ -42,6 +42,8 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 		dropdown.setFont(FontManager.getRunescapeSmallFont());
 		dropdown.setAlignmentX(LEFT_ALIGNMENT);
 		dropdown.setSelectedItem(items[0]);
+		dropdown.setFocusable(false);
+		dropdown.setBackground(ColorScheme.DARK_GRAY_COLOR.brighter());
 		dropdown.addActionListener(e -> {
 			ComboItem selection = dropdown.getItemAt(dropdown.getSelectedIndex());
 			updateFilterConfig();
@@ -56,6 +58,7 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 	{
 		JLabel label = new JLabel(filterConfig.getLabel() + ":");
 		label.setFont(FontManager.getRunescapeSmallFont());
+		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		return label;
 	}
 

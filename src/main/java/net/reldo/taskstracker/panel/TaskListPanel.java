@@ -2,7 +2,7 @@ package net.reldo.taskstracker.panel;
 
 import java.awt.Component;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -12,6 +12,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
@@ -100,7 +101,7 @@ public class TaskListPanel extends JScrollPane
 
 		public void redraw()
 		{
-			System.out.println("TaskListPanel.redraw");
+			log.debug("TaskListPanel.redraw");
 			assert SwingUtilities.isEventDispatchThread();
 			removeAll();
 			taskPanels.clear();
@@ -108,18 +109,23 @@ public class TaskListPanel extends JScrollPane
 			emptyTasks.setVisible(false);
 
 			log.debug("TaskListPanel creating panels");
-			Collection<TaskFromStruct> tasks = taskService.getTasks();
-			if (tasks == null || tasks.size() == 0)
+			List<TaskFromStruct> tasks = taskService.getTasks();
+			if (tasks == null || tasks.isEmpty())
 			{
 				emptyTasks.setVisible(true);
 				return;
 			}
-			for (TaskFromStruct task : tasks)
+
+			for (int indexPosition = 0; indexPosition < tasks.size(); indexPosition++)
 			{
-				TaskPanel taskPanel = taskPanelFactory.create(task);
+				int adjustedIndexPosition = indexPosition;
+				if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
+					adjustedIndexPosition = tasks.size() - (adjustedIndexPosition + 1);
+				TaskPanel taskPanel = taskPanelFactory.create(tasks.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition)));
 				add(taskPanel);
 				taskPanels.add(taskPanel);
 			}
+
 			log.debug("TaskListPanel validate and repaint");
 			validate();
 			repaint();

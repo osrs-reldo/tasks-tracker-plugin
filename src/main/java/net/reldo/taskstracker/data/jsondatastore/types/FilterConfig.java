@@ -27,6 +27,7 @@ public class FilterConfig {
 
 	/**
 	 * The source of the value(s) to use for the filter, see enum for types of values supported.
+	 * If global is specified then configKey must match a filter config defined in filters.json
 	 */
 	private FilterValueType valueType;
 

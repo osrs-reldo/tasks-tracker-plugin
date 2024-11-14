@@ -47,7 +47,6 @@
 //        return buttonPanel;
 //    }
 //
-//    //@TODO: (maybe) change this to use SpriteManager after it has apologised to me
 //    @Override
 //    protected LinkedHashMap<String, BufferedImage> getIconImages()
 //    {

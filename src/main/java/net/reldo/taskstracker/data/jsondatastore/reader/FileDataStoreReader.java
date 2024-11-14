@@ -64,4 +64,23 @@ public class FileDataStoreReader implements DataStoreReader
 			throw e;
 		}
 	}
+
+	@Override
+	public InputStream readFilterConfigs(String filterFilename)  throws Exception
+	{
+		String workingDirectory = System.getProperty("user.dir");
+		log.debug(String.format("Reading filter configs %s data from current working directory: %s", filterFilename, workingDirectory));
+		try {
+			String filePath = "../task-json-store/" + filterFilename;
+			File file = new File(filePath);
+			if (!file.exists() || !file.isFile()) {
+				throw new IOException("File not found or not a valid file: " + filePath);
+			}
+			return new FileInputStream(file);
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw e;
+		}
+	}
+
 }

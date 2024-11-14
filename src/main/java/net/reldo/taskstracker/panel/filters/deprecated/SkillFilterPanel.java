@@ -1,23 +1,20 @@
 // TODO: Reimplement under new FilterConfig regime
-//package net.reldo.taskstracker.panel.subfilters;
+//package net.reldo.taskstracker.panel.filters;
+//
 //
 //import com.google.common.collect.ImmutableList;
-//import java.awt.BorderLayout;
-//import java.awt.GridLayout;
 //import java.awt.image.BufferedImage;
 //import java.util.LinkedHashMap;
 //import java.util.List;
-//import javax.swing.JPanel;
-//import javax.swing.JToggleButton;
-//import javax.swing.border.EmptyBorder;
 //import net.reldo.taskstracker.TasksTrackerPlugin;
-//import net.reldo.taskstracker.tasktypes.TaskType;
+//import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
+//import net.reldo.taskstracker.data.jsondatastore.types.FilterCustomItem;
+//import net.reldo.taskstracker.data.task.TaskType;
 //import net.runelite.client.hiscore.HiscoreSkill;
 //import static net.runelite.client.hiscore.HiscoreSkill.*;
-//import net.runelite.client.ui.ColorScheme;
 //import net.runelite.client.util.ImageUtil;
 //
-//public class SkillFilterPanel extends FilterButtonPanel
+//public class SkillFilterPanel extends DynamicButtonFilterPanel
 //{
 //
 //    /**
@@ -34,38 +31,9 @@
 //            CONSTRUCTION, HUNTER
 //    );
 //
-//    public SkillFilterPanel(TasksTrackerPlugin plugin)
+//    public SkillFilterPanel(TasksTrackerPlugin plugin, FilterConfig filterConfig, TaskType taskType)
 //    {
-//        super(plugin, "Skill");
-//        this.configKey = "skillFilter";
-//
-//        setLayout(new BorderLayout());
-//        setBackground(ColorScheme.DARKER_GRAY_COLOR);
-//        setBorder(new EmptyBorder(10, 10, 10, 10));
-//
-//        redraw();
-//    }
-//
-//    @Override
-//    protected JPanel makeButtonPanel()
-//    {
-//        // Panel that holds skill icons
-//        JPanel buttonPanel = new JPanel();
-//        buttonPanel.setLayout(new GridLayout(8, 3));
-//        buttonPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-//
-//        LinkedHashMap<String, BufferedImage> skillImages = getIconImages();
-//
-//        // For each skill on the in-game skill panel, create a button and add it to the UI
-//        skillImages.forEach((name, image) -> {
-//            JToggleButton button = makeButton(name, image);
-//            buttons.put(name, button);
-//            buttonPanel.add(button);
-//        });
-//
-//        buttons.get("noskill").setToolTipText("No skill requirements.");
-//
-//        return buttonPanel;
+//        super(plugin, filterConfig, taskType);
 //    }
 //
 //    @Override

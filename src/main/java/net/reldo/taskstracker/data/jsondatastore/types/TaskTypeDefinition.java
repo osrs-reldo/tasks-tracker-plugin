@@ -2,7 +2,6 @@ package net.reldo.taskstracker.data.jsondatastore.types;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import lombok.Data;
 
 /**
@@ -52,7 +51,7 @@ public class TaskTypeDefinition
 	 * The value is an array of OSRS cache Struct ParamIDs that match with the plain English parameter
 	 * Generally, there is only 1 value in the array, but multiple are available for fallback
 	 */
-	private Map<String, Integer> stringParamMap;
+	private HashMap<String, Integer> stringParamMap;
 
 	/**
 	 * A dictionary of integer enums relevant to the task type
