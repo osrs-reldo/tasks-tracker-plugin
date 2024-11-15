@@ -1,15 +1,14 @@
 package net.reldo.taskstracker.panel;
 
-import net.reldo.taskstracker.TasksTrackerConfig;
-import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.tasktypes.Task;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.client.callback.ClientThread;
-import net.runelite.client.game.SkillIconManager;
+import net.reldo.taskstracker.TasksTrackerConfig;
+import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.TaskService;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
@@ -17,31 +16,24 @@ import net.runelite.client.ui.PluginPanel;
 @Slf4j
 public class TasksTrackerPluginPanel extends PluginPanel
 {
-	private final ClientThread clientThread;
-	private final SpriteManager spriteManager;
-	private final TasksTrackerPlugin plugin;
-	private final SkillIconManager skillIconManager;
-
 	private final LoggedInPanel loggedInPanel;
 	private final LoggedOutPanel loggedOutPanel = new LoggedOutPanel();
 
 	public TaskListPanel taskListPanel;
 
 	private boolean loggedIn = false;
+	private TaskService taskService;
 
-	public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
+	public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, SpriteManager spriteManager, TaskService taskService, TaskPanelFactory taskPanelFactory)
 	{
 		super(false);
-		this.plugin = plugin;
-		this.clientThread = clientThread;
-		this.spriteManager = spriteManager;
-		this.skillIconManager = skillIconManager;
+		this.taskService = taskService;
 
 		setBorder(new EmptyBorder(6, 6, 6, 6));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 		setLayout(new BorderLayout());
 
-		loggedInPanel = new LoggedInPanel(plugin, config, clientThread, spriteManager, skillIconManager);
+		loggedInPanel = new LoggedInPanel(plugin, config, taskService, taskPanelFactory);
 		taskListPanel = loggedInPanel.taskListPanel;
 		add(loggedInPanel, BorderLayout.NORTH);
 		loggedInPanel.setVisible(false);
@@ -64,7 +56,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		}
 	}
 
-	public void refresh(Task task)
+	public void refresh(TaskFromStruct task)
 	{
 		if (loggedIn)
 		{

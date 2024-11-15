@@ -31,4 +31,10 @@ public class ConfigValues {
         CUSTOM;
     }
 
+    public enum SortDirections
+    {
+        ASCENDING,
+        DESCENDING;
+    }
+
 }

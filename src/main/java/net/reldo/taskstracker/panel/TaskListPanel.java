@@ -2,10 +2,8 @@ package net.reldo.taskstracker.panel;
 
 import java.awt.Component;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
@@ -14,11 +12,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
-import net.reldo.taskstracker.tasktypes.Task;
-import net.runelite.client.callback.ClientThread;
-import net.runelite.client.game.SkillIconManager;
-import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.FontManager;
 
 @Slf4j
@@ -26,36 +23,19 @@ public class TaskListPanel extends JScrollPane
 {
 	public TasksTrackerPlugin plugin;
 	public final ArrayList<TaskPanel> taskPanels = new ArrayList<>();
-	private final ClientThread clientThread;
-	private final SpriteManager spriteManager;
-	private final SkillIconManager skillIconManager;
 	private final TaskListListPanel taskList;
+	private final TaskService taskService;
 	private final JLabel emptyTasks = new JLabel();
 
-	public TaskListPanel(TasksTrackerPlugin plugin, ClientThread clientThread, SpriteManager spriteManager, SkillIconManager skillIconManager)
+	public TaskListPanel(TasksTrackerPlugin plugin, TaskPanelFactory taskPanelFactory, TaskService taskService)
 	{
 		this.plugin = plugin;
-		this.clientThread = clientThread;
-		this.spriteManager = spriteManager;
-		this.skillIconManager = skillIconManager;
 
-		taskList = new TaskListListPanel();
+		taskList = new TaskListListPanel(taskPanelFactory);
+		this.taskService = taskService;
 
 		setViewportView(taskList);
 		setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-	}
-
-	public Collection<Task> getTasks()
-	{
-		// TODO: Build a filter service
-		if (plugin.getConfig().taskType() == null)
-		{
-			return null;
-		}
-		return plugin.taskManagers.get(plugin.getConfig().taskType()).tasks.values()
-			.stream()
-			.sorted(Comparator.comparing(Task::getClientSortId))
-			.collect(Collectors.toList());
 	}
 
 	public String getEmptyTaskListMessage()
@@ -68,7 +48,7 @@ public class TaskListPanel extends JScrollPane
 		taskList.redraw();
 	}
 
-	public void refresh(Task task)
+	public void refresh(TaskFromStruct task)
 	{
 		assert SwingUtilities.isEventDispatchThread();
 
@@ -93,7 +73,7 @@ public class TaskListPanel extends JScrollPane
 				.filter(TaskPanel::isVisible)
 				.findFirst();
 
-		if (!visibleTaskPanel.isPresent())
+		if (visibleTaskPanel.isEmpty())
 		{
 			emptyTasks.setVisible(true);
 		}
@@ -101,8 +81,11 @@ public class TaskListPanel extends JScrollPane
 
 	private class TaskListListPanel extends FixedWidthPanel
 	{
-		public TaskListListPanel()
+		private final TaskPanelFactory taskPanelFactory;
+
+		public TaskListListPanel(TaskPanelFactory taskPanelFactory)
 		{
+			this.taskPanelFactory = taskPanelFactory;
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 			setBorder(new EmptyBorder(0, 10, 10, 10));
 			setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -118,26 +101,32 @@ public class TaskListPanel extends JScrollPane
 
 		public void redraw()
 		{
+			log.debug("TaskListPanel.redraw");
 			assert SwingUtilities.isEventDispatchThread();
 			removeAll();
 			taskPanels.clear();
 			add(emptyTasks);
 			emptyTasks.setVisible(false);
 
-			log.debug(" Creating panels...");
-			Collection<Task> tasks = getTasks();
-			if (tasks == null || tasks.size() == 0)
+			log.debug("TaskListPanel creating panels");
+			List<TaskFromStruct> tasks = taskService.getTasks();
+			if (tasks == null || tasks.isEmpty())
 			{
 				emptyTasks.setVisible(true);
 				return;
 			}
-			for (Task task : tasks)
+
+			for (int indexPosition = 0; indexPosition < tasks.size(); indexPosition++)
 			{
-				TaskPanel taskPanel = task.generatePanel(plugin, clientThread, spriteManager, skillIconManager);
+				int adjustedIndexPosition = indexPosition;
+				if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
+					adjustedIndexPosition = tasks.size() - (adjustedIndexPosition + 1);
+				TaskPanel taskPanel = taskPanelFactory.create(tasks.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition)));
 				add(taskPanel);
 				taskPanels.add(taskPanel);
 			}
-			log.debug("Validated and repaint...");
+
+			log.debug("TaskListPanel validate and repaint");
 			validate();
 			repaint();
 		}

@@ -3,18 +3,10 @@ package net.reldo.taskstracker.data;
 import com.google.gson.annotations.Expose;
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.List;
 import lombok.Getter;
-import lombok.Setter;
-import net.reldo.taskstracker.bosses.BossData;
+import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.quests.DiaryData;
 import net.reldo.taskstracker.quests.QuestData;
-import net.reldo.taskstracker.tasktypes.Task;
-import net.reldo.taskstracker.tasktypes.TaskType;
-import net.reldo.taskstracker.tasktypes.league3.League3TaskVarps;
-import net.reldo.taskstracker.tasktypes.league3.League3Varbits;
-import net.reldo.taskstracker.tasktypes.league3.League3Varps;
-import net.reldo.taskstracker.tasktypes.league4.League4Varbits;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.client.config.ConfigManager;
@@ -27,7 +19,6 @@ public class Export
 
 	@Expose	private final QuestData quests;
 	@Expose	private final DiaryData diaries;
-	@Expose	private final BossData bosses;
 	@Expose	private String displayName;
 	@Expose	private final int runescapeVersion;
 	@Expose	private final String runeliteVersion;
@@ -35,8 +26,6 @@ public class Export
 	@Expose	private final String taskType;
 	@Expose	private final HashMap<Integer, Integer> varbits;
 	@Expose	private final HashMap<Integer, Integer> varps;
-	// TODO: Setter until property is ready to deprecate when web accepts varbits
-	@Setter @Expose	private HashMap<String, Task> tasks;
 
 	public Export(TaskType taskType, String runeliteVersion, Client client, PluginManager pluginManager, ConfigManager configManager)
 	{
@@ -48,11 +37,10 @@ public class Export
 		}
 		quests = new QuestData(client);
 		diaries = new DiaryData(client);
-		bosses = new BossData(pluginManager, configManager);
 		runescapeVersion = client.getRevision();
 		this.runeliteVersion = runeliteVersion;
 		timestamp = Instant.now().toEpochMilli();
-		this.taskType = taskType.name();
+		this.taskType = taskType.getTaskJsonName();
 		varbits = getVarbits(taskType);
 		varps = getVarps(taskType);
 	}
@@ -61,23 +49,8 @@ public class Export
 	{
 		assert client.isClientThread();
 
-		List<Integer> varbitIds = null;
-		if (taskType == TaskType.LEAGUE_3)
-		{
-			varbitIds = League3Varbits.getAllVarbitIds();
-		}
-		if (taskType == TaskType.LEAGUE_4)
-		{
-			varbitIds = League4Varbits.getAllVarbitIds();
-		}
-
-		if (varbitIds == null)
-		{
-			return null;
-		}
-
 		HashMap<Integer, Integer> varbitValueMap = new HashMap<>();
-		for (int varbitId : varbitIds)
+		for (int varbitId : taskType.getVarbits())
 		{
 			varbitValueMap.put(varbitId, client.getVarbitValue(varbitId));
 		}
@@ -89,24 +62,12 @@ public class Export
 	{
 		assert client.isClientThread();
 
-		List<Integer> varpIds = null;
-		if (taskType == TaskType.LEAGUE_3)
-		{
-			varpIds = League3Varps.getAllVarpIds();
-			varpIds.addAll(League3TaskVarps.getAllVarpIds());
-		}
-		if (taskType == TaskType.COMBAT)
-		{
-			varpIds = League3Varps.getAllVarpIds();
-		}
-
-		if (varpIds == null)
-		{
-			return null;
-		}
-
 		HashMap<Integer, Integer> varpValueMap = new HashMap<>();
-		for (int varpId : varpIds)
+		for (int varpId : taskType.getTaskVarps())
+		{
+			varpValueMap.put(varpId, client.getVarpValue(varpId));
+		}
+		for (int varpId : taskType.getOtherVarps())
 		{
 			varpValueMap.put(varpId, client.getVarpValue(varpId));
 		}

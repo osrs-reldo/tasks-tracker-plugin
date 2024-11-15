@@ -1,7 +1,6 @@
 package net.reldo.taskstracker;
 
 import net.reldo.taskstracker.config.ConfigValues;
-import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -116,14 +115,14 @@ public interface TasksTrackerConfig extends Config
 
 	@ConfigItem(
 		position = 106,
-		keyName = "taskType",
+		keyName = "taskTypeName",
 		name = "Task Type",
 		description = "Configures the task type which is displayed in the panel.",
 		hidden = true
 	)
-	default TaskType taskType()
+	default String taskTypeName()
 	{
-		return TaskType.COMBAT;
+		return "COMBAT";
 	}
 
     @ConfigItem(
@@ -148,5 +147,41 @@ public interface TasksTrackerConfig extends Config
     default String categoryFilter()
     {
         return "";
+    }
+
+	@ConfigItem(
+		position = 109,
+		keyName = "dropdownFilter",
+		name = "Dropdown Filter",
+		description = "Configures the dropdown to filter tasks on.",
+		hidden = true
+	)
+	default String dropdownFilter()
+	{
+		return "";
+	}
+
+    @ConfigItem(
+            position = 110,
+            keyName = "sortCriteria",
+            name = "Sort Criteria",
+            description = "Configures the criteria to sort tasks on.",
+            hidden = true
+    )
+    default String sortCriteria()
+    {
+        return "Default";
+    }
+
+    @ConfigItem(
+            position = 111,
+            keyName = "sortDirection",
+            name = "Sort Direction",
+            description = "Configures the direction to sort tasks.",
+            hidden = true
+    )
+    default ConfigValues.SortDirections sortDirection()
+    {
+        return ConfigValues.SortDirections.ASCENDING;
     }
 }

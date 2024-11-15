@@ -1,16 +1,13 @@
 plugins {
-    id 'java'
+	id 'java'
 }
 
 repositories {
-    mavenLocal()
-    maven {
-        url = 'https://repo.runelite.net'
-        content {
-            includeGroupByRegex("net\\.runelite.*")
-        }
-    }
-    mavenCentral()
+	mavenLocal()
+	maven {
+		url = 'https://repo.runelite.net'
+	}
+	mavenCentral()
 }
 
 def runeLiteVersion = 'latest.release'
@@ -21,9 +18,14 @@ dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
-    testImplementation 'junit:junit:4.12'
-    testImplementation group: 'net.runelite', name:'client', version: runeLiteVersion
-    testImplementation group: 'net.runelite', name:'jshell', version: runeLiteVersion
+    implementation 'org.junit.jupiter:junit-jupiter:5.7.0'
+    implementation group: 'com.google.inject.extensions', name: 'guice-assistedinject', version:'4.1.0'
+    testImplementation group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.14.9'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.8.0'
+    testImplementation group: 'org.mockito', name: 'mockito-inline', version: '3.8.0'
+    testImplementation group: 'com.google.inject.extensions', name: 'guice-testlib', version: '4.1.0'
+	testImplementation group: 'net.runelite', name:'client', version: runeLiteVersion
+//	testImplementation group: 'net.runelite', name:'jshell', version: runeLiteVersion
 }
 
 group = '${group_id}'
