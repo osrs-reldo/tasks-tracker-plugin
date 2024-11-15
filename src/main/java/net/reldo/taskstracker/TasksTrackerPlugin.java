@@ -79,37 +79,21 @@ public class TasksTrackerPlugin extends Plugin
 	private NavigationButton navButton;
 	private RuneScapeProfileType currentProfileType;
 
-	@Inject
-	@Named("runelite.version")
-	private String runeliteVersion;
-	@Inject
-	private Gson gson;
-	@Inject
-	private Client client;
-	@Inject
-	private SpriteManager spriteManager;
-	@Inject
-	private PluginManager pluginManager;
-	@Inject
-	private ClientToolbar clientToolbar;
-	@Inject
-	private ClientThread clientThread;
-	@Inject
-	private ChatMessageManager chatMessageManager;
-	@Getter
-	@Inject
-	private ConfigManager configManager;
-	@Getter
-	@Inject
-	private TasksTrackerConfig config;
+	@Inject	@Named("runelite.version") private String runeliteVersion;
+	@Inject private Gson gson;
+	@Inject	private Client client;
+	@Inject	private SpriteManager spriteManager;
+	@Inject	private PluginManager pluginManager;
+	@Inject	private ClientToolbar clientToolbar;
+	@Inject	private ClientThread clientThread;
+	@Inject	private ChatMessageManager chatMessageManager;
+	@Getter	@Inject	private ConfigManager configManager;
+	@Getter @Inject	private TasksTrackerConfig config;
 
-	@Inject
-	private TrackerConfigStore trackerConfigStore;
+	@Inject	private TrackerConfigStore trackerConfigStore;
+	@Inject private TaskService taskService;
+	@Inject private TaskPanelFactory taskPanelFactory;
 
-	@Inject
-	private TaskService taskService;
-	@Inject
-	private TaskPanelFactory taskPanelFactory;
 	@Override
 	public void configure(Binder binder)
 	{
@@ -125,7 +109,6 @@ public class TasksTrackerPlugin extends Plugin
 		return configManager.getConfig(TasksTrackerConfig.class);
 	}
 
-
 	@Override
 	protected void startUp()
 	{
@@ -139,24 +122,25 @@ public class TasksTrackerPlugin extends Plugin
 			log.error("error setting task type in startUp", ex);
 		}
 
-		this.forceUpdateVarpsFlag = false;
+		forceUpdateVarpsFlag = false;
 
-		this.pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService, taskPanelFactory);
+		pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService, taskPanelFactory);
 
 		boolean isLoggedIn = isLoggedInState(client.getGameState());
-		this.pluginPanel.setLoggedIn(isLoggedIn);
-		if (isLoggedIn) {
+		pluginPanel.setLoggedIn(isLoggedIn);
+		if (isLoggedIn)
+		{
 			forceUpdateVarpsFlag = true;
 		}
 
-		final BufferedImage icon = ImageUtil.loadImageResource(this.getClass(), "panel_icon.png");
-		this.navButton = NavigationButton.builder()
+		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
+		navButton = NavigationButton.builder()
 			.tooltip("Task Tracker")
 			.icon(icon)
 			.priority(5)
-			.panel(this.pluginPanel)
+			.panel(pluginPanel)
 			.build();
-		this.clientToolbar.addNavigation(this.navButton);
+		clientToolbar.addNavigation(navButton);
 
 		log.info("Tasks Tracker started!");
 	}
@@ -164,16 +148,16 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
-		this.pluginPanel = null;
-		this.taskService.clearTaskTypes();
-		this.clientToolbar.removeNavigation(this.navButton);
+		pluginPanel = null;
+		taskService.clearTaskTypes();
+		clientToolbar.removeNavigation(navButton);
 		log.info("Tasks Tracker stopped!");
 	}
 
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
-		if (this.forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
+		if (forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
 		{
 			// Force update is coming on next game tick, so ignore varbit change events
 			return;
@@ -183,7 +167,7 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			return;
 		}
-		this.varpIdsToUpdate.add(varbitChanged.getVarpId());
+		varpIdsToUpdate.add(varbitChanged.getVarpId());
 	}
 
 	@Subscribe
@@ -195,14 +179,14 @@ public class TasksTrackerPlugin extends Plugin
 			return;
 		}
 		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
-		if (configChanged.getKey().equals("untrackUponCompletion") && this.config.untrackUponCompletion())
+		if (configChanged.getKey().equals("untrackUponCompletion") && config.untrackUponCompletion())
 		{
-			this.forceVarpUpdate();
+			forceVarpUpdate();
 		}
 
 		if (configChanged.getKey().equals("filterPanelCollapsible"))
 		{
-			this.pluginPanel.redraw();
+			pluginPanel.redraw();
 		}
 	}
 
@@ -211,22 +195,22 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		log.debug("onGameStateChanged {}", gameStateChanged.getGameState().toString());
 		GameState newGameState = gameStateChanged.getGameState();
-		RuneScapeProfileType newProfileType = RuneScapeProfileType.getCurrent(this.client);
+		RuneScapeProfileType newProfileType = RuneScapeProfileType.getCurrent(client);
 
-		SwingUtilities.invokeLater(() -> this.pluginPanel.setLoggedIn(this.isLoggedInState(newGameState)));
+		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedInState(newGameState)));
 
 		// Logged in
 		if (newGameState == GameState.LOGGING_IN)
 		{
-			this.forceUpdateVarpsFlag = true;
+			forceUpdateVarpsFlag = true;
 		}
 		// Changed game mode
-		if (this.isLoggedInState(newGameState) && this.currentProfileType != null && this.currentProfileType != newProfileType)
+		if (isLoggedInState(newGameState) && currentProfileType != null && currentProfileType != newProfileType)
 		{
-			this.forceUpdateVarpsFlag = true;
+			forceUpdateVarpsFlag = true;
 		}
 
-		this.currentProfileType = newProfileType;
+		currentProfileType = newProfileType;
 	}
 
 	private boolean isLoggedInState(GameState gameState)
@@ -237,37 +221,37 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick gameTick)
 	{
-		if (this.forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
+		if (forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
 		{
 			log.debug("forceUpdateVarpsFlag game tick");
-			this.loadCurrentTaskTypeData();
-			this.forceVarpUpdate();
-			SwingUtilities.invokeLater(() -> this.pluginPanel.redraw());
-			this.forceUpdateVarpsFlag = false;
+			loadCurrentTaskTypeData();
+			forceVarpUpdate();
+			SwingUtilities.invokeLater(() -> pluginPanel.redraw());
+			forceUpdateVarpsFlag = false;
 			taskService.setTaskTypeChanged(false);
 		}
 
 		// Flush throttled varp updates
 		long currentTimeEpoch = System.currentTimeMillis();
-		if (currentTimeEpoch - this.lastVarpUpdate > VARP_UPDATE_THROTTLE_DELAY_MS)
+		if (currentTimeEpoch - lastVarpUpdate > VARP_UPDATE_THROTTLE_DELAY_MS)
 		{
-			this.flushVarpUpdates(this.varpIdsToUpdate);
-			this.varpIdsToUpdate = new HashSet<>();
-			this.lastVarpUpdate = currentTimeEpoch;
+			flushVarpUpdates(varpIdsToUpdate);
+			varpIdsToUpdate = new HashSet<>();
+			lastVarpUpdate = currentTimeEpoch;
 		}
 
-		int[] newSkills = this.client.getRealSkillLevels();
-		boolean changed = !Arrays.equals(this.playerSkills, newSkills);
+		int[] newSkills = client.getRealSkillLevels();
+		boolean changed = !Arrays.equals(playerSkills, newSkills);
 		if (changed)
 		{
-			this.playerSkills = this.client.getRealSkillLevels();
-			SwingUtilities.invokeLater(() -> this.pluginPanel.refresh(null));
+			playerSkills = client.getRealSkillLevels();
+			SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
 		}
 	}
 
 	public void refresh()
 	{
-		this.pluginPanel.refresh(null);
+		pluginPanel.refresh(null);
 	}
 
 	public void saveCurrentTaskTypeData()
@@ -281,13 +265,13 @@ public class TasksTrackerPlugin extends Plugin
 	{
 //		JOptionPane optionPane = new JOptionPane("Paste import data into the text field below to import task tracker data.", JOptionPane.INFORMATION_MESSAGE);
 //		optionPane.setWantsInput(true);
-//		JDialog inputDialog = optionPane.createDialog(this.pluginPanel, "Import Tasks Input");
+//		JDialog inputDialog = optionPane.createDialog(pluginPanel, "Import Tasks Input");
 //		inputDialog.setAlwaysOnTop(true);
 //		inputDialog.setVisible(true);
 //
 //		if (optionPane.getInputValue().equals("") || optionPane.getInputValue().equals("uninitializedValue"))
 //		{
-//			this.showMessageBox("Import Tasks Error", "Input was empty so no data has been imported.", JOptionPane.ERROR_MESSAGE, false);
+//			showMessageBox("Import Tasks Error", "Input was empty so no data has been imported.", JOptionPane.ERROR_MESSAGE, false);
 //			return;
 //		}
 //
@@ -296,18 +280,18 @@ public class TasksTrackerPlugin extends Plugin
 //		try
 //		{
 //			json = (String) optionPane.getInputValue();
-//			reldoImport = this.gson.fromJson(json, ReldoImport.class);
+//			reldoImport = gson.fromJson(json, ReldoImport.class);
 //		}
 //		catch (Exception ex)
 //		{
-//			this.showMessageBox("Import Tasks Error", "There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE, false);
+//			showMessageBox("Import Tasks Error", "There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE, false);
 //			log.error("There was an issue importing task tracker data.", ex);
 //			log.debug("reldoImport json: {}", json);
 //			return;
 //		}
 //
 //		optionPane = new JOptionPane("Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
-//		JDialog confirmDialog = optionPane.createDialog(this.pluginPanel, "Import Tasks Overwrite Confirmation");
+//		JDialog confirmDialog = optionPane.createDialog(pluginPanel, "Import Tasks Overwrite Confirmation");
 //		confirmDialog.setAlwaysOnTop(true);
 //		confirmDialog.setVisible(true);
 //
@@ -321,11 +305,11 @@ public class TasksTrackerPlugin extends Plugin
 //		{
 //			// FIXME: Hardcoded for league 4 only
 //			reldoImport.getTasks().forEach((id, reldoTaskSave) -> {
-//				Task task = this.taskManagers.get(TaskType.LEAGUE_4).tasks.get(id);
+//				Task task = taskManagers.get(TaskType.LEAGUE_4).tasks.get(id);
 //				task.loadReldoSave(reldoTaskSave);
 //			});
-//			this.trackerConfigStore.saveTaskTypeToConfig(TaskType.LEAGUE_4, this.taskManagers.get(TaskType.LEAGUE_4).tasks.values());
-//			this.pluginPanel.redraw();
+//			trackerConfigStore.saveTaskTypeToConfig(TaskType.LEAGUE_4, taskManagers.get(TaskType.LEAGUE_4).tasks.values());
+//			pluginPanel.redraw();
 //		}
 	}
 
@@ -339,7 +323,7 @@ public class TasksTrackerPlugin extends Plugin
 			.append(Color.BLACK, String.format("Task Tracker - Tracked Tasks: %s | Tracked Points: %s", trackedTasks, trackedPoints))
 			.build();
 
-		this.chatMessageManager.queue(
+		chatMessageManager.queue(
 			QueuedMessage.builder()
 				.type(ChatMessageType.CONSOLE)
 				.runeLiteFormattedMessage(message)
@@ -349,9 +333,9 @@ public class TasksTrackerPlugin extends Plugin
 	public void copyJsonToClipboard()
 	{
 		TaskType taskType = taskService.getCurrentTaskType();
-		this.clientThread.invokeLater(() -> {
+		clientThread.invokeLater(() -> {
 			// Not worried with this complexity on the client thread because it's from an infrequent button press
-			String json = this.exportToJson(taskType);
+			String json = exportToJson(taskType);
 			final StringSelection stringSelection = new StringSelection(json);
 			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
 
@@ -369,7 +353,7 @@ public class TasksTrackerPlugin extends Plugin
 	private void forceVarpUpdate()
 	{
 		log.debug("forceVarpUpdate");
-		this.processVarpAndUpdateTasks(null).thenAccept((processed) -> {
+		processVarpAndUpdateTasks(null).thenAccept((processed) -> {
 			if (processed)
 			{
 				saveCurrentTaskTypeData();
@@ -380,7 +364,7 @@ public class TasksTrackerPlugin extends Plugin
 	private void flushVarpUpdates(Set<Integer> varpIds)
 	{
 		log.debug("Flushing throttled varp updates {}", varpIds);
-		varpIds.forEach((id) -> this.processVarpAndUpdateTasks(id).thenAccept(processed -> {
+		varpIds.forEach((id) -> processVarpAndUpdateTasks(id).thenAccept(processed -> {
 			if (processed)
 			{
 				saveCurrentTaskTypeData();
@@ -390,13 +374,13 @@ public class TasksTrackerPlugin extends Plugin
 
 	private CompletableFuture<Boolean> processTaskStatus(TaskFromStruct taskV2) {
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
-		this.clientThread.invokeLater(() -> {
+		clientThread.invokeLater(() -> {
 			try {
 				int CA_TASK_COMPLETED_SCRIPT_ID = 4834;
-				this.client.runScript(CA_TASK_COMPLETED_SCRIPT_ID, taskV2.getIntParam("id"));
-				boolean isTaskCompleted = this.client.getIntStack()[0] > 0;
+				client.runScript(CA_TASK_COMPLETED_SCRIPT_ID, taskV2.getIntParam("id"));
+				boolean isTaskCompleted = client.getIntStack()[0] > 0;
 				taskV2.setCompleted(isTaskCompleted);
-				if (isTaskCompleted && this.config.untrackUponCompletion())
+				if (isTaskCompleted && config.untrackUponCompletion())
 				{
 					taskV2.setTracked(false);
 				}
@@ -417,8 +401,8 @@ public class TasksTrackerPlugin extends Plugin
 
 		// If varpId specified, only get those tasks, otherwise get all
 		List<TaskFromStruct> tasks = varpId != null ?
-			this.taskService.getCurrentTasksByVarp().get(varpId) :
-		    this.taskService.getTasks();
+			taskService.getCurrentTasksByVarp().get(varpId) :
+		    taskService.getTasks();
 
 		List<CompletableFuture<Boolean>> taskFutures = new ArrayList<>();
 		for (TaskFromStruct taskV2 : tasks)
@@ -433,7 +417,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	private String exportToJson(TaskType taskType)
 	{
-		Gson gson = this.gson.newBuilder()
+		Gson gson = gson.newBuilder()
 			.excludeFieldsWithoutExposeAnnotation()
 			.registerTypeAdapter(float.class, new LongSerializer())
 			.create();
@@ -446,7 +430,7 @@ public class TasksTrackerPlugin extends Plugin
 		}
 		else
 		{
-			Export export = new Export(taskType, this.runeliteVersion, this.client, this.pluginManager, this.configManager);
+			Export export = new Export(taskType, runeliteVersion, client, pluginManager, configManager);
 			return gson.toJson(export);
 		}
 	}
@@ -468,7 +452,7 @@ public class TasksTrackerPlugin extends Plugin
 				optionPane = new JOptionPane(message, messageType);
 			}
 
-			dialog = optionPane.createDialog(this.pluginPanel, title);
+			dialog = optionPane.createDialog(pluginPanel, title);
 			dialog.setAlwaysOnTop(true);
 			dialog.setVisible(true);
 

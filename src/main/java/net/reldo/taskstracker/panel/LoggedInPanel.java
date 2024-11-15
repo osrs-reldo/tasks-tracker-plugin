@@ -481,7 +481,8 @@ public class LoggedInPanel extends JPanel
 
 	private void updateCollapseButtonText()
 	{
-		if(getSelectedTaskType() == null) return;
+		if (taskService.getCurrentTaskType() == null) return;
+		
 		ArrayList<FilterConfig> filters = taskService.getCurrentTaskType().getFilters();
 
 		int countInclusive = 0;
@@ -501,10 +502,5 @@ public class LoggedInPanel extends JPanel
 		}
 
 		collapseBtn.setText(countInclusive + " inclusive, "  + countExclusive + " exclusive filters");
-	}
-
-	private TaskType getSelectedTaskType()
-	{
-		return taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
 	}
 }

@@ -13,7 +13,7 @@ public class TasksSummary
 		tasks.forEach(task -> {
 			if (task.isTracked()) {
 				trackedTasksCount++;
-				System.out.printf("%s %s%n", task.getName(), task.getPoints());
+				log.debug("TasksSummary %s %s%n", task.getName(), task.getPoints());
 				trackedTasksPoints += task.getPoints();
 			}
 		});
