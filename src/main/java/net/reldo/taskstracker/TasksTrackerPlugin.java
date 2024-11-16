@@ -257,7 +257,7 @@ public class TasksTrackerPlugin extends Plugin
 		SwingUtilities.invokeLater(() -> this.pluginPanel.refresh(null));
 	}
 
-	public void reload()
+	public void reloadTaskType()
 	{
 		taskService.clearTaskTypes();
 		filterService.clearFilterConfigs();
