@@ -14,6 +14,7 @@ import javax.inject.Singleton;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
 import net.reldo.taskstracker.data.jsondatastore.TaskDataClient;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
@@ -23,21 +24,18 @@ import net.reldo.taskstracker.data.task.filters.FilterService;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.ConfigManager;
 
 @Singleton
 @Slf4j
 public class TaskService
 {
-	@Inject
-	private ManifestClient manifestClient;
-	@Inject
-	private TaskDataClient taskDataClient;
-	@Inject
-	private ClientThread clientThread;
-	@Inject
-	private Client client;
-	@Inject
-	private FilterService filterService;
+	@Inject private ManifestClient manifestClient;
+	@Inject private TaskDataClient taskDataClient;
+	@Inject private ClientThread clientThread;
+	@Inject private Client client;
+	@Inject private FilterService filterService;
+	@Inject private ConfigManager configManager;
 
 	@Getter
 	@Setter
@@ -54,19 +52,29 @@ public class TaskService
 	private HashMap<String, TaskType> _taskTypes = new HashMap<>();
 	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
 
-	public void setTaskType(String taskTypeName)
+	public boolean setTaskType(String taskTypeJsonName)
 	{
-		// TODO: cache all task types?
+		TaskType newTaskType = getTaskTypesByJsonName().get(taskTypeJsonName);
+		if (newTaskType == null)
+		{
+			log.error("unsupported task type {}, falling back to COMBAT", taskTypeJsonName);
+			newTaskType = getTaskTypesByJsonName().get("COMBAT");
+		}
+		return this.setTaskType(newTaskType);
+	}
+
+	public boolean setTaskType(TaskType newTaskType)
+	{
+		if (newTaskType.equals(currentTaskType))
+		{
+			log.debug("skipping setTaskType, same task type selected");
+			return false;
+		}
 		try
 		{
-			TaskType newTaskType = getTaskTypes().get(taskTypeName);
-			if (newTaskType == null)
-			{
-				log.error("unsupported task type {}, falling back to COMBAT", taskTypeName);
-				newTaskType = getTaskTypes().get("COMBAT");
-			}
 			tasks.clear();
 			currentTaskType = newTaskType;
+			configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskTypeJsonName", newTaskType.getTaskJsonName());
 
             // Complete creation of any GLOBAL value type filterConfigs
 			for (FilterConfig filterConfig : currentTaskType.getFilters())
@@ -137,10 +145,12 @@ public class TaskService
 			}
 
 			taskTypeChanged = true;
+			return true;
 		}
 		catch (Exception ex)
 		{
 			log.error("Unable to set task type", ex);
+			return false;
 		}
 	}
 
@@ -184,7 +194,7 @@ public class TaskService
 	 *
 	 * @return Hashmap of TaskType indexed by task type json name
 	 */
-	public HashMap<String, TaskType> getTaskTypes()
+	public HashMap<String, TaskType> getTaskTypesByJsonName()
 	{
 		if (_taskTypes.size() > 0)
 		{
