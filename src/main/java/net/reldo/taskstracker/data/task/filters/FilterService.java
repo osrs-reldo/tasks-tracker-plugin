@@ -15,17 +15,17 @@ public class FilterService
     private FilterDataClient filterDataClient;
 
     // Filter config cache
-    private HashMap<String, FilterConfig> filterConfigs;
+    private HashMap<String, FilterConfig> _filterConfigs = new HashMap<>();
 
     public FilterConfig getGlobalFilterByKey(String filterKey)
     {
         // Instantiate filterConfigs if not already
-        if (filterConfigs == null)
+        if (_filterConfigs == null || _filterConfigs.isEmpty())
         {
             try
             {
-                filterConfigs = filterDataClient.getFilterConfigs();
-                return filterConfigs.get(filterKey);
+                _filterConfigs = filterDataClient.getFilterConfigs();
+                return _filterConfigs.get(filterKey);
             }
             catch (Exception ex)
             {
@@ -34,9 +34,14 @@ public class FilterService
         }
         else
         {
-            return filterConfigs.get(filterKey);
+            return _filterConfigs.get(filterKey);
         }
 
         return null;
+    }
+
+    public void clearFilterConfigs()
+    {
+        this._filterConfigs.clear();
     }
 }
