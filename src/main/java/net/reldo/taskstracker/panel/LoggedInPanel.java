@@ -387,7 +387,7 @@ public class LoggedInPanel extends JPanel
 		JPopupMenu reloadPluginPopup = new JPopupMenu();
 		reloadPluginPopup.setBorder(new EmptyBorder(5, 5, 5, 5));
 		JMenuItem reloadPluginMenuItem = new JMenuItem("Reload plugin");
-		reloadPluginMenuItem.addActionListener(e -> plugin.reload());
+		reloadPluginMenuItem.addActionListener(e -> plugin.reloadTaskType());
 		reloadPluginPopup.add(reloadPluginMenuItem);
 		title.setComponentPopupMenu(reloadPluginPopup);
 
