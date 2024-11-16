@@ -19,12 +19,14 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicBorders;
 import javax.swing.plaf.basic.BasicButtonUI;
+import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.SwingUtil;
 
+@Slf4j
 public abstract class FilterButtonPanel extends FilterPanel
 {
     protected final TasksTrackerPlugin plugin;
@@ -194,23 +196,28 @@ public abstract class FilterButtonPanel extends FilterPanel
 
     public void redraw()
     {
-        assert SwingUtilities.isEventDispatchThread();
+        if(SwingUtilities.isEventDispatchThread())
+        {
+            buttons.clear();
+            removeAll();
 
-        buttons.clear();
-        removeAll();
+            collapseBtn = makeCollapseButton();
+            buttonPanel = makeButtonPanel();
 
-        collapseBtn = makeCollapseButton();
-        buttonPanel = makeButtonPanel();
+            add(collapseBtn, BorderLayout.NORTH);
+            add(buttonPanel, BorderLayout.CENTER);
+            add(allOrNoneButtons(), BorderLayout.SOUTH);
+            updateFilterText();
+            updateCollapseButtonText();
 
-        add(collapseBtn, BorderLayout.NORTH);
-        add(buttonPanel, BorderLayout.CENTER);
-        add(allOrNoneButtons(), BorderLayout.SOUTH);
-        updateFilterText();
-        updateCollapseButtonText();
+            collapseBtn.setVisible(plugin.getConfig().filterPanelCollapsible());
 
-        collapseBtn.setVisible(plugin.getConfig().filterPanelCollapsible());
-
-        validate();
-        repaint();
+            validate();
+            repaint();
+        }
+        else
+        {
+            log.error("Filter button panel redraw failed - not event dispatch thread.");
+        }
     }
 }

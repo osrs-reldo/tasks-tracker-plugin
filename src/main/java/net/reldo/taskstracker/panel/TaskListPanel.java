@@ -50,32 +50,37 @@ public class TaskListPanel extends JScrollPane
 
 	public void refresh(TaskFromStruct task)
 	{
-		assert SwingUtilities.isEventDispatchThread();
-
-		emptyTasks.setVisible(false);
-
-		if (task != null)
+		if(SwingUtilities.isEventDispatchThread())
 		{
-			Optional<TaskPanel> panel = taskPanels.stream()
-				.filter(tp -> tp.task.getName().equalsIgnoreCase(task.getName()))
-				.findFirst();
-			panel.ifPresent(TaskPanel::refresh);
+			emptyTasks.setVisible(false);
+
+			if (task != null)
+			{
+				Optional<TaskPanel> panel = taskPanels.stream()
+					.filter(tp -> tp.task.getName().equalsIgnoreCase(task.getName()))
+					.findFirst();
+				panel.ifPresent(TaskPanel::refresh);
+			}
+			else
+			{
+				for (TaskPanel taskPanel : taskPanels)
+				{
+					taskPanel.refresh();
+				}
+			}
+
+			Optional<TaskPanel> visibleTaskPanel = taskPanels.stream()
+					.filter(TaskPanel::isVisible)
+					.findFirst();
+
+			if (visibleTaskPanel.isEmpty())
+			{
+				emptyTasks.setVisible(true);
+			}
 		}
 		else
 		{
-			for (TaskPanel taskPanel : taskPanels)
-			{
-				taskPanel.refresh();
-			}
-		}
-
-		Optional<TaskPanel> visibleTaskPanel = taskPanels.stream()
-				.filter(TaskPanel::isVisible)
-				.findFirst();
-
-		if (visibleTaskPanel.isEmpty())
-		{
-			emptyTasks.setVisible(true);
+			log.error("Task list panel refresh failed - not event dispatch thread.");
 		}
 	}
 
@@ -102,33 +107,39 @@ public class TaskListPanel extends JScrollPane
 		public void redraw()
 		{
 			log.debug("TaskListPanel.redraw");
-			assert SwingUtilities.isEventDispatchThread();
-			removeAll();
-			taskPanels.clear();
-			add(emptyTasks);
-			emptyTasks.setVisible(false);
-
-			log.debug("TaskListPanel creating panels");
-			List<TaskFromStruct> tasks = taskService.getTasks();
-			if (tasks == null || tasks.isEmpty())
+			if(SwingUtilities.isEventDispatchThread())
 			{
-				emptyTasks.setVisible(true);
-				return;
-			}
+				removeAll();
+				taskPanels.clear();
+				add(emptyTasks);
+				emptyTasks.setVisible(false);
 
-			for (int indexPosition = 0; indexPosition < tasks.size(); indexPosition++)
+				log.debug("TaskListPanel creating panels");
+				List<TaskFromStruct> tasks = taskService.getTasks();
+				if (tasks == null || tasks.isEmpty())
+				{
+					emptyTasks.setVisible(true);
+					return;
+				}
+
+				for (int indexPosition = 0; indexPosition < tasks.size(); indexPosition++)
+				{
+					int adjustedIndexPosition = indexPosition;
+					if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
+						adjustedIndexPosition = tasks.size() - (adjustedIndexPosition + 1);
+					TaskPanel taskPanel = taskPanelFactory.create(tasks.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition)));
+					add(taskPanel);
+					taskPanels.add(taskPanel);
+				}
+
+				log.debug("TaskListPanel validate and repaint");
+				validate();
+				repaint();
+			}
+			else
 			{
-				int adjustedIndexPosition = indexPosition;
-				if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
-					adjustedIndexPosition = tasks.size() - (adjustedIndexPosition + 1);
-				TaskPanel taskPanel = taskPanelFactory.create(tasks.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition)));
-				add(taskPanel);
-				taskPanels.add(taskPanel);
+				log.error("Task list panel redraw failed - not event dispatch thread.");
 			}
-
-			log.debug("TaskListPanel validate and repaint");
-			validate();
-			repaint();
 		}
 	}
 }

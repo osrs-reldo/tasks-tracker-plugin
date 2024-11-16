@@ -51,6 +51,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.ProfileChanged;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -118,8 +119,8 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		try
 		{
-			String taskTypeName = config.taskTypeName();
-			taskService.setTaskType(taskTypeName);
+			String taskTypeJsonName = config.taskTypeJsonName();
+			taskService.setTaskType(taskTypeJsonName);
 		}
 		catch (Exception ex)
 		{
@@ -252,9 +253,15 @@ public class TasksTrackerPlugin extends Plugin
 		}
 	}
 
+	@Subscribe
+	public void onProfileChanged(ProfileChanged profileChanged)
+	{
+		reload();
+	}
+
 	public void refresh()
 	{
-		SwingUtilities.invokeLater(() -> this.pluginPanel.refresh(null));
+		SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
 	}
 
 	public void reloadTaskType()
@@ -263,8 +270,8 @@ public class TasksTrackerPlugin extends Plugin
 		filterService.clearFilterConfigs();
 		try
 		{
-			String taskTypeName = config.taskTypeName();
-			taskService.setTaskType(taskTypeName);
+			String taskTypeJsonName = config.taskTypeJsonName();
+			taskService.setTaskType(taskTypeJsonName);
 		}
 		catch (Exception ex)
 		{
@@ -272,8 +279,8 @@ public class TasksTrackerPlugin extends Plugin
 		}
 		SwingUtilities.invokeLater(() ->
 		{
-			this.pluginPanel.redraw();
-			this.pluginPanel.refresh(null);
+			pluginPanel.redraw();
+			pluginPanel.refresh(null);
 		});
 	}
 
@@ -312,7 +319,7 @@ public class TasksTrackerPlugin extends Plugin
 			return;
 		}
 
-		if (!reldoImport.taskTypeName.equalsIgnoreCase(config.taskTypeName()))
+		if (!reldoImport.taskTypeName.equalsIgnoreCase(config.taskTypeJsonName()))
 		{
 			this.showMessageBox("Import Tasks Error", String.format("Wrong task type. Select the %s task type to import this data.", reldoImport.taskTypeName), JOptionPane.ERROR_MESSAGE, false);
 			return;
