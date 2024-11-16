@@ -23,7 +23,6 @@ public class ParamButtonFilter extends Filter
 	public boolean meetsCriteria(TaskFromStruct task)
 	{
 		String configValue = configManager.getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, filterConfigKey);
-		log.debug("{}.meetsCriteria {}={} taskValue={}", this.getClass().getSimpleName(), filterConfigKey, configValue, task.getIntParam(paramName));
 		boolean isEmptyFilterSelection = configValue == null || configValue.isEmpty() || configValue.equals("-1");
 		if (isEmptyFilterSelection)
 		{

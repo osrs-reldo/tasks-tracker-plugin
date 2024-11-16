@@ -1,8 +1,10 @@
 package net.reldo.taskstracker.data;
 
 import java.util.Collection;
+import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 
+@Slf4j
 public class TasksSummary
 {
 	public int trackedTasksCount = 0;
@@ -13,7 +15,7 @@ public class TasksSummary
 		tasks.forEach(task -> {
 			if (task.isTracked()) {
 				trackedTasksCount++;
-				log.debug("TasksSummary %s %s%n", task.getName(), task.getPoints());
+				log.debug("TasksSummary {} {}", task.getName(), task.getPoints());
 				trackedTasksPoints += task.getPoints();
 			}
 		});

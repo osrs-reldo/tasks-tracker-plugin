@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +26,6 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
-import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
@@ -185,7 +185,7 @@ public class LoggedInPanel extends JPanel
                 case TRACKED:
                     trackedFilterBtn.setState(1);
                     trackedFilterBtn.setEnabled(false);
-                    plugin.getConfigManager().setConfiguration("tasks-tracker", "taskListTab", newTab);
+                    plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", newTab);
                     filterButtonAction("tracked");
                     break;
                 case ALL:
@@ -195,11 +195,11 @@ public class LoggedInPanel extends JPanel
                     completedFilterBtn.setEnabled(false);
                     ignoredFilterBtn.setState(1);
                     ignoredFilterBtn.setEnabled(false);
-                    plugin.getConfigManager().setConfiguration("tasks-tracker", "taskListTab", newTab);
+                    plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", newTab);
                     actionAllFilterButtons();
                     break;
 				case CUSTOM:
-					plugin.getConfigManager().setConfiguration("tasks-tracker", "taskListTab", newTab);
+					plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", newTab);
 					plugin.refresh();
 					break;
                 default:
@@ -305,12 +305,25 @@ public class LoggedInPanel extends JPanel
 		northPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
 		ArrayList<ComboItem<TaskType>> taskTypeItems = new ArrayList<>();
-		taskService.getTaskTypes().forEach((taskTypeJsonName, taskType) -> taskTypeItems.add(new ComboItem(taskType, taskType.getName())));
+		taskService.getTaskTypesByJsonName().forEach((taskTypeJsonName, taskType) -> taskTypeItems.add(new ComboItem(taskType, taskType.getName())));
 		ComboItem<TaskType>[] comboItemsArray = taskTypeItems.toArray(new ComboItem[0]);
 		taskTypeDropdown = new JComboBox<>(comboItemsArray);
 		taskTypeDropdown.setAlignmentX(LEFT_ALIGNMENT);
-		taskTypeDropdown.setSelectedItem(taskService.getCurrentTaskType()); // TODO: kinda gross
-		taskTypeDropdown.addActionListener(e -> updateWithNewTaskType(taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue()));
+
+		TaskType currentTaskType = taskService.getCurrentTaskType();
+		ComboItem<TaskType> currentTaskTypeComboItem = Arrays.stream(comboItemsArray)
+			.filter(item -> item.getValue().equals(currentTaskType))
+			.findFirst().orElseGet(() -> comboItemsArray[0]);
+		taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
+		taskTypeDropdown.addActionListener(e -> {
+			TaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
+			boolean wasTaskTypeChanged = taskService.setTaskType(taskType);
+			if (wasTaskTypeChanged)
+			{
+				redraw();
+				refresh(null);
+			}
+		});
 		taskTypeDropdown.setFocusable(false);
 
 		// Wrapper for collapsible sub-filter menu
@@ -469,14 +482,6 @@ public class LoggedInPanel extends JPanel
 		filtersPanel.add(textSearch);
 
 		return filtersPanel;
-	}
-
-	private void updateWithNewTaskType(TaskType taskType)
-	{
-		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskTypeName", taskType.getTaskJsonName());
-		taskService.setTaskType(taskType.getTaskJsonName());
-		redraw();
-		refresh(null);
 	}
 
 	private void updateCollapseButtonText()

@@ -74,16 +74,16 @@ public class TaskFromStruct
 		}
 		try
 		{
-			log.debug("LOADING STRUCT DATA " + structId);
+//			log.debug("LOADING STRUCT DATA " + structId);
 			_struct = client.getStructComposition(structId);
 			taskType.getIntParamMap().forEach((paramName, paramId) -> {
 				int value = _struct.getIntValue(paramId);
-				log.debug("{} {}", paramName, value);
+//				log.debug("{} {}", paramName, value);
 				_intParams.put(paramName, value);
 			});
 			taskType.getStringParamMap().forEach((paramName, paramId) -> {
 				String value = _struct.getStringValue(paramId);
-				log.debug("{} {}", paramName, value);
+//				log.debug("{} {}", paramName, value);
 				_stringParams.put(paramName, value);
 			});
 		}
