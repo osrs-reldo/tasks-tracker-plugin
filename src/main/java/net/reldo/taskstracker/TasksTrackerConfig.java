@@ -32,11 +32,11 @@ public interface TasksTrackerConfig extends Config
 
     @ConfigItem(
             position = 12,
-            keyName = "saveAreaFilterState", //@todo generalise this to all sub-filters
-            name = "Save Area Filter State",
+            keyName = "saveSubFilterState", //@todo generalise this to all sub-filters
+            name = "Save Filter State",
             description = "Configures whether the state of area filters should be saved and recalled when switching task type or restarting the plugin."
     )
-    default boolean saveAreaFilterState()
+    default boolean saveSubFilterState()
     {
         return true;
     }
@@ -89,30 +89,6 @@ public interface TasksTrackerConfig extends Config
         return ConfigValues.TaskListTabs.ALL;
     }
 
-    @ConfigItem(
-            position = 104,
-            keyName = "skillFilter",
-            name = "Skills Filter",
-            description = "Configures the skills to filter tasks on.",
-            hidden = true
-    )
-    default String skillFilter()
-    {
-        return "";
-    }
-
-    @ConfigItem(
-            position = 105,
-            keyName = "tierFilter",
-            name = "Tier Filter",
-            description = "Configures the tiers to filter tasks on.",
-            hidden = true
-    )
-    default String tierFilter()
-    {
-        return "";
-    }
-
 	@ConfigItem(
 		position = 106,
 		keyName = "taskTypeName",
@@ -124,30 +100,6 @@ public interface TasksTrackerConfig extends Config
 	{
 		return "COMBAT";
 	}
-
-    @ConfigItem(
-            position = 107,
-            keyName = "areaFilter",
-            name = "Area Filter",
-            description = "Configures the areas to filter tasks on.",
-            hidden = true
-    )
-    default String areaFilter()
-    {
-        return "";
-    }
-
-    @ConfigItem(
-            position = 108,
-            keyName = "categoryFilter",
-            name = "Category Filter",
-            description = "Configures the category to filter tasks on.",
-            hidden = true
-    )
-    default String categoryFilter()
-    {
-        return "";
-    }
 
 	@ConfigItem(
 		position = 109,

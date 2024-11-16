@@ -141,8 +141,8 @@ public class MultiToggleButton extends JButton
 
     private void addPopupMenuItem(String text, int state)
     {
-        JMenuItem menuItem = new JMenuItem();
-        menuItem.addActionListener(e -> this.setState(state));
+        JMenuItem menuItem = new JMenuItem(text);
+        menuItem.addActionListener(e -> {if(isEnabled())setState(state);});
         popupMenu.add(menuItem);
     }
 }

@@ -78,6 +78,7 @@ public class SortPanel extends FixedWidthPanel
 
         add(sortDropdown);
         add(directionButton);
+        updateConfig();
     }
 
     protected void updateConfig()

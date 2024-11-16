@@ -170,6 +170,18 @@ public abstract class FilterButtonPanel extends FilterPanel
         plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, configKey, filterText);
     }
 
+    protected boolean getConfigButtonState(String buttonKey)
+    {
+        String configValue = plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, configKey);
+        boolean isEmptyFilterSelection = configValue == null || configValue.isEmpty() || configValue.equals("-1");
+        if (isEmptyFilterSelection)
+        {
+            return true;
+        }
+
+        return configValue.contains("f-" + buttonKey + "-f");
+    }
+
     protected void setAllSelected(boolean state)
     {
         buttons.values().forEach(button -> button.setSelected(state));

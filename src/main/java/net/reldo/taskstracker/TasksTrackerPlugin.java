@@ -33,6 +33,7 @@ import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskTrackerTaskModule;
 import net.reldo.taskstracker.data.task.TaskType;
+import net.reldo.taskstracker.data.task.filters.FilterService;
 import net.reldo.taskstracker.panel.TaskPanelFactory;
 import net.reldo.taskstracker.panel.TaskTrackerPanelModule;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
@@ -94,6 +95,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	@Inject	private TrackerConfigStore trackerConfigStore;
 	@Inject private TaskService taskService;
+	@Inject private FilterService filterService;
 	@Inject private TaskPanelFactory taskPanelFactory;
 
 	@Override
@@ -252,7 +254,27 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void refresh()
 	{
-		pluginPanel.refresh(null);
+		SwingUtilities.invokeLater(() -> this.pluginPanel.refresh(null));
+	}
+
+	public void reloadTaskType()
+	{
+		taskService.clearTaskTypes();
+		filterService.clearFilterConfigs();
+		try
+		{
+			String taskTypeName = config.taskTypeName();
+			taskService.setTaskType(taskTypeName);
+		}
+		catch (Exception ex)
+		{
+			log.error("error setting task type in reload", ex);
+		}
+		SwingUtilities.invokeLater(() ->
+		{
+			this.pluginPanel.redraw();
+			this.pluginPanel.refresh(null);
+		});
 	}
 
 	public void saveCurrentTaskTypeData()

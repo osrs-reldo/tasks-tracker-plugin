@@ -74,7 +74,7 @@ public class TaskService
 		{
 			tasks.clear();
 			currentTaskType = newTaskType;
-			configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskTypeJsonName", newTaskType.getTaskJsonName());
+			configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskTypeName", newTaskType.getTaskJsonName());
 
             // Complete creation of any GLOBAL value type filterConfigs
 			for (FilterConfig filterConfig : currentTaskType.getFilters())

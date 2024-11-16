@@ -14,7 +14,9 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
@@ -172,6 +174,7 @@ public class LoggedInPanel extends JPanel
 				customTab.setSelected(true);
 				break;
 		}
+		tabChanged(config.taskListTab());
 
 		return taskListPanel;
 	}
@@ -380,6 +383,13 @@ public class LoggedInPanel extends JPanel
 		JLabel title = new JLabel("Tasks Tracker");
 		title.setHorizontalAlignment(SwingConstants.LEFT);
 		title.setForeground(Color.WHITE);
+
+		JPopupMenu reloadPluginPopup = new JPopupMenu();
+		reloadPluginPopup.setBorder(new EmptyBorder(5, 5, 5, 5));
+		JMenuItem reloadPluginMenuItem = new JMenuItem("Reload plugin");
+		reloadPluginMenuItem.addActionListener(e -> plugin.reloadTaskType());
+		reloadPluginPopup.add(reloadPluginMenuItem);
+		title.setComponentPopupMenu(reloadPluginPopup);
 
 		// Filter button bar
 		final JPanel viewControls = new JPanel();
