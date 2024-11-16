@@ -13,9 +13,11 @@ import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
+import net.runelite.api.Skill;
 import net.runelite.client.ui.FontManager;
 
 @Slf4j
@@ -82,6 +84,29 @@ public class TaskListPanel extends JScrollPane
 		{
 			log.error("Task list panel refresh failed - not event dispatch thread.");
 		}
+	}
+
+	public void refreshTaskPanelsWithSkill(Skill skill)
+	{
+		// Refresh all task panels for tasks with 'skill' or
+		// 'SKILLS' (any skill) or 'TOTAL LEVEL' as a requirement.
+		taskPanels.stream()
+				.filter(tp ->
+				{
+					List<TaskDefinitionSkill> skillsList = tp.task.getTaskDefinition().getSkills();
+					if(skillsList == null || skillsList.isEmpty())
+					{
+						return false;
+					}
+
+					return skillsList.stream()
+						.map(TaskDefinitionSkill::getSkill)
+						.anyMatch(s ->  s.equalsIgnoreCase(skill.getName()) ||
+                                        s.equalsIgnoreCase("SKILLS") ||
+                                        s.equalsIgnoreCase("TOTAL LEVEL")
+						);
+				})
+				.forEach(TaskPanel::refresh);
 	}
 
 	private class TaskListListPanel extends FixedWidthPanel
