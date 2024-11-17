@@ -127,4 +127,9 @@ public class TaskType
 	{
 		return _taskTypeDefinition.getVarbits();
 	}
+
+	public int getTaskCompletedScriptId()
+	{
+		return _taskTypeDefinition.getTaskCompletedScriptId();
+	}
 }

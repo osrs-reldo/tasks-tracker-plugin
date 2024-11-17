@@ -53,17 +53,6 @@ public class TaskFromStruct
 		return this._intParams.get(paramName);
 	}
 
-	public int getTaskTypeVarpIndex()
-	{
-		return this.getSortId() / 32;
-	}
-
-	public int getTaskVarp()
-	{
-		int index = getTaskTypeVarpIndex();
-		return taskType.getTaskVarps().get(index);
-	}
-
 	// TODO: Remove client from params
 	public boolean loadStructData(Client client)
 	{
@@ -74,16 +63,16 @@ public class TaskFromStruct
 		}
 		try
 		{
-//			log.debug("LOADING STRUCT DATA " + structId);
+			// log.debug("LOADING STRUCT DATA " + structId);
 			_struct = client.getStructComposition(structId);
 			taskType.getIntParamMap().forEach((paramName, paramId) -> {
 				int value = _struct.getIntValue(paramId);
-//				log.debug("{} {}", paramName, value);
+				// log.debug("{} {}", paramName, value);
 				_intParams.put(paramName, value);
 			});
 			taskType.getStringParamMap().forEach((paramName, paramId) -> {
 				String value = _struct.getStringValue(paramId);
-//				log.debug("{} {}", paramName, value);
+				// log.debug("{} {}", paramName, value);
 				_stringParams.put(paramName, value);
 			});
 		}

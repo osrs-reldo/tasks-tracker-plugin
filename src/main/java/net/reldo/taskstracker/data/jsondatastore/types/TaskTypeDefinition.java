@@ -95,4 +95,11 @@ public class TaskTypeDefinition
 	 * Examples in the past: Relics chosen, Tasks completed, unlocks, Fragment xp
 	 */
 	private int[] varbits;
+
+	/**
+	 * The script id used to parse the completion of a task
+	 * This is a rs2asm script
+	 * Example: Combat achievements = script 4834
+	 */
+	private int taskCompletedScriptId;
 }
