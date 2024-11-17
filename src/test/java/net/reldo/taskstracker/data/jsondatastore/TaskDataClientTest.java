@@ -124,7 +124,6 @@ public class TaskDataClientTest
 	private Manifest getMockManifest()
 	{
 		Manifest mockManifest = new Manifest();
-		mockManifest.exportVarbits = new int[]{123, 456};
 		mockManifest.filterMetadata = "filters.json";
 		mockManifest.taskTypeMetadata = "task-types.json";
 		return mockManifest;

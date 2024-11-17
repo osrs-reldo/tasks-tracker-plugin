@@ -7,6 +7,4 @@ public class Manifest
 {
 	public String taskTypeMetadata;
 	public String filterMetadata;
-	public int[] exportVarbits;
-	public int[] exportVarps;
 }
