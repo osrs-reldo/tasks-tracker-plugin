@@ -41,10 +41,7 @@ public class TaskService
 	@Setter
 	private boolean taskTypeChanged = false;
 	@Getter
-	private TaskType currentTaskType; // TODO: should be config driven
-	@Getter
-	private final HashMap<Integer, List<TaskFromStruct>> currentTasksByVarp = new HashMap<>();
-	// TODO: Build the filter on getTasks
+	private TaskType currentTaskType;
 	@Getter
 	private final List<TaskFromStruct> tasks = new ArrayList<>();
 	@Getter
@@ -103,14 +100,12 @@ public class TaskService
 			currentTaskTypeVarps.clear();
 			currentTaskTypeVarps = new HashSet<>(currentTaskType.getTaskVarps());
 
-			currentTasksByVarp.clear();
 			Collection<TaskDefinition> taskDefinitions = taskDataClient.getTaskDefinitions(currentTaskType.getTaskJsonName());
 			for (TaskDefinition definition : taskDefinitions)
 			{
 				TaskFromStruct task = new TaskFromStruct(currentTaskType, definition);
 				tasks.add(task);
 				clientThread.invoke(() -> task.loadStructData(client));
-				addVarpLookup(task);
 			}
 
 			// Index task list for each property @todo check if clientThread.invoke guarantees all task data will be loaded before sorting
@@ -243,15 +238,6 @@ public class TaskService
 		return future;
 	}
 
-	private void addVarpLookup(TaskFromStruct task)
-	{
-		if (!currentTasksByVarp.containsKey(task.getTaskVarp()))
-		{
-			currentTasksByVarp.put(task.getTaskVarp(), new ArrayList<>());
-		}
-		currentTasksByVarp.get(task.getTaskVarp()).add(task);
-	}
-
 	public void applySave(TaskType saveTaskType, HashMap<Integer, ConfigTaskSave> saveData)
 	{
 		String currentTaskTypeName = currentTaskType.getTaskJsonName();
@@ -271,5 +257,17 @@ public class TaskService
 			}
 			task.loadConfigSave(configTaskSave);
 		}
+	}
+
+	public List<TaskFromStruct> getTasksFromVarpId(Integer varpId)
+	{
+		int varpIndex = getCurrentTaskType().getTaskVarps().indexOf(varpId);
+		int minTaskId = varpIndex * 32;
+		int maxTaskId = minTaskId + 32;
+
+		return getTasks().stream().filter(t -> {
+			int taskId = t.getIntParam("id");
+			return taskId >= minTaskId && taskId <= maxTaskId;
+		}).collect(Collectors.toList());
 	}
 }

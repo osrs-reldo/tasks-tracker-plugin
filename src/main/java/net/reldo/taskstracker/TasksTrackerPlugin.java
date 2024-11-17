@@ -44,6 +44,7 @@ import net.runelite.api.Client;
 import net.runelite.api.Experience;
 import net.runelite.api.GameState;
 import net.runelite.api.Skill;
+import net.runelite.api.events.CommandExecuted;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.StatChanged;
@@ -163,6 +164,29 @@ public class TasksTrackerPlugin extends Plugin
 		taskService.clearTaskTypes();
 		clientToolbar.removeNavigation(navButton);
 		log.info("Tasks Tracker stopped!");
+	}
+
+	@Subscribe
+	public void onCommandExecuted(CommandExecuted commandExecuted)
+	{
+		if (!commandExecuted.getCommand().startsWith("tt")) return;
+
+		if (commandExecuted.getCommand().equalsIgnoreCase("tt-process-varp"))
+		{
+			String[] args = commandExecuted.getArguments();
+			if (args.length == 0) return;
+
+			try
+			{
+				int varpId = Integer.parseInt(args[0]);
+				log.debug("Processing varpId " + varpId);
+				processVarpAndUpdateTasks(varpId);
+			}
+			catch (NumberFormatException e)
+			{
+				log.debug("Invalid varpId, provide a valid integer");
+			}
+		}
 	}
 
 	@Subscribe
@@ -439,22 +463,22 @@ public class TasksTrackerPlugin extends Plugin
 		}));
 	}
 
-	private CompletableFuture<Boolean> processTaskStatus(TaskFromStruct taskV2)
+	private CompletableFuture<Boolean> processTaskStatus(TaskFromStruct task)
 	{
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
 		clientThread.invokeLater(() -> {
 			try
 			{
-				int CA_TASK_COMPLETED_SCRIPT_ID = 4834;
-				client.runScript(CA_TASK_COMPLETED_SCRIPT_ID, taskV2.getIntParam("id"));
+				int taskCompletedScriptId = taskService.getCurrentTaskType().getTaskCompletedScriptId();
+				client.runScript(taskCompletedScriptId, task.getIntParam("id"));
 				boolean isTaskCompleted = client.getIntStack()[0] > 0;
-				taskV2.setCompleted(isTaskCompleted);
+				task.setCompleted(isTaskCompleted);
 				if (isTaskCompleted && config.untrackUponCompletion())
 				{
-					taskV2.setTracked(false);
+					task.setTracked(false);
 				}
-				log.debug("process taskFromStruct {} {}", taskV2.getStringParam("name"), isTaskCompleted);
-				SwingUtilities.invokeLater(() -> pluginPanel.refresh(taskV2));
+				log.debug("process taskFromStruct {} {}", task.getStringParam("name"), isTaskCompleted);
+				SwingUtilities.invokeLater(() -> pluginPanel.refresh(task));
 				future.complete(isTaskCompleted);
 			}
 			catch (Exception ex)
@@ -466,19 +490,23 @@ public class TasksTrackerPlugin extends Plugin
 		return future;
 	}
 
+	/**
+	 * Update task completion status. If no varpId is specified, it updates all tasks in the current task type
+	 * @param varpId varp id to update (optional)
+	 * @return An observable that emits true if all tasks were processed
+	 */
 	private CompletableFuture<Boolean> processVarpAndUpdateTasks(@Nullable Integer varpId)
 	{
 		log.info("processVarpAndUpdateTasks: " + (varpId != null ? varpId : "all"));
 
-		// If varpId specified, only get those tasks, otherwise get all
 		List<TaskFromStruct> tasks = varpId != null ?
-			taskService.getCurrentTasksByVarp().get(varpId) :
-		    taskService.getTasks();
+			taskService.getTasksFromVarpId(varpId) :
+			taskService.getTasks();
 
 		List<CompletableFuture<Boolean>> taskFutures = new ArrayList<>();
-		for (TaskFromStruct taskV2 : tasks)
+		for (TaskFromStruct task : tasks)
 		{
-			CompletableFuture<Boolean> taskFuture = processTaskStatus(taskV2);
+			CompletableFuture<Boolean> taskFuture = processTaskStatus(task);
 			taskFutures.add(taskFuture);
 		}
 
