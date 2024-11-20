@@ -281,7 +281,7 @@ public class TaskPanel extends JPanel
 		}
 		else
 		{
-			System.out.println("Desktop browsing is not supported on this system.");
+			log.warn("Desktop browsing is not supported on this system.");
 		}
 	}
 

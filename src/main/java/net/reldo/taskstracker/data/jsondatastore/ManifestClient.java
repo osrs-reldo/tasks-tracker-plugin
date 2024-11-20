@@ -24,7 +24,7 @@ public class ManifestClient
 
 	public ManifestClient()
 	{
-		System.out.println("init manifestclient");
+		log.debug("init manifestclient");
 	}
 
 	public Manifest getManifest() throws Exception
@@ -36,7 +36,7 @@ public class ManifestClient
 		InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
 		String manifestJson = CharStreams.toString(responseReader); // ew, why not a stream? not working...
 		_manifest = this.gson.fromJson(manifestJson, Manifest.class);
-		System.out.println("_manifest = " + _manifest);
+		log.debug("_manifest = " + _manifest);
 		return _manifest;
 	}
 }
