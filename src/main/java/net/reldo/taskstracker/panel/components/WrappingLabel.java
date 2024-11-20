@@ -28,9 +28,10 @@ public class WrappingLabel extends JPanel
 		g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
 		FontMetrics fm = g2d.getFontMetrics();
-		int lineHeight = fm.getHeight();
+		int lineHeight = fm.getAscent() + fm.getDescent() + fm.getLeading();
+
 		int x = 0;
-		int y = lineHeight;
+		int y = fm.getAscent();
 
 		// Wrap text and draw each line
 		for (String line : wrapText(text, getWidth(), fm))
@@ -44,7 +45,7 @@ public class WrappingLabel extends JPanel
 	public Dimension getPreferredSize()
 	{
 		FontMetrics fm = getFontMetrics(getFont());
-		int lineHeight = fm.getHeight();
+		int lineHeight = fm.getAscent() + fm.getDescent() + fm.getLeading();
 
 		// Calculate number of lines
 		int lines = wrapText(text, getWidth(), fm).size();
