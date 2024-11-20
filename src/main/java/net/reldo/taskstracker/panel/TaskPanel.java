@@ -59,7 +59,8 @@ public class TaskPanel extends JPanel
 	private final JLabel tierIcon = new JLabel();
 	private final JPanel container = new JPanel(new BorderLayout());
 	private final JPanel body = new JPanel(new BorderLayout());
-	// TODO: tech debt - we should be optimizing the batch rendering of taskpanels rather than the panel itself
+	// TODO: tech debt - we use wrappling label here to improve taskpanel performance when drawing
+	//  we should prioritize optimizing the batch rendering of taskpanels rather than the panel itself
 	private final WrappingLabel name = new WrappingLabel("task");
 	private final WrappingLabel description = new WrappingLabel("description");
 	private final JPanel buttons = new JPanel();
@@ -80,9 +81,7 @@ public class TaskPanel extends JPanel
 		setComponentPopupMenu(getPopupMenu());
 		ToolTipManager.sharedInstance().registerComponent(this);
 		refresh();
-		// TODO: profile why filtering has a very laggy list redraw (it technically shouldnt be redrawing, only show/hiding)
-		// TODO: move filtering into task service, so we don't have to create these per task
-		// TODO: DEPRECATE filterKey in favor of config.key
+
 		task.getTaskType().getFilters().forEach((filterConfig) -> {
 			String paramName = filterConfig.getValueName();
 			if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER))
