@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 public class ReldoImport
 {
+	public String taskTypeName;
 	public int version;
 	public String rsn;
 	private HashMap<Integer, ReldoTaskSave> tasks;

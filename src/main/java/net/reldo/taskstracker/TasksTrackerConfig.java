@@ -1,7 +1,6 @@
 package net.reldo.taskstracker;
 
 import net.reldo.taskstracker.config.ConfigValues;
-import net.reldo.taskstracker.tasktypes.TaskType;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -33,11 +32,12 @@ public interface TasksTrackerConfig extends Config
 
     @ConfigItem(
             position = 12,
-            keyName = "saveAreaFilterState", //@todo generalise this to all sub-filters
-            name = "Save Area Filter State",
-            description = "Configures whether the state of area filters should be saved and recalled when switching task type or restarting the plugin."
+            keyName = "saveSubFilterState", //@todo generalise this to all sub-filters
+            name = "Save Filter State",
+            description = "Configures whether the state of area filters should be saved and recalled when switching task type or restarting the plugin.",
+	        hidden = true
     )
-    default boolean saveAreaFilterState()
+    default boolean saveSubFilterState()
     {
         return true;
     }
@@ -90,63 +90,51 @@ public interface TasksTrackerConfig extends Config
         return ConfigValues.TaskListTabs.ALL;
     }
 
-    @ConfigItem(
-            position = 104,
-            keyName = "skillFilter",
-            name = "Skills Filter",
-            description = "Configures the skills to filter tasks on.",
-            hidden = true
-    )
-    default String skillFilter()
-    {
-        return "";
-    }
-
-    @ConfigItem(
-            position = 105,
-            keyName = "tierFilter",
-            name = "Tier Filter",
-            description = "Configures the tiers to filter tasks on.",
-            hidden = true
-    )
-    default String tierFilter()
-    {
-        return "";
-    }
-
 	@ConfigItem(
 		position = 106,
-		keyName = "taskType",
+		keyName = "taskTypeJsonName",
 		name = "Task Type",
 		description = "Configures the task type which is displayed in the panel.",
 		hidden = true
 	)
-	default TaskType taskType()
+	default String taskTypeJsonName()
 	{
-		return TaskType.COMBAT;
+		return "COMBAT";
+	}
+
+	@ConfigItem(
+		position = 109,
+		keyName = "dropdownFilter",
+		name = "Dropdown Filter",
+		description = "Configures the dropdown to filter tasks on.",
+		hidden = true
+	)
+	default String dropdownFilter()
+	{
+		return "";
 	}
 
     @ConfigItem(
-            position = 107,
-            keyName = "areaFilter",
-            name = "Area Filter",
-            description = "Configures the areas to filter tasks on.",
+            position = 110,
+            keyName = "sortCriteria",
+            name = "Sort Criteria",
+            description = "Configures the criteria to sort tasks on.",
             hidden = true
     )
-    default String areaFilter()
+    default String sortCriteria()
     {
-        return "";
+        return "Default";
     }
 
     @ConfigItem(
-            position = 108,
-            keyName = "categoryFilter",
-            name = "Category Filter",
-            description = "Configures the category to filter tasks on.",
+            position = 111,
+            keyName = "sortDirection",
+            name = "Sort Direction",
+            description = "Configures the direction to sort tasks.",
             hidden = true
     )
-    default String categoryFilter()
+    default ConfigValues.SortDirections sortDirection()
     {
-        return "";
+        return ConfigValues.SortDirections.ASCENDING;
     }
 }
