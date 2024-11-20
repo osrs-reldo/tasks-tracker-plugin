@@ -32,7 +32,7 @@ public class FilterDataClient
 
     public HashMap<String, FilterConfig> getFilterConfigs() throws Exception
     {
-        log.info("get filter configs");
+        log.debug("get filter configs");
         InputStream stream = this.dataStoreReader.readFilterConfigs(this.manifestClient.getManifest().filterMetadata);
         InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
         Type listType = TypeToken.getParameterized(ArrayList.class, FilterConfig.class).getType();

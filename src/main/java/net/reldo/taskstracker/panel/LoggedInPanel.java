@@ -87,13 +87,13 @@ public class LoggedInPanel extends JPanel
 		String selectedTaskTypeJsonName = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue().getTaskJsonName();
 		if(!selectedTaskTypeJsonName.equals(config.taskTypeJsonName()))
 		{
-			log.info("Task type dropdown de-synced, attempting to find current task type");
+			log.debug("Task type dropdown de-synced, attempting to find current task type");
 			for(int i = 0; i < taskTypeDropdown.getItemCount(); i++)
 			{
 				ComboItem<TaskType> item = taskTypeDropdown.getItemAt(i);
 				if(item.getValue().getTaskJsonName().equals(config.taskTypeJsonName()))
 				{
-					log.info("Current task type found, setting selected task type");
+					log.debug("Current task type found, setting selected task type");
 					taskTypeDropdown.setSelectedIndex(i);
 					break;
 				}
