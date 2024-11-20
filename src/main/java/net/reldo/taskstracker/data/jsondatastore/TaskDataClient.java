@@ -31,7 +31,7 @@ public class TaskDataClient
 
 	public TaskDataClient()
 	{
-		System.out.println("init task data client");
+		log.debug("init task data client");
 	}
 
 	public HashMap<String, TaskType> getTaskTypes() throws Exception
