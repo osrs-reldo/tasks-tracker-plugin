@@ -30,9 +30,9 @@ import javax.swing.JToolTip;
 import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.HtmlUtil;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.HtmlUtil;
 import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
@@ -42,13 +42,13 @@ import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.filters.Filter;
 import net.reldo.taskstracker.data.task.filters.ParamButtonFilter;
 import net.reldo.taskstracker.data.task.filters.ParamDropdownFilter;
+import net.reldo.taskstracker.panel.components.WrappingLabel;
 import net.runelite.api.Constants;
 import net.runelite.api.Skill;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
-import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 import net.runelite.client.util.SwingUtil;
 
 @Slf4j
@@ -59,8 +59,9 @@ public class TaskPanel extends JPanel
 	private final JLabel tierIcon = new JLabel();
 	private final JPanel container = new JPanel(new BorderLayout());
 	private final JPanel body = new JPanel(new BorderLayout());
-	private final JShadowedLabel name = new JShadowedLabel();
-	private final JLabel description = new JLabel();
+	// TODO: tech debt - we should be optimizing the batch rendering of taskpanels rather than the panel itself
+	private final WrappingLabel name = new WrappingLabel("task");
+	private final WrappingLabel description = new WrappingLabel("description");
 	private final JPanel buttons = new JPanel();
 	private final JToggleButton toggleTrack = new JToggleButton();
 	private final JToggleButton toggleIgnore = new JToggleButton();
@@ -291,8 +292,8 @@ public class TaskPanel extends JPanel
 	public void refresh()
 	{
 		setBackgroundColor(getTaskBackgroundColor());
-		name.setText(HtmlUtil.wrapWithHtml(task.getName()));
-		description.setText(HtmlUtil.wrapWithHtml(task.getDescription()));
+		name.setText(task.getName());
+		description.setText(task.getDescription());
 		toggleTrack.setSelected(task.isTracked());
 		toggleIgnore.setSelected(task.isIgnored());
 
