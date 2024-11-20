@@ -9,9 +9,11 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
@@ -39,10 +41,13 @@ import net.reldo.taskstracker.panel.TaskTrackerPanelModule;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.Experience;
 import net.runelite.api.GameState;
+import net.runelite.api.Skill;
 import net.runelite.api.events.CommandExecuted;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageBuilder;
@@ -52,6 +57,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.ProfileChanged;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -82,6 +88,7 @@ public class TasksTrackerPlugin extends Plugin
 	private long lastVarpUpdate = 0;
 	private NavigationButton navButton;
 	private RuneScapeProfileType currentProfileType;
+	private final Map<Skill, Integer> oldExperience = new EnumMap<>(Skill.class);
 
 	@Inject	@Named("runelite.version") private String runeliteVersion;
 	@Inject private Gson gson;
@@ -119,8 +126,8 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		try
 		{
-			String taskTypeName = config.taskTypeName();
-			taskService.setTaskType(taskTypeName);
+			String taskTypeJsonName = config.taskTypeJsonName();
+			taskService.setTaskType(taskTypeJsonName);
 		}
 		catch (Exception ex)
 		{
@@ -266,19 +273,53 @@ public class TasksTrackerPlugin extends Plugin
 			varpIdsToUpdate = new HashSet<>();
 			lastVarpUpdate = currentTimeEpoch;
 		}
+	}
 
+	@Subscribe
+	public void onStatChanged(StatChanged statChanged)
+	{
+		// @todo deprecate one of these, we don't need to track player skills twice.
+		// Cache current player skills
 		int[] newSkills = client.getRealSkillLevels();
 		boolean changed = !Arrays.equals(playerSkills, newSkills);
 		if (changed)
 		{
 			playerSkills = client.getRealSkillLevels();
-			SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
 		}
+
+		final Skill skill = statChanged.getSkill();
+
+		// Modified from m0bilebtw's modification from Nightfirecat's virtual level ups plugin
+		final int xpAfter = client.getSkillExperience(skill);
+		final int levelAfter = Experience.getLevelForXp(xpAfter);
+		final int xpBefore = oldExperience.getOrDefault(skill, -1);
+		final int levelBefore = xpBefore == -1 ? -1 : Experience.getLevelForXp(xpBefore);
+
+		oldExperience.put(skill, xpAfter);
+
+		// Do not proceed if any of the following are true:
+		//  * xpBefore == -1              (don't fire when first setting new known value)
+		//  * xpAfter <= xpBefore         (do not allow 200m -> 200m exp drops)
+		//  * levelBefore >= levelAfter   (stop if we're not actually reaching a new level)
+		//  * levelAfter > MAX_REAL_LEVEL (stop if above 99)
+		if (xpBefore == -1 || xpAfter <= xpBefore || levelBefore >= levelAfter || levelAfter > Experience.MAX_REAL_LEVEL)
+		{
+			return;
+		}
+
+		// If we get here, 'skill' was leveled up!
+		pluginPanel.taskListPanel.refreshTaskPanelsWithSkill(skill);
+	}
+
+	@Subscribe
+	public void onProfileChanged(ProfileChanged profileChanged)
+	{
+		reloadTaskType();
 	}
 
 	public void refresh()
 	{
-		SwingUtilities.invokeLater(() -> this.pluginPanel.refresh(null));
+		SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
 	}
 
 	public void reloadTaskType()
@@ -287,8 +328,8 @@ public class TasksTrackerPlugin extends Plugin
 		filterService.clearFilterConfigs();
 		try
 		{
-			String taskTypeName = config.taskTypeName();
-			taskService.setTaskType(taskTypeName);
+			String taskTypeJsonName = config.taskTypeJsonName();
+			taskService.setTaskType(taskTypeJsonName);
 		}
 		catch (Exception ex)
 		{
@@ -296,8 +337,8 @@ public class TasksTrackerPlugin extends Plugin
 		}
 		SwingUtilities.invokeLater(() ->
 		{
-			this.pluginPanel.redraw();
-			this.pluginPanel.refresh(null);
+			pluginPanel.redraw();
+			pluginPanel.refresh(null);
 		});
 	}
 
@@ -336,7 +377,7 @@ public class TasksTrackerPlugin extends Plugin
 			return;
 		}
 
-		if (!reldoImport.taskTypeName.equalsIgnoreCase(config.taskTypeName()))
+		if (!reldoImport.taskTypeName.equalsIgnoreCase(config.taskTypeJsonName()))
 		{
 			this.showMessageBox("Import Tasks Error", String.format("Wrong task type. Select the %s task type to import this data.", reldoImport.taskTypeName), JOptionPane.ERROR_MESSAGE, false);
 			return;

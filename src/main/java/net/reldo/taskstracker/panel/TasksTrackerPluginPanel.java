@@ -66,24 +66,29 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	public void setLoggedIn(boolean loggedIn)
 	{
-		assert SwingUtilities.isEventDispatchThread();
-
-		if (loggedIn != this.loggedIn)
+		if(SwingUtilities.isEventDispatchThread())
 		{
-			if (loggedIn)
-			{
-				loggedOutPanel.setVisible(false);
-				loggedInPanel.setVisible(true);
-			}
-			else
-			{
-				loggedInPanel.setVisible(false);
-				loggedOutPanel.setVisible(true);
-			}
+            if (loggedIn != this.loggedIn)
+            {
+                if (loggedIn)
+                {
+                    loggedOutPanel.setVisible(false);
+                    loggedInPanel.setVisible(true);
+                }
+                else
+                {
+                    loggedInPanel.setVisible(false);
+                    loggedOutPanel.setVisible(true);
+                }
 
-			validate();
-			repaint();
+                validate();
+                repaint();
+            }
+            this.loggedIn = loggedIn;
 		}
-		this.loggedIn = loggedIn;
+		else
+		{
+			log.error("Failed to update loggedIn state - not event dispatch thread.");
+		}
 	}
 }

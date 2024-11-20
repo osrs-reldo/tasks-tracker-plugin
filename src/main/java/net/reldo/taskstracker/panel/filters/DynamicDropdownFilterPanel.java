@@ -70,18 +70,23 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 
 	public void redraw()
 	{
-		assert SwingUtilities.isEventDispatchThread();
+		if(SwingUtilities.isEventDispatchThread())
+		{
+			removeAll();
 
-		removeAll();
+			dropdown = makeDropdownPanel();
 
-		dropdown = makeDropdownPanel();
+			add(makeLabel());
+			add(dropdown);
 
-		add(makeLabel());
-		add(dropdown);
+			updateFilterConfig();
 
-		updateFilterConfig();
-
-		validate();
-		repaint();
+			validate();
+			repaint();
+		}
+		else
+		{
+			log.error("Dropdown filter panel redraw failed - not event dispatch thread.");
+		}
 	}
 }

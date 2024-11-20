@@ -13,9 +13,11 @@ import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
+import net.runelite.api.Skill;
 import net.runelite.client.ui.FontManager;
 
 @Slf4j
@@ -50,33 +52,61 @@ public class TaskListPanel extends JScrollPane
 
 	public void refresh(TaskFromStruct task)
 	{
-		assert SwingUtilities.isEventDispatchThread();
-
-		emptyTasks.setVisible(false);
-
-		if (task != null)
+		if(SwingUtilities.isEventDispatchThread())
 		{
-			Optional<TaskPanel> panel = taskPanels.stream()
-				.filter(tp -> tp.task.getName().equalsIgnoreCase(task.getName()))
-				.findFirst();
-			panel.ifPresent(TaskPanel::refresh);
+			emptyTasks.setVisible(false);
+
+			if (task != null)
+			{
+				Optional<TaskPanel> panel = taskPanels.stream()
+					.filter(tp -> tp.task.getName().equalsIgnoreCase(task.getName()))
+					.findFirst();
+				panel.ifPresent(TaskPanel::refresh);
+			}
+			else
+			{
+				for (TaskPanel taskPanel : taskPanels)
+				{
+					taskPanel.refresh();
+				}
+			}
+
+			Optional<TaskPanel> visibleTaskPanel = taskPanels.stream()
+					.filter(TaskPanel::isVisible)
+					.findFirst();
+
+			if (visibleTaskPanel.isEmpty())
+			{
+				emptyTasks.setVisible(true);
+			}
 		}
 		else
 		{
-			for (TaskPanel taskPanel : taskPanels)
-			{
-				taskPanel.refresh();
-			}
+			log.error("Task list panel refresh failed - not event dispatch thread.");
 		}
+	}
 
-		Optional<TaskPanel> visibleTaskPanel = taskPanels.stream()
-				.filter(TaskPanel::isVisible)
-				.findFirst();
+	public void refreshTaskPanelsWithSkill(Skill skill)
+	{
+		// Refresh all task panels for tasks with 'skill' or
+		// 'SKILLS' (any skill) or 'TOTAL LEVEL' as a requirement.
+		taskPanels.stream()
+				.filter(tp ->
+				{
+					List<TaskDefinitionSkill> skillsList = tp.task.getTaskDefinition().getSkills();
+					if(skillsList == null || skillsList.isEmpty())
+					{
+						return false;
+					}
 
-		if (visibleTaskPanel.isEmpty())
-		{
-			emptyTasks.setVisible(true);
-		}
+					return skillsList.stream()
+						.map(TaskDefinitionSkill::getSkill)
+						.anyMatch(s ->  s.equalsIgnoreCase(skill.getName()) ||
+                                        s.equalsIgnoreCase("SKILLS") ||
+                                        s.equalsIgnoreCase("TOTAL LEVEL")
+						);
+				})
+				.forEach(TaskPanel::refresh);
 	}
 
 	private class TaskListListPanel extends FixedWidthPanel
@@ -102,33 +132,39 @@ public class TaskListPanel extends JScrollPane
 		public void redraw()
 		{
 			log.debug("TaskListPanel.redraw");
-			assert SwingUtilities.isEventDispatchThread();
-			removeAll();
-			taskPanels.clear();
-			add(emptyTasks);
-			emptyTasks.setVisible(false);
-
-			log.debug("TaskListPanel creating panels");
-			List<TaskFromStruct> tasks = taskService.getTasks();
-			if (tasks == null || tasks.isEmpty())
+			if(SwingUtilities.isEventDispatchThread())
 			{
-				emptyTasks.setVisible(true);
-				return;
-			}
+				removeAll();
+				taskPanels.clear();
+				add(emptyTasks);
+				emptyTasks.setVisible(false);
 
-			for (int indexPosition = 0; indexPosition < tasks.size(); indexPosition++)
+				log.debug("TaskListPanel creating panels");
+				List<TaskFromStruct> tasks = taskService.getTasks();
+				if (tasks == null || tasks.isEmpty())
+				{
+					emptyTasks.setVisible(true);
+					return;
+				}
+
+				for (int indexPosition = 0; indexPosition < tasks.size(); indexPosition++)
+				{
+					int adjustedIndexPosition = indexPosition;
+					if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
+						adjustedIndexPosition = tasks.size() - (adjustedIndexPosition + 1);
+					TaskPanel taskPanel = taskPanelFactory.create(tasks.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition)));
+					add(taskPanel);
+					taskPanels.add(taskPanel);
+				}
+
+				log.debug("TaskListPanel validate and repaint");
+				validate();
+				repaint();
+			}
+			else
 			{
-				int adjustedIndexPosition = indexPosition;
-				if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
-					adjustedIndexPosition = tasks.size() - (adjustedIndexPosition + 1);
-				TaskPanel taskPanel = taskPanelFactory.create(tasks.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition)));
-				add(taskPanel);
-				taskPanels.add(taskPanel);
+				log.error("Task list panel redraw failed - not event dispatch thread.");
 			}
-
-			log.debug("TaskListPanel validate and repaint");
-			validate();
-			repaint();
 		}
 	}
 }

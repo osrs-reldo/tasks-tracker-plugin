@@ -92,12 +92,12 @@ public interface TasksTrackerConfig extends Config
 
 	@ConfigItem(
 		position = 106,
-		keyName = "taskTypeName",
+		keyName = "taskTypeJsonName",
 		name = "Task Type",
 		description = "Configures the task type which is displayed in the panel.",
 		hidden = true
 	)
-	default String taskTypeName()
+	default String taskTypeJsonName()
 	{
 		return "COMBAT";
 	}
