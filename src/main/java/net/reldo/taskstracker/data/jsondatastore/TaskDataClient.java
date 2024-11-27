@@ -16,6 +16,7 @@ import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.reldo.taskstracker.data.task.TaskType;
+import net.runelite.api.Client;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
 import okhttp3.OkHttpClient;
@@ -28,6 +29,7 @@ public class TaskDataClient
 	@Inject	private OkHttpClient okHttpClient;
 	@Inject private Gson gson;
 	@Inject private DataStoreReader dataStoreReader;
+	@Inject private Client client;
 	@Inject private ClientThread clientThread;
 	@Inject private SpriteManager spriteManager;
 
@@ -47,7 +49,7 @@ public class TaskDataClient
 		HashMap<String, TaskType> taskTypes = new HashMap<>();
 		for (TaskTypeDefinition taskTypeDefinition : taskTypeDefinitions)
 		{
-			taskTypes.put(taskTypeDefinition.getTaskJsonName(), new TaskType(clientThread, spriteManager, taskTypeDefinition));
+			taskTypes.put(taskTypeDefinition.getTaskJsonName(), new TaskType(client, clientThread, spriteManager, taskTypeDefinition));
 		}
 		return taskTypes;
 	}

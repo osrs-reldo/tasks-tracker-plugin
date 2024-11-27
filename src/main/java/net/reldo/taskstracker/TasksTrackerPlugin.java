@@ -462,11 +462,11 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
 		clientThread.invokeLater(() -> {
+			int taskId =  task.getIntParam("id");
+			int varbitIndex = taskId / 32;
+			int bitIndex = taskId % 32;
 			try
 			{
-				int taskId =  task.getIntParam("id");
-				int varbitIndex = taskId / 32;
-				int bitIndex = taskId % 32;
 				int varpId = task.getTaskType().getTaskVarps().get(varbitIndex);
 				BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varpId));
 				boolean isTaskCompleted = varpValue.testBit(bitIndex);
@@ -481,7 +481,7 @@ public class TasksTrackerPlugin extends Plugin
 			}
 			catch (Exception ex)
 			{
-				log.error("Error processing task status", ex);
+				log.error("Error processing task status {}", taskId, ex);
 				future.completeExceptionally(ex);
 			}
 		});

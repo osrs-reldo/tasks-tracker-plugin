@@ -9,6 +9,8 @@ import lombok.Getter;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
+import net.runelite.api.Client;
+import net.runelite.api.EnumComposition;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
 
@@ -18,13 +20,17 @@ public class TaskType
 	private final HashMap<Integer, BufferedImage> spritesById = new HashMap<>();
 	@Getter
 	private final HashMap<Integer, BufferedImage> tierSprites = new HashMap<>();
+	@Getter
+	private final HashMap<Integer, Integer> tierPoints = new HashMap<>();
 
+	private final Client client;
 	private final ClientThread clientThread;
 	private final SpriteManager spriteManager;
 	private final TaskTypeDefinition _taskTypeDefinition;
 
-	public TaskType(ClientThread clientThread, SpriteManager spriteManager, TaskTypeDefinition taskTypeDefinition)
+	public TaskType(Client client, ClientThread clientThread, SpriteManager spriteManager, TaskTypeDefinition taskTypeDefinition)
 	{
+		this.client = client;
 		this.clientThread = clientThread;
 		this.spriteManager = spriteManager;
 		this._taskTypeDefinition = taskTypeDefinition;
@@ -43,6 +49,16 @@ public class TaskType
 				BufferedImage spriteImage = spriteManager.getSprite(spriteId, 0);
 				tierSprites.put(tierId, spriteImage);
 			});
+			if (_taskTypeDefinition.getIntEnumMap().containsKey("tierPoints"))
+			{
+				int enumId = _taskTypeDefinition.getIntEnumMap().get("tierPoints");
+				EnumComposition enumComposition = client.getEnum(enumId);
+				int[] keys = enumComposition.getKeys();
+				for (int key : keys)
+				{
+					tierPoints.put(key, enumComposition.getIntValue(key));
+				}
+			}
 			future.complete(true);
 		});
 

@@ -93,7 +93,16 @@ public class TaskFromStruct
 
 	public int getPoints()
 	{
-		return 0;
+		if (taskType.getTierPoints().size() == 0)
+		{
+			return 0;
+		}
+		Integer points = taskType.getTierPoints().get(getTier());
+		if (points == null)
+		{
+			return 0;
+		}
+		return points;
 	}
 
 	public void setCompleted(boolean completed)
