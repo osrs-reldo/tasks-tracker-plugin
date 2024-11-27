@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -463,15 +464,18 @@ public class TasksTrackerPlugin extends Plugin
 		clientThread.invokeLater(() -> {
 			try
 			{
-				int taskCompletedScriptId = taskService.getCurrentTaskType().getTaskCompletedScriptId();
-				client.runScript(taskCompletedScriptId, task.getIntParam("id"));
-				boolean isTaskCompleted = client.getIntStack()[0] > 0;
+				int taskId =  task.getIntParam("id");
+				int varbitIndex = taskId / 32;
+				int bitIndex = taskId % 32;
+				int varpId = task.getTaskType().getTaskVarps().get(varbitIndex);
+				BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varpId));
+				boolean isTaskCompleted = varpValue.testBit(bitIndex);
 				task.setCompleted(isTaskCompleted);
 				if (isTaskCompleted && config.untrackUponCompletion())
 				{
 					task.setTracked(false);
 				}
-				log.debug("process taskFromStruct {} {}", task.getStringParam("name"), isTaskCompleted);
+				log.debug("process taskFromStruct {} ({}) {}", task.getStringParam("name"), task.getIntParam("id"), isTaskCompleted);
 				SwingUtilities.invokeLater(() -> pluginPanel.refresh(task));
 				future.complete(isTaskCompleted);
 			}
