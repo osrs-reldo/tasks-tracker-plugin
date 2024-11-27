@@ -44,8 +44,6 @@ public class FilterDataClient
             {
                 filterConfigsByConfigKey.put(filterConfig.getConfigKey(), filterConfig);
             }
-            responseReader.close();
-            stream.close();
             return filterConfigsByConfigKey;
         }
     }
