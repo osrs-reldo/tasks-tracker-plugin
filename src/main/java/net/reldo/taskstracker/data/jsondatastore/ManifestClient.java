@@ -32,11 +32,13 @@ public class ManifestClient
 		if (_manifest != null) {
 			return _manifest;
 		}
-		InputStream stream = this.dataStoreReader.readManifestData();
-		InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
-		String manifestJson = CharStreams.toString(responseReader); // ew, why not a stream? not working...
-		_manifest = this.gson.fromJson(manifestJson, Manifest.class);
-		log.debug("_manifest = " + _manifest);
-		return _manifest;
+		try(InputStream stream = this.dataStoreReader.readManifestData();
+			InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
+		{
+			String manifestJson = CharStreams.toString(responseReader); // ew, why not a stream? not working...
+			_manifest = this.gson.fromJson(manifestJson, Manifest.class);
+			log.debug("_manifest = " + _manifest);
+			return _manifest;
+		}
 	}
 }
