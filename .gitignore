@@ -9,3 +9,4 @@ nb-configuration.xml
 nbproject/
 .run
 bin
+FileDataStoreReader
