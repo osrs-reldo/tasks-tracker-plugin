@@ -37,6 +37,8 @@ public class ManifestClient
 		String manifestJson = CharStreams.toString(responseReader); // ew, why not a stream? not working...
 		_manifest = this.gson.fromJson(manifestJson, Manifest.class);
 		log.debug("_manifest = " + _manifest);
+		responseReader.close();
+		stream.close();
 		return _manifest;
 	}
 }

@@ -49,6 +49,8 @@ public class TaskDataClient
 		{
 			taskTypes.put(taskTypeDefinition.getTaskJsonName(), new TaskType(clientThread, spriteManager, taskTypeDefinition));
 		}
+		responseReader.close();
+		stream.close();
 		return taskTypes;
 	}
 
@@ -57,6 +59,8 @@ public class TaskDataClient
 		InputStream stream = this.dataStoreReader.readTasks(jsonFilename);
 		InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
 		Type listType = TypeToken.getParameterized(ArrayList.class, TaskDefinition.class).getType();
+		responseReader.close();
+		stream.close();
 		return this.gson.fromJson(responseReader, listType);
 	}
 }
