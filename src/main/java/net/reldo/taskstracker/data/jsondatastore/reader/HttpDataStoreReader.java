@@ -1,8 +1,5 @@
 package net.reldo.taskstracker.data.jsondatastore.reader;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -24,7 +21,6 @@ public class HttpDataStoreReader implements DataStoreReader
 	{
 		String manifestUrl = JsonDataStore.baseUrl + "/manifest.json";
 		log.debug("getManifest json from {} ...", manifestUrl);
-		System.out.printf("getManifest json from {} ...%s", manifestUrl);
 		Request request = new Request.Builder()
 			.url(manifestUrl)
 			.build();
