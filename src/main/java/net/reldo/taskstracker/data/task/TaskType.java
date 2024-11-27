@@ -1,40 +1,32 @@
 package net.reldo.taskstracker.data.task;
 
-import com.google.inject.assistedinject.Assisted;
-import com.google.inject.assistedinject.AssistedInject;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
-import javax.inject.Inject;
 import lombok.Getter;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
-import net.runelite.api.Client;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
 
 public class TaskType
 {
-	@Inject
-	private Client client;
-	@Inject
-	private ClientThread clientThread;
-	@Inject
-	private SpriteManager spriteManager;
-
 	@Getter
 	private final HashMap<Integer, BufferedImage> spritesById = new HashMap<>();
 	@Getter
 	private final HashMap<Integer, BufferedImage> tierSprites = new HashMap<>();
 
+	private final ClientThread clientThread;
+	private final SpriteManager spriteManager;
 	private final TaskTypeDefinition _taskTypeDefinition;
 
-	@AssistedInject
-	public TaskType(@Assisted TaskTypeDefinition taskTypeDefinition)
+	public TaskType(ClientThread clientThread, SpriteManager spriteManager, TaskTypeDefinition taskTypeDefinition)
 	{
+		this.clientThread = clientThread;
+		this.spriteManager = spriteManager;
 		this._taskTypeDefinition = taskTypeDefinition;
 	}
 

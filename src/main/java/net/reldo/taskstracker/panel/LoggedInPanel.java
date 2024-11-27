@@ -45,8 +45,7 @@ public class LoggedInPanel extends JPanel
 	public TaskListPanel taskListPanel;
 	private JComboBox<ComboItem<TaskType>> taskTypeDropdown;
 
-	private TaskService taskService;
-	private final TaskPanelFactory taskPanelFactory;
+	private final TaskService taskService;
 	private final TasksTrackerPlugin plugin;
 	private final TasksTrackerConfig config;
 
@@ -64,12 +63,11 @@ public class LoggedInPanel extends JPanel
 	private SortPanel sortPanel;
 	private final JToggleButton collapseBtn = new JToggleButton();
 
-	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, TaskService taskService, TaskPanelFactory taskPanelFactory)
+	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, TaskService taskService)
 	{
 		super(false);
 		this.plugin = plugin;
 		this.taskService = taskService;
-		this.taskPanelFactory = taskPanelFactory;
 		this.config = config;
 
 		createPanel();
@@ -121,7 +119,7 @@ public class LoggedInPanel extends JPanel
 		setLayout(new BorderLayout());
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		taskListPanel = new TaskListPanel(plugin, taskPanelFactory, taskService);
+		taskListPanel = new TaskListPanel(plugin, taskService);
 
 		add(getNorthPanel(), BorderLayout.NORTH);
 		add(getCenterPanel(), BorderLayout.CENTER);

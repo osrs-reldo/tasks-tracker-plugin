@@ -29,11 +29,11 @@ public class TaskListPanel extends JScrollPane
 	private final TaskService taskService;
 	private final JLabel emptyTasks = new JLabel();
 
-	public TaskListPanel(TasksTrackerPlugin plugin, TaskPanelFactory taskPanelFactory, TaskService taskService)
+	public TaskListPanel(TasksTrackerPlugin plugin, TaskService taskService)
 	{
 		this.plugin = plugin;
 
-		taskList = new TaskListListPanel(taskPanelFactory);
+		taskList = new TaskListListPanel(plugin);
 		this.taskService = taskService;
 
 		setViewportView(taskList);
@@ -111,11 +111,12 @@ public class TaskListPanel extends JScrollPane
 
 	private class TaskListListPanel extends FixedWidthPanel
 	{
-		private final TaskPanelFactory taskPanelFactory;
+		private final TasksTrackerPlugin plugin;
 
-		public TaskListListPanel(TaskPanelFactory taskPanelFactory)
+		public TaskListListPanel(TasksTrackerPlugin plugin)
 		{
-			this.taskPanelFactory = taskPanelFactory;
+			this.plugin = plugin;
+
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 			setBorder(new EmptyBorder(0, 10, 10, 10));
 			setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -152,7 +153,7 @@ public class TaskListPanel extends JScrollPane
 					int adjustedIndexPosition = indexPosition;
 					if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
 						adjustedIndexPosition = tasks.size() - (adjustedIndexPosition + 1);
-					TaskPanel taskPanel = taskPanelFactory.create(tasks.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition)));
+					TaskPanel taskPanel = new TaskPanel(plugin, tasks.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition)));
 					add(taskPanel);
 					taskPanels.add(taskPanel);
 				}

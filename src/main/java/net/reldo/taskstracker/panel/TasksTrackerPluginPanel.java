@@ -24,7 +24,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 	private boolean loggedIn = false;
 	private TaskService taskService;
 
-	public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, SpriteManager spriteManager, TaskService taskService, TaskPanelFactory taskPanelFactory)
+	public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, SpriteManager spriteManager, TaskService taskService)
 	{
 		super(false);
 		this.taskService = taskService;
@@ -33,7 +33,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 		setLayout(new BorderLayout());
 
-		loggedInPanel = new LoggedInPanel(plugin, config, taskService, taskPanelFactory);
+		loggedInPanel = new LoggedInPanel(plugin, config, taskService);
 		taskListPanel = loggedInPanel.taskListPanel;
 		add(loggedInPanel, BorderLayout.NORTH);
 		loggedInPanel.setVisible(false);

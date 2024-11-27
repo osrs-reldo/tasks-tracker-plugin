@@ -1,7 +1,5 @@
 package net.reldo.taskstracker.panel;
 
-import com.google.inject.assistedinject.Assisted;
-import com.google.inject.assistedinject.AssistedInject;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Desktop;
@@ -68,8 +66,7 @@ public class TaskPanel extends JPanel
 
 	protected TasksTrackerPlugin plugin;
 
-	@AssistedInject
-	public TaskPanel(TasksTrackerPlugin plugin, @Assisted TaskFromStruct task)
+	public TaskPanel(TasksTrackerPlugin plugin, TaskFromStruct task)
 	{
 		super(new BorderLayout());
 		this.plugin = plugin;

@@ -33,11 +33,8 @@ import net.reldo.taskstracker.data.jsondatastore.reader.HttpDataStoreReader;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
-import net.reldo.taskstracker.data.task.TaskTrackerTaskModule;
 import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.data.task.filters.FilterService;
-import net.reldo.taskstracker.panel.TaskPanelFactory;
-import net.reldo.taskstracker.panel.TaskTrackerPanelModule;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -104,14 +101,11 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject	private TrackerConfigStore trackerConfigStore;
 	@Inject private TaskService taskService;
 	@Inject private FilterService filterService;
-	@Inject private TaskPanelFactory taskPanelFactory;
 
 	@Override
 	public void configure(Binder binder)
 	{
 		binder.bind(DataStoreReader.class).to(HttpDataStoreReader.class);
-		binder.install(new TaskTrackerPanelModule());
-		binder.install(new TaskTrackerTaskModule());
 		super.configure(binder);
 	}
 
@@ -136,7 +130,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		forceUpdateVarpsFlag = false;
 
-		pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService, taskPanelFactory);
+		pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService);
 
 		boolean isLoggedIn = isLoggedInState(client.getGameState());
 		pluginPanel.setLoggedIn(isLoggedIn);

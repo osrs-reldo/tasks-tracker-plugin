@@ -21,12 +21,6 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     testImplementation group: 'net.runelite', name:'client', version: runeLiteVersion
     testImplementation group: 'net.runelite', name:'jshell', version: runeLiteVersion
-
-
-    implementation group: 'com.google.inject.extensions', name: 'guice-assistedinject', version:'4.1.0', {
-        exclude group: 'com.google.inject'
-        exclude group: 'com.google.guava'
-    }
     testImplementation group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.14.9'
 }
 
