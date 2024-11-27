@@ -15,8 +15,9 @@ public class TasksSummary
 		tasks.forEach(task -> {
 			if (task.isTracked()) {
 				trackedTasksCount++;
-				log.debug("TasksSummary {} {}", task.getName(), task.getPoints());
-				trackedTasksPoints += task.getPoints();
+				int points = task.getPoints();
+				log.debug("TasksSummary {} {}", task.getName(), points);
+				trackedTasksPoints += points;
 			}
 		});
 	}
