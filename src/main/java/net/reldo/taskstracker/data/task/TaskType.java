@@ -40,26 +40,30 @@ public class TaskType
 	{
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
 		clientThread.invokeLater(() -> {
-			getButtonFiltersSpriteIds().forEach((spriteId) -> {
-				BufferedImage spriteImage = spriteManager.getSprite(spriteId, 0);
-				spritesById.put(spriteId, spriteImage);
-			});
-			_taskTypeDefinition.getTierSpriteIdMap().forEach((idKey, spriteId) -> {
-				Integer tierId = Integer.parseInt(idKey);
-				BufferedImage spriteImage = spriteManager.getSprite(spriteId, 0);
-				tierSprites.put(tierId, spriteImage);
-			});
-			if (_taskTypeDefinition.getIntEnumMap().containsKey("tierPoints"))
-			{
-				int enumId = _taskTypeDefinition.getIntEnumMap().get("tierPoints");
-				EnumComposition enumComposition = client.getEnum(enumId);
-				int[] keys = enumComposition.getKeys();
-				for (int key : keys)
+			try {
+				getButtonFiltersSpriteIds().forEach((spriteId) -> {
+					BufferedImage spriteImage = spriteManager.getSprite(spriteId, 0);
+					spritesById.put(spriteId, spriteImage);
+				});
+				_taskTypeDefinition.getTierSpriteIdMap().forEach((idKey, spriteId) -> {
+					Integer tierId = Integer.parseInt(idKey);
+					BufferedImage spriteImage = spriteManager.getSprite(spriteId, 0);
+					tierSprites.put(tierId, spriteImage);
+				});
+				if (_taskTypeDefinition.getIntEnumMap().containsKey("tierPoints"))
 				{
-					tierPoints.put(key, enumComposition.getIntValue(key));
+					int enumId = _taskTypeDefinition.getIntEnumMap().get("tierPoints");
+					EnumComposition enumComposition = client.getEnum(enumId);
+					int[] keys = enumComposition.getKeys();
+					for (int key : keys)
+					{
+						tierPoints.put(key, enumComposition.getIntValue(key));
+					}
 				}
+				future.complete(true);
+			} catch (Exception e) {
+				future.completeExceptionally(e);
 			}
-			future.complete(true);
 		});
 
 		return future;
