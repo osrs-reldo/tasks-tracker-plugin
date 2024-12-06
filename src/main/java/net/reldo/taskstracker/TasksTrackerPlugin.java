@@ -210,6 +210,7 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			return;
 		}
+
 		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
 		if (configChanged.getKey().equals("untrackUponCompletion") && config.untrackUponCompletion())
 		{
@@ -219,6 +220,12 @@ public class TasksTrackerPlugin extends Plugin
 		if (configChanged.getKey().equals("filterPanelCollapsible"))
 		{
 			pluginPanel.redraw();
+		}
+
+		if (configChanged.getKey().startsWith("tab")) // task list tab config items all start 'tab#'
+		{
+			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab().ordinal() + 1);
+			refresh();
 		}
 	}
 

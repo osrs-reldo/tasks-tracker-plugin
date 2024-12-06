@@ -46,7 +46,7 @@ public class MultiToggleButton extends JButton
             }
             else
             {
-                this.remove(popupMenu);
+                this.setComponentPopupMenu(null);
             }
         }
     }
@@ -144,5 +144,11 @@ public class MultiToggleButton extends JButton
         JMenuItem menuItem = new JMenuItem(text);
         menuItem.addActionListener(e -> {if(isEnabled())setStateThenAction(state);});
         popupMenu.add(menuItem);
+    }
+
+    public void setEnabled(boolean enabled)
+    {
+        super.setEnabled(enabled);
+        popupMenuEnabled(enabled);
     }
 }
