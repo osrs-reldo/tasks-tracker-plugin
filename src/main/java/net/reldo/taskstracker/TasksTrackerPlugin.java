@@ -87,6 +87,7 @@ public class TasksTrackerPlugin extends Plugin
 	private NavigationButton navButton;
 	private RuneScapeProfileType currentProfileType;
 	private final Map<Skill, Integer> oldExperience = new EnumMap<>(Skill.class);
+	private boolean startUpCompleted = false;
 
 	@Inject	@Named("runelite.version") private String runeliteVersion;
 	@Inject private Gson gson;
@@ -149,6 +150,7 @@ public class TasksTrackerPlugin extends Plugin
 			.build();
 		clientToolbar.addNavigation(navButton);
 
+		startUpCompleted = true;
 		log.info("Tasks Tracker started!");
 	}
 
@@ -158,6 +160,7 @@ public class TasksTrackerPlugin extends Plugin
 		pluginPanel = null;
 		taskService.clearTaskTypes();
 		clientToolbar.removeNavigation(navButton);
+		startUpCompleted = false;
 		log.info("Tasks Tracker stopped!");
 	}
 
@@ -207,6 +210,7 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			return;
 		}
+
 		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
 		if (configChanged.getKey().equals("untrackUponCompletion") && config.untrackUponCompletion())
 		{
@@ -216,6 +220,12 @@ public class TasksTrackerPlugin extends Plugin
 		if (configChanged.getKey().equals("filterPanelCollapsible"))
 		{
 			pluginPanel.redraw();
+		}
+
+		if (configChanged.getKey().startsWith("tab")) // task list tab config items all start 'tab#'
+		{
+			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab().ordinal() + 1);
+			refresh();
 		}
 	}
 
@@ -309,7 +319,10 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onProfileChanged(ProfileChanged profileChanged)
 	{
-		reloadTaskType();
+		if (startUpCompleted)
+		{
+			reloadTaskType();
+		}
 	}
 
 	public void refresh()
