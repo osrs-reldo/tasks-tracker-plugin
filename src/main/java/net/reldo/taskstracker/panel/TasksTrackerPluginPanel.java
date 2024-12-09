@@ -64,6 +64,14 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		}
 	}
 
+	public void refreshFilterButtonsFromConfig(int tab)
+	{
+		if (loggedIn)
+		{
+			loggedInPanel.refreshFilterButtonsFromConfig(tab);
+		}
+	}
+
 	public void setLoggedIn(boolean loggedIn)
 	{
 		if(SwingUtilities.isEventDispatchThread())
