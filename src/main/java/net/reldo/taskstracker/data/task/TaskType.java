@@ -39,7 +39,7 @@ public class TaskType
 	public CompletableFuture<Boolean> loadTaskTypeDataAsync()
 	{
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
-		clientThread.invokeLater(() -> {
+		clientThread.invoke(() -> {
 			try {
 				getButtonFiltersSpriteIds().forEach((spriteId) -> {
 					BufferedImage spriteImage = spriteManager.getSprite(spriteId, 0);
