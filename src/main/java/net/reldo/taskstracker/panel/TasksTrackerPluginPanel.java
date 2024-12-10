@@ -7,6 +7,7 @@ import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.runelite.client.game.SpriteManager;
@@ -64,7 +65,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		}
 	}
 
-	public void refreshFilterButtonsFromConfig(int tab)
+	public void refreshFilterButtonsFromConfig(ConfigValues.TaskListTabs tab)
 	{
 		if (loggedIn)
 		{

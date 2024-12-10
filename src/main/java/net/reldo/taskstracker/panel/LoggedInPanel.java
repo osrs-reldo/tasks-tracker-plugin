@@ -183,25 +183,8 @@ public class LoggedInPanel extends JPanel
 		if(newTab != null)
 		{
 			saveCurrentTabFilters();
-
-            switch (newTab)
-			{
-                case TAB_ONE:
-					plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", newTab);
-					refreshFilterButtonsFromConfig(1);
-                    break;
-                case TAB_TWO:
-					plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", newTab);
-					refreshFilterButtonsFromConfig(2);
-                    break;
-				case TAB_THREE:
-					plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", newTab);
-					refreshFilterButtonsFromConfig(3);
-					break;
-                default:
-                    break;
-            }
-
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", newTab);
+			refreshFilterButtonsFromConfig(newTab);
 			plugin.refresh();
 		}
 	}
@@ -232,11 +215,12 @@ public class LoggedInPanel extends JPanel
 	}
 
 	// TODO reduce duplication
-	public void refreshFilterButtonsFromConfig(int tab)
+	public void refreshFilterButtonsFromConfig(ConfigValues.TaskListTabs tab)
 	{
 		switch (tab)
 		{
-			case 1:
+			case TAB_ONE:
+				if(!tabOne.isSelected()) tabOne.setSelected(true);
 				trackedFilterBtn.setState(config.tab1TrackedValue().ordinal());
 				trackedFilterBtn.setEnabled(!config.tab1TrackedLock());
 				completedFilterBtn.setState(config.tab1CompletedValue().ordinal());
@@ -245,7 +229,8 @@ public class LoggedInPanel extends JPanel
 				ignoredFilterBtn.setEnabled(!config.tab1IgnoredLock());
 				actionAllFilterButtonsNoRefresh();
 				break;
-			case 2:
+			case TAB_TWO:
+				if(!tabTwo.isSelected()) tabTwo.setSelected(true);
 				trackedFilterBtn.setState(config.tab2TrackedValue().ordinal());
 				trackedFilterBtn.setEnabled(!config.tab2TrackedLock());
 				completedFilterBtn.setState(config.tab2CompletedValue().ordinal());
@@ -254,7 +239,8 @@ public class LoggedInPanel extends JPanel
 				ignoredFilterBtn.setEnabled(!config.tab2IgnoredLock());
 				actionAllFilterButtonsNoRefresh();
 				break;
-			case 3:
+			case TAB_THREE:
+				if(!tabThree.isSelected()) tabThree.setSelected(true);
 				trackedFilterBtn.setState(config.tab3TrackedValue().ordinal());
 				trackedFilterBtn.setEnabled(!config.tab3TrackedLock());
 				completedFilterBtn.setState(config.tab3CompletedValue().ordinal());

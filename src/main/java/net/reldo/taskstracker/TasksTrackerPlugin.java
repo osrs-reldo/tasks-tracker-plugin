@@ -221,7 +221,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (configChanged.getKey().startsWith("tab")) // task list tab config items all start 'tab#'
 		{
-			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab().ordinal() + 1);
+			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
 			refresh();
 		}
 	}
@@ -340,6 +340,7 @@ public class TasksTrackerPlugin extends Plugin
 		SwingUtilities.invokeLater(() ->
 		{
 			pluginPanel.redraw();
+			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
 			pluginPanel.refresh(null);
 		});
 	}
