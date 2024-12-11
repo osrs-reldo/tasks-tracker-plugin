@@ -27,7 +27,7 @@ public class TaskListPanel extends JScrollPane
 {
 	public TasksTrackerPlugin plugin;
 	private final int TASK_LIST_BUFFER_COUNT = 2;
-	public ArrayList<TaskPanel> taskPanels = new ArrayList<>(); //todo check if this should be final
+	public ArrayList<TaskPanel> taskPanels = new ArrayList<>();
 	private final ArrayList<TaskListListPanel> taskListBuffers = new ArrayList<>(TASK_LIST_BUFFER_COUNT);
 	private int currentTaskListBufferIndex;
 	private final TaskService taskService;
@@ -77,7 +77,7 @@ public class TaskListPanel extends JScrollPane
 
 	private void showNextTaskListListPanel()
 	{
-		log.info("Showing next task list list panel: {}", getNextBufferIndex());
+		log.debug("Showing next task list list panel: {}", getNextBufferIndex());
 		TaskListListPanel previousPanel = getCurrentTaskListListPanel();
 		setCurrentTaskListListPanel(getNextBufferIndex());
 		previousPanel.prepEmptyTaskListPanel();
@@ -90,14 +90,14 @@ public class TaskListPanel extends JScrollPane
 
 	public void drawNewTaskType()
 	{
-		log.info("Drawing new Task Type taskListListPanel");
+		log.debug("Drawing new Task Type taskListListPanel");
 		getNextTaskListListPanel().drawNewTaskType();
 	}
 
 	public void redraw()
 	{
-		log.info("Redrawing taskListListPanel");
-		getNextTaskListListPanel().redraw();
+		log.debug("Redrawing taskListListPanel");
+		getCurrentTaskListListPanel().redraw();
 	}
 
 	public void refresh(TaskFromStruct task)
@@ -232,21 +232,20 @@ public class TaskListPanel extends JScrollPane
 			log.debug("TaskListPanel.redraw");
 			if(SwingUtilities.isEventDispatchThread())
 			{
-				log.debug("TaskListPanel adding panels");
 				if (taskPanels == null || taskPanels.isEmpty())
 				{
 					emptyTasks.setVisible(true);
 					return;
 				}
 
-				processInBatches(taskPanels.size(), indexPosition ->
+				for (int indexPosition = 0; indexPosition < taskPanels.size(); indexPosition++)
 				{
 					int adjustedIndexPosition = indexPosition;
 					if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
 						adjustedIndexPosition = taskPanels.size() - (adjustedIndexPosition + 1);
 					TaskPanel taskPanel = taskPanels.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition));
-					add(taskPanel);
-				});
+					setComponentZOrder(taskPanel, indexPosition);
+				}
 
 				SwingUtilities.invokeLater(() -> refresh(null));
 			}
@@ -258,15 +257,13 @@ public class TaskListPanel extends JScrollPane
 
 		private void processInBatches(int objectCount, IntConsumer method)
 		{
-			log.debug("TaskListPanel.processInBatches");
-
 			processBatch(0, objectCount, method);
 			showNextTaskListListPanel();
 		}
 
 		private void processBatch(int batch, int objectCount, IntConsumer method)
 		{
-			log.info("TaskListPanel.processBatch {}", batch);
+			log.debug("TaskListPanel.processBatch {}", batch);
 
 			for (int index = 0; index < batchSize; index++)
 			{
@@ -281,7 +278,6 @@ public class TaskListPanel extends JScrollPane
 				}
 			}
 
-			log.debug("TaskListPanel validate and repaint after batch {}", batch);
 			validate();
 			repaint();
 
