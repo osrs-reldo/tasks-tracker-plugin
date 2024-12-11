@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
@@ -316,7 +317,11 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onProfileChanged(ProfileChanged profileChanged)
 	{
-		reloadTaskType();
+		final Optional<Plugin> taskTrackerPlugin = pluginManager.getPlugins().stream().filter(p -> p.getName().equals("Tasks Tracker")).findFirst();
+		if (taskTrackerPlugin.isPresent() && pluginManager.isPluginEnabled(taskTrackerPlugin.get()))
+		{
+			reloadTaskType();
+		}
 	}
 
 	public void refresh()
