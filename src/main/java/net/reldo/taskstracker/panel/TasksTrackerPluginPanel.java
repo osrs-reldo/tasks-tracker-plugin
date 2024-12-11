@@ -100,4 +100,13 @@ public class TasksTrackerPluginPanel extends PluginPanel
 			log.error("Failed to update loggedIn state - not event dispatch thread.");
 		}
 	}
+
+	public void drawNewTaskType()
+	{
+		if (loggedIn)
+		{
+			loggedInPanel.drawNewTaskType();
+		}
+
+	}
 }

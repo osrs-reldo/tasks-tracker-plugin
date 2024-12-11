@@ -82,7 +82,7 @@ public class LoggedInPanel extends JPanel
 		return getParent().getSize();
 	}
 
-	public void redraw()
+	public void drawNewTaskType()
 	{
 		// taskTypeDropdown may become de-synced after profile change
 		String selectedTaskTypeJsonName = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue().getTaskJsonName();
@@ -100,6 +100,16 @@ public class LoggedInPanel extends JPanel
 				}
 			}
 		}
+
+		subFilterPanel.redraw();
+		sortPanel.redraw();
+		updateCollapseButtonText();
+
+		taskListPanel.drawNewTaskType();
+	}
+
+	public void redraw()
+	{
 		subFilterPanel.redraw();
 		sortPanel.redraw();
 		updateCollapseButtonText();
@@ -335,7 +345,6 @@ public class LoggedInPanel extends JPanel
 			boolean wasTaskTypeChanged = taskService.setTaskType(taskType);
 			if (wasTaskTypeChanged)
 			{
-				redraw();
 				refresh(null);
 			}
 		});
