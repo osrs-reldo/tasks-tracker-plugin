@@ -260,26 +260,13 @@ public class TaskListPanel extends JScrollPane
 		{
 			log.debug("TaskListPanel.processInBatches");
 
-			int numberOfBatches = (objectCount / batchSize) + 1;
-
-			for(int batch = 0; batch < numberOfBatches; batch++)
-			{
-				if(batch == 0)
-				{
-					processBatch(batch, objectCount, method);
-					showNextTaskListListPanel();
-				}
-				else
-				{
-					int batchIndex = batch; // lambda parameter should be effectively final
-					SwingUtilities.invokeLater(() -> processBatch(batchIndex, objectCount, method));
-				}
-			}
+			processBatch(0, objectCount, method);
+			showNextTaskListListPanel();
 		}
 
 		private void processBatch(int batch, int objectCount, IntConsumer method)
 		{
-			log.debug("TaskListPanel.processBatch");
+			log.info("TaskListPanel.processBatch {}", batch);
 
 			for (int index = 0; index < batchSize; index++)
 			{
@@ -297,6 +284,13 @@ public class TaskListPanel extends JScrollPane
 			log.debug("TaskListPanel validate and repaint after batch {}", batch);
 			validate();
 			repaint();
+
+			// queue next batch if not done
+			int batchIndex = batch + 1;
+			if (batchIndex * batchSize < objectCount)
+			{
+				SwingUtilities.invokeLater(() -> processBatch(batchIndex, objectCount, method));
+			}
 		}
 	}
 }
