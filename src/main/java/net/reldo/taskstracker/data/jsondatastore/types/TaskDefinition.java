@@ -32,7 +32,7 @@ public class TaskDefinition
 	 * - notes = extra description like "a magic cabbage is a cabbage picked at Draynor Manor"
 	 * - category = an extra category type that isn't a param
 	 */
-	private Map<String, Object> metadata;
+	private Map<String, TaskMetadatum> metadata;
 
 	/**
 	 * Notes from the OSRS wiki

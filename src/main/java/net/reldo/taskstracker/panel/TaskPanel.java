@@ -35,9 +35,12 @@ import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
+import net.reldo.taskstracker.data.jsondatastore.types.FilterValueType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.filters.Filter;
+import net.reldo.taskstracker.data.task.filters.MetadataButtonFilter;
+import net.reldo.taskstracker.data.task.filters.MetadataDropdownFilter;
 import net.reldo.taskstracker.data.task.filters.ParamButtonFilter;
 import net.reldo.taskstracker.data.task.filters.ParamDropdownFilter;
 import net.runelite.api.Constants;
@@ -77,16 +80,31 @@ public class TaskPanel extends JPanel
 		refresh();
 
 		task.getTaskType().getFilters().forEach((filterConfig) -> {
-			String paramName = filterConfig.getValueName();
-			if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER))
+			String fullConfigKey = task.getTaskType().getTaskJsonName() + "." + filterConfig.getConfigKey();
+			if (filterConfig.getValueType().equals(FilterValueType.PARAM_INTEGER) || filterConfig.getValueType().equals(FilterValueType.PARAM_STRING))
 			{
-				Filter filter = new ParamButtonFilter(plugin.getConfigManager(), paramName, task.getTaskType().getTaskJsonName() + "." + filterConfig.getConfigKey());
-				filters.add(filter);
-			}
-			else if (filterConfig.getFilterType().equals(FilterType.DROPDOWN_FILTER))
-			{
-				Filter filter = new ParamDropdownFilter(plugin.getConfigManager(), paramName, task.getTaskType().getTaskJsonName() + "." + filterConfig.getConfigKey());
-				filters.add(filter);
+				String paramName = filterConfig.getValueName();
+				if (paramName == null) return;
+				if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER))
+				{
+					Filter filter = new ParamButtonFilter(plugin.getConfigManager(), paramName, fullConfigKey);
+					filters.add(filter);
+				}
+				else if (filterConfig.getFilterType().equals(FilterType.DROPDOWN_FILTER))
+				{
+					Filter filter = new ParamDropdownFilter(plugin.getConfigManager(), paramName, fullConfigKey);
+					filters.add(filter);
+				}
+			} else if (filterConfig.getValueType().equals(FilterValueType.METADATA)) {
+				String metadataKey = filterConfig.getValueName();
+				if (metadataKey == null) return;
+				if (filterConfig.getFilterType().equals(FilterType.DROPDOWN_FILTER)) {
+					Filter filter = new MetadataDropdownFilter(plugin.getConfigManager(), metadataKey, fullConfigKey);
+					filters.add(filter);
+				} else if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER)) {
+					Filter filter = new MetadataButtonFilter(plugin.getConfigManager(), metadataKey, fullConfigKey);
+					filters.add(filter);
+				}
 			}
 		});
 	}

@@ -115,8 +115,12 @@ public class SubFilterPanel extends FixedWidthPanel
 				}
 				return options.toArray(new ComboItem[0]);
 			}
+		} else if (filterConfig.getValueType().equals(FilterValueType.METADATA))
+		{
+			return filterConfig.getCustomItems().stream()
+				.map(item -> new ComboItem<>(item.getValue(), item.getTooltip()))
+				.toArray(ComboItem[]::new);
 		}
-
 		return new ComboItem[0];
 	}
 }

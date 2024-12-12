@@ -44,7 +44,7 @@ public class FilterConfig {
 	private String optionLabelEnum;
 
 	/**
-	 * Item values in a button filter (dropdown not yet supported)
+	 * Item values for a custom filter
 	 */
 	private ArrayList<FilterCustomItem> customItems;
 
