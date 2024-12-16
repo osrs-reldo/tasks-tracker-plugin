@@ -5,8 +5,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -106,6 +104,7 @@ public class LoggedInPanel extends JPanel
 		updateCollapseButtonText();
 
 		taskListPanel.drawNewTaskType();
+		refreshFilterButtonsFromConfig(config.taskListTab());
 	}
 
 	public void redraw()
@@ -170,20 +169,6 @@ public class LoggedInPanel extends JPanel
 
 		taskListPanel.add(tabPane, BorderLayout.NORTH);
 		taskListPanel.add(this.taskListPanel, BorderLayout.CENTER);
-
-		switch (config.taskListTab())
-		{
-			case TAB_ONE:
-				tabOne.setSelected(true);
-				break;
-			case TAB_TWO:
-				tabTwo.setSelected(true);
-				break;
-			case TAB_THREE:
-				tabThree.setSelected(true);
-				break;
-		}
-		tabChanged(config.taskListTab());
 
 		return taskListPanel;
 	}
@@ -441,7 +426,7 @@ public class LoggedInPanel extends JPanel
 
 		// Ignored tasks filter button
 		SwingUtil.removeButtonDecorations(ignoredFilterBtn);
-		ignoredFilterBtn.setIcons(Icons.SEMIVISIBLE_ICON, Icons.VISIBLE_ICON, Icons.INVISIBLE_ICON);
+		ignoredFilterBtn.setIcons(Icons.UNIGNORED_ONLY_ICON, Icons.IGNORED_UNIGNORED_ICON, Icons.IGNORED_ONLY_ICON);
 		ignoredFilterBtn.setToolTips("Hide ignored tasks", "All tasks", "Ignored tasks only");
 		ignoredFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		ignoredFilterBtn.setStateChangedAction(e -> filterButtonAction("ignored"));

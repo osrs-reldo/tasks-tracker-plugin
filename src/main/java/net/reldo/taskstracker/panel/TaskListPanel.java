@@ -187,12 +187,7 @@ public class TaskListPanel extends JScrollPane
 
 		public void prepEmptyTaskListPanel()
 		{
-			SwingUtilities.invokeLater(() ->
-			{
-				removeAll();
-				add(emptyTasks);
-				emptyTasks.setVisible(false);
-			});
+			SwingUtilities.invokeLater(this::removeAll);
 		}
 
 		public void drawNewTaskType()
@@ -201,12 +196,17 @@ public class TaskListPanel extends JScrollPane
 			if(SwingUtilities.isEventDispatchThread())
 			{
 				log.debug("TaskListPanel creating panels");
+
+				add(emptyTasks);
+
 				List<TaskFromStruct> tasks = taskService.getTasks();
 				if (tasks == null || tasks.isEmpty())
 				{
 					emptyTasks.setVisible(true);
 					return;
 				}
+
+				emptyTasks.setVisible(false);
 
 				// Buffer to hold newly created task panels before they are swapped in
 				ArrayList<TaskPanel> newTaskPanels = new ArrayList<>(tasks.size());
@@ -218,8 +218,6 @@ public class TaskListPanel extends JScrollPane
 					newTaskPanels.add(taskPanel);
 					if (indexPosition == (batchSize - 1)) taskPanels = newTaskPanels; // replace taskPanels list at end of first batch
 				});
-
-				SwingUtilities.invokeLater(() -> refresh(null));
 			}
 			else
 			{
@@ -281,11 +279,15 @@ public class TaskListPanel extends JScrollPane
 			validate();
 			repaint();
 
-			// queue next batch if not done
+			// queue next batch if not done or refresh after last batch
 			int batchIndex = batch + 1;
 			if (batchIndex * batchSize < objectCount)
 			{
 				SwingUtilities.invokeLater(() -> processBatch(batchIndex, objectCount, method));
+			}
+			else
+			{
+				SwingUtilities.invokeLater(() -> refresh(null));
 			}
 		}
 	}

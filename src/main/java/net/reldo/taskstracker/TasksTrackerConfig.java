@@ -58,6 +58,15 @@ public interface TasksTrackerConfig extends Config
         return true;
     }
 
+
+    @ConfigSection(
+            name = "Internal Config",
+            description = "These settings change the internal behaviour of the plugin. Reset them if any issues occur.",
+            position = 10,
+            closedByDefault = true
+    )
+    String internalConfig = "internalConfig";
+
     @Range(
             min = 10
     )
@@ -65,11 +74,12 @@ public interface TasksTrackerConfig extends Config
             position = 13,
             keyName = "taskPanelBatchSize",
             name = "Task Panel Batch Size",
-            description = "Configures the number of task panels to create in each batch when redrawing the task list panel."
+            description = "Configures the number of task panels to create in each batch when redrawing the task list panel.",
+            section = internalConfig
     )
     default int taskPanelBatchSize()
     {
-        return 20;
+        return 50;
     }
 
     @ConfigItem(
@@ -192,7 +202,7 @@ public interface TasksTrackerConfig extends Config
     )
     default String tab1Name()
     {
-        return "Tracked Tasks";
+        return "Tracked";
     }
 
     @ConfigItem(
@@ -216,7 +226,7 @@ public interface TasksTrackerConfig extends Config
     )
     default ConfigValues.CompletedFilterValues tab1CompletedValue()
     {
-        return ConfigValues.CompletedFilterValues.COMPLETE_AND_INCOMPLETE;
+        return ConfigValues.CompletedFilterValues.INCOMPLETE;
     }
 
     @ConfigItem(
@@ -287,7 +297,7 @@ public interface TasksTrackerConfig extends Config
     )
     default String tab2Name()
     {
-        return "All Tasks";
+        return "Incomplete";
     }
 
     @ConfigItem(
@@ -311,7 +321,7 @@ public interface TasksTrackerConfig extends Config
     )
     default ConfigValues.CompletedFilterValues tab2CompletedValue()
     {
-        return ConfigValues.CompletedFilterValues.COMPLETE_AND_INCOMPLETE;
+        return ConfigValues.CompletedFilterValues.INCOMPLETE;
     }
 
     @ConfigItem(
@@ -359,7 +369,7 @@ public interface TasksTrackerConfig extends Config
     )
     default ConfigValues.IgnoredFilterValues tab2IgnoredValue()
     {
-        return ConfigValues.IgnoredFilterValues.IGNORED_AND_NOT_IGNORED;
+        return ConfigValues.IgnoredFilterValues.NOT_IGNORED;
     }
 
     /*==================
@@ -382,7 +392,7 @@ public interface TasksTrackerConfig extends Config
     )
     default String tab3Name()
     {
-        return "Custom";
+        return "All Tasks";
     }
 
     @ConfigItem(
@@ -454,7 +464,7 @@ public interface TasksTrackerConfig extends Config
     )
     default ConfigValues.IgnoredFilterValues tab3IgnoredValue()
     {
-        return ConfigValues.IgnoredFilterValues.NOT_IGNORED;
+        return ConfigValues.IgnoredFilterValues.IGNORED_AND_NOT_IGNORED;
     }
 
 
