@@ -121,18 +121,23 @@ public class TaskListPanel extends JScrollPane
 				}
 			}
 
-			Optional<TaskPanel> visibleTaskPanel = taskPanels.stream()
-					.filter(TaskPanel::isVisible)
-					.findFirst();
-
-			if (visibleTaskPanel.isEmpty())
-			{
-				emptyTasks.setVisible(true);
-			}
+			refreshEmptyPanel();
 		}
 		else
 		{
 			log.error("Task list panel refresh failed - not event dispatch thread.");
+		}
+	}
+
+	private void refreshEmptyPanel()
+	{
+		Optional<TaskPanel> visibleTaskPanel = taskPanels.stream()
+				.filter(TaskPanel::isVisible)
+				.findFirst();
+
+		if (visibleTaskPanel.isEmpty())
+		{
+			emptyTasks.setVisible(true);
 		}
 	}
 
@@ -276,6 +281,7 @@ public class TaskListPanel extends JScrollPane
 				}
 			}
 
+			refreshEmptyPanel();
 			validate();
 			repaint();
 
