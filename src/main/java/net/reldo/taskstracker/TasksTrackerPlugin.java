@@ -466,7 +466,7 @@ public class TasksTrackerPlugin extends Plugin
 	private CompletableFuture<Boolean> processTaskStatus(TaskFromStruct task)
 	{
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
-		clientThread.invokeLater(() -> {
+		clientThread.invoke(() -> {
 			int taskId =  task.getIntParam("id");
 			int varbitIndex = taskId / 32;
 			int bitIndex = taskId % 32;
