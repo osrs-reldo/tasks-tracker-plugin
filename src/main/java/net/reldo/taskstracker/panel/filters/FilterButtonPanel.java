@@ -73,10 +73,10 @@ public abstract class FilterButtonPanel extends FilterPanel
 
             button.setIcon(deselectedIcon);
             button.setSelectedIcon(selectedIcon);
+            button.setPreferredSize(new Dimension(image.getWidth(), image.getHeight() + 10));
         } else {
 	        button.setPreferredSize(new Dimension(button.getPreferredSize().width, 50));
         }
-        button.setPreferredSize(new Dimension(image.getWidth(), image.getHeight() + 10));
         button.setToolTipText(tooltip.substring(0,1).toUpperCase() + tooltip.substring(1).toLowerCase());
 
         button.addActionListener(e -> {

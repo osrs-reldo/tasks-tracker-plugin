@@ -14,6 +14,7 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.ConfigTaskSave;
 import net.reldo.taskstracker.data.task.TaskService;
+import net.reldo.taskstracker.data.task.TaskType;
 import net.runelite.client.config.ConfigManager;
 
 @Singleton
@@ -41,12 +42,18 @@ public class TrackerConfigStore
 
 	public void loadCurrentTaskTypeFromConfig()
 	{
-		log.debug("loadTaskTypeFromConfig {}", taskService.getCurrentTaskType().getName());
+		TaskType currentTaskType = taskService.getCurrentTaskType();
+		if (currentTaskType == null)
+		{
+			log.debug("loadTaskTypeFromConfig type is null, skipping");
+			return;
+		}
+		log.debug("loadTaskTypeFromConfig {}", currentTaskType.getName());
 		String configKey = getCurrentTaskTypeConfigKey();
 		String configJson = configManager.getRSProfileConfiguration(CONFIG_GROUP_NAME, configKey);
 		if (configJson == null)
 		{
-			log.debug("No save information for task type {}, not applying save", taskService.getCurrentTaskType().getName());
+			log.debug("No save information for task type {}, not applying save", currentTaskType.getName());
 			return;
 		}
 
@@ -54,7 +61,7 @@ public class TrackerConfigStore
 		try
 		{
 			HashMap<Integer, ConfigTaskSave> saveData = customGson.fromJson(configJson, deserializeType);
-			taskService.applySave(taskService.getCurrentTaskType(), saveData);
+			taskService.applySave(currentTaskType, saveData);
 		}
 		catch (JsonParseException ex)
 		{
