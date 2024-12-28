@@ -322,25 +322,26 @@ public class TasksTrackerPlugin extends Plugin
 		SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
 	}
 
-	public void reloadTaskType()
-	{
-		taskService.clearTaskTypes();
-		filterService.clearFilterConfigs();
-		try
-		{
-			String taskTypeJsonName = config.taskTypeJsonName();
-			taskService.setTaskType(taskTypeJsonName);
-		}
-		catch (Exception ex)
-		{
-			log.error("error setting task type in reload", ex);
-		}
-		SwingUtilities.invokeLater(() ->
-		{
-			pluginPanel.redraw();
-			pluginPanel.refresh(null);
-		});
-	}
+    public void reloadTaskType() {
+        taskService.clearTaskTypes();
+        filterService.clearFilterConfigs();
+        try {
+            String taskTypeJsonName = config.taskTypeJsonName();
+            taskService.setTaskType(taskTypeJsonName).thenAccept(isSet -> {
+                if (!isSet) {
+                    return;
+                }
+                SwingUtilities.invokeLater(() ->
+                {
+                    pluginPanel.redraw();
+                    pluginPanel.refresh(null);
+                });
+            });
+        } catch (Exception ex) {
+            log.error("error setting task type in reload", ex);
+        }
+
+    }
 
 	public void saveCurrentTaskTypeData()
 	{

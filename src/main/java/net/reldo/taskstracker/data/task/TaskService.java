@@ -49,38 +49,50 @@ public class TaskService
 	private HashMap<String, TaskType> _taskTypes = new HashMap<>();
 	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
 
-	public boolean setTaskType(String taskTypeJsonName)
-	{
-		TaskType newTaskType = getTaskTypesByJsonName().get(taskTypeJsonName);
-		if (newTaskType == null)
-		{
-			log.error("unsupported task type {}, falling back to COMBAT", taskTypeJsonName);
-			newTaskType = getTaskTypesByJsonName().get("COMBAT");
-		}
-		return this.setTaskType(newTaskType);
-	}
+    public CompletableFuture<Boolean> setTaskType(String taskTypeJsonName) {
+        TaskType newTaskType = getTaskTypesByJsonName().get(taskTypeJsonName);
+        if (newTaskType == null) {
+            log.error("unsupported task type {}, falling back to COMBAT", taskTypeJsonName);
+            newTaskType = getTaskTypesByJsonName().get("COMBAT");
+        }
+        return this.setTaskType(newTaskType);
+    }
 
-	public boolean setTaskType(TaskType newTaskType)
-	{
-		if (newTaskType.equals(currentTaskType))
-		{
-			log.debug("skipping setTaskType, same task type selected");
-			return false;
-		}
-		try
-		{
-			tasks.clear();
-			currentTaskType = newTaskType;
-			configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskTypeJsonName", newTaskType.getTaskJsonName());
+    private CompletableFuture<Boolean> loadAllTasksStructData(Collection<TaskFromStruct> tasks) {
+        Collection<CompletableFuture<Boolean>> taskFutures = new ArrayList<>();
+        for (TaskFromStruct task : tasks) {
+            CompletableFuture<Boolean> taskFuture = new CompletableFuture<>();
+            clientThread.invoke(() -> {
+                boolean isTaskLoaded = task.loadStructData(client);
+                taskFuture.complete(isTaskLoaded);
+            });
+            taskFutures.add(taskFuture);
+        }
+        return CompletableFuture.allOf(taskFutures.toArray(new CompletableFuture[0])).thenApply(v -> {
+            for (CompletableFuture<Boolean> future : taskFutures) {
+                if (!future.join()) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
 
-            // Complete creation of any GLOBAL value type filterConfigs
-			for (FilterConfig filterConfig : currentTaskType.getFilters())
-			{
-				if (filterConfig.getValueType().equals(FilterValueType.GLOBAL))
-				{
-					// Set valueType to the one required by the global filter
-					FilterConfig globalFilterConfig = filterService.getGlobalFilterByKey(filterConfig.getConfigKey());
-					filterConfig.setValueType(globalFilterConfig.getValueType());
+    public CompletableFuture<Boolean> setTaskType(TaskType newTaskType) {
+        log.debug("setTaskType {}", newTaskType.getTaskJsonName());
+        if (newTaskType.equals(currentTaskType)) {
+            log.debug("Skipping setTaskType, same task type selected");
+            return CompletableFuture.completedFuture(false);
+        }
+        currentTaskType = newTaskType;
+        configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskTypeJsonName", newTaskType.getTaskJsonName());
+
+        // Complete creation of any GLOBAL value type filterConfigs
+        for (FilterConfig filterConfig : currentTaskType.getFilters()) {
+            if (filterConfig.getValueType().equals(FilterValueType.GLOBAL)) {
+                // Set valueType to the one required by the global filter
+                FilterConfig globalFilterConfig = filterService.getGlobalFilterByKey(filterConfig.getConfigKey());
+                filterConfig.setValueType(globalFilterConfig.getValueType());
 
 					// Set any filterConfig fields not already specified
 					Optional.ofNullable(filterConfig.getLabel()).ifPresentOrElse(val -> {}, () -> filterConfig.setLabel(globalFilterConfig.getLabel()));
@@ -91,63 +103,60 @@ public class TaskService
 				}
 			}
 
-			boolean loaded = currentTaskType.loadTaskTypeDataAsync().get(); // TODO: blocking
-			if (!loaded)
-			{
-				throw new Exception("LOADING TASKTYPE ERROR");
-			}
+        List<TaskFromStruct> newTasks = new ArrayList<>();
+        return newTaskType.loadTaskTypeDataAsync().thenCompose((isTaskTypeLoaded) -> {
+            if (!isTaskTypeLoaded) {
+                log.error("Error loading task type during setTaskType");
+                return CompletableFuture.completedFuture(false);
+            }
 
-			currentTaskTypeVarps.clear();
-			currentTaskTypeVarps = new HashSet<>(currentTaskType.getTaskVarps());
+            try {
+                Collection<TaskDefinition> taskDefinitions = taskDataClient.getTaskDefinitions(currentTaskType.getTaskJsonName());
+                for (TaskDefinition definition : taskDefinitions) {
+                    TaskFromStruct task = new TaskFromStruct(currentTaskType, definition);
+                    newTasks.add(task);
+                }
+                return loadAllTasksStructData(newTasks);
+            } catch (Exception e3) {
+                return CompletableFuture.failedFuture(e3);
+            }
+        }).thenCompose(areTasksLoaded -> {
+            if (!areTasksLoaded) {
+                return CompletableFuture.completedFuture(false);
+            }
 
-			Collection<TaskDefinition> taskDefinitions = taskDataClient.getTaskDefinitions(currentTaskType.getTaskJsonName());
-			for (TaskDefinition definition : taskDefinitions)
-			{
-				TaskFromStruct task = new TaskFromStruct(currentTaskType, definition);
-				tasks.add(task);
-				clientThread.invoke(() -> task.loadStructData(client));
-			}
+            tasks.clear();
+            tasks.addAll(newTasks);
 
-			// Index task list for each property @todo check if clientThread.invoke guarantees all task data will be loaded before sorting
-			sortedIndexes.clear();
-			currentTaskType.getIntParamMap().keySet().forEach(paramName ->
-			{
-				sortedIndexes.put(paramName, null);
-				clientThread.invoke(() ->
-						addSortedIndex(paramName, Comparator.comparingInt((TaskFromStruct task) -> task.getIntParam(paramName)))
-				);
-			});
-			currentTaskType.getStringParamMap().keySet().forEach(paramName ->
-			{
-				sortedIndexes.put(paramName, null);
-				clientThread.invoke(() ->
-						addSortedIndex(paramName, Comparator.comparing((TaskFromStruct task) -> task.getStringParam(paramName)))
-				);
-			});
-			// todo: make this less of a special case.
-			if (taskDefinitions.stream().anyMatch(task -> task.getCompletionPercent() != null))
-			{
-				sortedIndexes.put("completion %", null);
-				clientThread.invoke(() ->
-					 addSortedIndex("completion %",
-						 (TaskFromStruct task1, TaskFromStruct task2) ->
-						 {
-							 Float comp1 = task1.getTaskDefinition().getCompletionPercent() != null ? task1.getTaskDefinition().getCompletionPercent() : 0;
-							 Float comp2 = task2.getTaskDefinition().getCompletionPercent() != null ? task2.getTaskDefinition().getCompletionPercent() : 0;
-							 return comp1.compareTo(comp2);
-						 })
-				);
-			}
+            // Index task list for each property
+            sortedIndexes.clear();
+            currentTaskType.getIntParamMap().keySet().forEach(paramName -> {
+                sortedIndexes.put(paramName, null);
+                addSortedIndex(paramName, Comparator.comparingInt((TaskFromStruct task) -> task.getIntParam(paramName)));
+            });
+            currentTaskType.getStringParamMap().keySet().forEach(paramName -> {
+                sortedIndexes.put(paramName, null);
+                addSortedIndex(paramName, Comparator.comparing((TaskFromStruct task) -> task.getStringParam(paramName)));
+            });
+            // todo: make this less of a special case.
+            if (tasks.stream().anyMatch(task -> task.getCompletionPercent() != null)) {
+                sortedIndexes.put("completion %", null);
+                addSortedIndex("completion %",
+                        (TaskFromStruct task1, TaskFromStruct task2) ->
+                        {
+                            Float comp1 = task1.getTaskDefinition().getCompletionPercent() != null ? task1.getTaskDefinition().getCompletionPercent() : 0;
+                            Float comp2 = task2.getTaskDefinition().getCompletionPercent() != null ? task2.getTaskDefinition().getCompletionPercent() : 0;
+                            return comp1.compareTo(comp2);
+                        });
+            }
 
-			taskTypeChanged = true;
-			return true;
-		}
-		catch (Exception ex)
-		{
-			log.error("Unable to set task type", ex);
-			return false;
-		}
-	}
+            currentTaskTypeVarps.clear();
+            currentTaskTypeVarps = new HashSet<>(currentTaskType.getTaskVarps());
+
+            taskTypeChanged = true;
+            return CompletableFuture.completedFuture(true);
+        });
+    }
 
 	private void addSortedIndex(String paramName, Comparator<TaskFromStruct> comparator)
 	{
