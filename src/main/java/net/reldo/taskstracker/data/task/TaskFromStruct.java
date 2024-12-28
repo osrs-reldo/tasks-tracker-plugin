@@ -201,4 +201,8 @@ public class TaskFromStruct
 	{
 		return new ConfigTaskSave(this);
 	}
+
+	public Float getCompletionPercent() {
+		return getTaskDefinition().getCompletionPercent();
+	}
 }
