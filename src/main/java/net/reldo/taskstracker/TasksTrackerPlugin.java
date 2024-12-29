@@ -216,7 +216,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (configChanged.getKey().equals("filterPanelCollapsible"))
 		{
-			pluginPanel.redraw();
+			SwingUtilities.invokeLater(pluginPanel::redraw);
 		}
 	}
 
@@ -304,7 +304,7 @@ public class TasksTrackerPlugin extends Plugin
 		}
 
 		// If we get here, 'skill' was leveled up!
-		pluginPanel.taskListPanel.refreshTaskPanelsWithSkill(skill);
+		SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.refreshTaskPanelsWithSkill(skill));
 	}
 
 	@Subscribe
