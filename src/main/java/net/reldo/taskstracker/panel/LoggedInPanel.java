@@ -19,6 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
@@ -336,8 +337,11 @@ public class LoggedInPanel extends JPanel
             TaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
             taskService.setTaskType(taskType).thenAccept(wasTaskTypeChanged -> {
                 if (wasTaskTypeChanged) {
-                    redraw();
-                    refresh(null);
+					SwingUtilities.invokeLater(() ->
+					{
+						redraw();
+						refresh(null);
+					});
                 }
             });
         });
