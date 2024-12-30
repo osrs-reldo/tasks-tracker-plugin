@@ -17,6 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
@@ -320,20 +321,23 @@ public class LoggedInPanel extends JPanel
 		taskTypeDropdown = new JComboBox<>(comboItemsArray);
 		taskTypeDropdown.setAlignmentX(LEFT_ALIGNMENT);
 
-		TaskType currentTaskType = taskService.getCurrentTaskType();
-		ComboItem<TaskType> currentTaskTypeComboItem = Arrays.stream(comboItemsArray)
-			.filter(item -> item.getValue().equals(currentTaskType))
-			.findFirst().orElseGet(() -> comboItemsArray[0]);
-		taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
-		taskTypeDropdown.addActionListener(e -> {
-			TaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
-			boolean wasTaskTypeChanged = taskService.setTaskType(taskType);
-			if (wasTaskTypeChanged)
-			{
-				refresh(null);
-			}
-		});
-		taskTypeDropdown.setFocusable(false);
+        TaskType currentTaskType = taskService.getCurrentTaskType();
+        ComboItem<TaskType> currentTaskTypeComboItem = Arrays.stream(comboItemsArray)
+                .filter(item -> item.getValue().equals(currentTaskType))
+                .findFirst().orElseGet(() -> comboItemsArray[0]);
+        taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
+        taskTypeDropdown.addActionListener(e -> {
+            TaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
+            taskService.setTaskType(taskType).thenAccept(wasTaskTypeChanged -> {
+                if (wasTaskTypeChanged) {
+					SwingUtilities.invokeLater(() ->
+					{
+						refresh(null);
+					});
+                }
+            });
+        });
+        taskTypeDropdown.setFocusable(false);
 
 		// Wrapper for collapsible sub-filter menu
 		JPanel subFilterWrapper = new JPanel();

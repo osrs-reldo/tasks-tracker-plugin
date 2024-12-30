@@ -217,7 +217,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (configChanged.getKey().equals("filterPanelCollapsible"))
 		{
-			pluginPanel.redraw();
+			SwingUtilities.invokeLater(pluginPanel::redraw);
 		}
 
 		if (configChanged.getKey().startsWith("tab")) // task list tab config items all start 'tab#'
@@ -316,7 +316,7 @@ public class TasksTrackerPlugin extends Plugin
 		}
 
 		// If we get here, 'skill' was leveled up!
-		pluginPanel.taskListPanel.refreshTaskPanelsWithSkill(skill);
+		SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.refreshTaskPanelsWithSkill(skill));
 	}
 
 	@Subscribe
@@ -334,26 +334,27 @@ public class TasksTrackerPlugin extends Plugin
 		SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
 	}
 
-	public void reloadTaskType()
-	{
-		taskService.clearTaskTypes();
-		filterService.clearFilterConfigs();
-		try
-		{
-			String taskTypeJsonName = config.taskTypeJsonName();
-			taskService.setTaskType(taskTypeJsonName);
-		}
-		catch (Exception ex)
-		{
-			log.error("error setting task type in reload", ex);
-		}
-		SwingUtilities.invokeLater(() ->
-		{
+    public void reloadTaskType() {
+        taskService.clearTaskTypes();
+        filterService.clearFilterConfigs();
+        try {
+            String taskTypeJsonName = config.taskTypeJsonName();
+            taskService.setTaskType(taskTypeJsonName).thenAccept(isSet -> {
+                if (!isSet) {
+                    return;
+                }
+                SwingUtilities.invokeLater(() ->
+                {
 			pluginPanel.drawNewTaskType();
 			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
 			pluginPanel.refresh(null);
-		});
-	}
+                });
+            });
+        } catch (Exception ex) {
+            log.error("error setting task type in reload", ex);
+        }
+
+    }
 
 	public void saveCurrentTaskTypeData()
 	{
@@ -479,7 +480,7 @@ public class TasksTrackerPlugin extends Plugin
 	private CompletableFuture<Boolean> processTaskStatus(TaskFromStruct task)
 	{
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
-		clientThread.invokeLater(() -> {
+		clientThread.invoke(() -> {
 			int taskId =  task.getIntParam("id");
 			int varbitIndex = taskId / 32;
 			int bitIndex = taskId % 32;
