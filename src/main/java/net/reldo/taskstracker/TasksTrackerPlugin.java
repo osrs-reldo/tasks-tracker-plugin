@@ -254,7 +254,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		if (forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
 		{
-			log.debug("forceUpdateVarpsFlag game tick");
+			log.debug("forceUpdateVarpsFlag game tick {} {}", forceUpdateVarpsFlag, taskService.isTaskTypeChanged());
 			trackerConfigStore.loadCurrentTaskTypeFromConfig();
 			forceVarpUpdate();
 			SwingUtilities.invokeLater(() -> pluginPanel.redraw());
@@ -318,9 +318,9 @@ public class TasksTrackerPlugin extends Plugin
 		}
 	}
 
-	public void refresh()
+	public void refreshAllTasks()
 	{
-		SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
+		SwingUtilities.invokeLater(() -> pluginPanel.refreshAllTasks());
 	}
 
     public void reloadTaskType() {
@@ -335,7 +335,7 @@ public class TasksTrackerPlugin extends Plugin
                 SwingUtilities.invokeLater(() ->
                 {
                     pluginPanel.redraw();
-                    pluginPanel.refresh(null);
+                    pluginPanel.refreshAllTasks();
                 });
             });
         } catch (Exception ex) {
@@ -519,12 +519,9 @@ public class TasksTrackerPlugin extends Plugin
 			.thenRun(() -> {
 				if (varpId != null)
 				{
-					for (TaskFromStruct task : tasks)
-					{
-						SwingUtilities.invokeLater(() -> pluginPanel.refresh(task));
-					}
+					SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.refreshMultipleTasks(tasks));
 				} else {
-					SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
+					SwingUtilities.invokeLater(() -> pluginPanel.refreshAllTasks());
 				}
 			})
 			.thenApply(v -> true);

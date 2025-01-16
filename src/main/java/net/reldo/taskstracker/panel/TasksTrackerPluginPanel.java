@@ -7,7 +7,6 @@ import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
@@ -22,12 +21,10 @@ public class TasksTrackerPluginPanel extends PluginPanel
 	public TaskListPanel taskListPanel;
 
 	private boolean loggedInPanelVisible = false;
-	private TaskService taskService;
 
 	public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, SpriteManager spriteManager, TaskService taskService)
 	{
 		super(false);
-		this.taskService = taskService;
 
 		setBorder(new EmptyBorder(6, 6, 6, 6));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -56,11 +53,11 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		}
 	}
 
-	public void refresh(TaskFromStruct task)
+	public void refreshAllTasks()
 	{
 		if (loggedInPanelVisible)
 		{
-			loggedInPanel.refresh(task);
+			loggedInPanel.refreshAllTasks();
 		}
 	}
 
@@ -108,6 +105,4 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		}
 		this.loggedInPanelVisible = loggedInPanelVisible;
 	}
-
-
 }
