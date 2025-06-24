@@ -8,6 +8,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -48,14 +51,19 @@ public class TaskService
 	private final HashMap<String, int[]> sortedIndexes = new HashMap<>();
 	private HashMap<String, TaskType> _taskTypes = new HashMap<>();
 	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
+	private final ExecutorService futureExecutor = Executors.newSingleThreadExecutor();
 
     public CompletableFuture<Boolean> setTaskType(String taskTypeJsonName) {
-        TaskType newTaskType = getTaskTypesByJsonName().get(taskTypeJsonName);
-        if (newTaskType == null) {
-            log.error("unsupported task type {}, falling back to COMBAT", taskTypeJsonName);
-            newTaskType = getTaskTypesByJsonName().get("COMBAT");
-        }
-        return this.setTaskType(newTaskType);
+        return getTaskTypesByJsonName().thenCompose(taskTypes ->
+        {
+            TaskType newTaskType = taskTypes.get(taskTypeJsonName);
+            if (newTaskType == null)
+            {
+                log.error("unsupported task type {}, falling back to COMBAT", taskTypeJsonName);
+                newTaskType = taskTypes.get("COMBAT");
+            }
+            return this.setTaskType(newTaskType);
+        });
     }
 
     private CompletableFuture<Boolean> loadAllTasksStructData(Collection<TaskFromStruct> tasks) {
@@ -110,16 +118,20 @@ public class TaskService
                 return CompletableFuture.completedFuture(false);
             }
 
-            try {
-                Collection<TaskDefinition> taskDefinitions = taskDataClient.getTaskDefinitions(currentTaskType.getTaskJsonName());
-                for (TaskDefinition definition : taskDefinitions) {
-                    TaskFromStruct task = new TaskFromStruct(currentTaskType, definition);
-                    newTasks.add(task);
+            CompletableFuture<Boolean> future = new CompletableFuture<>();
+            futureExecutor.submit(() -> {
+                try {
+                    Collection<TaskDefinition> taskDefinitions = taskDataClient.getTaskDefinitions(currentTaskType.getTaskJsonName());
+                    for (TaskDefinition definition : taskDefinitions) {
+                        TaskFromStruct task = new TaskFromStruct(currentTaskType, definition);
+                        newTasks.add(task);
+                    }
+                    loadAllTasksStructData(newTasks).thenApply(future::complete);
+                } catch (Exception e3) {
+                    future.completeExceptionally(e3);
                 }
-                return loadAllTasksStructData(newTasks);
-            } catch (Exception e3) {
-                return CompletableFuture.failedFuture(e3);
-            }
+            });
+            return future;
         }).thenCompose(areTasksLoaded -> {
             if (!areTasksLoaded) {
                 return CompletableFuture.completedFuture(false);
@@ -198,22 +210,34 @@ public class TaskService
 	 *
 	 * @return Hashmap of TaskType indexed by task type json name
 	 */
-	public HashMap<String, TaskType> getTaskTypesByJsonName()
+	public CompletableFuture<HashMap<String, TaskType>> getTaskTypesByJsonName()
 	{
 		if (_taskTypes.size() > 0)
 		{
-			return _taskTypes;
+			return CompletableFuture.completedFuture(_taskTypes);
 		}
 
 		try
 		{
-			_taskTypes = taskDataClient.getTaskTypes();
-			return _taskTypes;
+			CompletableFuture<HashMap<String, TaskType>> future = new CompletableFuture<>();
+			futureExecutor.submit(() ->
+			{
+				try
+				{
+					_taskTypes = taskDataClient.getTaskTypes();
+					future.complete(_taskTypes);
+				}
+				catch (Exception e) {
+					future.completeExceptionally(e);
+				}
+			});
+
+			return future;
 		}
 		catch (Exception ex)
 		{
 			log.error("Unable to populate task types from data client", ex);
-			return new HashMap<>();
+			return CompletableFuture.completedFuture(new HashMap<>());
 		}
 	}
 
