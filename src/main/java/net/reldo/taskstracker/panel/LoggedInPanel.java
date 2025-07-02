@@ -315,29 +315,10 @@ public class LoggedInPanel extends JPanel
 		northPanel.setLayout(layout);
 		northPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-		ArrayList<ComboItem<TaskType>> taskTypeItems = new ArrayList<>();
-		taskService.getTaskTypesByJsonName().forEach((taskTypeJsonName, taskType) -> taskTypeItems.add(new ComboItem(taskType, taskType.getName())));
-		ComboItem<TaskType>[] comboItemsArray = taskTypeItems.toArray(new ComboItem[0]);
-		taskTypeDropdown = new JComboBox<>(comboItemsArray);
+		taskTypeDropdown = new JComboBox<>();
 		taskTypeDropdown.setAlignmentX(LEFT_ALIGNMENT);
-
-        TaskType currentTaskType = taskService.getCurrentTaskType();
-        ComboItem<TaskType> currentTaskTypeComboItem = Arrays.stream(comboItemsArray)
-                .filter(item -> item.getValue().equals(currentTaskType))
-                .findFirst().orElseGet(() -> comboItemsArray[0]);
-        taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
-        taskTypeDropdown.addActionListener(e -> {
-            TaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
-            taskService.setTaskType(taskType).thenAccept(wasTaskTypeChanged -> {
-                if (wasTaskTypeChanged) {
-					SwingUtilities.invokeLater(() ->
-					{
-						refresh(null);
-					});
-                }
-            });
-        });
-        taskTypeDropdown.setFocusable(false);
+		taskTypeDropdown.setFocusable(false);
+		initTaskTypeDropdownAsync();
 
 		// Wrapper for collapsible sub-filter menu
 		JPanel subFilterWrapper = new JPanel();
@@ -532,5 +513,34 @@ public class LoggedInPanel extends JPanel
 		}
 
 		collapseBtn.setText(countInclusive + " inclusive, "  + countExclusive + " exclusive filters");
+	}
+
+	private void initTaskTypeDropdownAsync() {
+		TaskType currentTaskType = taskService.getCurrentTaskType();
+		taskService.getTaskTypesByJsonName().thenAccept(taskTypes -> {
+			ArrayList<ComboItem<TaskType>> taskTypeItems = new ArrayList<>();
+			taskTypes.forEach((taskTypeJsonName, taskType) -> {
+				ComboItem<TaskType> item = new ComboItem<>(taskType, taskType.getName());
+				taskTypeItems.add(item);
+				taskTypeDropdown.addItem(item);
+			});
+
+			ComboItem<TaskType> currentTaskTypeComboItem = taskTypeItems.stream()
+					.filter(item -> item.getValue().equals(currentTaskType))
+					.findFirst().orElseGet(() -> taskTypeItems.get(0));
+			taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
+			taskTypeDropdown.addActionListener(e -> {
+				TaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
+				taskService.setTaskType(taskType).thenAccept(wasTaskTypeChanged ->{
+					if (wasTaskTypeChanged) {
+						SwingUtilities.invokeLater(() ->
+						{
+							redraw();
+							refresh(null);
+						});
+					}
+				});
+			});
+		});
 	}
 }

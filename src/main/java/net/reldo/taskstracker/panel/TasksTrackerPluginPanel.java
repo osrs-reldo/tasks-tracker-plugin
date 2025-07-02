@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
+
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.runelite.client.game.SpriteManager;
@@ -22,7 +23,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	public TaskListPanel taskListPanel;
 
-	private boolean loggedIn = false;
+	private boolean loggedInPanelVisible = false;
 	private TaskService taskService;
 
 	public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, SpriteManager spriteManager, TaskService taskService)
@@ -51,7 +52,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	public void redraw()
 	{
-		if (loggedIn)
+		if (loggedInPanelVisible)
 		{
 			loggedInPanel.redraw();
 		}
@@ -59,7 +60,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	public void refresh(TaskFromStruct task)
 	{
-		if (loggedIn)
+		if (loggedInPanelVisible)
 		{
 			loggedInPanel.refresh(task);
 		}
@@ -67,7 +68,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	public void refreshFilterButtonsFromConfig(ConfigValues.TaskListTabs tab)
 	{
-		if (loggedIn)
+		if (loggedInPanelVisible)
 		{
 			loggedInPanel.refreshFilterButtonsFromConfig(tab);
 		}
@@ -77,23 +78,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 	{
 		if(SwingUtilities.isEventDispatchThread())
 		{
-            if (loggedIn != this.loggedIn)
-            {
-                if (loggedIn)
-                {
-                    loggedOutPanel.setVisible(false);
-                    loggedInPanel.setVisible(true);
-                }
-                else
-                {
-                    loggedInPanel.setVisible(false);
-                    loggedOutPanel.setVisible(true);
-                }
-
-                validate();
-                repaint();
-            }
-            this.loggedIn = loggedIn;
+			updateVisiblePanel(loggedIn);
 		}
 		else
 		{
@@ -101,9 +86,44 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		}
 	}
 
+	public void hideLoggedInPanel()
+	{
+		if(SwingUtilities.isEventDispatchThread())
+		{
+			updateVisiblePanel(false);
+		}
+		else
+		{
+			log.error("Failed to update logged in panel visibility - not event dispatch thread.");
+		}
+	}
+
+	private void updateVisiblePanel(boolean loggedInPanelVisible)
+	{
+		if (loggedInPanelVisible != this.loggedInPanelVisible)
+		{
+			if (loggedInPanelVisible)
+			{
+				loggedOutPanel.setVisible(false);
+				loggedInPanel.setVisible(true);
+			}
+			else
+			{
+				loggedInPanel.setVisible(false);
+				loggedOutPanel.setVisible(true);
+			}
+
+			validate();
+			repaint();
+		}
+		this.loggedInPanelVisible = loggedInPanelVisible;
+	}
+
+
+
 	public void drawNewTaskType()
 	{
-		if (loggedIn)
+		if (loggedInPanelVisible)
 		{
 			loggedInPanel.drawNewTaskType();
 		}
