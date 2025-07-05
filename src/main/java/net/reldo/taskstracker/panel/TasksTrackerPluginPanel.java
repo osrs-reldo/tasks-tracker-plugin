@@ -119,13 +119,20 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		this.loggedInPanelVisible = loggedInPanelVisible;
 	}
 
-
-
 	public void drawNewTaskType()
 	{
 		if (loggedInPanelVisible)
 		{
 			loggedInPanel.drawNewTaskType();
+		}
+
+	}
+
+	public void saveCurrentTabFilters()
+	{
+		if (loggedInPanelVisible)
+		{
+			loggedInPanel.saveCurrentTabFilters();
 		}
 
 	}

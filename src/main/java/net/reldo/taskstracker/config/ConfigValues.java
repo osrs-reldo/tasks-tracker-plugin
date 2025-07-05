@@ -53,9 +53,16 @@ public class ConfigValues {
 
     public enum TaskListTabs
     {
-        TAB_ONE,
-        TAB_TWO,
-        TAB_THREE;
+        TAB_ONE("tab1"),
+        TAB_TWO("tab2"),
+        TAB_THREE("tab3");
+
+        public final String configID;
+
+        TaskListTabs(String configID)
+        {
+            this.configID = configID;
+        }
     }
 
     public enum SortDirections

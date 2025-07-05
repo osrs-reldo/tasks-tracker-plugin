@@ -20,6 +20,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
+import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicButtonUI;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
@@ -185,7 +186,7 @@ public class LoggedInPanel extends JPanel
 		}
 	}
 
-	private void saveCurrentTabFilters()
+	public void saveCurrentTabFilters()
 	{
 		String tab = "tab" + (config.taskListTab().ordinal() + 1); // tabs are 1-indexed
 
@@ -258,6 +259,39 @@ public class LoggedInPanel extends JPanel
 		button.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		button.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		button.addActionListener(e -> tabChanged(tab));
+
+		JPopupMenu popupMenu = new JPopupMenu("Filter Lock Toggles");
+		JMenuItem labelItem = new JMenuItem("Filter Lock Toggles");
+		labelItem.setEnabled(false);
+
+		JMenuItem completedItem = new JMenuItem("Completed");
+		completedItem.addActionListener(e -> {plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "CompletedLock", completedFilterBtn.isEnabled());});
+		JMenuItem trackedItem = new JMenuItem("Tracked");
+		trackedItem.addActionListener(e -> {plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "TrackedLock", trackedFilterBtn.isEnabled());});
+		JMenuItem ignoredItem = new JMenuItem("Ignored");
+		ignoredItem.addActionListener(e -> {plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "IgnoredLock", ignoredFilterBtn.isEnabled());});
+
+		popupMenu.add(labelItem);
+		popupMenu.add(completedItem);
+		popupMenu.add(trackedItem);
+		popupMenu.add(ignoredItem);
+
+		button.addChangeListener(e -> {
+			if(completedItem.isEnabled() != button.isSelected())
+			{
+				completedItem.setEnabled(button.isSelected());
+			}
+			if(trackedItem.isEnabled() != button.isSelected())
+			{
+				trackedItem.setEnabled(button.isSelected());
+			}
+			if(ignoredItem.isEnabled() != button.isSelected())
+			{
+				ignoredItem.setEnabled(button.isSelected());
+			}
+		});
+
+		button.setComponentPopupMenu(popupMenu);
 
 		return button;
 	}
