@@ -18,8 +18,8 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 {
 	private final String configKey;
 	private final FilterConfig filterConfig;
-	private ConfigManager configManager;
-	private TasksTrackerPlugin plugin;
+	private final ConfigManager configManager;
+	private final TasksTrackerPlugin plugin;
 	private final ComboItem[] items;
 	private JComboBox<ComboItem> dropdown;
 
@@ -47,7 +47,7 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 		dropdown.addActionListener(e -> {
 			ComboItem selection = dropdown.getItemAt(dropdown.getSelectedIndex());
 			updateFilterConfig();
-			plugin.refresh();
+			plugin.refreshAllTasks();
 			log.debug("selected: {} {}", selection.getLabel(), selection.getValue());
 		});
 

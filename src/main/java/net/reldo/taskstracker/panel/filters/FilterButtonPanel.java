@@ -82,7 +82,7 @@ public abstract class FilterButtonPanel extends FilterPanel
         button.addActionListener(e -> {
             updateFilterText();
             updateCollapseButtonText();
-            plugin.refresh();
+            plugin.refreshAllTasks();
         });
 
         button.setSelected(true);
@@ -107,7 +107,7 @@ public abstract class FilterButtonPanel extends FilterPanel
             setAllSelected(true);
             updateFilterText();
             updateCollapseButtonText();
-            plugin.refresh();
+            plugin.refreshAllTasks();
         });
 
         JButton none = new JButton("none");
@@ -120,7 +120,7 @@ public abstract class FilterButtonPanel extends FilterPanel
             setAllSelected(false);
             updateFilterText();
             updateCollapseButtonText();
-            plugin.refresh();
+            plugin.refreshAllTasks();
         });
 
         JLabel separator = new JLabel("|");

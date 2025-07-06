@@ -1,9 +1,7 @@
 package net.reldo.taskstracker.panel;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JComboBox;
@@ -56,10 +54,7 @@ public class SortPanel extends FixedWidthPanel
         sortDropdown.setSelectedIndex(0);
         sortDropdown.addActionListener(e -> {
             updateConfig();
-            SwingUtilities.invokeLater(() -> {
-                taskListPanel.redraw();
-                taskListPanel.refresh(null);
-            });
+	        SwingUtilities.invokeLater(taskListPanel::redraw);
         });
         sortDropdown.setFocusable(false);
 
@@ -70,10 +65,7 @@ public class SortPanel extends FixedWidthPanel
         directionButton.setBackground(ColorScheme.DARK_GRAY_COLOR);
         directionButton.setStateChangedAction(e -> {
             updateConfig();
-            SwingUtilities.invokeLater(() -> {
-                taskListPanel.redraw();
-                taskListPanel.refresh(null);
-            });
+	        SwingUtilities.invokeLater(taskListPanel::redraw);
         });
 
         add(sortDropdown);

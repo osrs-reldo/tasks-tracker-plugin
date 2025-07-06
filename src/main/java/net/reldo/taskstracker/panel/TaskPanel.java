@@ -74,7 +74,6 @@ public class TaskPanel extends JPanel
 		createPanel();
 		setComponentPopupMenu(getPopupMenu());
 		ToolTipManager.sharedInstance().registerComponent(this);
-		refresh();
 
 		task.getTaskType().getFilters().forEach((filterConfig) -> {
 			String paramName = filterConfig.getValueName();
@@ -89,6 +88,8 @@ public class TaskPanel extends JPanel
 				filters.add(filter);
 			}
 		});
+
+		refresh();
 	}
 
 	public JPopupMenu getPopupMenu()
@@ -200,7 +201,7 @@ public class TaskPanel extends JPanel
 		toggleTrack.setBorder(new EmptyBorder(5, 0, 5, 0));
 		toggleTrack.addActionListener(e -> {
 			task.setTracked(toggleTrack.isSelected());
-			plugin.pluginPanel.taskListPanel.refresh(task);
+			plugin.pluginPanel.taskListPanel.refreshTask(task);
 			plugin.saveCurrentTaskTypeData();
 		});
 		SwingUtil.removeButtonDecorations(toggleTrack);
@@ -212,7 +213,7 @@ public class TaskPanel extends JPanel
 		toggleIgnore.setBorder(new EmptyBorder(5, 0, 5, 0));
 		toggleIgnore.addActionListener(e -> {
 			task.setIgnored(!task.isIgnored());
-			plugin.pluginPanel.taskListPanel.refresh(task);
+			plugin.pluginPanel.taskListPanel.refreshTask(task);
 			plugin.saveCurrentTaskTypeData();
 		});
 		SwingUtil.removeButtonDecorations(toggleIgnore);

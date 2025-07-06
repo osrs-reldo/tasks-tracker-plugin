@@ -29,7 +29,6 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.panel.components.SearchBox;
@@ -105,14 +104,10 @@ public class LoggedInPanel extends JPanel
 		taskListPanel.redraw();
 	}
 
-	public void refresh(TaskFromStruct task)
+	public void refreshAllTasks()
 	{
-		if(task == null)
-		{
-			updateCollapseButtonText();
-		}
-
-		taskListPanel.refresh(task);
+		updateCollapseButtonText();
+		taskListPanel.refreshAllTasks();
 	}
 
 	private void createPanel()
@@ -218,10 +213,10 @@ public class LoggedInPanel extends JPanel
                     break;
 				case CUSTOM:
 					plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", newTab);
-					plugin.refresh();
+					plugin.refreshAllTasks();
 					break;
                 default:
-                    plugin.refresh();
+                    plugin.refreshAllTasks();
                     break;
             }
 		}
@@ -464,7 +459,7 @@ public class LoggedInPanel extends JPanel
 	private void filterButtonAction(String filter)
 	{
 		filterButtonActionNoRefresh(filter);
-		plugin.refresh();
+		plugin.refreshAllTasks();
 	}
 
 	private void actionAllFilterButtons()
@@ -472,7 +467,7 @@ public class LoggedInPanel extends JPanel
 		filterButtonActionNoRefresh("tracked");
 		filterButtonActionNoRefresh("ignored");
 		filterButtonActionNoRefresh("completed");
-		plugin.refresh();
+		plugin.refreshAllTasks();
 	}
 
 	private JPanel getSearchPanel()
@@ -484,7 +479,7 @@ public class LoggedInPanel extends JPanel
 		SearchBox textSearch = new SearchBox();
 		textSearch.addTextChangedListener(() -> {
 			plugin.taskTextFilter = textSearch.getText().toLowerCase();
-			plugin.refresh();
+			plugin.refreshAllTasks();
 		});
 
 		filtersPanel.add(textSearch);
@@ -538,7 +533,7 @@ public class LoggedInPanel extends JPanel
 						SwingUtilities.invokeLater(() ->
 						{
 							redraw();
-							refresh(null);
+							plugin.refreshAllTasks();
 						});
 					}
 				});
