@@ -28,7 +28,6 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.panel.components.SearchBox;
@@ -118,14 +117,11 @@ public class LoggedInPanel extends JPanel
 		taskListPanel.redraw();
 	}
 
-	public void refresh(TaskFromStruct task)
+	public void refreshAllTasks()
 	{
-		if(task == null)
-		{
-			updateCollapseButtonText();
+		updateCollapseButtonText();
 			refreshTabNames();
-		}
-		taskListPanel.refresh(task);
+		taskListPanel.refreshAllTasks();
 	}
 
 	private void createPanel()
@@ -182,7 +178,7 @@ public class LoggedInPanel extends JPanel
 			saveCurrentTabFilters();
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", newTab);
 			refreshFilterButtonsFromConfig(newTab);
-			plugin.refresh();
+			plugin.refreshAllTasks();
 		}
 	}
 
@@ -491,7 +487,7 @@ public class LoggedInPanel extends JPanel
 	private void filterButtonAction(String filter)
 	{
 		filterButtonActionNoRefresh(filter);
-		plugin.refresh();
+		plugin.refreshAllTasks();
 	}
 
 	private void actionAllFilterButtonsNoRefresh()
@@ -504,7 +500,7 @@ public class LoggedInPanel extends JPanel
 	private void actionAllFilterButtons()
 	{
 		actionAllFilterButtonsNoRefresh();
-		plugin.refresh();
+		plugin.refreshAllTasks();
 	}
 
 	private JPanel getSearchPanel()
@@ -516,7 +512,7 @@ public class LoggedInPanel extends JPanel
 		SearchBox textSearch = new SearchBox();
 		textSearch.addTextChangedListener(() -> {
 			plugin.taskTextFilter = textSearch.getText().toLowerCase();
-			plugin.refresh();
+			plugin.refreshAllTasks();
 		});
 
 		filtersPanel.add(textSearch);
@@ -570,7 +566,7 @@ public class LoggedInPanel extends JPanel
 						SwingUtilities.invokeLater(() ->
 						{
 							redraw();
-							refresh(null);
+							plugin.refreshAllTasks();
 						});
 					}
 				});

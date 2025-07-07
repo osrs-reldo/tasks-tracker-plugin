@@ -2,6 +2,8 @@ package net.reldo.taskstracker.panel;
 
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.IntConsumer;
@@ -27,6 +29,7 @@ public class TaskListPanel extends JScrollPane
 {
 	public TasksTrackerPlugin plugin;
 	private final int TASK_LIST_BUFFER_COUNT = 2;
+	private final HashMap<Integer, TaskPanel> taskPanelsByStructId = new HashMap<>();
 	public ArrayList<TaskPanel> taskPanels = new ArrayList<>();
 	private final ArrayList<TaskListListPanel> taskListBuffers = new ArrayList<>(TASK_LIST_BUFFER_COUNT);
 	private int currentTaskListBufferIndex;
@@ -100,42 +103,71 @@ public class TaskListPanel extends JScrollPane
 		getCurrentTaskListListPanel().redraw();
 	}
 
-	public void refresh(TaskFromStruct task)
+	public void refreshAllTasks()
 	{
-		if(SwingUtilities.isEventDispatchThread())
-		{
-			emptyTasks.setVisible(false);
-
-			if (task != null)
-			{
-				Optional<TaskPanel> panel = taskPanels.stream()
-					.filter(tp -> tp.task.getName().equalsIgnoreCase(task.getName()))
-					.findFirst();
-				panel.ifPresent(TaskPanel::refresh);
-			}
-			else
-			{
-				for (TaskPanel taskPanel : taskPanels)
-				{
-					taskPanel.refresh();
-				}
-			}
-
-			refreshEmptyPanel();
-		}
-		else
+		log.debug("TaskListPanel.refreshAllTasks");
+		if (!SwingUtilities.isEventDispatchThread())
 		{
 			log.error("Task list panel refresh failed - not event dispatch thread.");
+			return;
 		}
+		for (TaskPanel taskPanel : taskPanelsByStructId.values())
+		{
+			taskPanel.refresh();
+		}
+	}
+
+	public void refreshMultipleTasks(Collection<TaskFromStruct> tasks)
+	{
+		log.debug("TaskListPanel.refreshMultipleTasks {}", tasks.size());
+		if (!SwingUtilities.isEventDispatchThread())
+		{
+			log.error("Task list panel refresh failed - not event dispatch thread.");
+			return;
+		}
+		for (TaskFromStruct task : tasks)
+		{
+			refresh(task);
+		}
+	}
+
+	public void refreshTask(TaskFromStruct task)
+	{
+		log.debug("TaskListPanel.refreshMultipleTasks {}", task.getName());
+		refresh(task);
+	}
+
+	private void refresh(TaskFromStruct task)
+	{
+		if (!SwingUtilities.isEventDispatchThread())
+		{
+			log.error("Task list panel refresh failed - not event dispatch thread.");
+			return;
+		}
+		if (task == null)
+		{
+			log.debug("Attempted to refresh null task");
+			return;
+		}
+
+		emptyTasks.setVisible(false);
+
+		TaskPanel panel = taskPanelsByStructId.get(task.getStructId());
+		if (panel != null)
+		{
+			panel.refresh();
+		}
+
+		refreshEmptyPanel();
+
 	}
 
 	private void refreshEmptyPanel()
 	{
-		Optional<TaskPanel> visibleTaskPanel = taskPanels.stream()
-				.filter(TaskPanel::isVisible)
-				.findFirst();
+		boolean isAnyTaskPanelVisible = taskPanelsByStructId.values().stream()
+				.anyMatch(TaskPanel::isVisible);
 
-		if (visibleTaskPanel.isEmpty())
+		if (!isAnyTaskPanelVisible)
 		{
 			emptyTasks.setVisible(true);
 		}
@@ -145,20 +177,20 @@ public class TaskListPanel extends JScrollPane
 	{
 		// Refresh all task panels for tasks with 'skill' or
 		// 'SKILLS' (any skill) or 'TOTAL LEVEL' as a requirement.
-		taskPanels.stream()
+		taskPanelsByStructId.values().stream()
 			.filter(tp ->
 			{
 				List<TaskDefinitionSkill> skillsList = tp.task.getTaskDefinition().getSkills();
-				if(skillsList == null || skillsList.isEmpty())
+				if (skillsList == null || skillsList.isEmpty())
 				{
 					return false;
 				}
 
 				return skillsList.stream()
 					.map(TaskDefinitionSkill::getSkill)
-					.anyMatch(s ->  s.equalsIgnoreCase(skill.getName()) ||
-									s.equalsIgnoreCase("SKILLS") ||
-									s.equalsIgnoreCase("TOTAL LEVEL")
+					.anyMatch(s -> s.equalsIgnoreCase(skill.getName()) ||
+						s.equalsIgnoreCase("SKILLS") ||
+						s.equalsIgnoreCase("TOTAL LEVEL")
 					);
 			})
 			.forEach(TaskPanel::refresh);
@@ -201,7 +233,7 @@ public class TaskListPanel extends JScrollPane
 			if(SwingUtilities.isEventDispatchThread())
 			{
 				log.debug("TaskListPanel creating panels");
-
+				taskPanelsByStructId.clear();
 				add(emptyTasks);
 
 				List<TaskFromStruct> tasks = taskService.getTasks();
@@ -218,9 +250,11 @@ public class TaskListPanel extends JScrollPane
 
 				processInBatches(tasks.size(), indexPosition ->
 				{
-					TaskPanel taskPanel = new TaskPanel(plugin, tasks.get(indexPosition));
+					TaskFromStruct task = tasks.get(indexPosition);
+					TaskPanel taskPanel = new TaskPanel(plugin, task);
 					add(taskPanel);
 					newTaskPanels.add(taskPanel);
+					taskPanelsByStructId.put(task.getStructId(), taskPanel);
 					if (indexPosition == (batchSize - 1)) taskPanels = newTaskPanels; // replace taskPanels list at end of first batch
 				});
 			}
@@ -245,12 +279,14 @@ public class TaskListPanel extends JScrollPane
 				{
 					int adjustedIndexPosition = indexPosition;
 					if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
+					{
 						adjustedIndexPosition = taskPanels.size() - (adjustedIndexPosition + 1);
+					}
 					TaskPanel taskPanel = taskPanels.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition));
 					setComponentZOrder(taskPanel, indexPosition);
 				}
 
-				SwingUtilities.invokeLater(() -> refresh(null));
+				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
 			}
 			else
 			{
@@ -293,7 +329,7 @@ public class TaskListPanel extends JScrollPane
 			}
 			else
 			{
-				SwingUtilities.invokeLater(() -> refresh(null));
+				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
 			}
 		}
 	}
