@@ -11,9 +11,9 @@ import net.runelite.client.config.Range;
 public interface TasksTrackerConfig extends Config
 {
 
-    /*====================
-    -- General settings --
-    ====================*/
+    /*=================================================================================================================
+    -- General settings                                                                                              --
+    =================================================================================================================*/
 
     @ConfigSection(
             name = "General",
@@ -178,13 +178,13 @@ public interface TasksTrackerConfig extends Config
         return ConfigValues.SortDirections.ASCENDING;
     }
 
-    /*==========================
-    -- Task List Tab settings --
-    ==========================*/
+    /*=================================================================================================================
+    -- Task List Tab settings                                                                                        --
+    =================================================================================================================*/
 
-    /*==================
-    -- Tab 1 settings --
-    ==================*/
+    /*========================================================
+    -- Tab 1 settings                                       --
+    ========================================================*/
 
     @ConfigSection(
             name = "Task List Tab 1",
@@ -277,9 +277,9 @@ public interface TasksTrackerConfig extends Config
         return ConfigValues.IgnoredFilterValues.NOT_IGNORED;
     }
 
-    /*==================
-    -- Tab 2 settings --
-    ==================*/
+    /*========================================================
+    -- Tab 2 settings                                       --
+    ========================================================*/
 
     @ConfigSection(
             name = "Task List Tab 2",
@@ -372,9 +372,9 @@ public interface TasksTrackerConfig extends Config
         return ConfigValues.IgnoredFilterValues.NOT_IGNORED;
     }
 
-    /*==================
-    -- Tab 3 settings --
-    ==================*/
+    /*========================================================
+    -- Tab 3 settings                                       --
+    ========================================================*/
 
     @ConfigSection(
             name = "Task List Tab 3",

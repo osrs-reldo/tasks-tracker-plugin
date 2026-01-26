@@ -257,6 +257,10 @@ public class LoggedInPanel extends JPanel
 		button.addActionListener(e -> tabChanged(tab));
 
 		JPopupMenu popupMenu = new JPopupMenu("Filter Lock Toggles");
+
+		JMenuItem saveFiltersItem = new JMenuItem("Save Filters");
+		saveFiltersItem.addActionListener(e -> saveCurrentTabFilters());
+
 		JMenuItem labelItem = new JMenuItem("Filter Lock Toggles");
 		labelItem.setEnabled(false);
 
@@ -267,6 +271,7 @@ public class LoggedInPanel extends JPanel
 		JMenuItem ignoredItem = new JMenuItem("Ignored");
 		ignoredItem.addActionListener(e -> {plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "IgnoredLock", ignoredFilterBtn.isEnabled());});
 
+		popupMenu.add(saveFiltersItem);
 		popupMenu.add(labelItem);
 		popupMenu.add(completedItem);
 		popupMenu.add(trackedItem);
