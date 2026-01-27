@@ -7,6 +7,7 @@ import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
@@ -61,6 +62,14 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		}
 	}
 
+	public void refreshFilterButtonsFromConfig(ConfigValues.TaskListTabs tab)
+	{
+		if (loggedInPanelVisible)
+		{
+			loggedInPanel.refreshFilterButtonsFromConfig(tab);
+		}
+	}
+
 	public void setLoggedIn(boolean loggedIn)
 	{
 		if(SwingUtilities.isEventDispatchThread())
@@ -104,5 +113,23 @@ public class TasksTrackerPluginPanel extends PluginPanel
 			repaint();
 		}
 		this.loggedInPanelVisible = loggedInPanelVisible;
+	}
+
+	public void drawNewTaskType()
+	{
+		if (loggedInPanelVisible)
+		{
+			loggedInPanel.drawNewTaskType();
+		}
+
+	}
+
+	public void saveCurrentTabFilters()
+	{
+		if (loggedInPanelVisible)
+		{
+			loggedInPanel.saveCurrentTabFilters();
+		}
+
 	}
 }

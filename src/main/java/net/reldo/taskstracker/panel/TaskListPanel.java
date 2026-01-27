@@ -1,15 +1,19 @@
 package net.reldo.taskstracker.panel;
 
 import java.awt.Component;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.IntConsumer;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
@@ -24,30 +28,79 @@ import net.runelite.client.ui.FontManager;
 public class TaskListPanel extends JScrollPane
 {
 	public TasksTrackerPlugin plugin;
+	private final int TASK_LIST_BUFFER_COUNT = 2;
 	private final HashMap<Integer, TaskPanel> taskPanelsByStructId = new HashMap<>();
-	private final TaskListListPanel taskList;
+	public ArrayList<TaskPanel> taskPanels = new ArrayList<>();
+	private final ArrayList<TaskListListPanel> taskListBuffers = new ArrayList<>(TASK_LIST_BUFFER_COUNT);
+	private int currentTaskListBufferIndex;
 	private final TaskService taskService;
 	private final JLabel emptyTasks = new JLabel();
+	@Setter
+    private int batchSize;
 
 	public TaskListPanel(TasksTrackerPlugin plugin, TaskService taskService)
 	{
 		this.plugin = plugin;
-
-		taskList = new TaskListListPanel(plugin);
 		this.taskService = taskService;
+		batchSize = plugin.getConfig().taskPanelBatchSize();
 
-		setViewportView(taskList);
+		FixedWidthPanel taskListListPanelWrapper = new FixedWidthPanel();
+
+		for(int i = 0; i < TASK_LIST_BUFFER_COUNT; i++)
+		{
+			taskListBuffers.add(new TaskListListPanel(plugin));
+			taskListListPanelWrapper.add(taskListBuffers.get(i));
+		}
+
+		setViewportView(taskListListPanelWrapper);
 		setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+		setCurrentTaskListListPanel(0);
 	}
 
-	public String getEmptyTaskListMessage()
+	private void setCurrentTaskListListPanel(int index)
 	{
-		return "No tasks match the current filters.";
+		if (index != currentTaskListBufferIndex)
+		{
+			taskListBuffers.get(currentTaskListBufferIndex).setVisible(false);
+			taskListBuffers.get(index).setVisible(true);
+			currentTaskListBufferIndex = index;
+		}
+	}
+
+	private TaskListListPanel getCurrentTaskListListPanel()
+	{
+		return taskListBuffers.get(currentTaskListBufferIndex);
+	}
+
+	private TaskListListPanel getNextTaskListListPanel()
+	{
+		return taskListBuffers.get(getNextBufferIndex());
+	}
+
+	private void showNextTaskListListPanel()
+	{
+		log.debug("Showing next task list list panel: {}", getNextBufferIndex());
+		TaskListListPanel previousPanel = getCurrentTaskListListPanel();
+		setCurrentTaskListListPanel(getNextBufferIndex());
+		previousPanel.prepEmptyTaskListPanel();
+	}
+
+	private int getNextBufferIndex()
+	{
+		return (currentTaskListBufferIndex + 1) % TASK_LIST_BUFFER_COUNT;
+	}
+
+	public void drawNewTaskType()
+	{
+		log.debug("Drawing new Task Type taskListListPanel");
+		getNextTaskListListPanel().drawNewTaskType();
 	}
 
 	public void redraw()
 	{
-		taskList.redraw();
+		log.debug("Redrawing taskListListPanel");
+		getCurrentTaskListListPanel().redraw();
 	}
 
 	public void refreshAllTasks()
@@ -62,6 +115,7 @@ public class TaskListPanel extends JScrollPane
 		{
 			taskPanel.refresh();
 		}
+		refreshEmptyPanel();
 	}
 
 	public void refreshMultipleTasks(Collection<TaskFromStruct> tasks)
@@ -105,12 +159,22 @@ public class TaskListPanel extends JScrollPane
 			panel.refresh();
 		}
 
+		refreshEmptyPanel();
+
+	}
+
+	private void refreshEmptyPanel()
+	{
 		boolean isAnyTaskPanelVisible = taskPanelsByStructId.values().stream()
-			.anyMatch(TaskPanel::isVisible);
+				.anyMatch(TaskPanel::isVisible);
 
 		if (!isAnyTaskPanelVisible)
 		{
 			emptyTasks.setVisible(true);
+		}
+		else
+		{
+			emptyTasks.setVisible(false);
 		}
 	}
 
@@ -137,7 +201,12 @@ public class TaskListPanel extends JScrollPane
 			.forEach(TaskPanel::refresh);
 	}
 
-	private class TaskListListPanel extends FixedWidthPanel
+	public String getEmptyTaskListMessage()
+	{
+		return "No tasks match the current filters.";
+	}
+
+    private class TaskListListPanel extends FixedWidthPanel
 	{
 		private final TasksTrackerPlugin plugin;
 
@@ -158,17 +227,20 @@ public class TaskListPanel extends JScrollPane
 			emptyTasks.setVisible(false);
 		}
 
-		public void redraw()
+		public void prepEmptyTaskListPanel()
 		{
-			log.debug("TaskListPanel.redraw");
+			SwingUtilities.invokeLater(this::removeAll);
+		}
+
+		public void drawNewTaskType()
+		{
+			log.debug("TaskListPanel.drawNewTaskType");
 			if(SwingUtilities.isEventDispatchThread())
 			{
-				removeAll();
+				log.debug("TaskListPanel creating panels");
 				taskPanelsByStructId.clear();
 				add(emptyTasks);
-				emptyTasks.setVisible(false);
 
-				log.debug("TaskListPanel creating panels");
 				List<TaskFromStruct> tasks = taskService.getTasks();
 				if (tasks == null || tasks.isEmpty())
 				{
@@ -176,26 +248,93 @@ public class TaskListPanel extends JScrollPane
 					return;
 				}
 
-				for (int indexPosition = 0; indexPosition < tasks.size(); indexPosition++)
+				emptyTasks.setVisible(false);
+
+				// Buffer to hold newly created task panels before they are swapped in
+				ArrayList<TaskPanel> newTaskPanels = new ArrayList<>(tasks.size());
+
+				processInBatches(tasks.size(), indexPosition ->
+				{
+					TaskFromStruct task = tasks.get(indexPosition);
+					TaskPanel taskPanel = new TaskPanel(plugin, task);
+					add(taskPanel);
+					newTaskPanels.add(taskPanel);
+					taskPanelsByStructId.put(task.getStructId(), taskPanel);
+					if (indexPosition == (batchSize - 1)) taskPanels = newTaskPanels; // replace taskPanels list at end of first batch
+				});
+			}
+			else
+			{
+				log.error("Task list panel drawNewTaskType failed - not event dispatch thread.");
+			}
+		}
+
+		public void redraw()
+		{
+			log.debug("TaskListPanel.redraw");
+			if(SwingUtilities.isEventDispatchThread())
+			{
+				if (taskPanels == null || taskPanels.isEmpty())
+				{
+					emptyTasks.setVisible(true);
+					return;
+				}
+
+				for (int indexPosition = 0; indexPosition < taskPanels.size(); indexPosition++)
 				{
 					int adjustedIndexPosition = indexPosition;
 					if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
 					{
-						adjustedIndexPosition = tasks.size() - (adjustedIndexPosition + 1);
+						adjustedIndexPosition = taskPanels.size() - (adjustedIndexPosition + 1);
 					}
-					TaskFromStruct task = tasks.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition));
-					TaskPanel taskPanel = new TaskPanel(plugin, task);
-					add(taskPanel);
-					taskPanelsByStructId.put(task.getStructId(), taskPanel);
+					TaskPanel taskPanel = taskPanels.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition));
+					setComponentZOrder(taskPanel, indexPosition);
 				}
 
-				log.debug("TaskListPanel validate and repaint");
-				validate();
-				repaint();
+				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
 			}
 			else
 			{
 				log.error("Task list panel redraw failed - not event dispatch thread.");
+			}
+		}
+
+		private void processInBatches(int objectCount, IntConsumer method)
+		{
+			processBatch(0, objectCount, method);
+			showNextTaskListListPanel();
+		}
+
+		private void processBatch(int batch, int objectCount, IntConsumer method)
+		{
+			log.debug("TaskListPanel.processBatch {}", batch);
+
+			for (int index = 0; index < batchSize; index++)
+			{
+				int indexPosition = index + (batch * batchSize);
+				if (indexPosition < objectCount)
+				{
+					method.accept(indexPosition);
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			refreshEmptyPanel();
+			validate();
+			repaint();
+
+			// queue next batch if not done or refresh after last batch
+			int batchIndex = batch + 1;
+			if (batchIndex * batchSize < objectCount)
+			{
+				SwingUtilities.invokeLater(() -> processBatch(batchIndex, objectCount, method));
+			}
+			else
+			{
+				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
 			}
 		}
 	}
