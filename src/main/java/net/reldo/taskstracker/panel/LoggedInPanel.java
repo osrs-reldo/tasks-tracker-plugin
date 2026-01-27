@@ -120,7 +120,7 @@ public class LoggedInPanel extends JPanel
 	public void refreshAllTasks()
 	{
 		updateCollapseButtonText();
-			refreshTabNames();
+		refreshTabNames();
 		taskListPanel.refreshAllTasks();
 	}
 

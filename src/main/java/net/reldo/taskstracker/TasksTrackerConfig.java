@@ -202,7 +202,7 @@ public interface TasksTrackerConfig extends Config
     )
     default String tab1Name()
     {
-        return "Tracked";
+        return "Tracked Tasks";
     }
 
     @ConfigItem(
@@ -292,7 +292,7 @@ public interface TasksTrackerConfig extends Config
             position = 1,
             keyName = "tab2Name",
             name = "Name",
-            description = "The name of the tab. Default: All Tasks",
+            description = "The name of the tab. Default: Incomplete",
             section = tab2Settings
     )
     default String tab2Name()
@@ -392,7 +392,7 @@ public interface TasksTrackerConfig extends Config
     )
     default String tab3Name()
     {
-        return "All Tasks";
+        return "Custom Tab";
     }
 
     @ConfigItem(

@@ -115,6 +115,7 @@ public class TaskListPanel extends JScrollPane
 		{
 			taskPanel.refresh();
 		}
+		refreshEmptyPanel();
 	}
 
 	public void refreshMultipleTasks(Collection<TaskFromStruct> tasks)
@@ -170,6 +171,10 @@ public class TaskListPanel extends JScrollPane
 		if (!isAnyTaskPanelVisible)
 		{
 			emptyTasks.setVisible(true);
+		}
+		else
+		{
+			emptyTasks.setVisible(false);
 		}
 	}
 
