@@ -3,12 +3,28 @@ package net.reldo.taskstracker.data;
 import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 
 @Slf4j
 public class TasksSummary
 {
+	// Tracked totals
 	public int trackedTasksCount = 0;
 	public int trackedTasksPoints = 0;
+
+	// Filtered totals (tasks matching users current filter criteria)
+	public int filteredTasksCount = 0;
+	public int filteredTasksPoints = 0;
+
+	// Tracked progress breakdown
+	public int trackedCompletedCount = 0;
+	public int trackedCompletedPoints = 0;
+	public int trackedIncompleteCount = 0;
+	public int trackedIncompletePoints = 0;
+
+	// Total completed (all tasks, not just tracked) - for tier calculation
+	public int totalCompletedCount = 0;
+	public int totalCompletedPoints = 0;
 
 	public TasksSummary(Collection<TaskFromStruct> tasks)
 	{
@@ -20,5 +36,134 @@ public class TasksSummary
 				trackedTasksPoints += points;
 			}
 		});
+	}
+
+	/**
+	 * New constructor - calculates filtered totals, tracked progress, and total completed.
+	 *
+	 * @param tasks All tasks to process
+	 * @param filterMatcher The filter matcher to determine which tasks pass current filters
+	 * @param taskTextFilter The current text search filter (can be null)
+	 */
+	public TasksSummary(Collection<TaskFromStruct> tasks, FilterMatcher filterMatcher, String taskTextFilter)
+	{
+		tasks.forEach(task -> {
+			int points = task.getPoints();
+
+			// Calculate filtered totals
+			if (filterMatcher.meetsFilterCriteria(task, taskTextFilter))
+			{
+				filteredTasksCount++;
+				filteredTasksPoints += points;
+			}
+
+			// Calculate total completed (for tier calculation)
+			if (task.isCompleted())
+			{
+				totalCompletedCount++;
+				totalCompletedPoints += points;
+			}
+
+			// Calculate tracked totals with completion breakdown
+			if (task.isTracked())
+			{
+				trackedTasksCount++;
+				trackedTasksPoints += points;
+
+				if (task.isCompleted())
+				{
+					trackedCompletedCount++;
+					trackedCompletedPoints += points;
+				}
+				else
+				{
+					trackedIncompleteCount++;
+					trackedIncompletePoints += points;
+				}
+			}
+		});
+	}
+
+	/**
+	 * Formats the summary data as a chat message string.
+	 *
+	 * @param taskTypeName The current task type name (e.g., "COMBAT") for tier progress
+	 * @param untrackUponCompletion Whether the untrack-upon-completion setting is enabled
+	 * @return Formatted message string
+	 */
+	public String formatChatMessage(String taskTypeName, boolean untrackUponCompletion)
+	{
+		StringBuilder message = new StringBuilder("Task Tracker: ");
+
+		// Pt 1 - Filtered tasks count
+		if (filteredTasksCount == 0)
+		{
+			message.append("No tasks match filter");
+		}
+		else
+		{
+			String taskWord = filteredTasksCount == 1 ? "task" : "tasks";
+			message.append(String.format("%d filtered %s (%s)",
+				filteredTasksCount,
+				taskWord,
+				formatPoints(filteredTasksPoints)));
+		}
+
+		message.append(" | ");
+
+		// Pt 2 - Tracked tasks progress
+		if (trackedTasksCount == 0)
+		{
+			message.append("No tracked tasks");
+		}
+		else if (untrackUponCompletion)
+		{
+			message.append(String.format("%d tracked tasks left, worth %s",
+				trackedIncompleteCount,
+				formatPoints(trackedIncompletePoints)));
+		}
+		else if (trackedCompletedCount == trackedTasksCount)
+		{
+			message.append("All tracked tasks done");
+		}
+		else
+		{
+			message.append(String.format("%d of %d tracked tasks left (%s)",
+				trackedIncompleteCount,
+				trackedTasksCount,
+				formatPoints(trackedIncompletePoints)));
+		}
+
+		// Pt 3 - Tier progress (CA only, can be expanded for leagues)
+		/*
+		if ("COMBAT".equals(taskTypeName))
+		{
+			message.append(" | ");
+			RewardTier currentTier = RewardTier.getTierForPoints(totalCompletedPoints);
+			RewardTier nextTier = currentTier.getNextTier();
+
+			if (nextTier == null)
+			{
+				message.append("Grandmaster complete!");
+			}
+			else
+			{
+				int pointsToNext = currentTier.getPointsToNextTier(totalCompletedPoints);
+				message.append(String.format("%s to %s",
+					formatPoints(pointsToNext),
+					nextTier.getDisplayName()));
+			}
+		}
+		*/
+
+		return message.toString();
+	}
+
+	/**
+	 * Formats points with proper pluralization.
+	 */
+	private String formatPoints(int points)
+	{
+		return points == 1 ? "1 pt" : points + " pts";
 	}
 }
