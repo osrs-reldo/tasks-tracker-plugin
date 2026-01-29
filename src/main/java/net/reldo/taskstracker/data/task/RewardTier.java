@@ -11,7 +11,6 @@ import net.runelite.api.Client;
  * Combat Achievement reward tiers with their point thresholds.
  * Can be expanded to include leagues tiers once known
  *
- * Thresholds can be loaded from game varbits via {@link #initializeThresholds(Client)}.
  * Falls back to hardcoded values if varbits haven't been loaded or return invalid data.
  */
 @Slf4j
@@ -31,7 +30,7 @@ public enum RewardTier
 	private final int varbitId;               // Varbit to read threshold from game
 
 	/**
-	 * Cached thresholds loaded from game varbits.
+	 * Cached thresholds from varbits.
 	 * If null, fallbacks are used.
 	 */
 	private static Map<RewardTier, Integer> cachedThresholds = null;
@@ -44,7 +43,7 @@ public enum RewardTier
 	}
 
 	/**
-	 * Initializes tier thresholds by reading from game varbits.
+	 * Initializes tier thresholds
 	 * Should be called on the client thread when logged in.
 	 *
 	 * @param client The RuneLite client
