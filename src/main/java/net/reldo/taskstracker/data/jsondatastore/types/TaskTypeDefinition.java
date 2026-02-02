@@ -102,4 +102,20 @@ public class TaskTypeDefinition
 	 * Example: Combat achievements = script 4834
 	 */
 	private int taskCompletedScriptId;
+
+	/**
+	 * Point-based reward tier thresholds.
+	 * Used for Combat Achievement tiers and League reward tiers.
+	 * Each entry supports varbitId (game lookup) and points (hardcoded fallback).
+	 * Null if task type doesn't have reward tiers.
+	 */
+	private ArrayList<RewardTierDefinition> rewardTiers;
+
+	/**
+	 * Task-count-based area unlock thresholds.
+	 * Used for League region unlocks based on completed tasks.
+	 * Each entry supports varbitId (game lookup) and tasks (hardcoded fallback).
+	 * Null for non-League task types.
+	 */
+	private ArrayList<AreaUnlockDefinition> areaUnlocks;
 }

@@ -37,7 +37,6 @@ import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
-import net.reldo.taskstracker.data.task.RewardTier;
 import net.reldo.taskstracker.data.task.filters.FilterService;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
 import net.runelite.api.ChatMessageType;
@@ -264,11 +263,6 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			forceUpdateVarpsFlag = true;
 		}
-		// Logged out - clear cached tier thresholds
-		if (newGameState == GameState.LOGIN_SCREEN || newGameState == GameState.CONNECTION_LOST)
-		{
-			RewardTier.clearThresholds();
-		}
 
 		currentProfileType = newProfileType;
 	}
@@ -287,7 +281,6 @@ public class TasksTrackerPlugin extends Plugin
 			trackerConfigStore.loadCurrentTaskTypeFromConfig();
 			forceVarpUpdate();
 			updateFilterMatcher();
-			RewardTier.initializeThresholds(client);
 			SwingUtilities.invokeLater(() -> pluginPanel.drawNewTaskType());
 			forceUpdateVarpsFlag = false;
 			taskService.setTaskTypeChanged(false);

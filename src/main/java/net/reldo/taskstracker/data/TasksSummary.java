@@ -134,24 +134,27 @@ public class TasksSummary
 				formatPoints(trackedIncompletePoints)));
 		}
 
-		// Pt 3 - Tier progress (CA only, can be expanded for leagues)
+		// Pt 3 - Tier progress (works for any task type with rewardTiers defined in JSON)
+		// To enable: pass TierService and TaskType to this method, or move this logic to caller
 		/*
-		if ("COMBAT".equals(taskTypeName))
+		List<RewardTierDefinition> rewardTiers = taskType.getRewardTiers();
+		if (!rewardTiers.isEmpty())
 		{
 			message.append(" | ");
-			RewardTier currentTier = RewardTier.getTierForPoints(totalCompletedPoints);
-			RewardTier nextTier = currentTier.getNextTier();
+			RewardTierDefinition currentTier = tierService.getTierForPoints(rewardTiers, totalCompletedPoints);
+			RewardTierDefinition nextTier = tierService.getNextTier(rewardTiers, totalCompletedPoints);
 
 			if (nextTier == null)
 			{
-				message.append("Grandmaster complete!");
+				// At max tier
+				String tierName = currentTier != null ? currentTier.getLabel() : "Max";
+				message.append(tierName + " complete!");
 			}
 			else
 			{
-				int pointsToNext = currentTier.getPointsToNextTier(totalCompletedPoints);
-				message.append(String.format("%s to %s",
-					formatPoints(pointsToNext),
-					nextTier.getDisplayName()));
+				int pointsToNext = tierService.getPointsToNextTier(rewardTiers, totalCompletedPoints);
+				String nextTierName = nextTier.getLabel() != null ? nextTier.getLabel() : "next tier";
+				message.append(String.format("%s to %s", formatPoints(pointsToNext), nextTierName));
 			}
 		}
 		*/

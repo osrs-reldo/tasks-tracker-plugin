@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 import lombok.Getter;
+import net.reldo.taskstracker.data.jsondatastore.types.AreaUnlockDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
+import net.reldo.taskstracker.data.jsondatastore.types.RewardTierDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
@@ -143,5 +145,25 @@ public class TaskType
 	public int getTaskCompletedScriptId()
 	{
 		return _taskTypeDefinition.getTaskCompletedScriptId();
+	}
+
+	/**
+	 * Get reward tier definitions (point thresholds).
+	 * @return List of tiers, or empty list if not defined
+	 */
+	public ArrayList<RewardTierDefinition> getRewardTiers()
+	{
+		ArrayList<RewardTierDefinition> tiers = _taskTypeDefinition.getRewardTiers();
+		return tiers != null ? tiers : new ArrayList<>();
+	}
+
+	/**
+	 * Get area unlock definitions (task thresholds).
+	 * @return List of unlocks, or empty list if not defined
+	 */
+	public ArrayList<AreaUnlockDefinition> getAreaUnlocks()
+	{
+		ArrayList<AreaUnlockDefinition> unlocks = _taskTypeDefinition.getAreaUnlocks();
+		return unlocks != null ? unlocks : new ArrayList<>();
 	}
 }
