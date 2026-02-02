@@ -4,8 +4,8 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import net.reldo.taskstracker.data.jsondatastore.types.AreaUnlockDefinition;
-import net.reldo.taskstracker.data.jsondatastore.types.RewardTierDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskCompletionCountTierDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskPointTierDefinition;
 import net.runelite.api.Client;
 
 /**
@@ -30,7 +30,7 @@ public class TierService
 	 * @param tier The tier definition
 	 * @return Resolved points, or -1 if unknown
 	 */
-	public int resolvePoints(RewardTierDefinition tier)
+	public int resolvePoints(TaskPointTierDefinition tier)
 	{
 		if (tier == null)
 		{
@@ -64,7 +64,7 @@ public class TierService
 	 * @param unlock The unlock definition
 	 * @return Resolved task count, or -1 if unknown
 	 */
-	public int resolveTasks(AreaUnlockDefinition unlock)
+	public int resolveTasks(TaskCompletionCountTierDefinition unlock)
 	{
 		if (unlock == null)
 		{
@@ -98,10 +98,10 @@ public class TierService
 	 * @param totalPoints Player's total points
 	 * @return The highest tier achieved, or null if none
 	 */
-	public RewardTierDefinition getTierForPoints(List<RewardTierDefinition> tiers, int totalPoints)
+	public TaskPointTierDefinition getTierForPoints(List<TaskPointTierDefinition> tiers, int totalPoints)
 	{
-		RewardTierDefinition result = null;
-		for (RewardTierDefinition tier : tiers)
+		TaskPointTierDefinition result = null;
+		for (TaskPointTierDefinition tier : tiers)
 		{
 			int threshold = resolvePoints(tier);
 			if (threshold >= 0 && totalPoints >= threshold)
@@ -123,10 +123,10 @@ public class TierService
 	 * @param completedTasks Player's completed task count
 	 * @return The highest unlock achieved, or null if none
 	 */
-	public AreaUnlockDefinition getUnlockForTasks(List<AreaUnlockDefinition> unlocks, int completedTasks)
+	public TaskCompletionCountTierDefinition getUnlockForTasks(List<TaskCompletionCountTierDefinition> unlocks, int completedTasks)
 	{
-		AreaUnlockDefinition result = null;
-		for (AreaUnlockDefinition unlock : unlocks)
+		TaskCompletionCountTierDefinition result = null;
+		for (TaskCompletionCountTierDefinition unlock : unlocks)
 		{
 			int threshold = resolveTasks(unlock);
 			if (threshold >= 0 && completedTasks >= threshold)
@@ -148,9 +148,9 @@ public class TierService
 	 * @param currentPoints Player's current points
 	 * @return The next tier to achieve, or null if at max
 	 */
-	public RewardTierDefinition getNextTier(List<RewardTierDefinition> tiers, int currentPoints)
+	public TaskPointTierDefinition getNextTier(List<TaskPointTierDefinition> tiers, int currentPoints)
 	{
-		for (RewardTierDefinition tier : tiers)
+		for (TaskPointTierDefinition tier : tiers)
 		{
 			int threshold = resolvePoints(tier);
 			if (threshold > currentPoints)
@@ -168,9 +168,9 @@ public class TierService
 	 * @param completedTasks Player's completed task count
 	 * @return The next unlock to achieve, or null if at max
 	 */
-	public AreaUnlockDefinition getNextUnlock(List<AreaUnlockDefinition> unlocks, int completedTasks)
+	public TaskCompletionCountTierDefinition getNextUnlock(List<TaskCompletionCountTierDefinition> unlocks, int completedTasks)
 	{
-		for (AreaUnlockDefinition unlock : unlocks)
+		for (TaskCompletionCountTierDefinition unlock : unlocks)
 		{
 			int threshold = resolveTasks(unlock);
 			if (threshold > completedTasks)
@@ -188,9 +188,9 @@ public class TierService
 	 * @param currentPoints Player's current points
 	 * @return Points needed, or 0 if at max tier
 	 */
-	public int getPointsToNextTier(List<RewardTierDefinition> tiers, int currentPoints)
+	public int getPointsToNextTier(List<TaskPointTierDefinition> tiers, int currentPoints)
 	{
-		RewardTierDefinition next = getNextTier(tiers, currentPoints);
+		TaskPointTierDefinition next = getNextTier(tiers, currentPoints);
 		if (next == null)
 		{
 			return 0;
@@ -206,9 +206,9 @@ public class TierService
 	 * @param completedTasks Player's completed task count
 	 * @return Tasks needed, or 0 if at max unlock
 	 */
-	public int getTasksToNextUnlock(List<AreaUnlockDefinition> unlocks, int completedTasks)
+	public int getTasksToNextUnlock(List<TaskCompletionCountTierDefinition> unlocks, int completedTasks)
 	{
-		AreaUnlockDefinition next = getNextUnlock(unlocks, completedTasks);
+		TaskCompletionCountTierDefinition next = getNextUnlock(unlocks, completedTasks);
 		if (next == null)
 		{
 			return 0;

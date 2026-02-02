@@ -137,12 +137,12 @@ public class TasksSummary
 		// Pt 3 - Tier progress (works for any task type with taskPointTiers defined in JSON)
 		// To enable: pass TierService and TaskType to this method, or move this logic to caller
 		/*
-		List<RewardTierDefinition> taskPointTiers = taskType.getTaskPointTiers();
+		List<TaskPointTierDefinition> taskPointTiers = taskType.getTaskPointTiers();
 		if (!taskPointTiers.isEmpty())
 		{
 			message.append(" | ");
-			RewardTierDefinition currentTier = tierService.getTierForPoints(taskPointTiers, totalCompletedPoints);
-			RewardTierDefinition nextTier = tierService.getNextTier(taskPointTiers, totalCompletedPoints);
+			TaskPointTierDefinition currentTier = tierService.getTierForPoints(taskPointTiers, totalCompletedPoints);
+			TaskPointTierDefinition nextTier = tierService.getNextTier(taskPointTiers, totalCompletedPoints);
 
 			if (nextTier == null)
 			{

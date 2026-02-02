@@ -6,10 +6,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 import lombok.Getter;
-import net.reldo.taskstracker.data.jsondatastore.types.AreaUnlockDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
-import net.reldo.taskstracker.data.jsondatastore.types.RewardTierDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskCompletionCountTierDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskPointTierDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
@@ -151,9 +151,9 @@ public class TaskType
 	 * Get task point tier definitions (point thresholds).
 	 * @return List of tiers, or empty list if not defined
 	 */
-	public ArrayList<RewardTierDefinition> getTaskPointTiers()
+	public ArrayList<TaskPointTierDefinition> getTaskPointTiers()
 	{
-		ArrayList<RewardTierDefinition> tiers = _taskTypeDefinition.getTaskPointTiers();
+		ArrayList<TaskPointTierDefinition> tiers = _taskTypeDefinition.getTaskPointTiers();
 		return tiers != null ? tiers : new ArrayList<>();
 	}
 
@@ -161,9 +161,9 @@ public class TaskType
 	 * Get task completion count tier definitions (task thresholds).
 	 * @return List of unlocks, or empty list if not defined
 	 */
-	public ArrayList<AreaUnlockDefinition> getTaskCompletionCountTiers()
+	public ArrayList<TaskCompletionCountTierDefinition> getTaskCompletionCountTiers()
 	{
-		ArrayList<AreaUnlockDefinition> unlocks = _taskTypeDefinition.getTaskCompletionCountTiers();
+		ArrayList<TaskCompletionCountTierDefinition> unlocks = _taskTypeDefinition.getTaskCompletionCountTiers();
 		return unlocks != null ? unlocks : new ArrayList<>();
 	}
 }
