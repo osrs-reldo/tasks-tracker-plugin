@@ -66,7 +66,7 @@ public class DynamicButtonFilterPanel extends FilterButtonPanel
 		// For each filter value create a button and add it to the UI
 		buttonImages.forEach((key, image) -> {
 			String tooltip = buttonTooltips.get(key);
-			JToggleButton button = makeButton(tooltip, image);
+			FilterButton button = makeButton(key, tooltip, image);
 			button.setSelected(getConfigButtonState(key));
 			buttons.put(key, button);
 			buttonPanel.add(button);
