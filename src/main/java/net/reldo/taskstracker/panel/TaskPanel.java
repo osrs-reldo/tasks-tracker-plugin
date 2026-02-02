@@ -277,14 +277,18 @@ public class TaskPanel extends JPanel
 	private void editTaskNote()
 	{
 		JOptionPane optionPane = new JOptionPane("Enter the notes to associate with this task (empty removes note):", JOptionPane.INFORMATION_MESSAGE);
-		optionPane.setInputValue(task.getNote());
+		optionPane.setInitialSelectionValue(task.getNote());
 		optionPane.setWantsInput(true);
 		JDialog inputDialog = optionPane.createDialog(this, "Set tasks note");
 		inputDialog.setAlwaysOnTop(true);
 		inputDialog.setVisible(true);
-		String note = optionPane.getInputValue().toString();
-		task.setNote(note);
-		plugin.saveCurrentTaskTypeData();
+		Object inputValue = optionPane.getInputValue();
+		if (inputValue != JOptionPane.UNINITIALIZED_VALUE)
+		{
+			String note = inputValue.toString();
+			task.setNote(note.isEmpty() ? null : note);
+			plugin.saveCurrentTaskTypeData();
+		}
 	}
 
 	private void openRuneScapeWiki()
