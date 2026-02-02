@@ -24,11 +24,8 @@ public class TierService
 	private Client client;
 
 	/**
-	 * Resolve actual points for a reward tier.
+	 * Resolve actual points for a tier.
 	 * Priority: game varbit → hardcoded JSON → -1 (unknown)
-	 *
-	 * @param tier The tier definition
-	 * @return Resolved points, or -1 if unknown
 	 */
 	public int resolvePoints(TaskPointTierDefinition tier)
 	{
@@ -60,9 +57,6 @@ public class TierService
 	/**
 	 * Resolve actual task count for an area unlock.
 	 * Priority: game varbit → hardcoded JSON → -1 (unknown)
-	 *
-	 * @param unlock The unlock definition
-	 * @return Resolved task count, or -1 if unknown
 	 */
 	public int resolveTasks(TaskCompletionCountTierDefinition unlock)
 	{
@@ -91,13 +85,7 @@ public class TierService
 		return unlock.getTasks(); // Returns -1 if unknown
 	}
 
-	/**
-	 * Get the reward tier achieved for a point total.
-	 *
-	 * @param tiers List of tier definitions (assumed sorted by points ascending)
-	 * @param totalPoints Player's total points
-	 * @return The highest tier achieved, or null if none
-	 */
+	// Get the reward tier achieved for a point total.
 	public TaskPointTierDefinition getTierForPoints(List<TaskPointTierDefinition> tiers, int totalPoints)
 	{
 		TaskPointTierDefinition result = null;
@@ -110,19 +98,13 @@ public class TierService
 			}
 			else if (threshold >= 0)
 			{
-				break; // Tiers are ordered, stop when we don't meet threshold
+				break;
 			}
 		}
 		return result;
 	}
 
-	/**
-	 * Get the area unlock achieved for a task count.
-	 *
-	 * @param unlocks List of unlock definitions (assumed sorted by tasks ascending)
-	 * @param completedTasks Player's completed task count
-	 * @return The highest unlock achieved, or null if none
-	 */
+	// Get the completion tier achieved for a task count.
 	public TaskCompletionCountTierDefinition getUnlockForTasks(List<TaskCompletionCountTierDefinition> unlocks, int completedTasks)
 	{
 		TaskCompletionCountTierDefinition result = null;
@@ -141,13 +123,7 @@ public class TierService
 		return result;
 	}
 
-	/**
-	 * Get the next reward tier after the current one.
-	 *
-	 * @param tiers List of tier definitions
-	 * @param currentPoints Player's current points
-	 * @return The next tier to achieve, or null if at max
-	 */
+	// Get the next points tier after the current one.
 	public TaskPointTierDefinition getNextTier(List<TaskPointTierDefinition> tiers, int currentPoints)
 	{
 		for (TaskPointTierDefinition tier : tiers)
@@ -161,13 +137,7 @@ public class TierService
 		return null; // At max tier
 	}
 
-	/**
-	 * Get the next area unlock after the current one.
-	 *
-	 * @param unlocks List of unlock definitions
-	 * @param completedTasks Player's completed task count
-	 * @return The next unlock to achieve, or null if at max
-	 */
+	// Get the next completion count tier after the current one.
 	public TaskCompletionCountTierDefinition getNextUnlock(List<TaskCompletionCountTierDefinition> unlocks, int completedTasks)
 	{
 		for (TaskCompletionCountTierDefinition unlock : unlocks)
@@ -181,13 +151,6 @@ public class TierService
 		return null; // At max unlock
 	}
 
-	/**
-	 * Get points needed to reach next tier.
-	 *
-	 * @param tiers List of tier definitions
-	 * @param currentPoints Player's current points
-	 * @return Points needed, or 0 if at max tier
-	 */
 	public int getPointsToNextTier(List<TaskPointTierDefinition> tiers, int currentPoints)
 	{
 		TaskPointTierDefinition next = getNextTier(tiers, currentPoints);
@@ -199,13 +162,6 @@ public class TierService
 		return threshold > 0 ? threshold - currentPoints : 0;
 	}
 
-	/**
-	 * Get tasks needed to reach next unlock.
-	 *
-	 * @param unlocks List of unlock definitions
-	 * @param completedTasks Player's completed task count
-	 * @return Tasks needed, or 0 if at max unlock
-	 */
 	public int getTasksToNextUnlock(List<TaskCompletionCountTierDefinition> unlocks, int completedTasks)
 	{
 		TaskCompletionCountTierDefinition next = getNextUnlock(unlocks, completedTasks);

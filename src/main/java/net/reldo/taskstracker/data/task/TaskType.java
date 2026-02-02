@@ -147,20 +147,12 @@ public class TaskType
 		return _taskTypeDefinition.getTaskCompletedScriptId();
 	}
 
-	/**
-	 * Get task point tier definitions (point thresholds).
-	 * @return List of tiers, or empty list if not defined
-	 */
 	public ArrayList<TaskPointTierDefinition> getTaskPointTiers()
 	{
 		ArrayList<TaskPointTierDefinition> tiers = _taskTypeDefinition.getTaskPointTiers();
 		return tiers != null ? tiers : new ArrayList<>();
 	}
 
-	/**
-	 * Get task completion count tier definitions (task thresholds).
-	 * @return List of unlocks, or empty list if not defined
-	 */
 	public ArrayList<TaskCompletionCountTierDefinition> getTaskCompletionCountTiers()
 	{
 		ArrayList<TaskCompletionCountTierDefinition> unlocks = _taskTypeDefinition.getTaskCompletionCountTiers();

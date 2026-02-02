@@ -217,10 +217,8 @@ public class TasksTrackerPlugin extends Plugin
 		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
         if (configChanged.getKey().equals("untrackUponCompletion"))
         {
-            // Immediately refresh the UI so completed tasks disable/enable the track button right away.
             SwingUtilities.invokeLater(pluginPanel::refreshAllTasks);
 
-            // If enabling auto-untrack, reprocess completion state so completed tasks get untracked.
             if (config.untrackUponCompletion())
             {
                 forceVarpUpdate();

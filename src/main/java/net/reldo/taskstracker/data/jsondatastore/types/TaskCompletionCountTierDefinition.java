@@ -3,8 +3,8 @@ package net.reldo.taskstracker.data.jsondatastore.types;
 import lombok.Data;
 
 /**
- * Task-count-based area unlock threshold.
- * Used for League region unlocks based on completed tasks.
+ * Thresholds based on number of tasks completed
+ * Primarily used for League region unlocks based on completed tasks.
  *
  * Resolution priority:
  * 1. If varbitId > 0: try reading from game varbit
@@ -30,17 +30,11 @@ public class TaskCompletionCountTierDefinition
 	 */
 	private int tasks;
 
-	/**
-	 * Checks if this entry has a known varbit to read from.
-	 */
 	public boolean hasVarbit()
 	{
 		return varbitId > 0;
 	}
 
-	/**
-	 * Checks if this entry has a known hardcoded value.
-	 */
 	public boolean hasKnownTasks()
 	{
 		return tasks > -1;

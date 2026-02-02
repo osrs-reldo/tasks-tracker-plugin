@@ -104,9 +104,9 @@ public class TaskTypeDefinition
 	private int taskCompletedScriptId;
 
 	/**
-	 * Point-based reward tier thresholds.
-	 * Used for Combat Achievement tiers and League reward tiers.
-	 * Each entry supports varbitId (game lookup) and points (hardcoded fallback).
+	 * Point-based thresholds for tasks.
+	 * Used for Combat Achievement tiers and Leagues relic tiers.
+	 * Each entry supports varbitId and hardcoded points.
 	 * Null if task type doesn't have reward tiers.
 	 */
 	private ArrayList<TaskPointTierDefinition> taskPointTiers;
@@ -114,7 +114,7 @@ public class TaskTypeDefinition
 	/**
 	 * Task-count-based area unlock thresholds.
 	 * Used for League region unlocks based on completed tasks.
-	 * Each entry supports varbitId (game lookup) and tasks (hardcoded fallback).
+	 * Each entry supports varbitId and hardcoded tasks.
 	 * Null for non-League task types.
 	 */
 	private ArrayList<TaskCompletionCountTierDefinition> taskCompletionCountTiers;

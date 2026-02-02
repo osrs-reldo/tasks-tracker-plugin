@@ -57,7 +57,7 @@ public class TasksSummary
 				filteredTasksPoints += points;
 			}
 
-			// Calculate total completed (for tier calculation)
+			// Calculate total completed
 			if (task.isCompleted())
 			{
 				totalCompletedCount++;
@@ -84,13 +84,6 @@ public class TasksSummary
 		});
 	}
 
-	/**
-	 * Formats the summary data as a chat message string.
-	 *
-	 * @param taskTypeName The current task type name (e.g., "COMBAT") for tier progress
-	 * @param untrackUponCompletion Whether the untrack-upon-completion setting is enabled
-	 * @return Formatted message string
-	 */
 	public String formatChatMessage(String taskTypeName, boolean untrackUponCompletion)
 	{
 		StringBuilder message = new StringBuilder("Task Tracker: ");
@@ -134,37 +127,10 @@ public class TasksSummary
 				formatPoints(trackedIncompletePoints)));
 		}
 
-		// Pt 3 - Tier progress (works for any task type with taskPointTiers defined in JSON)
-		// To enable: pass TierService and TaskType to this method, or move this logic to caller
-		/*
-		List<TaskPointTierDefinition> taskPointTiers = taskType.getTaskPointTiers();
-		if (!taskPointTiers.isEmpty())
-		{
-			message.append(" | ");
-			TaskPointTierDefinition currentTier = tierService.getTierForPoints(taskPointTiers, totalCompletedPoints);
-			TaskPointTierDefinition nextTier = tierService.getNextTier(taskPointTiers, totalCompletedPoints);
-
-			if (nextTier == null)
-			{
-				// At max tier
-				String tierName = currentTier != null ? currentTier.getLabel() : "Max";
-				message.append(tierName + " complete!");
-			}
-			else
-			{
-				int pointsToNext = tierService.getPointsToNextTier(taskPointTiers, totalCompletedPoints);
-				String nextTierName = nextTier.getLabel() != null ? nextTier.getLabel() : "next tier";
-				message.append(String.format("%s to %s", formatPoints(pointsToNext), nextTierName));
-			}
-		}
-		*/
-
 		return message.toString();
 	}
 
-	/**
-	 * Formats points with proper pluralization.
-	 */
+	// Pluralization
 	private String formatPoints(int points)
 	{
 		return points == 1 ? "1 pt" : points + " pts";

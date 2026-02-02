@@ -69,7 +69,7 @@ public class FilterMatcher
 	 */
 	public boolean meetsFilterCriteria(TaskFromStruct task, String taskTextFilter)
 	{
-		// Text filter - search in name and description
+		// Text filter
 		if (taskTextFilter != null && !taskTextFilter.isEmpty())
 		{
 			String nameLowercase = task.getName().toLowerCase();
@@ -81,7 +81,7 @@ public class FilterMatcher
 			}
 		}
 
-		// Sub-filters (area, skill, UI tier buttons/dropdowns from SubFilterPanel)
+		// Sub-filters (UI tier buttons/dropdowns from SubFilterPanel)
 		for (Filter filter : subFilters)
 		{
 			if (!filter.meetsCriteria(task))

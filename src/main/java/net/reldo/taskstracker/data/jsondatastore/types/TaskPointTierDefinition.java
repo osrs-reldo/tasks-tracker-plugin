@@ -3,8 +3,8 @@ package net.reldo.taskstracker.data.jsondatastore.types;
 import lombok.Data;
 
 /**
- * Point-based reward tier threshold.
- * Used for Combat Achievement tiers and League reward tiers.
+ * Point-based task thresholds.
+ * Used for Combat Achievement tiers and Leagues relic tiers.
  *
  * Resolution priority:
  * 1. If varbitId > 0: try reading from game varbit
@@ -20,7 +20,7 @@ public class TaskPointTierDefinition
 	private int varbitId;
 
 	/**
-	 * Display label (e.g., "Easy", "Bronze", "Tier 1").
+	 * Display label (e.g., "Easy", "Tier 1").
 	 * If null, use "Tier {index+1}".
 	 */
 	private String label;
@@ -30,17 +30,11 @@ public class TaskPointTierDefinition
 	 */
 	private int points;
 
-	/**
-	 * Checks if this entry has a known varbit to read from.
-	 */
 	public boolean hasVarbit()
 	{
 		return varbitId > 0;
 	}
 
-	/**
-	 * Checks if this entry has a known hardcoded value.
-	 */
 	public boolean hasKnownPoints()
 	{
 		return points > -1;
