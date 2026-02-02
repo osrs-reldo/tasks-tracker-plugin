@@ -106,16 +106,16 @@ public class TaskTypeDefinition
 	/**
 	 * Point-based thresholds for tasks.
 	 * Used for Combat Achievement tiers and Leagues relic tiers.
-	 * Each entry supports varbitId and hardcoded points.
+	 * Each entry supports varbitId and hardcoded point values.
 	 * Null if task type doesn't have reward tiers.
 	 */
 	private ArrayList<TaskPointTierDefinition> taskPointTiers;
 
 	/**
-	 * Task-count-based area unlock thresholds.
-	 * Used for League region unlocks based on completed tasks.
-	 * Each entry supports varbitId and hardcoded tasks.
-	 * Null for non-League task types.
+	 * Task-completion-count-based thresholds for tasks.
+	 * Used for League region unlocks.
+	 * Each entry supports varbitId and hardcoded task counts.
+	 * Null for non-League task types. CAs can be easily included if a use for it is discovered.
 	 */
 	private ArrayList<TaskCompletionCountTierDefinition> taskCompletionCountTiers;
 }
