@@ -148,22 +148,22 @@ public class TaskType
 	}
 
 	/**
-	 * Get reward tier definitions (point thresholds).
+	 * Get task point tier definitions (point thresholds).
 	 * @return List of tiers, or empty list if not defined
 	 */
-	public ArrayList<RewardTierDefinition> getRewardTiers()
+	public ArrayList<RewardTierDefinition> getTaskPointTiers()
 	{
-		ArrayList<RewardTierDefinition> tiers = _taskTypeDefinition.getRewardTiers();
+		ArrayList<RewardTierDefinition> tiers = _taskTypeDefinition.getTaskPointTiers();
 		return tiers != null ? tiers : new ArrayList<>();
 	}
 
 	/**
-	 * Get area unlock definitions (task thresholds).
+	 * Get task completion count tier definitions (task thresholds).
 	 * @return List of unlocks, or empty list if not defined
 	 */
-	public ArrayList<AreaUnlockDefinition> getAreaUnlocks()
+	public ArrayList<AreaUnlockDefinition> getTaskCompletionCountTiers()
 	{
-		ArrayList<AreaUnlockDefinition> unlocks = _taskTypeDefinition.getAreaUnlocks();
+		ArrayList<AreaUnlockDefinition> unlocks = _taskTypeDefinition.getTaskCompletionCountTiers();
 		return unlocks != null ? unlocks : new ArrayList<>();
 	}
 }

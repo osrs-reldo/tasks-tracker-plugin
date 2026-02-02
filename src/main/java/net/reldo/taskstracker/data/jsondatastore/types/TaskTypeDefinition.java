@@ -109,7 +109,7 @@ public class TaskTypeDefinition
 	 * Each entry supports varbitId (game lookup) and points (hardcoded fallback).
 	 * Null if task type doesn't have reward tiers.
 	 */
-	private ArrayList<RewardTierDefinition> rewardTiers;
+	private ArrayList<RewardTierDefinition> taskPointTiers;
 
 	/**
 	 * Task-count-based area unlock thresholds.
@@ -117,5 +117,5 @@ public class TaskTypeDefinition
 	 * Each entry supports varbitId (game lookup) and tasks (hardcoded fallback).
 	 * Null for non-League task types.
 	 */
-	private ArrayList<AreaUnlockDefinition> areaUnlocks;
+	private ArrayList<AreaUnlockDefinition> taskCompletionCountTiers;
 }
