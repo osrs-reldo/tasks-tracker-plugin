@@ -8,6 +8,8 @@ import java.util.concurrent.CompletableFuture;
 import lombok.Getter;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskCompletionCountTierDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskPointTierDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
@@ -143,5 +145,17 @@ public class TaskType
 	public int getTaskCompletedScriptId()
 	{
 		return _taskTypeDefinition.getTaskCompletedScriptId();
+	}
+
+	public ArrayList<TaskPointTierDefinition> getTaskPointTiers()
+	{
+		ArrayList<TaskPointTierDefinition> tiers = _taskTypeDefinition.getTaskPointTiers();
+		return tiers != null ? tiers : new ArrayList<>();
+	}
+
+	public ArrayList<TaskCompletionCountTierDefinition> getTaskCompletionCountTiers()
+	{
+		ArrayList<TaskCompletionCountTierDefinition> unlocks = _taskTypeDefinition.getTaskCompletionCountTiers();
+		return unlocks != null ? unlocks : new ArrayList<>();
 	}
 }

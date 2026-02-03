@@ -36,6 +36,7 @@ import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
+import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.reldo.taskstracker.data.task.filters.FilterService;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
 import net.runelite.api.ChatMessageType;
@@ -104,6 +105,8 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject private TaskService taskService;
 	@Inject private FilterService filterService;
 
+	@Getter private FilterMatcher filterMatcher;
+
 	@Override
 	public void configure(Binder binder)
 	{
@@ -156,6 +159,8 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		pluginPanel.saveCurrentTabFilters();
+		pluginPanel.hideLoggedInPanel();
 		pluginPanel = null;
 		taskService.clearTaskTypes();
 		clientToolbar.removeNavigation(navButton);
@@ -208,15 +213,32 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			return;
 		}
+
 		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
-		if (configChanged.getKey().equals("untrackUponCompletion") && config.untrackUponCompletion())
-		{
-			forceVarpUpdate();
-		}
+        if (configChanged.getKey().equals("untrackUponCompletion"))
+        {
+            SwingUtilities.invokeLater(pluginPanel::refreshAllTasks);
+
+            if (config.untrackUponCompletion())
+            {
+                forceVarpUpdate();
+            }
+        }
 
 		if (configChanged.getKey().equals("filterPanelCollapsible"))
 		{
 			SwingUtilities.invokeLater(pluginPanel::redraw);
+		}
+
+		if (configChanged.getKey().startsWith("tab")) // task list tab config items all start 'tab#'
+		{
+			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
+			refreshAllTasks();
+		}
+
+		if (configChanged.getKey().equals("taskPanelBatchSize"))
+		{
+			pluginPanel.taskListPanel.setBatchSize(config.taskPanelBatchSize());
 		}
 	}
 
@@ -253,10 +275,11 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		if (forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
 		{
-			log.debug("forceUpdateVarpsFlag game tick");
+			log.debug("forceUpdateVarpsFlag game tick {} {}", forceUpdateVarpsFlag, taskService.isTaskTypeChanged());
 			trackerConfigStore.loadCurrentTaskTypeFromConfig();
 			forceVarpUpdate();
-			SwingUtilities.invokeLater(() -> pluginPanel.redraw());
+			updateFilterMatcher();
+			SwingUtilities.invokeLater(() -> pluginPanel.drawNewTaskType());
 			forceUpdateVarpsFlag = false;
 			taskService.setTaskTypeChanged(false);
 		}
@@ -317,9 +340,9 @@ public class TasksTrackerPlugin extends Plugin
 		}
 	}
 
-	public void refresh()
+	public void refreshAllTasks()
 	{
-		SwingUtilities.invokeLater(() -> pluginPanel.refresh(null));
+		SwingUtilities.invokeLater(() -> pluginPanel.refreshAllTasks());
 	}
 
     public void reloadTaskType() {
@@ -331,10 +354,12 @@ public class TasksTrackerPlugin extends Plugin
                 if (!isSet) {
                     return;
                 }
+                updateFilterMatcher();
                 SwingUtilities.invokeLater(() ->
                 {
-                    pluginPanel.redraw();
-                    pluginPanel.refresh(null);
+			pluginPanel.drawNewTaskType();
+			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
+                    pluginPanel.refreshAllTasks();
                 });
             });
         } catch (Exception ex) {
@@ -410,20 +435,46 @@ public class TasksTrackerPlugin extends Plugin
 		}
 	}
 
+	/**
+	 * Creates or updates the FilterMatcher for the current task type.
+	 * Should be called when the task type changes.
+	 */
+	public void updateFilterMatcher()
+	{
+		this.filterMatcher = new FilterMatcher(
+			configManager,
+			config,
+			taskService.getCurrentTaskType()
+		);
+	}
+
 	public void sendTotalsToChat()
 	{
-		TasksSummary summary = new TasksSummary(taskService.getTasks());
-		int trackedTasks = summary.trackedTasksCount;
-		int trackedPoints = summary.trackedTasksPoints;
+		if (filterMatcher == null)
+		{
+			updateFilterMatcher();
+		}
 
-		final String message = new ChatMessageBuilder()
-			.append(Color.BLACK, String.format("Task Tracker - Tracked Tasks: %s | Tracked Points: %s", trackedTasks, trackedPoints))
+		TasksSummary summary = new TasksSummary(
+			taskService.getTasks(),
+			filterMatcher,
+			taskTextFilter
+		);
+
+		String taskTypeName = taskService.getCurrentTaskType() != null
+			? taskService.getCurrentTaskType().getTaskJsonName()
+			: null;
+
+		String message = summary.formatChatMessage(taskTypeName, config.untrackUponCompletion());
+
+		final String formattedMessage = new ChatMessageBuilder()
+			.append(Color.BLACK, message)
 			.build();
 
 		chatMessageManager.queue(
 			QueuedMessage.builder()
 				.type(ChatMessageType.CONSOLE)
-				.runeLiteFormattedMessage(message)
+				.runeLiteFormattedMessage(formattedMessage)
 				.build());
 	}
 
@@ -482,7 +533,6 @@ public class TasksTrackerPlugin extends Plugin
 					task.setTracked(false);
 				}
 				log.debug("process taskFromStruct {} ({}) {}", task.getStringParam("name"), task.getIntParam("id"), isTaskCompleted);
-				SwingUtilities.invokeLater(() -> pluginPanel.refresh(task));
 				future.complete(isTaskCompleted);
 			}
 			catch (Exception ex)
@@ -515,7 +565,16 @@ public class TasksTrackerPlugin extends Plugin
 		}
 
 		CompletableFuture<Void> allTasksFuture = CompletableFuture.allOf(taskFutures.toArray(new CompletableFuture[0]));
-		return allTasksFuture.thenApply(v -> true);
+		return allTasksFuture
+			.thenRun(() -> {
+				if (varpId != null)
+				{
+					SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.refreshMultipleTasks(tasks));
+				} else {
+					SwingUtilities.invokeLater(() -> pluginPanel.refreshAllTasks());
+				}
+			})
+			.thenApply(v -> true);
 	}
 
 	private String getCurrentTaskTypeExportJson()

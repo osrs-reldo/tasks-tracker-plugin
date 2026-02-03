@@ -14,7 +14,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.swing.BoxLayout;
@@ -31,17 +30,10 @@ import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.HtmlUtil;
-import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
-import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
-import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
-import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
-import net.reldo.taskstracker.data.task.filters.Filter;
-import net.reldo.taskstracker.data.task.filters.ParamButtonFilter;
-import net.reldo.taskstracker.data.task.filters.ParamDropdownFilter;
+import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.runelite.api.Constants;
 import net.runelite.api.Skill;
 import net.runelite.client.game.SkillIconManager;
@@ -64,33 +56,21 @@ public class TaskPanel extends JPanel
 	private final JToggleButton toggleTrack = new JToggleButton();
 	private final JToggleButton toggleIgnore = new JToggleButton();
 
-	protected final ArrayList<Filter> filters = new ArrayList<>();
+	protected final FilterMatcher filterMatcher;
 
 	protected TasksTrackerPlugin plugin;
 
-	public TaskPanel(TasksTrackerPlugin plugin, TaskFromStruct task)
+	public TaskPanel(TasksTrackerPlugin plugin, TaskFromStruct task, FilterMatcher filterMatcher)
 	{
 		super(new BorderLayout());
 		this.plugin = plugin;
 		this.task = task;
+		this.filterMatcher = filterMatcher;
 		createPanel();
 		setComponentPopupMenu(getPopupMenu());
 		ToolTipManager.sharedInstance().registerComponent(this);
-		refresh();
 
-		task.getTaskType().getFilters().forEach((filterConfig) -> {
-			String paramName = filterConfig.getValueName();
-			if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER))
-			{
-				Filter filter = new ParamButtonFilter(plugin.getConfigManager(), paramName, task.getTaskType().getTaskJsonName() + "." + filterConfig.getConfigKey());
-				filters.add(filter);
-			}
-			else if (filterConfig.getFilterType().equals(FilterType.DROPDOWN_FILTER))
-			{
-				Filter filter = new ParamDropdownFilter(plugin.getConfigManager(), paramName, task.getTaskType().getTaskJsonName() + "." + filterConfig.getConfigKey());
-				filters.add(filter);
-			}
-		});
+		refresh();
 	}
 
 	public JPopupMenu getPopupMenu()
@@ -209,7 +189,7 @@ public class TaskPanel extends JPanel
 		toggleTrack.setBorder(new EmptyBorder(5, 0, 5, 0));
 		toggleTrack.addActionListener(e -> {
 			task.setTracked(toggleTrack.isSelected());
-			plugin.pluginPanel.taskListPanel.refresh(task);
+			plugin.pluginPanel.taskListPanel.refreshTask(task);
 			plugin.saveCurrentTaskTypeData();
 		});
 		SwingUtil.removeButtonDecorations(toggleTrack);
@@ -221,7 +201,7 @@ public class TaskPanel extends JPanel
 		toggleIgnore.setBorder(new EmptyBorder(5, 0, 5, 0));
 		toggleIgnore.addActionListener(e -> {
 			task.setIgnored(!task.isIgnored());
-			plugin.pluginPanel.taskListPanel.refresh(task);
+			plugin.pluginPanel.taskListPanel.refreshTask(task);
 			plugin.saveCurrentTaskTypeData();
 		});
 		SwingUtil.removeButtonDecorations(toggleIgnore);
@@ -311,63 +291,37 @@ public class TaskPanel extends JPanel
 		}
 	}
 
-	public void refresh()
-	{
-		setBackgroundColor(getTaskBackgroundColor());
-		name.setText(HtmlUtil.wrapWithHtml(task.getName()));
-		description.setText(HtmlUtil.wrapWithHtml(task.getDescription()));
-		toggleTrack.setSelected(task.isTracked());
-		toggleIgnore.setSelected(task.isIgnored());
+    public void refresh()
+    {
+        setBackgroundColor(getTaskBackgroundColor());
+        name.setText(HtmlUtil.wrapWithHtml(task.getName()));
+        description.setText(HtmlUtil.wrapWithHtml(task.getDescription()));
 
-		setVisible(meetsFilterCriteria());
+        // If completed tasks are auto-untracked, don't allow users to add them to tracked tasks, that's silly.
+        boolean disableTrack = plugin.getConfig().untrackUponCompletion() && task.isCompleted();
+        toggleTrack.setEnabled(!disableTrack);
 
-		revalidate();
-	}
+        // Tell the user why it's greyed out
+        if (disableTrack)
+        {
+            toggleTrack.setToolTipText("Completed tasks cannot be tracked while 'Untrack Tasks Upon Completion' is enabled.");
+        }
+        else
+        {
+            toggleTrack.setToolTipText(null);
+        }
+
+        toggleTrack.setSelected(task.isTracked());
+        toggleIgnore.setSelected(task.isIgnored());
+
+        setVisible(meetsFilterCriteria());
+
+        revalidate();
+    }
 
 	protected boolean meetsFilterCriteria()
 	{
-		String nameLowercase = task.getName().toLowerCase();
-		String descriptionLowercase = task.getDescription().toLowerCase();
-		if (plugin.taskTextFilter != null &&
-			!nameLowercase.contains(plugin.taskTextFilter) &&
-			!descriptionLowercase.contains(plugin.taskTextFilter))
-		{
-			return false;
-		}
-
-		TasksTrackerConfig config = plugin.getConfig();
-
-		for (Filter filter : filters)
-		{
-			if (!filter.meetsCriteria(task))
-			{
-				return false;
-			}
-		}
-
-		if (config.completedFilter().equals(CompletedFilterValues.INCOMPLETE) && task.isCompleted())
-		{
-			return false;
-		}
-		if (config.completedFilter().equals(CompletedFilterValues.COMPLETE) && !task.isCompleted())
-		{
-			return false;
-		}
-
-		if (config.ignoredFilter().equals(IgnoredFilterValues.NOT_IGNORED) && task.isIgnored())
-		{
-			return false;
-		}
-		if (config.ignoredFilter().equals(IgnoredFilterValues.IGNORED) && !task.isIgnored())
-		{
-			return false;
-		}
-
-		if (config.trackedFilter().equals(TrackedFilterValues.UNTRACKED) && task.isTracked())
-		{
-			return false;
-		}
-		return !config.trackedFilter().equals(TrackedFilterValues.TRACKED) || task.isTracked();
+		return filterMatcher.meetsFilterCriteria(task, plugin.taskTextFilter);
 	}
 
 	private void setBackgroundColor(Color color)
