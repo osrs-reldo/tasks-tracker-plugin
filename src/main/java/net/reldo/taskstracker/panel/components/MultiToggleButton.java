@@ -2,6 +2,7 @@ package net.reldo.taskstracker.panel.components;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
@@ -33,6 +34,7 @@ public class MultiToggleButton extends JButton
         tooltips = new String[stateCount];
         popupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
         addActionListener(e -> changeStateThenAction());
+        super.setToolTipText("Initial State"); // Tooltip text must be initialised for getToolTipText() to be called
     }
 
     public void popupMenuEnabled(boolean enabled)
@@ -87,8 +89,6 @@ public class MultiToggleButton extends JButton
 
         tooltips[state] = tooltip;
         addPopupMenuItem(tooltip, state);
-
-        if (state == this.state) setTooltipState();
     }
 
     public boolean setToolTips(String[] tooltips)
@@ -121,16 +121,28 @@ public class MultiToggleButton extends JButton
         super.setIcon(icons[state]);
     }
 
-    private void setTooltipState()
+    private String createToolTipText()
     {
-        super.setToolTipText(tooltips[state]);
+        String tooltipText = tooltips[state];
+
+        if(!this.isEnabled())
+        {
+            tooltipText = "\uD83D\uDD12 " + tooltipText;//"🔒 ";
+        }
+
+        return tooltipText;
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent mouseEvent)
+    {
+        return createToolTipText();
     }
 
     public void setState(int state)
     {
         this.state = state;
         setIconState();
-        setTooltipState();
     }
 
     public void setStateThenAction(int state)
