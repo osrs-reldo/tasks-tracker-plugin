@@ -23,6 +23,7 @@ public class MultiToggleButton extends JButton
     private ActionListener stateChangedAction = null;
     @Getter
     private int state = 0;
+    final JPopupMenu lockedPopupMenu = new JPopupMenu();
     final JPopupMenu popupMenu = new JPopupMenu();
     private boolean popupMenuEnabled = false;
 
@@ -35,6 +36,11 @@ public class MultiToggleButton extends JButton
         popupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
         addActionListener(e -> changeStateThenAction());
         super.setToolTipText("Initial State"); // Tooltip text must be initialised for getToolTipText() to be called
+
+        lockedPopupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
+        JMenuItem menuItem = new JMenuItem("\uD83D\uDD12 Locked");
+        menuItem.setEnabled(false);
+        lockedPopupMenu.add(menuItem);
     }
 
     public void popupMenuEnabled(boolean enabled)
@@ -48,7 +54,7 @@ public class MultiToggleButton extends JButton
             }
             else
             {
-                this.setComponentPopupMenu(null);
+                this.setComponentPopupMenu(lockedPopupMenu);
             }
         }
     }
@@ -127,7 +133,7 @@ public class MultiToggleButton extends JButton
 
         if(!this.isEnabled())
         {
-            tooltipText = "\uD83D\uDD12 " + tooltipText;//"🔒 ";
+            tooltipText = "\uD83D\uDD12 " + tooltipText;//"🔒 "
         }
 
         return tooltipText;
