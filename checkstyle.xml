@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC
+	"-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+	"https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+	Checkstyle configuration based on RuneLite coding conventions.
+	https://github.com/runelite/runelite/wiki/Code-Conventions
+
+	Note: Tab indentation and line endings are enforced by .editorconfig.
+	This config focuses on structural rules that EditorConfig cannot enforce.
+-->
+<module name="Checker">
+	<property name="charset" value="UTF-8"/>
+	<property name="severity" value="error"/>
+
+	<!-- No trailing whitespace on lines -->
+	<module name="RegexpSingleline">
+		<property name="format" value="\s+$"/>
+		<property name="message" value="Line has trailing whitespace."/>
+	</module>
+
+	<module name="TreeWalker">
+		<!-- ==================== Braces ==================== -->
+
+		<!-- Braces on next line (Allman style) -->
+		<module name="LeftCurly">
+			<property name="option" value="nl"/>
+		</module>
+
+		<module name="RightCurly">
+			<property name="option" value="alone"/>
+		</module>
+
+		<!-- Always require braces for if/else/for/do/while -->
+		<module name="NeedBraces"/>
+
+		<!-- ==================== Imports ==================== -->
+
+		<!-- No wildcard imports (static wildcards are OK per RuneLite convention) -->
+		<module name="AvoidStarImport"/>
+
+		<!-- No unused imports -->
+		<module name="UnusedImports"/>
+
+		<!-- No redundant imports -->
+		<module name="RedundantImport"/>
+
+		<!-- ==================== Whitespace ==================== -->
+
+		<!-- No whitespace after unary operators, etc. -->
+		<module name="NoWhitespaceAfter">
+			<property name="tokens" value="AT,INC,DEC,UNARY_MINUS,UNARY_PLUS,BNOT,LNOT,DOT,ARRAY_DECLARATOR,INDEX_OP"/>
+		</module>
+
+		<!-- No whitespace before comma, semicolon, postfix operators -->
+		<module name="NoWhitespaceBefore"/>
+
+		<!-- Whitespace around operators -->
+		<module name="WhitespaceAround">
+			<property name="allowEmptyConstructors" value="true"/>
+			<property name="allowEmptyMethods" value="true"/>
+			<property name="allowEmptyTypes" value="true"/>
+			<property name="allowEmptyLoops" value="true"/>
+			<property name="allowEmptyLambdas" value="true"/>
+		</module>
+
+		<!-- ==================== Naming ==================== -->
+
+		<!-- Standard Java naming conventions -->
+		<module name="TypeName"/>
+		<module name="MemberName"/>
+		<module name="MethodName"/>
+		<module name="ParameterName"/>
+		<module name="LocalVariableName"/>
+		<module name="PackageName"/>
+
+		<!-- ==================== Miscellaneous ==================== -->
+
+		<!-- One top-level class per file -->
+		<module name="OneTopLevelClass"/>
+
+		<!-- Modifier order -->
+		<module name="ModifierOrder"/>
+
+		<!-- No multiple statements on one line -->
+		<module name="OneStatementPerLine"/>
+
+		<!-- No empty blocks -->
+		<module name="EmptyBlock">
+			<property name="option" value="TEXT"/>
+		</module>
+
+		<!-- Suppress checks via comments: // CHECKSTYLE:OFF / // CHECKSTYLE:ON -->
+		<module name="SuppressionCommentFilter">
+			<property name="offCommentFormat" value="CHECKSTYLE:OFF"/>
+			<property name="onCommentFormat" value="CHECKSTYLE:ON"/>
+		</module>
+	</module>
+</module>

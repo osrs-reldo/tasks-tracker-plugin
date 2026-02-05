@@ -14,7 +14,6 @@ import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterCustomItem;
 import net.reldo.taskstracker.data.task.TaskType;
 import net.runelite.client.hiscore.HiscoreSkill;
-import static net.runelite.client.hiscore.HiscoreSkill.*;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 
@@ -27,14 +26,14 @@ public class DynamicButtonFilterPanel extends FilterButtonPanel
 	 * Real skills, ordered in the way they should be displayed in the panel.
 	 */
 	private static final List<HiscoreSkill> SKILLS = ImmutableList.of(
-			ATTACK, HITPOINTS, MINING,
-			STRENGTH, AGILITY, SMITHING,
-			DEFENCE, HERBLORE, FISHING,
-			RANGED, THIEVING, COOKING,
-			PRAYER, CRAFTING, FIREMAKING,
-			MAGIC, FLETCHING, WOODCUTTING,
-			RUNECRAFT, SLAYER, FARMING,
-			CONSTRUCTION, HUNTER
+			HiscoreSkill.ATTACK, HiscoreSkill.HITPOINTS, HiscoreSkill.MINING,
+			HiscoreSkill.STRENGTH, HiscoreSkill.AGILITY, HiscoreSkill.SMITHING,
+			HiscoreSkill.DEFENCE, HiscoreSkill.HERBLORE, HiscoreSkill.FISHING,
+			HiscoreSkill.RANGED, HiscoreSkill.THIEVING, HiscoreSkill.COOKING,
+			HiscoreSkill.PRAYER, HiscoreSkill.CRAFTING, HiscoreSkill.FIREMAKING,
+			HiscoreSkill.MAGIC, HiscoreSkill.FLETCHING, HiscoreSkill.WOODCUTTING,
+			HiscoreSkill.RUNECRAFT, HiscoreSkill.SLAYER, HiscoreSkill.FARMING,
+			HiscoreSkill.CONSTRUCTION, HiscoreSkill.HUNTER
 	);
 
 	public DynamicButtonFilterPanel(TasksTrackerPlugin plugin, FilterConfig filterConfig, TaskType taskType)
