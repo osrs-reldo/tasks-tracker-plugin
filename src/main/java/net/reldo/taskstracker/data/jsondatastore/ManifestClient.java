@@ -32,7 +32,7 @@ public class ManifestClient
 		if (_manifest != null) {
 			return _manifest;
 		}
-		try(InputStream stream = this.dataStoreReader.readManifestData();
+		try (InputStream stream = this.dataStoreReader.readManifestData();
 			InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
 		{
 			String manifestJson = CharStreams.toString(responseReader); // ew, why not a stream? not working...

@@ -1,100 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE module PUBLIC
-	"-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
-	"https://checkstyle.org/dtds/configuration_1_3.dtd">
+<profiles version="12">
+  <profile kind="CodeFormatterProfile" name="RuneLite" version="12">
 
-<!--
-	Checkstyle configuration based on RuneLite coding conventions.
-	https://github.com/runelite/runelite/wiki/Code-Conventions
+    <!-- ==================== Indentation ==================== -->
+    <setting id="org.eclipse.jdt.core.formatter.tabulation.char" value="tab"/>
+    <setting id="org.eclipse.jdt.core.formatter.tabulation.size" value="4"/>
+    <setting id="org.eclipse.jdt.core.formatter.indentation.size" value="4"/>
+    <setting id="org.eclipse.jdt.core.formatter.continuation_indentation" value="1"/>
+    <setting id="org.eclipse.jdt.core.formatter.lineSplit" value="120"/>
 
-	Note: Tab indentation and line endings are enforced by .editorconfig.
-	This config focuses on structural rules that EditorConfig cannot enforce.
--->
-<module name="Checker">
-	<property name="charset" value="UTF-8"/>
-	<property name="severity" value="error"/>
+    <!-- ==================== Braces ==================== -->
 
-	<!-- No trailing whitespace on lines -->
-	<module name="RegexpSingleline">
-		<property name="format" value="\s+$"/>
-		<property name="message" value="Line has trailing whitespace."/>
-	</module>
+    <!-- Control flow: same line -->
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_if" value="end_of_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_for" value="end_of_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_while" value="end_of_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_do" value="end_of_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_try" value="end_of_line"/>
 
-	<module name="TreeWalker">
-		<!-- ==================== Braces ==================== -->
+    <!-- else / catch / finally on new line -->
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_else" value="next_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_catch" value="next_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_finally" value="next_line"/>
 
-		<!-- Braces on next line (Allman style) -->
-		<module name="LeftCurly">
-			<property name="option" value="nl"/>
-		</module>
+    <!-- Types and methods: next line allowed -->
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_type_declaration" value="next_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_method_declaration" value="next_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_constructor_declaration" value="next_line"/>
 
-		<module name="RightCurly">
-			<property name="option" value="alone"/>
-		</module>
+    <!-- ==================== Whitespace ==================== -->
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_comma_in_arguments" value="true"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_comma_in_arguments" value="false"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_if" value="false"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_if" value="false"/>
 
-		<!-- Always require braces for if/else/for/do/while -->
-		<module name="NeedBraces"/>
+    <!-- ==================== Imports ==================== -->
+    <setting id="org.eclipse.jdt.core.formatter.number_of_imports_for_wildcard" value="999"/>
+    <setting id="org.eclipse.jdt.core.formatter.number_of_static_imports_for_wildcard" value="999"/>
 
-		<!-- ==================== Imports ==================== -->
+    <!-- ==================== Misc ==================== -->
+    <setting id="org.eclipse.jdt.core.formatter.keep_else_statement_on_same_line" value="false"/>
+    <setting id="org.eclipse.jdt.core.formatter.keep_then_statement_on_same_line" value="false"/>
 
-		<!-- No wildcard imports (static wildcards are OK per RuneLite convention) -->
-		<module name="AvoidStarImport"/>
-
-		<!-- No unused imports -->
-		<module name="UnusedImports"/>
-
-		<!-- No redundant imports -->
-		<module name="RedundantImport"/>
-
-		<!-- ==================== Whitespace ==================== -->
-
-		<!-- No whitespace after unary operators, etc. -->
-		<module name="NoWhitespaceAfter">
-			<property name="tokens" value="AT,INC,DEC,UNARY_MINUS,UNARY_PLUS,BNOT,LNOT,DOT,ARRAY_DECLARATOR,INDEX_OP"/>
-		</module>
-
-		<!-- No whitespace before comma, semicolon, postfix operators -->
-		<module name="NoWhitespaceBefore"/>
-
-		<!-- Whitespace around operators -->
-		<module name="WhitespaceAround">
-			<property name="allowEmptyConstructors" value="true"/>
-			<property name="allowEmptyMethods" value="true"/>
-			<property name="allowEmptyTypes" value="true"/>
-			<property name="allowEmptyLoops" value="true"/>
-			<property name="allowEmptyLambdas" value="true"/>
-		</module>
-
-		<!-- ==================== Naming ==================== -->
-
-		<!-- Standard Java naming conventions -->
-		<module name="TypeName"/>
-		<module name="MemberName"/>
-		<module name="MethodName"/>
-		<module name="ParameterName"/>
-		<module name="LocalVariableName"/>
-		<module name="PackageName"/>
-
-		<!-- ==================== Miscellaneous ==================== -->
-
-		<!-- One top-level class per file -->
-		<module name="OneTopLevelClass"/>
-
-		<!-- Modifier order -->
-		<module name="ModifierOrder"/>
-
-		<!-- No multiple statements on one line -->
-		<module name="OneStatementPerLine"/>
-
-		<!-- No empty blocks -->
-		<module name="EmptyBlock">
-			<property name="option" value="TEXT"/>
-		</module>
-
-		<!-- Suppress checks via comments: // CHECKSTYLE:OFF / // CHECKSTYLE:ON -->
-		<module name="SuppressionCommentFilter">
-			<property name="offCommentFormat" value="CHECKSTYLE:OFF"/>
-			<property name="onCommentFormat" value="CHECKSTYLE:ON"/>
-		</module>
-	</module>
-</module>
+  </profile>
+</profiles>

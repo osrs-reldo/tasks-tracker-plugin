@@ -1,8 +1,8 @@
 package net.reldo.taskstracker.config;
 
 
-public class ConfigValues {
-
+public class ConfigValues
+{
     public enum CompletedFilterValues
     {
         COMPLETE_AND_INCOMPLETE("Both"),
@@ -11,7 +11,10 @@ public class ConfigValues {
 
         public final String name;
 
-        public String toString() { return name; }
+        public String toString()
+		{
+			return name;
+		}
 
         CompletedFilterValues(String name)
         {
@@ -27,7 +30,10 @@ public class ConfigValues {
 
         public final String name;
 
-        public String toString() { return name; }
+        public String toString()
+		{
+			return name;
+		}
 
         TrackedFilterValues(String name)
         {
@@ -43,7 +49,10 @@ public class ConfigValues {
 
         public final String name;
 
-        public String toString() { return name; }
+        public String toString()
+		{
+			return name;
+		}
 
         IgnoredFilterValues(String name)
         {
