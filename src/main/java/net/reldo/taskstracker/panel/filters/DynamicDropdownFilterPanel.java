@@ -23,7 +23,8 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 	private final ComboItem[] items;
 	private JComboBox<ComboItem> dropdown;
 
-	public DynamicDropdownFilterPanel(TasksTrackerPlugin plugin, FilterConfig filterConfig, TaskType taskType, ComboItem[] items)
+	public DynamicDropdownFilterPanel(TasksTrackerPlugin plugin, FilterConfig filterConfig, TaskType taskType,
+		ComboItem[] items)
 	{
 		this.configManager = plugin.getConfigManager();
 		this.plugin = plugin;
@@ -31,7 +32,7 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 		this.items = items;
 		this.configKey = taskType.getFilterConfigPrefix() + filterConfig.getConfigKey();
 
-		setLayout(new GridLayout(1,2));
+		setLayout(new GridLayout(1, 2));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		setBorder(new EmptyBorder(5, 10, 5, 10));
 	}
@@ -64,14 +65,15 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 
 	protected void updateFilterConfig()
 	{
-		log.debug("updateFilterConfig {}, {}, {}", TasksTrackerPlugin.CONFIG_GROUP_NAME, configKey, dropdown.getItemAt(dropdown.getSelectedIndex()).getValue());
-		configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, configKey, dropdown.getItemAt(dropdown.getSelectedIndex()).getValue());
+		log.debug("updateFilterConfig {}, {}, {}", TasksTrackerPlugin.CONFIG_GROUP_NAME, configKey,
+			dropdown.getItemAt(dropdown.getSelectedIndex()).getValue());
+		configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, configKey,
+			dropdown.getItemAt(dropdown.getSelectedIndex()).getValue());
 	}
 
 	public void redraw()
 	{
-		if(SwingUtilities.isEventDispatchThread())
-		{
+		if (SwingUtilities.isEventDispatchThread()) {
 			removeAll();
 
 			dropdown = makeDropdownPanel();
@@ -84,8 +86,7 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 			validate();
 			repaint();
 		}
-		else
-		{
+		else {
 			log.error("Dropdown filter panel redraw failed - not event dispatch thread.");
 		}
 	}

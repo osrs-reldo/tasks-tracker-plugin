@@ -24,8 +24,7 @@ public class ParamButtonFilter extends Filter
 	{
 		String configValue = configManager.getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, filterConfigKey);
 		boolean isEmptyFilterSelection = configValue == null || configValue.isEmpty() || configValue.equals("-1");
-		if (isEmptyFilterSelection)
-		{
+		if (isEmptyFilterSelection) {
 			return false;
 		}
 

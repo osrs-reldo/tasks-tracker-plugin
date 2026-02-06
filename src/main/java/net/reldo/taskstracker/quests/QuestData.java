@@ -9,8 +9,7 @@ public class QuestData extends HashMap<Integer, QuestState>
 {
 	public QuestData(Client client)
 	{
-		for (Quest quest : Quest.values())
-		{
+		for (Quest quest : Quest.values()) {
 			this.put(quest.getId(), quest.getState(client));
 		}
 	}

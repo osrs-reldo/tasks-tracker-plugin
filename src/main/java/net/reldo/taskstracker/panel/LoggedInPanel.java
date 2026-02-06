@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Optional;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -20,7 +19,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
-import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicButtonUI;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
@@ -84,15 +82,13 @@ public class LoggedInPanel extends JPanel
 	public void drawNewTaskType()
 	{
 		// taskTypeDropdown may become de-synced after profile change
-		String selectedTaskTypeJsonName = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue().getTaskJsonName();
-		if(!selectedTaskTypeJsonName.equals(config.taskTypeJsonName()))
-		{
+		String selectedTaskTypeJsonName = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue()
+			.getTaskJsonName();
+		if (!selectedTaskTypeJsonName.equals(config.taskTypeJsonName())) {
 			log.debug("Task type dropdown de-synced, attempting to find current task type");
-			for(int i = 0; i < taskTypeDropdown.getItemCount(); i++)
-			{
+			for (int i = 0; i < taskTypeDropdown.getItemCount(); i++) {
 				ComboItem<TaskType> item = taskTypeDropdown.getItemAt(i);
-				if(item.getValue().getTaskJsonName().equals(config.taskTypeJsonName()))
-				{
+				if (item.getValue().getTaskJsonName().equals(config.taskTypeJsonName())) {
 					log.debug("Current task type found, setting selected task type");
 					taskTypeDropdown.setSelectedIndex(i);
 					break;
@@ -136,7 +132,8 @@ public class LoggedInPanel extends JPanel
 		add(getSouthPanel(), BorderLayout.SOUTH);
 	}
 
-	private JPanel getCenterPanel() {
+	private JPanel getCenterPanel()
+	{
 		// wrapper for the task list and tab buttons
 		final JPanel taskListPanel = new JPanel(new BorderLayout());
 		taskListPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -144,8 +141,8 @@ public class LoggedInPanel extends JPanel
 		taskListPanel.setAlignmentX(JPanel.CENTER_ALIGNMENT);
 
 		tabPane.setLayout(new BoxLayout(tabPane, BoxLayout.X_AXIS));
-		tabPane.setBorder(new EmptyBorder(0,0,0,0));
-		tabPane.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH,24));
+		tabPane.setBorder(new EmptyBorder(0, 0, 0, 0));
+		tabPane.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH, 24));
 
 		tabOne = tabButton(config.tab1Name(), ConfigValues.TaskListTabs.TAB_ONE);
 		tabTwo = tabButton(config.tab2Name(), ConfigValues.TaskListTabs.TAB_TWO);
@@ -173,8 +170,7 @@ public class LoggedInPanel extends JPanel
 
 	public void tabChanged(ConfigValues.TaskListTabs newTab)
 	{
-		if(newTab != null)
-		{
+		if (newTab != null) {
 			saveCurrentTabFilters();
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", newTab);
 			refreshFilterButtonsFromConfig(newTab);
@@ -188,32 +184,36 @@ public class LoggedInPanel extends JPanel
 
 		Enum configValue;
 
-		if (plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "CompletedLock").equals("false"))
-		{
+		if (plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "CompletedLock")
+			.equals("false")) {
 			configValue = ConfigValues.CompletedFilterValues.values()[completedFilterBtn.getState()];
-			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "CompletedValue", configValue);
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "CompletedValue",
+				configValue);
 		}
 
-		if (plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "TrackedLock").equals("false"))
-		{
+		if (plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "TrackedLock")
+			.equals("false")) {
 			configValue = ConfigValues.TrackedFilterValues.values()[trackedFilterBtn.getState()];
-			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "TrackedValue", configValue);
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "TrackedValue",
+				configValue);
 		}
 
-		if (plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "IgnoredLock").equals("false"))
-		{
+		if (plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "IgnoredLock")
+			.equals("false")) {
 			configValue = ConfigValues.IgnoredFilterValues.values()[ignoredFilterBtn.getState()];
-			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "IgnoredValue", configValue);
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "IgnoredValue",
+				configValue);
 		}
 	}
 
 	// TODO reduce duplication
 	public void refreshFilterButtonsFromConfig(ConfigValues.TaskListTabs tab)
 	{
-		switch (tab)
-		{
-			case TAB_ONE:
-				if(!tabOne.isSelected()) tabOne.setSelected(true);
+		switch (tab) {
+			case TAB_ONE :
+				if (!tabOne.isSelected()) {
+					tabOne.setSelected(true);
+				}
 				trackedFilterBtn.setState(config.tab1TrackedValue().ordinal());
 				trackedFilterBtn.setEnabled(!config.tab1TrackedLock());
 				completedFilterBtn.setState(config.tab1CompletedValue().ordinal());
@@ -222,8 +222,10 @@ public class LoggedInPanel extends JPanel
 				ignoredFilterBtn.setEnabled(!config.tab1IgnoredLock());
 				actionAllFilterButtonsNoRefresh();
 				break;
-			case TAB_TWO:
-				if(!tabTwo.isSelected()) tabTwo.setSelected(true);
+			case TAB_TWO :
+				if (!tabTwo.isSelected()) {
+					tabTwo.setSelected(true);
+				}
 				trackedFilterBtn.setState(config.tab2TrackedValue().ordinal());
 				trackedFilterBtn.setEnabled(!config.tab2TrackedLock());
 				completedFilterBtn.setState(config.tab2CompletedValue().ordinal());
@@ -232,8 +234,10 @@ public class LoggedInPanel extends JPanel
 				ignoredFilterBtn.setEnabled(!config.tab2IgnoredLock());
 				actionAllFilterButtonsNoRefresh();
 				break;
-			case TAB_THREE:
-				if(!tabThree.isSelected()) tabThree.setSelected(true);
+			case TAB_THREE :
+				if (!tabThree.isSelected()) {
+					tabThree.setSelected(true);
+				}
 				trackedFilterBtn.setState(config.tab3TrackedValue().ordinal());
 				trackedFilterBtn.setEnabled(!config.tab3TrackedLock());
 				completedFilterBtn.setState(config.tab3CompletedValue().ordinal());
@@ -242,7 +246,7 @@ public class LoggedInPanel extends JPanel
 				ignoredFilterBtn.setEnabled(!config.tab3IgnoredLock());
 				actionAllFilterButtonsNoRefresh();
 				break;
-			default:
+			default :
 				break;
 		}
 	}
@@ -251,7 +255,7 @@ public class LoggedInPanel extends JPanel
 	{
 		JToggleButton button = new JToggleButton(label);
 
-		button.setBorder(new EmptyBorder(2,5,2,5));
+		button.setBorder(new EmptyBorder(2, 5, 2, 5));
 		button.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		button.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		button.addActionListener(e -> tabChanged(tab));
@@ -265,11 +269,20 @@ public class LoggedInPanel extends JPanel
 		labelItem.setEnabled(false);
 
 		JMenuItem completedItem = new JMenuItem("Completed");
-		completedItem.addActionListener(e -> {plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "CompletedLock", completedFilterBtn.isEnabled());});
+		completedItem.addActionListener(e -> {
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME,
+				tab.configID + "CompletedLock", completedFilterBtn.isEnabled());
+		});
 		JMenuItem trackedItem = new JMenuItem("Tracked");
-		trackedItem.addActionListener(e -> {plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "TrackedLock", trackedFilterBtn.isEnabled());});
+		trackedItem.addActionListener(e -> {
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME,
+				tab.configID + "TrackedLock", trackedFilterBtn.isEnabled());
+		});
 		JMenuItem ignoredItem = new JMenuItem("Ignored");
-		ignoredItem.addActionListener(e -> {plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "IgnoredLock", ignoredFilterBtn.isEnabled());});
+		ignoredItem.addActionListener(e -> {
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME,
+				tab.configID + "IgnoredLock", ignoredFilterBtn.isEnabled());
+		});
 
 		popupMenu.add(saveFiltersItem);
 		popupMenu.add(labelItem);
@@ -278,16 +291,13 @@ public class LoggedInPanel extends JPanel
 		popupMenu.add(ignoredItem);
 
 		button.addChangeListener(e -> {
-			if(completedItem.isEnabled() != button.isSelected())
-			{
+			if (completedItem.isEnabled() != button.isSelected()) {
 				completedItem.setEnabled(button.isSelected());
 			}
-			if(trackedItem.isEnabled() != button.isSelected())
-			{
+			if (trackedItem.isEnabled() != button.isSelected()) {
 				trackedItem.setEnabled(button.isSelected());
 			}
-			if(ignoredItem.isEnabled() != button.isSelected())
-			{
+			if (ignoredItem.isEnabled() != button.isSelected()) {
 				ignoredItem.setEnabled(button.isSelected());
 			}
 		});
@@ -300,18 +310,15 @@ public class LoggedInPanel extends JPanel
 	private void refreshTabNames()
 	{
 		String tabName;
-		if (!tabOne.getText().equals(config.tab1Name()))
-		{
+		if (!tabOne.getText().equals(config.tab1Name())) {
 			tabName = config.tab1Name().isBlank() ? "Tab 1" : config.tab1Name();
 			tabOne.setText(tabName);
 		}
-		if (!tabTwo.getText().equals(config.tab2Name()))
-		{
+		if (!tabTwo.getText().equals(config.tab2Name())) {
 			tabName = config.tab2Name().isBlank() ? "Tab 2" : config.tab2Name();
 			tabTwo.setText(tabName);
 		}
-		if (!tabThree.getText().equals(config.tab3Name()))
-		{
+		if (!tabThree.getText().equals(config.tab3Name())) {
 			tabName = config.tab3Name().isBlank() ? "Tab 3" : config.tab3Name();
 			tabThree.setText(tabName);
 		}
@@ -320,7 +327,7 @@ public class LoggedInPanel extends JPanel
 	private JPanel getSouthPanel()
 	{
 		JPanel southPanel = new JPanel(new BorderLayout());
-		southPanel.setBorder(new EmptyBorder(5,0,2,0));
+		southPanel.setBorder(new EmptyBorder(5, 0, 2, 0));
 
 		JButton importButton = new JButton("Import");
 		importButton.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -424,7 +431,8 @@ public class LoggedInPanel extends JPanel
 
 		// Completed tasks filter button
 		SwingUtil.removeButtonDecorations(completedFilterBtn);
-		completedFilterBtn.setIcons(Icons.COMPLETE_INCOMPLETE_ICON, Icons.COMPLETE_ONLY_ICON, Icons.INCOMPLETE_ONLY_ICON);
+		completedFilterBtn.setIcons(Icons.COMPLETE_INCOMPLETE_ICON, Icons.COMPLETE_ONLY_ICON,
+			Icons.INCOMPLETE_ONLY_ICON);
 		completedFilterBtn.setToolTips("All tasks", "Completed tasks only", "Incomplete tasks only");
 		completedFilterBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		completedFilterBtn.setStateChangedAction(e -> filterButtonAction("completed"));
@@ -467,26 +475,26 @@ public class LoggedInPanel extends JPanel
 		int state;
 		Enum configValue;
 
-		switch (filter)
-		{
-			case "completed":
+		switch (filter) {
+			case "completed" :
 				state = completedFilterBtn.getState();
 				configValue = ConfigValues.CompletedFilterValues.values()[state];
 				break;
-			case "tracked":
+			case "tracked" :
 				state = trackedFilterBtn.getState();
 				configValue = ConfigValues.TrackedFilterValues.values()[state];
 				break;
-			case "ignored":
+			case "ignored" :
 				state = ignoredFilterBtn.getState();
 				configValue = ConfigValues.IgnoredFilterValues.values()[state];
 				break;
-			default:
+			default :
 				log.debug("Filter button action failed due to unrecognised filter.");
 				return;
 		}
 
-		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, filter + "Filter", configValue);
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, filter + "Filter",
+			configValue);
 	}
 
 	private void filterButtonAction(String filter)
@@ -527,30 +535,36 @@ public class LoggedInPanel extends JPanel
 
 	private void updateCollapseButtonText()
 	{
-		if (taskService.getCurrentTaskType() == null) return;
-		
+		if (taskService.getCurrentTaskType() == null) {
+			return;
+		}
+
 		ArrayList<FilterConfig> filters = taskService.getCurrentTaskType().getFilters();
 
 		int countInclusive = 0;
 		int countExclusive = 0;
 
-		for (FilterConfig filterConfig : filters)
-		{
-			String filterText = Optional.ofNullable(plugin.getConfigManager()
-					.getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME,
-							taskService.getCurrentTaskType().getFilterConfigPrefix() + filterConfig.getConfigKey()))
-					.orElse("");
+		for (FilterConfig filterConfig : filters) {
+			String filterText = Optional
+				.ofNullable(plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME,
+					taskService.getCurrentTaskType().getFilterConfigPrefix() + filterConfig.getConfigKey()))
+				.orElse("");
 
 			int count = (filterText.isEmpty() || filterText.equals("-1")) ? 0 : filterText.split(",").length;
 
-			if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER)) countInclusive += count;
-			if (filterConfig.getFilterType().equals(FilterType.DROPDOWN_FILTER)) countExclusive += count;
+			if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER)) {
+				countInclusive += count;
+			}
+			if (filterConfig.getFilterType().equals(FilterType.DROPDOWN_FILTER)) {
+				countExclusive += count;
+			}
 		}
 
-		collapseBtn.setText(countInclusive + " inclusive, "  + countExclusive + " exclusive filters");
+		collapseBtn.setText(countInclusive + " inclusive, " + countExclusive + " exclusive filters");
 	}
 
-	private void initTaskTypeDropdownAsync() {
+	private void initTaskTypeDropdownAsync()
+	{
 		TaskType currentTaskType = taskService.getCurrentTaskType();
 		taskService.getTaskTypesByJsonName().thenAccept(taskTypes -> {
 			ArrayList<ComboItem<TaskType>> taskTypeItems = new ArrayList<>();
@@ -561,15 +575,14 @@ public class LoggedInPanel extends JPanel
 			});
 
 			ComboItem<TaskType> currentTaskTypeComboItem = taskTypeItems.stream()
-					.filter(item -> item.getValue().equals(currentTaskType))
-					.findFirst().orElseGet(() -> taskTypeItems.get(0));
+				.filter(item -> item.getValue().equals(currentTaskType)).findFirst()
+				.orElseGet(() -> taskTypeItems.get(0));
 			taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
 			taskTypeDropdown.addActionListener(e -> {
 				TaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
-				taskService.setTaskType(taskType).thenAccept(wasTaskTypeChanged ->{
+				taskService.setTaskType(taskType).thenAccept(wasTaskTypeChanged -> {
 					if (wasTaskTypeChanged) {
-						SwingUtilities.invokeLater(() ->
-						{
+						SwingUtilities.invokeLater(() -> {
 							redraw();
 							plugin.refreshAllTasks();
 						});

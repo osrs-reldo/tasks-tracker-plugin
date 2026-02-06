@@ -21,22 +21,17 @@ public class HttpDataStoreReader implements DataStoreReader
 	{
 		String manifestUrl = JsonDataStore.baseUrl + "/manifest.json";
 		log.debug("getManifest json from {} ...", manifestUrl);
-		Request request = new Request.Builder()
-			.url(manifestUrl)
-			.build();
+		Request request = new Request.Builder().url(manifestUrl).build();
 		Response response = this.okHttpClient.newCall(request).execute();
-		if (!response.isSuccessful())
-		{
+		if (!response.isSuccessful()) {
 			String unsuccessful = "getManifest json request unsuccessful with status " + response.code();
-			if (response.body() != null)
-			{
+			if (response.body() != null) {
 				unsuccessful += " and body \n" + response.body();
 			}
 			log.error(unsuccessful);
 			throw new Exception(unsuccessful);
 		}
-		if (response.body() == null)
-		{
+		if (response.body() == null) {
 			log.error("getManifest returned without body");
 			throw new Exception("getManifest returned without body");
 		}
@@ -49,22 +44,17 @@ public class HttpDataStoreReader implements DataStoreReader
 	{
 		String taskJsonUrl = JsonDataStore.baseUrl + "/" + taskTypeFilename;
 		log.debug("getTaskTypes json from {} ...", taskJsonUrl);
-		Request request = new Request.Builder()
-			.url(taskJsonUrl)
-			.build();
+		Request request = new Request.Builder().url(taskJsonUrl).build();
 		Response response = this.okHttpClient.newCall(request).execute();
-		if (!response.isSuccessful())
-		{
+		if (!response.isSuccessful()) {
 			String unsuccessful = "getTaskTypes json request unsuccessful with status " + response.code();
-			if (response.body() != null)
-			{
+			if (response.body() != null) {
 				unsuccessful += " and body \n" + response.body();
 			}
 			log.error(unsuccessful);
 			throw new Exception(unsuccessful);
 		}
-		if (response.body() == null)
-		{
+		if (response.body() == null) {
 			log.error("getTaskTypes returned without body");
 			throw new Exception("getTaskTypes returned without body");
 		}
@@ -77,22 +67,17 @@ public class HttpDataStoreReader implements DataStoreReader
 	{
 		String taskJsonUrl = String.format("%s/tasks/%s.min.json", JsonDataStore.baseUrl, jsonFilename);
 		log.debug("getTasks json from {} ...", taskJsonUrl);
-		Request request = new Request.Builder()
-			.url(taskJsonUrl)
-			.build();
+		Request request = new Request.Builder().url(taskJsonUrl).build();
 		Response response = this.okHttpClient.newCall(request).execute();
-		if (!response.isSuccessful())
-		{
+		if (!response.isSuccessful()) {
 			String unsuccessful = "getTasks json request unsuccessful with status " + response.code();
-			if (response.body() != null)
-			{
+			if (response.body() != null) {
 				unsuccessful += " and body \n" + response.body();
 			}
 			log.error(unsuccessful);
 			throw new Exception(unsuccessful);
 		}
-		if (response.body() == null)
-		{
+		if (response.body() == null) {
 			log.error("getTasks returned without body");
 			throw new Exception("getTasks returned without body");
 		}
@@ -101,26 +86,21 @@ public class HttpDataStoreReader implements DataStoreReader
 	}
 
 	@Override
-	public InputStream readFilterConfigs(String filterFilename)  throws Exception
+	public InputStream readFilterConfigs(String filterFilename) throws Exception
 	{
 		String filterJsonUrl = JsonDataStore.baseUrl + "/" + filterFilename;
 		log.debug("getTaskTypes json from {} ...", filterJsonUrl);
-		Request request = new Request.Builder()
-				.url(filterJsonUrl)
-				.build();
+		Request request = new Request.Builder().url(filterJsonUrl).build();
 		Response response = this.okHttpClient.newCall(request).execute();
-		if (!response.isSuccessful())
-		{
+		if (!response.isSuccessful()) {
 			String unsuccessful = "getFilters json request unsuccessful with status " + response.code();
-			if (response.body() != null)
-			{
+			if (response.body() != null) {
 				unsuccessful += " and body \n" + response.body();
 			}
 			log.error(unsuccessful);
 			throw new Exception(unsuccessful);
 		}
-		if (response.body() == null)
-		{
+		if (response.body() == null) {
 			log.error("getFilters returned without body");
 			throw new Exception("getFilters returned without body");
 		}

@@ -1,0 +1,10 @@
+{
+    "java.checkstyle.configuration": "${workspaceFolder}/checkstyle-rules.xml",
+    "java.format.settings.url": "${workspaceFolder}/checkstyle.xml",
+    "java.format.settings.profile": "RuneLite",
+    "[java]": {
+        "editor.insertSpaces": false,
+        "editor.detectIndentation": false,
+        "editor.defaultFormatter": "redhat.java"
+    }
+}

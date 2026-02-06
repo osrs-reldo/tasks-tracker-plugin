@@ -24,16 +24,19 @@ public class TaskFromStruct
 	private final TaskDefinition taskDefinition;
 	@Getter
 	private boolean structLoaded;
-	@Getter @Setter
+	@Getter
+	@Setter
 	private long completedOn;
-	@Getter @Setter
+	@Getter
+	@Setter
 	private long trackedOn;
-	@Getter @Setter
+	@Getter
+	@Setter
 	private long ignoredOn;
 
-	private StructComposition _struct;
-	private final Map<String, String> _stringParams = new HashMap<>();
-	private final Map<String, Integer> _intParams = new HashMap<>();
+	private StructComposition structComposition;
+	private final Map<String, String> stringParams = new HashMap<>();
+	private final Map<String, Integer> intParams = new HashMap<>();
 
 	public TaskFromStruct(TaskType taskType, TaskDefinition taskDefinition)
 	{
@@ -45,12 +48,12 @@ public class TaskFromStruct
 
 	public String getStringParam(String paramName)
 	{
-		return this._stringParams.get(paramName);
+		return this.stringParams.get(paramName);
 	}
 
 	public Integer getIntParam(String paramName)
 	{
-		return this._intParams.get(paramName);
+		return this.intParams.get(paramName);
 	}
 
 	// TODO: Remove client from params
@@ -61,23 +64,21 @@ public class TaskFromStruct
 		if (structLoaded) {
 			return true;
 		}
-		try
-		{
+		try {
 			// log.debug("LOADING STRUCT DATA " + structId);
-			_struct = client.getStructComposition(structId);
+			structComposition = client.getStructComposition(structId);
 			taskType.getIntParamMap().forEach((paramName, paramId) -> {
-				int value = _struct.getIntValue(paramId);
+				int value = structComposition.getIntValue(paramId);
 				// log.debug("{} {}", paramName, value);
-				_intParams.put(paramName, value);
+				intParams.put(paramName, value);
 			});
 			taskType.getStringParamMap().forEach((paramName, paramId) -> {
-				String value = _struct.getStringValue(paramId);
+				String value = structComposition.getStringValue(paramId);
 				// log.debug("{} {}", paramName, value);
-				_stringParams.put(paramName, value);
+				stringParams.put(paramName, value);
 			});
 		}
-		catch (Exception ex)
-		{
+		catch (Exception ex) {
 			log.error("error loading struct data {}", ex, ex);
 			return false;
 		}
@@ -93,13 +94,11 @@ public class TaskFromStruct
 
 	public int getPoints()
 	{
-		if (taskType.getTierPoints().size() == 0)
-		{
+		if (taskType.getTierPoints().size() == 0) {
 			return 0;
 		}
 		Integer points = taskType.getTierPoints().get(getTier());
-		if (points == null)
-		{
+		if (points == null) {
 			return 0;
 		}
 		return points;
@@ -108,8 +107,7 @@ public class TaskFromStruct
 	public void setCompleted(boolean completed)
 	{
 		long now = Instant.now().toEpochMilli();
-		if (completed && completedOn > 0 && completedOn <= now)
-		{
+		if (completed && completedOn > 0 && completedOn <= now) {
 			return;
 		}
 		completedOn = completed ? now : 0;
@@ -123,8 +121,7 @@ public class TaskFromStruct
 	public void setTracked(boolean state)
 	{
 		long now = Instant.now().toEpochMilli();
-		if (state && trackedOn > 0 && trackedOn <= now)
-		{
+		if (state && trackedOn > 0 && trackedOn <= now) {
 			return;
 		}
 		trackedOn = state ? now : 0;
@@ -138,8 +135,7 @@ public class TaskFromStruct
 	public void setIgnored(boolean state)
 	{
 		long now = Instant.now().toEpochMilli();
-		if (state && ignoredOn > 0 && ignoredOn <= now)
-		{
+		if (state && ignoredOn > 0 && ignoredOn <= now) {
 			return;
 		}
 		ignoredOn = state ? now : 0;
@@ -166,18 +162,15 @@ public class TaskFromStruct
 	private void setMostRecentDates(long completedOn, long ignoredOn, long trackedOn)
 	{
 		// Older completions take priority; incomplete (0) also takes priority
-		if (completedOn < this.getCompletedOn())
-		{
+		if (completedOn < this.getCompletedOn()) {
 			this.setCompletedOn(completedOn);
 		}
 		// Newer ignores take priority
-		if (ignoredOn > this.getIgnoredOn())
-		{
+		if (ignoredOn > this.getIgnoredOn()) {
 			this.setIgnoredOn(ignoredOn);
 		}
 		// Newer tracks take priority
-		if (trackedOn > this.getTrackedOn())
-		{
+		if (trackedOn > this.getTrackedOn()) {
 			this.setTrackedOn(trackedOn);
 		}
 	}
@@ -202,7 +195,8 @@ public class TaskFromStruct
 		return new ConfigTaskSave(this);
 	}
 
-	public Float getCompletionPercent() {
+	public Float getCompletionPercent()
+	{
 		return getTaskDefinition().getCompletionPercent();
 	}
 }

@@ -26,14 +26,15 @@ public class TaskType
 	private final Client client;
 	private final ClientThread clientThread;
 	private final SpriteManager spriteManager;
-	private final TaskTypeDefinition _taskTypeDefinition;
+	private final TaskTypeDefinition definition;
 
-	public TaskType(Client client, ClientThread clientThread, SpriteManager spriteManager, TaskTypeDefinition taskTypeDefinition)
+	public TaskType(Client client, ClientThread clientThread, SpriteManager spriteManager,
+		TaskTypeDefinition taskTypeDefinition)
 	{
 		this.client = client;
 		this.clientThread = clientThread;
 		this.spriteManager = spriteManager;
-		this._taskTypeDefinition = taskTypeDefinition;
+		this.definition = taskTypeDefinition;
 	}
 
 	public CompletableFuture<Boolean> loadTaskTypeDataAsync()
@@ -45,23 +46,22 @@ public class TaskType
 					BufferedImage spriteImage = spriteManager.getSprite(spriteId, 0);
 					spritesById.put(spriteId, spriteImage);
 				});
-				_taskTypeDefinition.getTierSpriteIdMap().forEach((idKey, spriteId) -> {
+				definition.getTierSpriteIdMap().forEach((idKey, spriteId) -> {
 					Integer tierId = Integer.parseInt(idKey);
 					BufferedImage spriteImage = spriteManager.getSprite(spriteId, 0);
 					tierSprites.put(tierId, spriteImage);
 				});
-				if (_taskTypeDefinition.getIntEnumMap().containsKey("tierPoints"))
-				{
-					int enumId = _taskTypeDefinition.getIntEnumMap().get("tierPoints");
+				if (definition.getIntEnumMap().containsKey("tierPoints")) {
+					int enumId = definition.getIntEnumMap().get("tierPoints");
 					EnumComposition enumComposition = client.getEnum(enumId);
 					int[] keys = enumComposition.getKeys();
-					for (int key : keys)
-					{
+					for (int key : keys) {
 						tierPoints.put(key, enumComposition.getIntValue(key));
 					}
 				}
 				future.complete(true);
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				future.completeExceptionally(e);
 			}
 		});
@@ -71,77 +71,75 @@ public class TaskType
 
 	public String getFilterConfigPrefix()
 	{
-		return _taskTypeDefinition.getTaskJsonName() + ".";
+		return definition.getTaskJsonName() + ".";
 	}
 
 	private HashSet<Integer> getButtonFiltersSpriteIds()
 	{
 		HashSet<Integer> sprites = new HashSet<>();
-		_taskTypeDefinition.getFilters().stream().filter(
-			(filterConfig) -> filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER)
-		).forEach((filterConfig) -> {
-			if (filterConfig.getCustomItems() != null)
-			{
-				filterConfig.getCustomItems().forEach((customSprite) -> {
-					Integer spriteId = customSprite.getSpriteId();
-					if (spriteId == null)
-					{
-						return;
-					}
-					sprites.add(spriteId);
-				});
-			}
-		});
+		definition.getFilters().stream()
+			.filter((filterConfig) -> filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER))
+			.forEach((filterConfig) -> {
+				if (filterConfig.getCustomItems() != null) {
+					filterConfig.getCustomItems().forEach((customSprite) -> {
+						Integer spriteId = customSprite.getSpriteId();
+						if (spriteId == null) {
+							return;
+						}
+						sprites.add(spriteId);
+					});
+				}
+			});
 		return sprites;
 	}
 
 	public ArrayList<Integer> getTaskVarps()
 	{
-		return _taskTypeDefinition.getTaskVarps();
+		return definition.getTaskVarps();
 	}
 
 	public String getTaskJsonName()
 	{
-		return _taskTypeDefinition.getTaskJsonName();
+		return definition.getTaskJsonName();
 	}
 
 	public HashMap<String, Integer> getIntParamMap()
 	{
-		return _taskTypeDefinition.getIntParamMap();
+		return definition.getIntParamMap();
 	}
 
 	public HashMap<String, Integer> getStringParamMap()
 	{
-		return _taskTypeDefinition.getStringParamMap();
+		return definition.getStringParamMap();
 	}
 
 	public HashMap<String, Integer> getStringEnumMap()
 	{
-		return _taskTypeDefinition.getStringEnumMap();
+		return definition.getStringEnumMap();
 	}
 
 	public String getName()
 	{
-		return _taskTypeDefinition.getName();
+		return definition.getName();
 	}
 
 	public ArrayList<FilterConfig> getFilters()
 	{
-		return _taskTypeDefinition.getFilters();
+		return definition.getFilters();
 	}
 
 	public int[] getOtherVarps()
 	{
-		return _taskTypeDefinition.getOtherVarps();
+		return definition.getOtherVarps();
 	}
 
 	public int[] getVarbits()
 	{
-		return _taskTypeDefinition.getVarbits();
+		return definition.getVarbits();
 	}
 
 	public int getTaskCompletedScriptId()
 	{
-		return _taskTypeDefinition.getTaskCompletedScriptId();
+		return definition.getTaskCompletedScriptId();
 	}
 }

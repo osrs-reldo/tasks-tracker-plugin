@@ -25,16 +25,12 @@ public class DynamicButtonFilterPanel extends FilterButtonPanel
 	/**
 	 * Real skills, ordered in the way they should be displayed in the panel.
 	 */
-	private static final List<HiscoreSkill> SKILLS = ImmutableList.of(
-			HiscoreSkill.ATTACK, HiscoreSkill.HITPOINTS, HiscoreSkill.MINING,
-			HiscoreSkill.STRENGTH, HiscoreSkill.AGILITY, HiscoreSkill.SMITHING,
-			HiscoreSkill.DEFENCE, HiscoreSkill.HERBLORE, HiscoreSkill.FISHING,
-			HiscoreSkill.RANGED, HiscoreSkill.THIEVING, HiscoreSkill.COOKING,
-			HiscoreSkill.PRAYER, HiscoreSkill.CRAFTING, HiscoreSkill.FIREMAKING,
-			HiscoreSkill.MAGIC, HiscoreSkill.FLETCHING, HiscoreSkill.WOODCUTTING,
-			HiscoreSkill.RUNECRAFT, HiscoreSkill.SLAYER, HiscoreSkill.FARMING,
-			HiscoreSkill.CONSTRUCTION, HiscoreSkill.HUNTER
-	);
+	private static final List<HiscoreSkill> SKILLS = ImmutableList.of(HiscoreSkill.ATTACK, HiscoreSkill.HITPOINTS,
+		HiscoreSkill.MINING, HiscoreSkill.STRENGTH, HiscoreSkill.AGILITY, HiscoreSkill.SMITHING, HiscoreSkill.DEFENCE,
+		HiscoreSkill.HERBLORE, HiscoreSkill.FISHING, HiscoreSkill.RANGED, HiscoreSkill.THIEVING, HiscoreSkill.COOKING,
+		HiscoreSkill.PRAYER, HiscoreSkill.CRAFTING, HiscoreSkill.FIREMAKING, HiscoreSkill.MAGIC, HiscoreSkill.FLETCHING,
+		HiscoreSkill.WOODCUTTING, HiscoreSkill.RUNECRAFT, HiscoreSkill.SLAYER, HiscoreSkill.FARMING,
+		HiscoreSkill.CONSTRUCTION, HiscoreSkill.HUNTER);
 
 	public DynamicButtonFilterPanel(TasksTrackerPlugin plugin, FilterConfig filterConfig, TaskType taskType)
 	{
@@ -79,16 +75,13 @@ public class DynamicButtonFilterPanel extends FilterButtonPanel
 	{
 		LinkedHashMap<String, BufferedImage> images = new LinkedHashMap<>();
 
-		if (filterConfig.getConfigKey().equals("skill"))
-		{
+		if (filterConfig.getConfigKey().equals("skill")) {
 			String skillName;
 			BufferedImage skillImage;
 			int index = 0;
 
-			for (FilterCustomItem customItem : filterConfig.getCustomItems())
-			{
-				if (customItem.getValue() != 0)
-				{
+			for (FilterCustomItem customItem : filterConfig.getCustomItems()) {
+				if (customItem.getValue() != 0) {
 					skillName = SKILLS.get(index).name().toLowerCase();
 
 					String directory = "/skill_icons_small/";
@@ -96,8 +89,7 @@ public class DynamicButtonFilterPanel extends FilterButtonPanel
 
 					skillImage = ImageUtil.loadImageResource(getClass(), skillIcon);
 				}
-				else
-				{
+				else {
 					skillImage = ImageUtil.loadImageResource(TasksTrackerPlugin.class, "panel/components/no_skill.png");
 				}
 
@@ -106,10 +98,8 @@ public class DynamicButtonFilterPanel extends FilterButtonPanel
 				index++;
 			}
 		}
-		else
-		{
-			for (FilterCustomItem customItem : filterConfig.getCustomItems())
-			{
+		else {
+			for (FilterCustomItem customItem : filterConfig.getCustomItems()) {
 				String key = customItem.getValue().toString();
 				images.put(key, taskType.getSpritesById().get(customItem.getSpriteId()));
 			}
@@ -120,8 +110,7 @@ public class DynamicButtonFilterPanel extends FilterButtonPanel
 	private LinkedHashMap<String, String> getTooltips()
 	{
 		LinkedHashMap<String, String> tooltips = new LinkedHashMap<>();
-		for (FilterCustomItem customItem : filterConfig.getCustomItems())
-		{
+		for (FilterCustomItem customItem : filterConfig.getCustomItems()) {
 			String key = customItem.getValue().toString();
 			tooltips.put(key, customItem.getTooltip());
 		}

@@ -25,31 +25,39 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class TaskDataClient
 {
-	@Inject private ManifestClient manifestClient;
-	@Inject	private OkHttpClient okHttpClient;
-	@Inject private Gson gson;
-	@Inject private DataStoreReader dataStoreReader;
-	@Inject private Client client;
-	@Inject private ClientThread clientThread;
-	@Inject private SpriteManager spriteManager;
+	@Inject
+	private ManifestClient manifestClient;
+	@Inject
+	private OkHttpClient okHttpClient;
+	@Inject
+	private Gson gson;
+	@Inject
+	private DataStoreReader dataStoreReader;
+	@Inject
+	private Client client;
+	@Inject
+	private ClientThread clientThread;
+	@Inject
+	private SpriteManager spriteManager;
 
 	public TaskDataClient()
 	{
 		log.debug("init task data client");
 	}
 
-	public HashMap<String, TaskType> getTaskTypes() throws Exception {
-		try (InputStream stream = this.dataStoreReader.readTaskTypes(this.manifestClient.getManifest().taskTypeMetadata);
-			 InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
-		{
+	public HashMap<String, TaskType> getTaskTypes() throws Exception
+	{
+		try (
+			InputStream stream = this.dataStoreReader.readTaskTypes(this.manifestClient.getManifest().taskTypeMetadata);
+			InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
 			Type listType = TypeToken.getParameterized(ArrayList.class, TaskTypeDefinition.class).getType();
 
 			List<TaskTypeDefinition> taskTypeDefinitions = this.gson.fromJson(responseReader, listType);
 
 			HashMap<String, TaskType> taskTypes = new HashMap<>();
-			for (TaskTypeDefinition taskTypeDefinition : taskTypeDefinitions)
-			{
-				taskTypes.put(taskTypeDefinition.getTaskJsonName(), new TaskType(client, clientThread, spriteManager, taskTypeDefinition));
+			for (TaskTypeDefinition taskTypeDefinition : taskTypeDefinitions) {
+				taskTypes.put(taskTypeDefinition.getTaskJsonName(),
+					new TaskType(client, clientThread, spriteManager, taskTypeDefinition));
 			}
 			return taskTypes;
 		}
@@ -57,9 +65,8 @@ public class TaskDataClient
 
 	public List<TaskDefinition> getTaskDefinitions(String jsonFilename) throws Exception
 	{
-		try(InputStream stream = this.dataStoreReader.readTasks(jsonFilename);
-		    InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
-		{
+		try (InputStream stream = this.dataStoreReader.readTasks(jsonFilename);
+			InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
 			Type listType = TypeToken.getParameterized(ArrayList.class, TaskDefinition.class).getType();
 			return this.gson.fromJson(responseReader, listType);
 		}

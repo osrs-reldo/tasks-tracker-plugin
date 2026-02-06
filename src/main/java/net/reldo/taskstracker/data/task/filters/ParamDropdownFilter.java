@@ -24,19 +24,15 @@ public class ParamDropdownFilter extends Filter
 	{
 		String configValue = configManager.getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, filterConfigKey);
 		boolean isEmptyFilterSelection = configValue == null || configValue.isEmpty() || configValue.equals("-1");
-		if (isEmptyFilterSelection)
-		{
+		if (isEmptyFilterSelection) {
 			return true;
 		}
-		if (task.getIntParam(paramName) != null)
-		{
-			try
-			{
+		if (task.getIntParam(paramName) != null) {
+			try {
 				Integer parsedConfigValue = Integer.parseInt(configValue);
 				return parsedConfigValue.equals(task.getIntParam(paramName));
 			}
-			catch (Exception ex)
-			{
+			catch (Exception ex) {
 				log.warn("meetsCriteria error parsing config value for  {}", configValue);
 				return true;
 			}

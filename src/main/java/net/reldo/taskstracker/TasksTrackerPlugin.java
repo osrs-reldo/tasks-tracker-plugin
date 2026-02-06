@@ -67,9 +67,7 @@ import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
 
 @Slf4j
-@PluginDescriptor(
-	name = "Tasks Tracker"
-)
+@PluginDescriptor(name = "Tasks Tracker")
 public class TasksTrackerPlugin extends Plugin
 {
 	public static final String CONFIG_GROUP_NAME = "tasks-tracker";
@@ -89,20 +87,36 @@ public class TasksTrackerPlugin extends Plugin
 	private RuneScapeProfileType currentProfileType;
 	private final Map<Skill, Integer> oldExperience = new EnumMap<>(Skill.class);
 
-	@Inject	@Named("runelite.version") private String runeliteVersion;
-	@Inject private Gson gson;
-	@Inject	private Client client;
-	@Inject	private SpriteManager spriteManager;
-	@Inject	private PluginManager pluginManager;
-	@Inject	private ClientToolbar clientToolbar;
-	@Inject	private ClientThread clientThread;
-	@Inject	private ChatMessageManager chatMessageManager;
-	@Getter	@Inject	private ConfigManager configManager;
-	@Getter @Inject	private TasksTrackerConfig config;
+	@Inject
+	@Named("runelite.version")
+	private String runeliteVersion;
+	@Inject
+	private Gson gson;
+	@Inject
+	private Client client;
+	@Inject
+	private SpriteManager spriteManager;
+	@Inject
+	private PluginManager pluginManager;
+	@Inject
+	private ClientToolbar clientToolbar;
+	@Inject
+	private ClientThread clientThread;
+	@Inject
+	private ChatMessageManager chatMessageManager;
+	@Getter
+	@Inject
+	private ConfigManager configManager;
+	@Getter
+	@Inject
+	private TasksTrackerConfig config;
 
-	@Inject	private TrackerConfigStore trackerConfigStore;
-	@Inject private TaskService taskService;
-	@Inject private FilterService filterService;
+	@Inject
+	private TrackerConfigStore trackerConfigStore;
+	@Inject
+	private TaskService taskService;
+	@Inject
+	private FilterService filterService;
 
 	@Override
 	public void configure(Binder binder)
@@ -120,13 +134,11 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void startUp()
 	{
-		try
-		{
+		try {
 			String taskTypeJsonName = config.taskTypeJsonName();
 			taskService.setTaskType(taskTypeJsonName);
 		}
-		catch (Exception ex)
-		{
+		catch (Exception ex) {
 			log.error("error setting task type in startUp", ex);
 		}
 
@@ -136,17 +148,12 @@ public class TasksTrackerPlugin extends Plugin
 
 		boolean isLoggedIn = isLoggedInState(client.getGameState());
 		pluginPanel.setLoggedIn(isLoggedIn);
-		if (isLoggedIn)
-		{
+		if (isLoggedIn) {
 			forceUpdateVarpsFlag = true;
 		}
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
-		navButton = NavigationButton.builder()
-			.tooltip("Task Tracker")
-			.icon(icon)
-			.priority(5)
-			.panel(pluginPanel)
+		navButton = NavigationButton.builder().tooltip("Task Tracker").icon(icon).priority(5).panel(pluginPanel)
 			.build();
 		clientToolbar.addNavigation(navButton);
 
@@ -167,21 +174,22 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onCommandExecuted(CommandExecuted commandExecuted)
 	{
-		if (!commandExecuted.getCommand().startsWith("tt")) return;
+		if (!commandExecuted.getCommand().startsWith("tt")) {
+			return;
+		}
 
-		if (commandExecuted.getCommand().equalsIgnoreCase("tt-process-varp"))
-		{
+		if (commandExecuted.getCommand().equalsIgnoreCase("tt-process-varp")) {
 			String[] args = commandExecuted.getArguments();
-			if (args.length == 0) return;
+			if (args.length == 0) {
+				return;
+			}
 
-			try
-			{
+			try {
 				int varpId = Integer.parseInt(args[0]);
 				log.debug("Processing varpId " + varpId);
 				processVarpAndUpdateTasks(varpId);
 			}
-			catch (NumberFormatException e)
-			{
+			catch (NumberFormatException e) {
 				log.debug("Invalid varpId, provide a valid integer");
 			}
 		}
@@ -190,14 +198,12 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
-		if (forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
-		{
+		if (forceUpdateVarpsFlag || taskService.isTaskTypeChanged()) {
 			// Force update is coming on next game tick, so ignore varbit change events
 			return;
 		}
 		int varpId = varbitChanged.getVarpId();
-		if (!taskService.isVarpInCurrentTaskType(varpId))
-		{
+		if (!taskService.isVarpInCurrentTaskType(varpId)) {
 			return;
 		}
 		varpIdsToUpdate.add(varbitChanged.getVarpId());
@@ -206,30 +212,25 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged configChanged)
 	{
-		if (!configChanged.getGroup().equals(CONFIG_GROUP_NAME))
-		{
+		if (!configChanged.getGroup().equals(CONFIG_GROUP_NAME)) {
 			return;
 		}
 
 		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
-		if (configChanged.getKey().equals("untrackUponCompletion") && config.untrackUponCompletion())
-		{
+		if (configChanged.getKey().equals("untrackUponCompletion") && config.untrackUponCompletion()) {
 			forceVarpUpdate();
 		}
 
-		if (configChanged.getKey().equals("filterPanelCollapsible"))
-		{
+		if (configChanged.getKey().equals("filterPanelCollapsible")) {
 			SwingUtilities.invokeLater(pluginPanel::redraw);
 		}
 
-		if (configChanged.getKey().startsWith("tab")) // task list tab config items all start 'tab#'
-		{
+		if (configChanged.getKey().startsWith("tab")) { // task list tab config items all start 'tab#'
 			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
 			refreshAllTasks();
 		}
 
-		if (configChanged.getKey().equals("taskPanelBatchSize"))
-		{
+		if (configChanged.getKey().equals("taskPanelBatchSize")) {
 			pluginPanel.taskListPanel.setBatchSize(config.taskPanelBatchSize());
 		}
 	}
@@ -244,13 +245,11 @@ public class TasksTrackerPlugin extends Plugin
 		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedInState(newGameState)));
 
 		// Logged in
-		if (newGameState == GameState.LOGGING_IN)
-		{
+		if (newGameState == GameState.LOGGING_IN) {
 			forceUpdateVarpsFlag = true;
 		}
 		// Changed game mode
-		if (isLoggedInState(newGameState) && currentProfileType != null && currentProfileType != newProfileType)
-		{
+		if (isLoggedInState(newGameState) && currentProfileType != null && currentProfileType != newProfileType) {
 			forceUpdateVarpsFlag = true;
 		}
 
@@ -265,8 +264,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick gameTick)
 	{
-		if (forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
-		{
+		if (forceUpdateVarpsFlag || taskService.isTaskTypeChanged()) {
 			log.debug("forceUpdateVarpsFlag game tick {} {}", forceUpdateVarpsFlag, taskService.isTaskTypeChanged());
 			trackerConfigStore.loadCurrentTaskTypeFromConfig();
 			forceVarpUpdate();
@@ -277,8 +275,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		// Flush throttled varp updates
 		long currentTimeEpoch = System.currentTimeMillis();
-		if (currentTimeEpoch - lastVarpUpdate > VARP_UPDATE_THROTTLE_DELAY_MS)
-		{
+		if (currentTimeEpoch - lastVarpUpdate > VARP_UPDATE_THROTTLE_DELAY_MS) {
 			flushVarpUpdates(varpIdsToUpdate);
 			varpIdsToUpdate = new HashSet<>();
 			lastVarpUpdate = currentTimeEpoch;
@@ -292,14 +289,14 @@ public class TasksTrackerPlugin extends Plugin
 		// Cache current player skills
 		int[] newSkills = client.getRealSkillLevels();
 		boolean changed = !Arrays.equals(playerSkills, newSkills);
-		if (changed)
-		{
+		if (changed) {
 			playerSkills = client.getRealSkillLevels();
 		}
 
 		final Skill skill = statChanged.getSkill();
 
-		// Modified from m0bilebtw's modification from Nightfirecat's virtual level ups plugin
+		// Modified from m0bilebtw's modification from Nightfirecat's virtual level ups
+		// plugin
 		final int xpAfter = client.getSkillExperience(skill);
 		final int levelAfter = Experience.getLevelForXp(xpAfter);
 		final int xpBefore = oldExperience.getOrDefault(skill, -1);
@@ -308,12 +305,12 @@ public class TasksTrackerPlugin extends Plugin
 		oldExperience.put(skill, xpAfter);
 
 		// Do not proceed if any of the following are true:
-		//  * xpBefore == -1              (don't fire when first setting new known value)
-		//  * xpAfter <= xpBefore         (do not allow 200m -> 200m exp drops)
-		//  * levelBefore >= levelAfter   (stop if we're not actually reaching a new level)
-		//  * levelAfter > MAX_REAL_LEVEL (stop if above 99)
-		if (xpBefore == -1 || xpAfter <= xpBefore || levelBefore >= levelAfter || levelAfter > Experience.MAX_REAL_LEVEL)
-		{
+		// * xpBefore == -1 (don't fire when first setting new known value)
+		// * xpAfter <= xpBefore (do not allow 200m -> 200m exp drops)
+		// * levelBefore >= levelAfter (stop if we're not actually reaching a new level)
+		// * levelAfter > MAX_REAL_LEVEL (stop if above 99)
+		if (xpBefore == -1 || xpAfter <= xpBefore || levelBefore >= levelAfter
+			|| levelAfter > Experience.MAX_REAL_LEVEL) {
 			return;
 		}
 
@@ -324,9 +321,9 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onProfileChanged(ProfileChanged profileChanged)
 	{
-		final Optional<Plugin> taskTrackerPlugin = pluginManager.getPlugins().stream().filter(p -> p.getName().equals("Tasks Tracker")).findFirst();
-		if (taskTrackerPlugin.isPresent() && pluginManager.isPluginEnabled(taskTrackerPlugin.get()))
-		{
+		final Optional<Plugin> taskTrackerPlugin = pluginManager.getPlugins().stream()
+			.filter(p -> p.getName().equals("Tasks Tracker")).findFirst();
+		if (taskTrackerPlugin.isPresent() && pluginManager.isPluginEnabled(taskTrackerPlugin.get())) {
 			reloadTaskType();
 		}
 	}
@@ -336,27 +333,28 @@ public class TasksTrackerPlugin extends Plugin
 		SwingUtilities.invokeLater(() -> pluginPanel.refreshAllTasks());
 	}
 
-    public void reloadTaskType() {
-        taskService.clearTaskTypes();
-        filterService.clearFilterConfigs();
-        try {
-            String taskTypeJsonName = config.taskTypeJsonName();
-            taskService.setTaskType(taskTypeJsonName).thenAccept(isSet -> {
-                if (!isSet) {
-                    return;
-                }
-                SwingUtilities.invokeLater(() ->
-                {
-			pluginPanel.drawNewTaskType();
-			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
-                    pluginPanel.refreshAllTasks();
-                });
-            });
-        } catch (Exception ex) {
-            log.error("error setting task type in reload", ex);
-        }
+	public void reloadTaskType()
+	{
+		taskService.clearTaskTypes();
+		filterService.clearFilterConfigs();
+		try {
+			String taskTypeJsonName = config.taskTypeJsonName();
+			taskService.setTaskType(taskTypeJsonName).thenAccept(isSet -> {
+				if (!isSet) {
+					return;
+				}
+				SwingUtilities.invokeLater(() -> {
+					pluginPanel.drawNewTaskType();
+					pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
+					pluginPanel.refreshAllTasks();
+				});
+			});
+		}
+		catch (Exception ex) {
+			log.error("error setting task type in reload", ex);
+		}
 
-    }
+	}
 
 	public void saveCurrentTaskTypeData()
 	{
@@ -366,52 +364,54 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void openImportJsonDialog()
 	{
-		JOptionPane optionPane = new JOptionPane("Paste import data into the text field below to import task tracker data.", JOptionPane.INFORMATION_MESSAGE);
+		JOptionPane optionPane = new JOptionPane(
+			"Paste import data into the text field below to import task tracker data.",
+			JOptionPane.INFORMATION_MESSAGE);
 		optionPane.setWantsInput(true);
 		JDialog inputDialog = optionPane.createDialog(this.pluginPanel, "Import Tasks Input");
 		inputDialog.setAlwaysOnTop(true);
 		inputDialog.setVisible(true);
 
-		if (optionPane.getInputValue().equals("") || optionPane.getInputValue().equals("uninitializedValue"))
-		{
-			this.showMessageBox("Import Tasks Error", "Input was empty so no data has been imported.", JOptionPane.ERROR_MESSAGE, false);
+		if (optionPane.getInputValue().equals("") || optionPane.getInputValue().equals("uninitializedValue")) {
+			this.showMessageBox("Import Tasks Error", "Input was empty so no data has been imported.",
+				JOptionPane.ERROR_MESSAGE, false);
 			return;
 		}
 
 		String json = "";
 		ReldoImport reldoImport;
-		try
-		{
+		try {
 			json = (String) optionPane.getInputValue();
 			reldoImport = this.gson.fromJson(json, ReldoImport.class);
 		}
-		catch (Exception ex)
-		{
-			this.showMessageBox("Import Tasks Error", "There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE, false);
+		catch (Exception ex) {
+			this.showMessageBox("Import Tasks Error",
+				"There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE, false);
 			log.error("There was an issue importing task tracker data.", ex);
 			log.debug("reldoImport json: {}", json);
 			return;
 		}
 
-		if (!reldoImport.taskTypeName.equalsIgnoreCase(config.taskTypeJsonName()))
-		{
-			this.showMessageBox("Import Tasks Error", String.format("Wrong task type. Select the %s task type to import this data.", reldoImport.taskTypeName), JOptionPane.ERROR_MESSAGE, false);
+		if (!reldoImport.taskTypeName.equalsIgnoreCase(config.taskTypeJsonName())) {
+			this.showMessageBox("Import Tasks Error", String
+				.format("Wrong task type. Select the %s task type to import this data.", reldoImport.taskTypeName),
+				JOptionPane.ERROR_MESSAGE, false);
 			return;
 		}
 
-		optionPane = new JOptionPane("Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
+		optionPane = new JOptionPane(
+			"Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?",
+			JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
 		JDialog confirmDialog = optionPane.createDialog(this.pluginPanel, "Import Tasks Overwrite Confirmation");
 		confirmDialog.setAlwaysOnTop(true);
 		confirmDialog.setVisible(true);
 
 		Object selectedValue = optionPane.getValue();
-		if (selectedValue == null)
-		{
+		if (selectedValue == null) {
 			return;
 		}
 
-		if (selectedValue.equals(JOptionPane.YES_OPTION))
-		{
+		if (selectedValue.equals(JOptionPane.YES_OPTION)) {
 			HashMap<Integer, TaskFromStruct> tasksById = new HashMap<>();
 			taskService.getTasks().forEach((task) -> tasksById.put(task.getIntParam("id"), task));
 
@@ -432,20 +432,19 @@ public class TasksTrackerPlugin extends Plugin
 		int trackedPoints = summary.trackedTasksPoints;
 
 		final String message = new ChatMessageBuilder()
-			.append(Color.BLACK, String.format("Task Tracker - Tracked Tasks: %s | Tracked Points: %s", trackedTasks, trackedPoints))
+			.append(Color.BLACK,
+				String.format("Task Tracker - Tracked Tasks: %s | Tracked Points: %s", trackedTasks, trackedPoints))
 			.build();
 
-		chatMessageManager.queue(
-			QueuedMessage.builder()
-				.type(ChatMessageType.CONSOLE)
-				.runeLiteFormattedMessage(message)
-				.build());
+		chatMessageManager
+			.queue(QueuedMessage.builder().type(ChatMessageType.CONSOLE).runeLiteFormattedMessage(message).build());
 	}
 
 	public void copyJsonToClipboard()
 	{
 		clientThread.invokeLater(() -> {
-			// Not worried with this complexity on the client thread because it's from an infrequent button press
+			// Not worried with this complexity on the client thread because it's from an
+			// infrequent button press
 			String json = getCurrentTaskTypeExportJson();
 			final StringSelection stringSelection = new StringSelection(json);
 			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
@@ -459,8 +458,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		log.debug("forceVarpUpdate");
 		processVarpAndUpdateTasks(null).thenAccept((processed) -> {
-			if (processed)
-			{
+			if (processed) {
 				log.debug("forceVarpUpdate processed complete, saving");
 				saveCurrentTaskTypeData();
 			}
@@ -471,8 +469,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		log.debug("Flushing throttled varp updates {}", varpIds);
 		varpIds.forEach((id) -> processVarpAndUpdateTasks(id).thenAccept(processed -> {
-			if (processed)
-			{
+			if (processed) {
 				log.debug("flushVarpUpdates processed complete, saving");
 				saveCurrentTaskTypeData();
 			}
@@ -483,24 +480,22 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
 		clientThread.invoke(() -> {
-			int taskId =  task.getIntParam("id");
+			int taskId = task.getIntParam("id");
 			int varbitIndex = taskId / 32;
 			int bitIndex = taskId % 32;
-			try
-			{
+			try {
 				int varpId = task.getTaskType().getTaskVarps().get(varbitIndex);
 				BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varpId));
 				boolean isTaskCompleted = varpValue.testBit(bitIndex);
 				task.setCompleted(isTaskCompleted);
-				if (isTaskCompleted && config.untrackUponCompletion())
-				{
+				if (isTaskCompleted && config.untrackUponCompletion()) {
 					task.setTracked(false);
 				}
-				log.debug("process taskFromStruct {} ({}) {}", task.getStringParam("name"), task.getIntParam("id"), isTaskCompleted);
+				log.debug("process taskFromStruct {} ({}) {}", task.getStringParam("name"), task.getIntParam("id"),
+					isTaskCompleted);
 				future.complete(isTaskCompleted);
 			}
-			catch (Exception ex)
-			{
+			catch (Exception ex) {
 				log.error("Error processing task status {}", taskId, ex);
 				future.completeExceptionally(ex);
 			}
@@ -509,54 +504,48 @@ public class TasksTrackerPlugin extends Plugin
 	}
 
 	/**
-	 * Update task completion status. If no varpId is specified, it updates all tasks in the current task type
-	 * @param varpId varp id to update (optional)
+	 * Update task completion status. If no varpId is specified, it updates all
+	 * tasks in the current task type
+	 *
+	 * @param varpId
+	 *            varp id to update (optional)
 	 * @return An observable that emits true if all tasks were processed
 	 */
 	private CompletableFuture<Boolean> processVarpAndUpdateTasks(@Nullable Integer varpId)
 	{
 		log.info("processVarpAndUpdateTasks: " + (varpId != null ? varpId : "all"));
 
-		List<TaskFromStruct> tasks = varpId != null ?
-			taskService.getTasksFromVarpId(varpId) :
-			taskService.getTasks();
+		List<TaskFromStruct> tasks = varpId != null ? taskService.getTasksFromVarpId(varpId) : taskService.getTasks();
 
 		List<CompletableFuture<Boolean>> taskFutures = new ArrayList<>();
-		for (TaskFromStruct task : tasks)
-		{
+		for (TaskFromStruct task : tasks) {
 			CompletableFuture<Boolean> taskFuture = processTaskStatus(task);
 			taskFutures.add(taskFuture);
 		}
 
 		CompletableFuture<Void> allTasksFuture = CompletableFuture.allOf(taskFutures.toArray(new CompletableFuture[0]));
-		return allTasksFuture
-			.thenRun(() -> {
-				if (varpId != null)
-				{
-					SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.refreshMultipleTasks(tasks));
-				} else {
-					SwingUtilities.invokeLater(() -> pluginPanel.refreshAllTasks());
-				}
-			})
-			.thenApply(v -> true);
+		return allTasksFuture.thenRun(() -> {
+			if (varpId != null) {
+				SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.refreshMultipleTasks(tasks));
+			}
+			else {
+				SwingUtilities.invokeLater(() -> pluginPanel.refreshAllTasks());
+			}
+		}).thenApply(v -> true);
 	}
 
 	private String getCurrentTaskTypeExportJson()
 	{
 		TaskType taskType = taskService.getCurrentTaskType();
-		Gson gson = this.gson.newBuilder()
-			.excludeFieldsWithoutExposeAnnotation()
-			.registerTypeAdapter(float.class, new LongSerializer())
-			.create();
+		Gson gson = this.gson.newBuilder().excludeFieldsWithoutExposeAnnotation()
+			.registerTypeAdapter(float.class, new LongSerializer()).create();
 
-		if (taskType == null)
-		{
+		if (taskType == null) {
 			String error = "Cannot export to JSON; no task type selected.";
 			log.error(error);
 			return error;
 		}
-		else
-		{
+		else {
 			Export export = new Export(taskType, taskService.getTasks(), runeliteVersion, client);
 			return gson.toJson(export);
 		}
@@ -568,14 +557,13 @@ public class TasksTrackerPlugin extends Plugin
 			JOptionPane optionPane;
 			JDialog dialog;
 
-			if (showOpenLeagueTools)
-			{
+			if (showOpenLeagueTools) {
 				String[] options = {"Open OS League Tools", "Ok"};
 
-				optionPane = new JOptionPane(message, messageType, JOptionPane.YES_NO_OPTION, null, options, options[1]);
+				optionPane = new JOptionPane(message, messageType, JOptionPane.YES_NO_OPTION, null, options,
+					options[1]);
 			}
-			else
-			{
+			else {
 				optionPane = new JOptionPane(message, messageType);
 			}
 
@@ -584,13 +572,11 @@ public class TasksTrackerPlugin extends Plugin
 			dialog.setVisible(true);
 
 			Object selectedValue = optionPane.getValue();
-			if (selectedValue == null)
-			{
+			if (selectedValue == null) {
 				return;
 			}
 
-			if (selectedValue.equals("Open OS League Tools"))
-			{
+			if (selectedValue.equals("Open OS League Tools")) {
 				LinkBrowser.browse("https://www.osleague.tools/tracker?open=import&tab=tasks");
 			}
 		});

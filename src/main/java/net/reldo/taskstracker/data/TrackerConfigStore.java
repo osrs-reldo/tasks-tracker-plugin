@@ -34,37 +34,31 @@ public class TrackerConfigStore
 	@Inject
 	public TrackerConfigStore(Gson gson)
 	{
-		this.customGson = gson.newBuilder()
-			.excludeFieldsWithoutExposeAnnotation()
-			.registerTypeAdapter(float.class, new LongSerializer())
-			.create();
+		this.customGson = gson.newBuilder().excludeFieldsWithoutExposeAnnotation()
+			.registerTypeAdapter(float.class, new LongSerializer()).create();
 	}
 
 	public void loadCurrentTaskTypeFromConfig()
 	{
 		TaskType currentTaskType = taskService.getCurrentTaskType();
-		if (currentTaskType == null)
-		{
+		if (currentTaskType == null) {
 			log.debug("loadTaskTypeFromConfig type is null, skipping");
 			return;
 		}
 		log.debug("loadTaskTypeFromConfig {}", currentTaskType.getName());
 		String configKey = getCurrentTaskTypeConfigKey();
 		String configJson = configManager.getRSProfileConfiguration(CONFIG_GROUP_NAME, configKey);
-		if (configJson == null)
-		{
+		if (configJson == null) {
 			log.debug("No save information for task type {}, not applying save", currentTaskType.getName());
 			return;
 		}
 
 		Type deserializeType = TypeToken.getParameterized(HashMap.class, Integer.class, ConfigTaskSave.class).getType();
-		try
-		{
+		try {
 			HashMap<Integer, ConfigTaskSave> saveData = customGson.fromJson(configJson, deserializeType);
 			taskService.applySave(currentTaskType, saveData);
 		}
-		catch (JsonParseException ex)
-		{
+		catch (JsonParseException ex) {
 			log.error("{} {} json invalid. wiping saved data", CONFIG_GROUP_NAME, configKey, ex);
 			configManager.unsetRSProfileConfiguration(CONFIG_GROUP_NAME, configKey);
 		}
@@ -75,15 +69,12 @@ public class TrackerConfigStore
 		log.debug("saveTaskTypeToConfig");
 		Map<Integer, ConfigTaskSave> saveDataByStructId = taskService.getTasks().stream()
 			.filter(task -> task.getCompletedOn() != 0 || task.getIgnoredOn() != 0 || task.getTrackedOn() != 0)
-			.collect(Collectors.toMap(
-				TaskFromStruct::getStructId,
-				TaskFromStruct::getSaveData,
-				(existing, replacement) -> existing,
-				HashMap::new
-			));
+			.collect(Collectors.toMap(TaskFromStruct::getStructId, TaskFromStruct::getSaveData,
+				(existing, replacement) -> existing, HashMap::new));
 
 		String configValue = this.customGson.toJson(saveDataByStructId);
-		String configKey = CONFIG_TASKS_PREFIX + CONFIG_GROUP_PREFIX_SEPARATOR + taskService.getCurrentTaskType().getTaskJsonName();
+		String configKey = CONFIG_TASKS_PREFIX + CONFIG_GROUP_PREFIX_SEPARATOR
+			+ taskService.getCurrentTaskType().getTaskJsonName();
 		configManager.setRSProfileConfiguration(CONFIG_GROUP_NAME, configKey, configValue);
 	}
 

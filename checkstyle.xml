@@ -1,46 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <profiles version="12">
-  <profile kind="CodeFormatterProfile" name="RuneLite" version="12">
+	<profile kind="CodeFormatterProfile" name="RuneLite" version="12">
 
-    <!-- ==================== Indentation ==================== -->
-    <setting id="org.eclipse.jdt.core.formatter.tabulation.char" value="tab"/>
-    <setting id="org.eclipse.jdt.core.formatter.tabulation.size" value="4"/>
-    <setting id="org.eclipse.jdt.core.formatter.indentation.size" value="4"/>
-    <setting id="org.eclipse.jdt.core.formatter.continuation_indentation" value="1"/>
-    <setting id="org.eclipse.jdt.core.formatter.lineSplit" value="120"/>
+		<!-- ==================== Indentation ==================== -->
+		<setting id="org.eclipse.jdt.core.formatter.tabulation.char" value="tab" />
+		<setting id="org.eclipse.jdt.core.formatter.tabulation.size" value="4" />
+		<setting id="org.eclipse.jdt.core.formatter.indentation.size" value="4" />
+		<setting id="org.eclipse.jdt.core.formatter.continuation_indentation" value="1" />
+		<setting id="org.eclipse.jdt.core.formatter.lineSplit" value="120" />
 
-    <!-- ==================== Braces ==================== -->
+		<!-- ==================== Braces ==================== -->
 
-    <!-- Control flow: same line -->
-    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_if" value="end_of_line"/>
-    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_for" value="end_of_line"/>
-    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_while" value="end_of_line"/>
-    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_do" value="end_of_line"/>
-    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_try" value="end_of_line"/>
+		<!-- Control flow: same line -->
+		<setting id="org.eclipse.jdt.core.formatter.brace_position_for_if" value="end_of_line" />
+		<setting id="org.eclipse.jdt.core.formatter.brace_position_for_for" value="end_of_line" />
+		<setting id="org.eclipse.jdt.core.formatter.brace_position_for_while" value="end_of_line" />
+		<setting id="org.eclipse.jdt.core.formatter.brace_position_for_do" value="end_of_line" />
+		<setting id="org.eclipse.jdt.core.formatter.brace_position_for_try" value="end_of_line" />
 
-    <!-- else / catch / finally on new line -->
-    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_else" value="next_line"/>
-    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_catch" value="next_line"/>
-    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_finally" value="next_line"/>
+		<!-- else / catch / finally: brace on same line, but keyword on new line -->
+		<setting id="org.eclipse.jdt.core.formatter.brace_position_for_block_in_case" value="end_of_line" />
+		<setting id="org.eclipse.jdt.core.formatter.brace_position_for_switch" value="end_of_line" />
 
-    <!-- Types and methods: next line allowed -->
-    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_type_declaration" value="next_line"/>
-    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_method_declaration" value="next_line"/>
-    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_constructor_declaration" value="next_line"/>
+		<!-- Force else/catch/finally to start on new line (not "} else {") -->
+		<setting id="org.eclipse.jdt.core.formatter.insert_new_line_before_else_in_if_statement" value="insert" />
+		<setting id="org.eclipse.jdt.core.formatter.insert_new_line_before_catch_in_try_statement" value="insert" />
+		<setting id="org.eclipse.jdt.core.formatter.insert_new_line_before_finally_in_try_statement" value="insert" />
+		<setting id="org.eclipse.jdt.core.formatter.insert_new_line_before_while_in_do_statement" value="insert" />
 
-    <!-- ==================== Whitespace ==================== -->
-    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_comma_in_arguments" value="true"/>
-    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_comma_in_arguments" value="false"/>
-    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_if" value="false"/>
-    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_if" value="false"/>
+		<!-- Types and methods: next line allowed -->
+		<setting id="org.eclipse.jdt.core.formatter.brace_position_for_type_declaration"
+			value="next_line" />
+		<setting id="org.eclipse.jdt.core.formatter.brace_position_for_method_declaration"
+			value="next_line" />
+		<setting id="org.eclipse.jdt.core.formatter.brace_position_for_constructor_declaration"
+			value="next_line" />
 
-    <!-- ==================== Imports ==================== -->
-    <setting id="org.eclipse.jdt.core.formatter.number_of_imports_for_wildcard" value="999"/>
-    <setting id="org.eclipse.jdt.core.formatter.number_of_static_imports_for_wildcard" value="999"/>
+		<!-- ==================== Whitespace ==================== -->
+		<setting id="org.eclipse.jdt.core.formatter.insert_space_after_comma_in_arguments"
+			value="true" />
+		<setting id="org.eclipse.jdt.core.formatter.insert_space_before_comma_in_arguments"
+			value="false" />
+		<setting id="org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_if"
+			value="false" />
+		<setting id="org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_if"
+			value="false" />
 
-    <!-- ==================== Misc ==================== -->
-    <setting id="org.eclipse.jdt.core.formatter.keep_else_statement_on_same_line" value="false"/>
-    <setting id="org.eclipse.jdt.core.formatter.keep_then_statement_on_same_line" value="false"/>
+		<!-- ==================== Imports ==================== -->
+		<setting id="org.eclipse.jdt.core.formatter.number_of_imports_for_wildcard" value="999" />
+		<setting id="org.eclipse.jdt.core.formatter.number_of_static_imports_for_wildcard"
+			value="999" />
 
-  </profile>
+		<!-- ==================== Annotations ==================== -->
+
+		<!-- Force annotation arguments to wrap one per line (49 = one per line + force) -->
+		<setting id="org.eclipse.jdt.core.formatter.alignment_for_arguments_in_annotation" value="49" />
+
+		<!-- Put closing paren on new line after wrapped annotation arguments -->
+		<setting id="org.eclipse.jdt.core.formatter.parentheses_positions_in_annotation" value="separate_lines_if_wrapped" />
+
+		<!-- ==================== Comments ==================== -->
+
+		<!-- Preserve block comment formatting -->
+		<setting id="org.eclipse.jdt.core.formatter.comment.format_block_comments" value="false" />
+
+		<!-- ==================== Misc ==================== -->
+		<setting id="org.eclipse.jdt.core.formatter.keep_else_statement_on_same_line" value="false" />
+		<setting id="org.eclipse.jdt.core.formatter.keep_then_statement_on_same_line" value="false" />
+		<setting id="org.eclipse.jdt.core.formatter.keep_simple_if_on_one_line" value="false" />
+		<setting id="org.eclipse.jdt.core.formatter.keep_simple_for_body_on_same_line" value="false" />
+		<setting id="org.eclipse.jdt.core.formatter.keep_simple_while_body_on_same_line" value="false" />
+		<setting id="org.eclipse.jdt.core.formatter.keep_simple_do_while_body_on_same_line" value="false" />
+
+		<!-- ==================== Enums ==================== -->
+
+		<!-- Force one enum constant per line (17 = wrap where necessary + force split) -->
+		<setting id="org.eclipse.jdt.core.formatter.alignment_for_enum_constants" value="17" />
+
+		<!-- Enum declaration brace on next line -->
+		<setting id="org.eclipse.jdt.core.formatter.brace_position_for_enum_declaration" value="next_line" />
+
+		<!-- Force newlines for enum constants -->
+		<setting id="org.eclipse.jdt.core.formatter.insert_new_line_after_opening_brace_in_enum_declaration" value="insert" />
+		<setting id="org.eclipse.jdt.core.formatter.insert_new_line_before_closing_brace_in_enum_declaration" value="insert" />
+
+	</profile>
 </profiles>

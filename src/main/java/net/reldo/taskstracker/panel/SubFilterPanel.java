@@ -54,19 +54,15 @@ public class SubFilterPanel extends FixedWidthPanel
 	private List<FilterPanel> getFilterPanels(ArrayList<FilterConfig> filterConfigs)
 	{
 		List<FilterPanel> filterPanels = new ArrayList<>();
-		for (FilterConfig filterConfig : filterConfigs)
-		{
-			try
-			{
+		for (FilterConfig filterConfig : filterConfigs) {
+			try {
 				FilterPanel filterPanel = createDynamicFilterPanel(filterConfig);
-				if (filterPanel == null)
-				{
+				if (filterPanel == null) {
 					continue;
 				}
 				filterPanels.add(filterPanel);
 			}
-			catch (Exception ex)
-			{
+			catch (Exception ex) {
 				log.error("error creating filter panel {} {}", filterConfig.getConfigKey(), ex);
 			}
 		}
@@ -75,14 +71,14 @@ public class SubFilterPanel extends FixedWidthPanel
 
 	private FilterPanel createDynamicFilterPanel(FilterConfig filterConfig) throws Exception
 	{
-		switch (filterConfig.getFilterType())
-		{
-			case BUTTON_FILTER:
+		switch (filterConfig.getFilterType()) {
+			case BUTTON_FILTER :
 				return new DynamicButtonFilterPanel(plugin, filterConfig, taskService.getCurrentTaskType());
-			case DROPDOWN_FILTER:
+			case DROPDOWN_FILTER :
 				ComboItem[] dropdownItems = getDropdownItems(filterConfig);
-				return new DynamicDropdownFilterPanel(plugin, filterConfig, taskService.getCurrentTaskType(), dropdownItems);
-			default:
+				return new DynamicDropdownFilterPanel(plugin, filterConfig, taskService.getCurrentTaskType(),
+					dropdownItems);
+			default :
 				log.error("invalid filter type " + filterConfig.getFilterType());
 				return null;
 		}
@@ -90,24 +86,20 @@ public class SubFilterPanel extends FixedWidthPanel
 
 	private ComboItem[] getDropdownItems(FilterConfig filterConfig) throws ExecutionException, InterruptedException
 	{
-		if (filterConfig.getValueType() == null)
-		{
+		if (filterConfig.getValueType() == null) {
 			throw new Error("invalid filterConfig for dropdown items");
 		}
-		if (filterConfig.getValueType().equals(FilterValueType.PARAM_INTEGER))
-		{
+		if (filterConfig.getValueType().equals(FilterValueType.PARAM_INTEGER)) {
 			String enumName = filterConfig.getOptionLabelEnum();
-			if (!enumName.isEmpty())
-			{
-				HashMap<Integer, String> enumEntries = taskService.getStringEnumValuesAsync(enumName).get(); // TODO: blocking call
+			if (!enumName.isEmpty()) {
+				HashMap<Integer, String> enumEntries = taskService.getStringEnumValuesAsync(enumName).get(); // TODO:
+																												// blocking
+																												// call
 				ArrayList<ComboItem<Integer>> options = new ArrayList<>();
 				options.add(new ComboItem<>(-1, ""));
-				for (Map.Entry<Integer, String> entry : enumEntries.entrySet())
-				{
-					if (filterConfig.getValueName().equals("tier"))
-					{
-						if (entry.getValue().equals("All") || entry.getValue().equals("Tier"))
-						{
+				for (Map.Entry<Integer, String> entry : enumEntries.entrySet()) {
+					if (filterConfig.getValueName().equals("tier")) {
+						if (entry.getValue().equals("All") || entry.getValue().equals("Tier")) {
 							continue;
 						}
 					}

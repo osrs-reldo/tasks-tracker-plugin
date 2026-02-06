@@ -55,7 +55,8 @@ public enum DiaryVarbits
 
 	public int id;
 
-	DiaryVarbits(int id) {
+	DiaryVarbits(int id)
+	{
 		this.id = id;
 	}
 

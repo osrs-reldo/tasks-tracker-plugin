@@ -9,9 +9,11 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class FilterConfig {
+public class FilterConfig
+{
 	/**
-	 * Key under which to store the filter's selected values, generally prefixed by task type
+	 * Key under which to store the filter's selected values, generally prefixed by
+	 * task type
 	 */
 	private String configKey;
 
@@ -26,20 +28,22 @@ public class FilterConfig {
 	private FilterType filterType;
 
 	/**
-	 * The source of the value(s) to use for the filter, see enum for types of values supported.
-	 * If global is specified then configKey must match a filter config defined in filters.json
+	 * The source of the value(s) to use for the filter, see enum for types of
+	 * values supported. If global is specified then configKey must match a filter
+	 * config defined in filters.json
 	 */
 	private FilterValueType valueType;
 
 	/**
-	 * The name of the param or metadata property to use for the filter.
-	 * Can be left null for SKILL value type
+	 * The name of the param or metadata property to use for the filter. Can be left
+	 * null for SKILL value type
 	 */
 	private String valueName;
 
 	/**
-	 * Name of an enum specified in `TaskTypeDefinition.stringEnumMap` to provide labels for the filter
-	 * Specifying this property will override the displayed integer value of `valueName`
+	 * Name of an enum specified in `TaskTypeDefinition.stringEnumMap` to provide
+	 * labels for the filter Specifying this property will override the displayed
+	 * integer value of `valueName`
 	 */
 	private String optionLabelEnum;
 
