@@ -31,6 +31,7 @@ import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.panel.components.SearchBox;
+import net.reldo.taskstracker.panel.components.TabMenuItem;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
 import net.reldo.taskstracker.panel.filters.ComboItem;
 import net.runelite.client.ui.ColorScheme;
@@ -258,18 +259,21 @@ public class LoggedInPanel extends JPanel
 
 		JPopupMenu popupMenu = new JPopupMenu("Filter Lock Toggles");
 
-		JMenuItem saveFiltersItem = new JMenuItem("Save Filters");
+		JMenuItem saveFiltersItem = new JMenuItem("Save Filter States");
 		saveFiltersItem.addActionListener(e -> saveCurrentTabFilters());
 
-		JMenuItem labelItem = new JMenuItem("Filter Lock Toggles");
+		JMenuItem labelItem = new JMenuItem("-----------------");
 		labelItem.setEnabled(false);
 
-		JMenuItem completedItem = new JMenuItem("Completed");
-		completedItem.addActionListener(e -> {plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "CompletedLock", completedFilterBtn.isEnabled());});
-		JMenuItem trackedItem = new JMenuItem("Tracked");
-		trackedItem.addActionListener(e -> {plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "TrackedLock", trackedFilterBtn.isEnabled());});
-		JMenuItem ignoredItem = new JMenuItem("Ignored");
-		ignoredItem.addActionListener(e -> {plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "IgnoredLock", ignoredFilterBtn.isEnabled());});
+		JMenuItem completedItem = new TabMenuItem("Completed", completedFilterBtn, e -> {
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "CompletedLock", completedFilterBtn.isEnabled());
+		});
+		JMenuItem trackedItem = new TabMenuItem("Tracked", trackedFilterBtn, e -> {
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "TrackedLock", trackedFilterBtn.isEnabled());
+		});
+		JMenuItem ignoredItem = new TabMenuItem("Ignored", ignoredFilterBtn, e -> {
+			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "IgnoredLock", ignoredFilterBtn.isEnabled());
+		});
 
 		popupMenu.add(saveFiltersItem);
 		popupMenu.add(labelItem);
@@ -278,6 +282,10 @@ public class LoggedInPanel extends JPanel
 		popupMenu.add(ignoredItem);
 
 		button.addChangeListener(e -> {
+			if(saveFiltersItem.isEnabled() != button.isSelected())
+			{
+				saveFiltersItem.setEnabled(button.isSelected());
+			}
 			if(completedItem.isEnabled() != button.isSelected())
 			{
 				completedItem.setEnabled(button.isSelected());
