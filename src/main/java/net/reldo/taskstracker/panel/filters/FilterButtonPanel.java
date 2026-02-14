@@ -57,37 +57,9 @@ public abstract class FilterButtonPanel extends FilterPanel
 
     protected abstract JPanel makeButtonPanel();
 
-    protected JToggleButton makeButton(String tooltip, BufferedImage image)
+    protected FilterButton makeButton(String key, String tooltip, BufferedImage image)
     {
-        JToggleButton button = new JToggleButton();
-        button.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        button.setBorder(new BasicBorders.ToggleButtonBorder(ColorScheme.DARKER_GRAY_COLOR,
-                                                             ColorScheme.DARKER_GRAY_COLOR.darker(),
-                                                             ColorScheme.MEDIUM_GRAY_COLOR.darker(),
-                                                             ColorScheme.MEDIUM_GRAY_COLOR));
-        button.setFocusable(false);
-
-        if (image != null) {
-            ImageIcon selectedIcon = new ImageIcon(image);
-            ImageIcon deselectedIcon = new ImageIcon(ImageUtil.alphaOffset(image, -180));
-
-            button.setIcon(deselectedIcon);
-            button.setSelectedIcon(selectedIcon);
-            button.setPreferredSize(new Dimension(image.getWidth(), image.getHeight() + 10));
-        } else {
-	        button.setPreferredSize(new Dimension(button.getPreferredSize().width, 50));
-        }
-        button.setToolTipText(tooltip.substring(0,1).toUpperCase() + tooltip.substring(1).toLowerCase());
-
-        button.addActionListener(e -> {
-            updateFilterText();
-            updateCollapseButtonText();
-            plugin.refreshAllTasks();
-        });
-
-        button.setSelected(true);
-
-        return button;
+        return new FilterButton(key, tooltip, image, this);
     }
 
     protected JPanel allOrNoneButtons()
@@ -187,6 +159,20 @@ public abstract class FilterButtonPanel extends FilterPanel
     protected void setAllSelected(boolean state)
     {
         buttons.values().forEach(button -> button.setSelected(state));
+    }
+
+    protected void setOnlySelected(String selectedKey)
+    {
+        buttons.forEach((key, button) -> {
+            button.setSelected(key.equals(selectedKey));
+        });
+    }
+
+    protected void setAllExceptSelected(String exceptKey)
+    {
+        buttons.forEach((key, button) -> {
+            button.setSelected(!key.equals(exceptKey));
+        });
     }
 
     protected void updateCollapseButtonText()

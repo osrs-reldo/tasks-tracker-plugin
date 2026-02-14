@@ -20,6 +20,7 @@ import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
+import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
 import net.runelite.api.Skill;
 import net.runelite.client.ui.FontManager;
@@ -256,7 +257,7 @@ public class TaskListPanel extends JScrollPane
 				processInBatches(tasks.size(), indexPosition ->
 				{
 					TaskFromStruct task = tasks.get(indexPosition);
-					TaskPanel taskPanel = new TaskPanel(plugin, task);
+					TaskPanel taskPanel = new TaskPanel(plugin, task, plugin.getFilterMatcher());
 					add(taskPanel);
 					newTaskPanels.add(taskPanel);
 					taskPanelsByStructId.put(task.getStructId(), taskPanel);

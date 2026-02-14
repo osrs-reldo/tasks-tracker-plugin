@@ -14,13 +14,14 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
@@ -29,17 +30,10 @@ import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.HtmlUtil;
-import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
-import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
-import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
-import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
-import net.reldo.taskstracker.data.task.filters.Filter;
-import net.reldo.taskstracker.data.task.filters.ParamButtonFilter;
-import net.reldo.taskstracker.data.task.filters.ParamDropdownFilter;
+import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.runelite.api.Constants;
 import net.runelite.api.Skill;
 import net.runelite.client.game.SkillIconManager;
@@ -62,32 +56,19 @@ public class TaskPanel extends JPanel
 	private final JToggleButton toggleTrack = new JToggleButton();
 	private final JToggleButton toggleIgnore = new JToggleButton();
 
-	protected final ArrayList<Filter> filters = new ArrayList<>();
+	protected final FilterMatcher filterMatcher;
 
 	protected TasksTrackerPlugin plugin;
 
-	public TaskPanel(TasksTrackerPlugin plugin, TaskFromStruct task)
+	public TaskPanel(TasksTrackerPlugin plugin, TaskFromStruct task, FilterMatcher filterMatcher)
 	{
 		super(new BorderLayout());
 		this.plugin = plugin;
 		this.task = task;
+		this.filterMatcher = filterMatcher;
 		createPanel();
 		setComponentPopupMenu(getPopupMenu());
 		ToolTipManager.sharedInstance().registerComponent(this);
-
-		task.getTaskType().getFilters().forEach((filterConfig) -> {
-			String paramName = filterConfig.getValueName();
-			if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER))
-			{
-				Filter filter = new ParamButtonFilter(plugin.getConfigManager(), paramName, task.getTaskType().getTaskJsonName() + "." + filterConfig.getConfigKey());
-				filters.add(filter);
-			}
-			else if (filterConfig.getFilterType().equals(FilterType.DROPDOWN_FILTER))
-			{
-				Filter filter = new ParamDropdownFilter(plugin.getConfigManager(), paramName, task.getTaskType().getTaskJsonName() + "." + filterConfig.getConfigKey());
-				filters.add(filter);
-			}
-		});
 
 		refresh();
 	}
@@ -110,7 +91,7 @@ public class TaskPanel extends JPanel
 		}
 
 		String wikiNotes = task.getTaskDefinition().getWikiNotes();
-		if (wikiNotes != null)
+		if (wikiNotes != null && !wikiNotes.isEmpty())
 		{
 			tooltipText.append(HtmlUtil.HTML_LINE_BREAK).append(wikiNotes).append(HtmlUtil.HTML_LINE_BREAK);
 		}
@@ -127,6 +108,13 @@ public class TaskPanel extends JPanel
 		if (completionPercent != null)
 		{
 			tooltipText.append(HtmlUtil.HTML_LINE_BREAK).append("Players Completed: ").append(completionPercent).append('%');
+		}
+
+		String userNotes = task.getNote();
+		if (userNotes != null && !userNotes.isEmpty())
+		{
+			tooltipText.append(HtmlUtil.HTML_LINE_BREAK).append(HtmlUtil.HTML_LINE_BREAK);
+			tooltipText.append(HtmlUtil.wrapWithItalics(userNotes)).append(HtmlUtil.HTML_LINE_BREAK);
 		}
 
 		return HtmlUtil.wrapWithHtml(
@@ -247,20 +235,40 @@ public class TaskPanel extends JPanel
 			{
 				if (e.isPopupTrigger())
 				{
-					JPopupMenu menu = createWikiPopupMenu();
+					JPopupMenu menu = createTaskPopupMenu();
 					menu.show(e.getComponent(), e.getX(), e.getY());
 				}
 			}
 		});
 	}
 
-	public JPopupMenu createWikiPopupMenu()
+	public JPopupMenu createTaskPopupMenu()
 	{
 		JPopupMenu popupMenu = new JPopupMenu();
+		JMenuItem editNoteItem = new JMenuItem("Edit Note");
+		editNoteItem.addActionListener(e -> editTaskNote());
+		popupMenu.add(editNoteItem);
 		JMenuItem openWikiItem = new JMenuItem("Wiki");
 		openWikiItem.addActionListener(e -> openRuneScapeWiki());
 		popupMenu.add(openWikiItem);
 		return popupMenu;
+	}
+
+	private void editTaskNote()
+	{
+		JOptionPane optionPane = new JOptionPane("Enter the notes to associate with this task (empty removes note):", JOptionPane.INFORMATION_MESSAGE);
+		optionPane.setInitialSelectionValue(task.getNote());
+		optionPane.setWantsInput(true);
+		JDialog inputDialog = optionPane.createDialog(this, "Set tasks note");
+		inputDialog.setAlwaysOnTop(true);
+		inputDialog.setVisible(true);
+		Object inputValue = optionPane.getInputValue();
+		if (inputValue != JOptionPane.UNINITIALIZED_VALUE)
+		{
+			String note = inputValue.toString();
+			task.setNote(note.isEmpty() ? null : note);
+			plugin.saveCurrentTaskTypeData();
+		}
 	}
 
 	private void openRuneScapeWiki()
@@ -283,63 +291,37 @@ public class TaskPanel extends JPanel
 		}
 	}
 
-	public void refresh()
-	{
-		setBackgroundColor(getTaskBackgroundColor());
-		name.setText(HtmlUtil.wrapWithHtml(task.getName()));
-		description.setText(HtmlUtil.wrapWithHtml(task.getDescription()));
-		toggleTrack.setSelected(task.isTracked());
-		toggleIgnore.setSelected(task.isIgnored());
+    public void refresh()
+    {
+        setBackgroundColor(getTaskBackgroundColor());
+        name.setText(HtmlUtil.wrapWithHtml(task.getName()));
+        description.setText(HtmlUtil.wrapWithHtml(task.getDescription()));
 
-		setVisible(meetsFilterCriteria());
+        // If completed tasks are auto-untracked, don't allow users to add them to tracked tasks, that's silly.
+        boolean disableTrack = plugin.getConfig().untrackUponCompletion() && task.isCompleted();
+        toggleTrack.setEnabled(!disableTrack);
 
-		revalidate();
-	}
+        // Tell the user why it's greyed out
+        if (disableTrack)
+        {
+            toggleTrack.setToolTipText("Completed tasks cannot be tracked while 'Untrack Tasks Upon Completion' is enabled.");
+        }
+        else
+        {
+            toggleTrack.setToolTipText(null);
+        }
+
+        toggleTrack.setSelected(task.isTracked());
+        toggleIgnore.setSelected(task.isIgnored());
+
+        setVisible(meetsFilterCriteria());
+
+        revalidate();
+    }
 
 	protected boolean meetsFilterCriteria()
 	{
-		String nameLowercase = task.getName().toLowerCase();
-		String descriptionLowercase = task.getDescription().toLowerCase();
-		if (plugin.taskTextFilter != null &&
-			!nameLowercase.contains(plugin.taskTextFilter) &&
-			!descriptionLowercase.contains(plugin.taskTextFilter))
-		{
-			return false;
-		}
-
-		TasksTrackerConfig config = plugin.getConfig();
-
-		for (Filter filter : filters)
-		{
-			if (!filter.meetsCriteria(task))
-			{
-				return false;
-			}
-		}
-
-		if (config.completedFilter().equals(CompletedFilterValues.INCOMPLETE) && task.isCompleted())
-		{
-			return false;
-		}
-		if (config.completedFilter().equals(CompletedFilterValues.COMPLETE) && !task.isCompleted())
-		{
-			return false;
-		}
-
-		if (config.ignoredFilter().equals(IgnoredFilterValues.NOT_IGNORED) && task.isIgnored())
-		{
-			return false;
-		}
-		if (config.ignoredFilter().equals(IgnoredFilterValues.IGNORED) && !task.isIgnored())
-		{
-			return false;
-		}
-
-		if (config.trackedFilter().equals(TrackedFilterValues.UNTRACKED) && task.isTracked())
-		{
-			return false;
-		}
-		return !config.trackedFilter().equals(TrackedFilterValues.TRACKED) || task.isTracked();
+		return filterMatcher.meetsFilterCriteria(task, plugin.taskTextFilter);
 	}
 
 	private void setBackgroundColor(Color color)

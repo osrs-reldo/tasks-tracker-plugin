@@ -36,6 +36,7 @@ import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
+import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.reldo.taskstracker.data.task.filters.FilterService;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
 import net.runelite.api.ChatMessageType;
@@ -103,6 +104,8 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject	private TrackerConfigStore trackerConfigStore;
 	@Inject private TaskService taskService;
 	@Inject private FilterService filterService;
+
+	@Getter private FilterMatcher filterMatcher;
 
 	@Override
 	public void configure(Binder binder)
@@ -212,10 +215,15 @@ public class TasksTrackerPlugin extends Plugin
 		}
 
 		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
-		if (configChanged.getKey().equals("untrackUponCompletion") && config.untrackUponCompletion())
-		{
-			forceVarpUpdate();
-		}
+        if (configChanged.getKey().equals("untrackUponCompletion"))
+        {
+            SwingUtilities.invokeLater(pluginPanel::refreshAllTasks);
+
+            if (config.untrackUponCompletion())
+            {
+                forceVarpUpdate();
+            }
+        }
 
 		if (configChanged.getKey().equals("filterPanelCollapsible"))
 		{
@@ -270,6 +278,7 @@ public class TasksTrackerPlugin extends Plugin
 			log.debug("forceUpdateVarpsFlag game tick {} {}", forceUpdateVarpsFlag, taskService.isTaskTypeChanged());
 			trackerConfigStore.loadCurrentTaskTypeFromConfig();
 			forceVarpUpdate();
+			updateFilterMatcher();
 			SwingUtilities.invokeLater(() -> pluginPanel.drawNewTaskType());
 			forceUpdateVarpsFlag = false;
 			taskService.setTaskTypeChanged(false);
@@ -345,6 +354,7 @@ public class TasksTrackerPlugin extends Plugin
                 if (!isSet) {
                     return;
                 }
+                updateFilterMatcher();
                 SwingUtilities.invokeLater(() ->
                 {
 			pluginPanel.drawNewTaskType();
@@ -425,20 +435,46 @@ public class TasksTrackerPlugin extends Plugin
 		}
 	}
 
+	/**
+	 * Creates or updates the FilterMatcher for the current task type.
+	 * Should be called when the task type changes.
+	 */
+	public void updateFilterMatcher()
+	{
+		this.filterMatcher = new FilterMatcher(
+			configManager,
+			config,
+			taskService.getCurrentTaskType()
+		);
+	}
+
 	public void sendTotalsToChat()
 	{
-		TasksSummary summary = new TasksSummary(taskService.getTasks());
-		int trackedTasks = summary.trackedTasksCount;
-		int trackedPoints = summary.trackedTasksPoints;
+		if (filterMatcher == null)
+		{
+			updateFilterMatcher();
+		}
 
-		final String message = new ChatMessageBuilder()
-			.append(Color.BLACK, String.format("Task Tracker - Tracked Tasks: %s | Tracked Points: %s", trackedTasks, trackedPoints))
+		TasksSummary summary = new TasksSummary(
+			taskService.getTasks(),
+			filterMatcher,
+			taskTextFilter
+		);
+
+		String taskTypeName = taskService.getCurrentTaskType() != null
+			? taskService.getCurrentTaskType().getTaskJsonName()
+			: null;
+
+		String message = summary.formatChatMessage(taskTypeName, config.untrackUponCompletion());
+
+		final String formattedMessage = new ChatMessageBuilder()
+			.append(Color.BLACK, message)
 			.build();
 
 		chatMessageManager.queue(
 			QueuedMessage.builder()
 				.type(ChatMessageType.CONSOLE)
-				.runeLiteFormattedMessage(message)
+				.runeLiteFormattedMessage(formattedMessage)
 				.build());
 	}
 
