@@ -101,13 +101,13 @@ public class HttpDataStoreReader implements DataStoreReader
 	}
 
 	@Override
-	public InputStream readFilterConfigs(String filterFilename)  throws Exception
+	public InputStream readFilterConfigs(String filterFilename) throws Exception
 	{
 		String filterJsonUrl = JsonDataStore.baseUrl + "/" + filterFilename;
 		log.debug("getTaskTypes json from {} ...", filterJsonUrl);
 		Request request = new Request.Builder()
-				.url(filterJsonUrl)
-				.build();
+			.url(filterJsonUrl)
+			.build();
 		Response response = this.okHttpClient.newCall(request).execute();
 		if (!response.isSuccessful())
 		{

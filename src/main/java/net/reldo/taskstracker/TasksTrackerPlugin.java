@@ -90,22 +90,39 @@ public class TasksTrackerPlugin extends Plugin
 	private RuneScapeProfileType currentProfileType;
 	private final Map<Skill, Integer> oldExperience = new EnumMap<>(Skill.class);
 
-	@Inject	@Named("runelite.version") private String runeliteVersion;
-	@Inject private Gson gson;
-	@Inject	private Client client;
-	@Inject	private SpriteManager spriteManager;
-	@Inject	private PluginManager pluginManager;
-	@Inject	private ClientToolbar clientToolbar;
-	@Inject	private ClientThread clientThread;
-	@Inject	private ChatMessageManager chatMessageManager;
-	@Getter	@Inject	private ConfigManager configManager;
-	@Getter @Inject	private TasksTrackerConfig config;
+	@Inject
+	@Named("runelite.version")
+	private String runeliteVersion;
+	@Inject
+	private Gson gson;
+	@Inject
+	private Client client;
+	@Inject
+	private SpriteManager spriteManager;
+	@Inject
+	private PluginManager pluginManager;
+	@Inject
+	private ClientToolbar clientToolbar;
+	@Inject
+	private ClientThread clientThread;
+	@Inject
+	private ChatMessageManager chatMessageManager;
+	@Getter
+	@Inject
+	private ConfigManager configManager;
+	@Getter
+	@Inject
+	private TasksTrackerConfig config;
 
-	@Inject	private TrackerConfigStore trackerConfigStore;
-	@Inject private TaskService taskService;
-	@Inject private FilterService filterService;
+	@Inject
+	private TrackerConfigStore trackerConfigStore;
+	@Inject
+	private TaskService taskService;
+	@Inject
+	private FilterService filterService;
 
-	@Getter private FilterMatcher filterMatcher;
+	@Getter
+	private FilterMatcher filterMatcher;
 
 	@Override
 	public void configure(Binder binder)
@@ -170,12 +187,18 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onCommandExecuted(CommandExecuted commandExecuted)
 	{
-		if (!commandExecuted.getCommand().startsWith("tt")) return;
+		if (!commandExecuted.getCommand().startsWith("tt"))
+		{
+			return;
+		}
 
 		if (commandExecuted.getCommand().equalsIgnoreCase("tt-process-varp"))
 		{
 			String[] args = commandExecuted.getArguments();
-			if (args.length == 0) return;
+			if (args.length == 0)
+			{
+				return;
+			}
 
 			try
 			{
@@ -215,15 +238,15 @@ public class TasksTrackerPlugin extends Plugin
 		}
 
 		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
-        if (configChanged.getKey().equals("untrackUponCompletion"))
-        {
-            SwingUtilities.invokeLater(pluginPanel::refreshAllTasks);
+		if (configChanged.getKey().equals("untrackUponCompletion"))
+		{
+			SwingUtilities.invokeLater(pluginPanel::refreshAllTasks);
 
-            if (config.untrackUponCompletion())
-            {
-                forceVarpUpdate();
-            }
-        }
+			if (config.untrackUponCompletion())
+			{
+				forceVarpUpdate();
+			}
+		}
 
 		if (configChanged.getKey().equals("filterPanelCollapsible"))
 		{
@@ -345,28 +368,33 @@ public class TasksTrackerPlugin extends Plugin
 		SwingUtilities.invokeLater(() -> pluginPanel.refreshAllTasks());
 	}
 
-    public void reloadTaskType() {
-        taskService.clearTaskTypes();
-        filterService.clearFilterConfigs();
-        try {
-            String taskTypeJsonName = config.taskTypeJsonName();
-            taskService.setTaskType(taskTypeJsonName).thenAccept(isSet -> {
-                if (!isSet) {
-                    return;
-                }
-                updateFilterMatcher();
-                SwingUtilities.invokeLater(() ->
-                {
-			pluginPanel.drawNewTaskType();
-			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
-                    pluginPanel.refreshAllTasks();
-                });
-            });
-        } catch (Exception ex) {
-            log.error("error setting task type in reload", ex);
-        }
+	public void reloadTaskType()
+	{
+		taskService.clearTaskTypes();
+		filterService.clearFilterConfigs();
+		try
+		{
+			String taskTypeJsonName = config.taskTypeJsonName();
+			taskService.setTaskType(taskTypeJsonName).thenAccept(isSet -> {
+				if (!isSet)
+				{
+					return;
+				}
+				updateFilterMatcher();
+				SwingUtilities.invokeLater(() ->
+				{
+					pluginPanel.drawNewTaskType();
+					pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
+					pluginPanel.refreshAllTasks();
+				});
+			});
+		}
+		catch (Exception ex)
+		{
+			log.error("error setting task type in reload", ex);
+		}
 
-    }
+	}
 
 	public void saveCurrentTaskTypeData()
 	{
@@ -519,7 +547,7 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
 		clientThread.invoke(() -> {
-			int taskId =  task.getIntParam("id");
+			int taskId = task.getIntParam("id");
 			int varbitIndex = taskId / 32;
 			int bitIndex = taskId % 32;
 			try
@@ -546,6 +574,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	/**
 	 * Update task completion status. If no varpId is specified, it updates all tasks in the current task type
+	 *
 	 * @param varpId varp id to update (optional)
 	 * @return An observable that emits true if all tasks were processed
 	 */
@@ -570,7 +599,9 @@ public class TasksTrackerPlugin extends Plugin
 				if (varpId != null)
 				{
 					SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.refreshMultipleTasks(tasks));
-				} else {
+				}
+				else
+				{
 					SwingUtilities.invokeLater(() -> pluginPanel.refreshAllTasks());
 				}
 			})

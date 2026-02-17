@@ -33,12 +33,18 @@ import net.runelite.client.config.ConfigManager;
 @Slf4j
 public class TaskService
 {
-	@Inject private ManifestClient manifestClient;
-	@Inject private TaskDataClient taskDataClient;
-	@Inject private ClientThread clientThread;
-	@Inject private Client client;
-	@Inject private FilterService filterService;
-	@Inject private ConfigManager configManager;
+	@Inject
+	private ManifestClient manifestClient;
+	@Inject
+	private TaskDataClient taskDataClient;
+	@Inject
+	private ClientThread clientThread;
+	@Inject
+	private Client client;
+	@Inject
+	private FilterService filterService;
+	@Inject
+	private ConfigManager configManager;
 
 	@Getter
 	@Setter
@@ -53,130 +59,151 @@ public class TaskService
 	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
 	private final ExecutorService futureExecutor = Executors.newSingleThreadExecutor();
 
-    public CompletableFuture<Boolean> setTaskType(String taskTypeJsonName) {
-        return getTaskTypesByJsonName().thenCompose(taskTypes ->
-        {
-            TaskType newTaskType = taskTypes.get(taskTypeJsonName);
-            if (newTaskType == null)
-            {
-                log.error("unsupported task type {}, falling back to COMBAT", taskTypeJsonName);
-                newTaskType = taskTypes.get("COMBAT");
-            }
-            return this.setTaskType(newTaskType);
-        });
-    }
+	public CompletableFuture<Boolean> setTaskType(String taskTypeJsonName)
+	{
+		return getTaskTypesByJsonName().thenCompose(taskTypes ->
+		{
+			TaskType newTaskType = taskTypes.get(taskTypeJsonName);
+			if (newTaskType == null)
+			{
+				log.error("unsupported task type {}, falling back to COMBAT", taskTypeJsonName);
+				newTaskType = taskTypes.get("COMBAT");
+			}
+			return this.setTaskType(newTaskType);
+		});
+	}
 
-    private CompletableFuture<Boolean> loadAllTasksStructData(Collection<TaskFromStruct> tasks) {
-        Collection<CompletableFuture<Boolean>> taskFutures = new ArrayList<>();
-        for (TaskFromStruct task : tasks) {
-            CompletableFuture<Boolean> taskFuture = new CompletableFuture<>();
-            clientThread.invoke(() -> {
-                boolean isTaskLoaded = task.loadStructData(client);
-                taskFuture.complete(isTaskLoaded);
-            });
-            taskFutures.add(taskFuture);
-        }
-        return CompletableFuture.allOf(taskFutures.toArray(new CompletableFuture[0])).thenApply(v -> {
-            for (CompletableFuture<Boolean> future : taskFutures) {
-                if (!future.join()) {
-                    return false;
-                }
-            }
-            return true;
-        });
-    }
-
-    public CompletableFuture<Boolean> setTaskType(TaskType newTaskType) {
-        log.debug("setTaskType {}", newTaskType.getTaskJsonName());
-        if (newTaskType.equals(currentTaskType)) {
-            log.debug("Skipping setTaskType, same task type selected");
-            return CompletableFuture.completedFuture(false);
-        }
-        currentTaskType = newTaskType;
-        configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskTypeJsonName", newTaskType.getTaskJsonName());
-
-        // Complete creation of any GLOBAL value type filterConfigs
-        for (FilterConfig filterConfig : currentTaskType.getFilters()) {
-            if (filterConfig.getValueType().equals(FilterValueType.GLOBAL)) {
-                // Set valueType to the one required by the global filter
-                FilterConfig globalFilterConfig = filterService.getGlobalFilterByKey(filterConfig.getConfigKey());
-                filterConfig.setValueType(globalFilterConfig.getValueType());
-
-					// Set any filterConfig fields not already specified
-					Optional.ofNullable(filterConfig.getLabel()).ifPresentOrElse(val -> {}, () -> filterConfig.setLabel(globalFilterConfig.getLabel()));
-					Optional.ofNullable(filterConfig.getFilterType()).ifPresentOrElse(val -> {}, () -> filterConfig.setFilterType(globalFilterConfig.getFilterType()));
-					Optional.ofNullable(filterConfig.getValueName()).ifPresentOrElse(val -> {}, () -> filterConfig.setValueName(globalFilterConfig.getValueName()));
-					Optional.ofNullable(filterConfig.getOptionLabelEnum()).ifPresentOrElse(val -> {}, () -> filterConfig.setOptionLabelEnum(globalFilterConfig.getOptionLabelEnum()));
-					Optional.ofNullable(filterConfig.getCustomItems()).ifPresentOrElse(val -> {}, () -> filterConfig.setCustomItems(globalFilterConfig.getCustomItems()));
+	private CompletableFuture<Boolean> loadAllTasksStructData(Collection<TaskFromStruct> tasks)
+	{
+		Collection<CompletableFuture<Boolean>> taskFutures = new ArrayList<>();
+		for (TaskFromStruct task : tasks)
+		{
+			CompletableFuture<Boolean> taskFuture = new CompletableFuture<>();
+			clientThread.invoke(() -> {
+				boolean isTaskLoaded = task.loadStructData(client);
+				taskFuture.complete(isTaskLoaded);
+			});
+			taskFutures.add(taskFuture);
+		}
+		return CompletableFuture.allOf(taskFutures.toArray(new CompletableFuture[0])).thenApply(v -> {
+			for (CompletableFuture<Boolean> future : taskFutures)
+			{
+				if (!future.join())
+				{
+					return false;
 				}
 			}
+			return true;
+		});
+	}
 
-        List<TaskFromStruct> newTasks = new ArrayList<>();
-        return newTaskType.loadTaskTypeDataAsync().thenCompose((isTaskTypeLoaded) -> {
-            if (!isTaskTypeLoaded) {
-                log.error("Error loading task type during setTaskType");
-                return CompletableFuture.completedFuture(false);
-            }
+	public CompletableFuture<Boolean> setTaskType(TaskType newTaskType)
+	{
+		log.debug("setTaskType {}", newTaskType.getTaskJsonName());
+		if (newTaskType.equals(currentTaskType))
+		{
+			log.debug("Skipping setTaskType, same task type selected");
+			return CompletableFuture.completedFuture(false);
+		}
+		currentTaskType = newTaskType;
+		configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskTypeJsonName", newTaskType.getTaskJsonName());
 
-            CompletableFuture<Boolean> future = new CompletableFuture<>();
-            futureExecutor.submit(() -> {
-                try {
-                    Collection<TaskDefinition> taskDefinitions = taskDataClient.getTaskDefinitions(currentTaskType.getTaskJsonName());
-                    for (TaskDefinition definition : taskDefinitions) {
-                        TaskFromStruct task = new TaskFromStruct(currentTaskType, definition);
-                        newTasks.add(task);
-                    }
-                    loadAllTasksStructData(newTasks).thenApply(future::complete);
-                } catch (Exception e3) {
-                    future.completeExceptionally(e3);
-                }
-            });
-            return future;
-        }).thenCompose(areTasksLoaded -> {
-            if (!areTasksLoaded) {
-                return CompletableFuture.completedFuture(false);
-            }
+		// Complete creation of any GLOBAL value type filterConfigs
+		for (FilterConfig filterConfig : currentTaskType.getFilters())
+		{
+			if (filterConfig.getValueType().equals(FilterValueType.GLOBAL))
+			{
+				// Set valueType to the one required by the global filter
+				FilterConfig globalFilterConfig = filterService.getGlobalFilterByKey(filterConfig.getConfigKey());
+				filterConfig.setValueType(globalFilterConfig.getValueType());
 
-            tasks.clear();
-            tasks.addAll(newTasks);
+				// Set any filterConfig fields not already specified
+				Optional.ofNullable(filterConfig.getLabel()).ifPresentOrElse(val -> {
+				}, () -> filterConfig.setLabel(globalFilterConfig.getLabel()));
+				Optional.ofNullable(filterConfig.getFilterType()).ifPresentOrElse(val -> {
+				}, () -> filterConfig.setFilterType(globalFilterConfig.getFilterType()));
+				Optional.ofNullable(filterConfig.getValueName()).ifPresentOrElse(val -> {
+				}, () -> filterConfig.setValueName(globalFilterConfig.getValueName()));
+				Optional.ofNullable(filterConfig.getOptionLabelEnum()).ifPresentOrElse(val -> {
+				}, () -> filterConfig.setOptionLabelEnum(globalFilterConfig.getOptionLabelEnum()));
+				Optional.ofNullable(filterConfig.getCustomItems()).ifPresentOrElse(val -> {
+				}, () -> filterConfig.setCustomItems(globalFilterConfig.getCustomItems()));
+			}
+		}
 
-            // Index task list for each property
-            sortedIndexes.clear();
-            currentTaskType.getIntParamMap().keySet().forEach(paramName -> {
-                sortedIndexes.put(paramName, null);
-                addSortedIndex(paramName, Comparator.comparingInt((TaskFromStruct task) -> task.getIntParam(paramName)));
-            });
-            currentTaskType.getStringParamMap().keySet().forEach(paramName -> {
-                sortedIndexes.put(paramName, null);
-                addSortedIndex(paramName, Comparator.comparing((TaskFromStruct task) -> task.getStringParam(paramName)));
-            });
-            // todo: make this less of a special case.
-            if (tasks.stream().anyMatch(task -> task.getCompletionPercent() != null)) {
-                sortedIndexes.put("completion %", null);
-                addSortedIndex("completion %",
-                        (TaskFromStruct task1, TaskFromStruct task2) ->
-                        {
-                            Float comp1 = task1.getTaskDefinition().getCompletionPercent() != null ? task1.getTaskDefinition().getCompletionPercent() : 0;
-                            Float comp2 = task2.getTaskDefinition().getCompletionPercent() != null ? task2.getTaskDefinition().getCompletionPercent() : 0;
-                            return comp1.compareTo(comp2);
-                        });
-            }
+		List<TaskFromStruct> newTasks = new ArrayList<>();
+		return newTaskType.loadTaskTypeDataAsync().thenCompose((isTaskTypeLoaded) -> {
+			if (!isTaskTypeLoaded)
+			{
+				log.error("Error loading task type during setTaskType");
+				return CompletableFuture.completedFuture(false);
+			}
 
-            currentTaskTypeVarps.clear();
-            currentTaskTypeVarps = new HashSet<>(currentTaskType.getTaskVarps());
+			CompletableFuture<Boolean> future = new CompletableFuture<>();
+			futureExecutor.submit(() -> {
+				try
+				{
+					Collection<TaskDefinition> taskDefinitions = taskDataClient.getTaskDefinitions(currentTaskType.getTaskJsonName());
+					for (TaskDefinition definition : taskDefinitions)
+					{
+						TaskFromStruct task = new TaskFromStruct(currentTaskType, definition);
+						newTasks.add(task);
+					}
+					loadAllTasksStructData(newTasks).thenApply(future::complete);
+				}
+				catch (Exception e3)
+				{
+					future.completeExceptionally(e3);
+				}
+			});
+			return future;
+		}).thenCompose(areTasksLoaded -> {
+			if (!areTasksLoaded)
+			{
+				return CompletableFuture.completedFuture(false);
+			}
 
-            taskTypeChanged = true;
-            return CompletableFuture.completedFuture(true);
-        });
-    }
+			tasks.clear();
+			tasks.addAll(newTasks);
+
+			// Index task list for each property
+			sortedIndexes.clear();
+			currentTaskType.getIntParamMap().keySet().forEach(paramName -> {
+				sortedIndexes.put(paramName, null);
+				addSortedIndex(paramName, Comparator.comparingInt((TaskFromStruct task) -> task.getIntParam(paramName)));
+			});
+			currentTaskType.getStringParamMap().keySet().forEach(paramName -> {
+				sortedIndexes.put(paramName, null);
+				addSortedIndex(paramName, Comparator.comparing((TaskFromStruct task) -> task.getStringParam(paramName)));
+			});
+			// todo: make this less of a special case.
+			if (tasks.stream().anyMatch(task -> task.getCompletionPercent() != null))
+			{
+				sortedIndexes.put("completion %", null);
+				addSortedIndex("completion %",
+					(TaskFromStruct task1, TaskFromStruct task2) ->
+					{
+						Float comp1 = task1.getTaskDefinition().getCompletionPercent() != null ? task1.getTaskDefinition().getCompletionPercent() : 0;
+						Float comp2 = task2.getTaskDefinition().getCompletionPercent() != null ? task2.getTaskDefinition().getCompletionPercent() : 0;
+						return comp1.compareTo(comp2);
+					});
+			}
+
+			currentTaskTypeVarps.clear();
+			currentTaskTypeVarps = new HashSet<>(currentTaskType.getTaskVarps());
+
+			taskTypeChanged = true;
+			return CompletableFuture.completedFuture(true);
+		});
+	}
 
 	private void addSortedIndex(String paramName, Comparator<TaskFromStruct> comparator)
 	{
 		List<TaskFromStruct> sortedTasks = tasks.stream()
-				.sorted(comparator)
-				.collect(Collectors.toCollection(ArrayList::new));
+			.sorted(comparator)
+			.collect(Collectors.toCollection(ArrayList::new));
 		int[] sortedIndex = new int[tasks.size()];
-		for(int i = 0; i < sortedTasks.size(); i++)
+		for (int i = 0; i < sortedTasks.size(); i++)
 		{
 			sortedIndex[i] = tasks.indexOf(sortedTasks.get(i));
 		}
@@ -185,7 +212,7 @@ public class TaskService
 
 	public int getSortedTaskIndex(String sortCriteria, int position)
 	{
-		if(sortedIndexes.containsKey(sortCriteria))
+		if (sortedIndexes.containsKey(sortCriteria))
 		{
 			return sortedIndexes.get(sortCriteria)[position];
 		}
@@ -227,7 +254,8 @@ public class TaskService
 					_taskTypes = taskDataClient.getTaskTypes();
 					future.complete(_taskTypes);
 				}
-				catch (Exception e) {
+				catch (Exception e)
+				{
 					future.completeExceptionally(e);
 				}
 			});

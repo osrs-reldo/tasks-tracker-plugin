@@ -42,7 +42,8 @@ public class TaskType
 	{
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
 		clientThread.invoke(() -> {
-			try {
+			try
+			{
 				getButtonFiltersSpriteIds().forEach((spriteId) -> {
 					BufferedImage spriteImage = spriteManager.getSprite(spriteId, 0);
 					spritesById.put(spriteId, spriteImage);
@@ -63,7 +64,9 @@ public class TaskType
 					}
 				}
 				future.complete(true);
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				future.completeExceptionally(e);
 			}
 		});

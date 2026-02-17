@@ -62,8 +62,8 @@ public class FilterMatcher
 	/**
 	 * Checks if a task meets current UI filters.
 	 * Show all by default, each filter then restricts. Fast fail out.
-     *
-	 * @param task The task to check
+	 *
+	 * @param task           The task to check
 	 * @param taskTextFilter The current text search filter, already lowercased (can be null)
 	 * @return true if the task passes all filters, false otherwise
 	 */

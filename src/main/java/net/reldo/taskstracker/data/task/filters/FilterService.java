@@ -11,37 +11,37 @@ import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 @Slf4j
 public class FilterService
 {
-    @Inject
-    private FilterDataClient filterDataClient;
+	@Inject
+	private FilterDataClient filterDataClient;
 
-    // Filter config cache
-    private HashMap<String, FilterConfig> _filterConfigs = new HashMap<>();
+	// Filter config cache
+	private HashMap<String, FilterConfig> _filterConfigs = new HashMap<>();
 
-    public FilterConfig getGlobalFilterByKey(String filterKey)
-    {
-        // Instantiate filterConfigs if not already
-        if (_filterConfigs == null || _filterConfigs.isEmpty())
-        {
-            try
-            {
-                _filterConfigs = filterDataClient.getFilterConfigs();
-                return _filterConfigs.get(filterKey);
-            }
-            catch (Exception ex)
-            {
-                log.error("Unable to get filter configs", ex);
-            }
-        }
-        else
-        {
-            return _filterConfigs.get(filterKey);
-        }
+	public FilterConfig getGlobalFilterByKey(String filterKey)
+	{
+		// Instantiate filterConfigs if not already
+		if (_filterConfigs == null || _filterConfigs.isEmpty())
+		{
+			try
+			{
+				_filterConfigs = filterDataClient.getFilterConfigs();
+				return _filterConfigs.get(filterKey);
+			}
+			catch (Exception ex)
+			{
+				log.error("Unable to get filter configs", ex);
+			}
+		}
+		else
+		{
+			return _filterConfigs.get(filterKey);
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    public void clearFilterConfigs()
-    {
-        this._filterConfigs.clear();
-    }
+	public void clearFilterConfigs()
+	{
+		this._filterConfigs.clear();
+	}
 }

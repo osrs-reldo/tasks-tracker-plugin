@@ -18,16 +18,26 @@ public class Export
 {
 	private final Client client;
 
-	@Expose	private final QuestData quests;
-	@Expose	private final DiaryData diaries;
-	@Expose	private String displayName;
-	@Expose	private final int runescapeVersion;
-	@Expose	private final String runeliteVersion;
-	@Expose	private final long timestamp;
-	@Expose	private final String taskType;
-	@Expose	private final HashMap<Integer, Integer> varbits;
-	@Expose	private final HashMap<Integer, Integer> varps;
-	@Expose	private final HashMap<String, ConfigTaskSave> tasks;
+	@Expose
+	private final QuestData quests;
+	@Expose
+	private final DiaryData diaries;
+	@Expose
+	private String displayName;
+	@Expose
+	private final int runescapeVersion;
+	@Expose
+	private final String runeliteVersion;
+	@Expose
+	private final long timestamp;
+	@Expose
+	private final String taskType;
+	@Expose
+	private final HashMap<Integer, Integer> varbits;
+	@Expose
+	private final HashMap<Integer, Integer> varps;
+	@Expose
+	private final HashMap<String, ConfigTaskSave> tasks;
 
 	public Export(TaskType taskType, List<TaskFromStruct> tasks, String runeliteVersion, Client client)
 	{

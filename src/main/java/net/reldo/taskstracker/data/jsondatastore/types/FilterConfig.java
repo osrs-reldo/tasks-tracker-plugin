@@ -9,7 +9,8 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class FilterConfig {
+public class FilterConfig
+{
 	/**
 	 * Key under which to store the filter's selected values, generally prefixed by task type
 	 */
