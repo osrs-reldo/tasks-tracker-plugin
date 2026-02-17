@@ -74,7 +74,7 @@ public class FilterButton extends JToggleButton
 	private void showContextMenu(MouseEvent e)
 	{
 		JPopupMenu popupMenu = new JPopupMenu();
-		
+
 		JMenuItem filterToOnlyItem = new JMenuItem("Select Only");
 		filterToOnlyItem.addActionListener(event -> {
 			parentPanel.setOnlySelected(key);
@@ -83,7 +83,7 @@ public class FilterButton extends JToggleButton
 			parentPanel.plugin.refreshAllTasks();
 		});
 		popupMenu.add(filterToOnlyItem);
-		
+
 		JMenuItem exceptItem = new JMenuItem("Select All Except");
 		exceptItem.addActionListener(event -> {
 			parentPanel.setAllExceptSelected(key);
@@ -92,7 +92,7 @@ public class FilterButton extends JToggleButton
 			parentPanel.plugin.refreshAllTasks();
 		});
 		popupMenu.add(exceptItem);
-		
+
 		popupMenu.show(e.getComponent(), e.getX(), e.getY());
 	}
 

@@ -20,31 +20,35 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class FilterDataClient
 {
-    @Inject private ManifestClient manifestClient;
-    @Inject	private OkHttpClient okHttpClient;
-    @Inject private Gson gson;
-    @Inject private DataStoreReader dataStoreReader;
+	@Inject
+	private ManifestClient manifestClient;
+	@Inject
+	private OkHttpClient okHttpClient;
+	@Inject
+	private Gson gson;
+	@Inject
+	private DataStoreReader dataStoreReader;
 
-    public FilterDataClient()
-    {
-        log.debug("init filter data client");
-    }
+	public FilterDataClient()
+	{
+		log.debug("init filter data client");
+	}
 
-    public HashMap<String, FilterConfig> getFilterConfigs() throws Exception
-    {
-        log.debug("get filter configs");
-        try(InputStream stream = this.dataStoreReader.readFilterConfigs(this.manifestClient.getManifest().filterMetadata);
-            InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
-        {
-            Type listType = TypeToken.getParameterized(ArrayList.class, FilterConfig.class).getType();
+	public HashMap<String, FilterConfig> getFilterConfigs() throws Exception
+	{
+		log.debug("get filter configs");
+		try (InputStream stream = this.dataStoreReader.readFilterConfigs(this.manifestClient.getManifest().filterMetadata);
+			 InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
+		{
+			Type listType = TypeToken.getParameterized(ArrayList.class, FilterConfig.class).getType();
 
-            List<FilterConfig> filterConfigs = this.gson.fromJson(responseReader, listType);
-            HashMap<String, FilterConfig> filterConfigsByConfigKey = new HashMap<>();
-            for (FilterConfig filterConfig : filterConfigs)
-            {
-                filterConfigsByConfigKey.put(filterConfig.getConfigKey(), filterConfig);
-            }
-            return filterConfigsByConfigKey;
-        }
-    }
+			List<FilterConfig> filterConfigs = this.gson.fromJson(responseReader, listType);
+			HashMap<String, FilterConfig> filterConfigsByConfigKey = new HashMap<>();
+			for (FilterConfig filterConfig : filterConfigs)
+			{
+				filterConfigsByConfigKey.put(filterConfig.getConfigKey(), filterConfig);
+			}
+			return filterConfigsByConfigKey;
+		}
+	}
 }

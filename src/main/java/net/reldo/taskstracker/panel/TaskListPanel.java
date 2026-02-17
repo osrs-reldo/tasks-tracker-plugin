@@ -37,7 +37,7 @@ public class TaskListPanel extends JScrollPane
 	private final TaskService taskService;
 	private final JLabel emptyTasks = new JLabel();
 	@Setter
-    private int batchSize;
+	private int batchSize;
 
 	public TaskListPanel(TasksTrackerPlugin plugin, TaskService taskService)
 	{
@@ -47,7 +47,7 @@ public class TaskListPanel extends JScrollPane
 
 		FixedWidthPanel taskListListPanelWrapper = new FixedWidthPanel();
 
-		for(int i = 0; i < TASK_LIST_BUFFER_COUNT; i++)
+		for (int i = 0; i < TASK_LIST_BUFFER_COUNT; i++)
 		{
 			taskListBuffers.add(new TaskListListPanel(plugin));
 			taskListListPanelWrapper.add(taskListBuffers.get(i));
@@ -167,7 +167,7 @@ public class TaskListPanel extends JScrollPane
 	private void refreshEmptyPanel()
 	{
 		boolean isAnyTaskPanelVisible = taskPanelsByStructId.values().stream()
-				.anyMatch(TaskPanel::isVisible);
+			.anyMatch(TaskPanel::isVisible);
 
 		if (!isAnyTaskPanelVisible)
 		{
@@ -207,7 +207,7 @@ public class TaskListPanel extends JScrollPane
 		return "No tasks match the current filters.";
 	}
 
-    private class TaskListListPanel extends FixedWidthPanel
+	private class TaskListListPanel extends FixedWidthPanel
 	{
 		private final TasksTrackerPlugin plugin;
 
@@ -219,7 +219,7 @@ public class TaskListPanel extends JScrollPane
 			setBorder(new EmptyBorder(0, 10, 10, 10));
 			setAlignmentX(Component.LEFT_ALIGNMENT);
 
-			emptyTasks.setBorder(new EmptyBorder(10,0,10,0));
+			emptyTasks.setBorder(new EmptyBorder(10, 0, 10, 0));
 			emptyTasks.setText("<html><center>" + getEmptyTaskListMessage() + "</center></html>");
 			emptyTasks.setFont(FontManager.getRunescapeSmallFont());
 			emptyTasks.setHorizontalAlignment(JLabel.CENTER);
@@ -236,7 +236,7 @@ public class TaskListPanel extends JScrollPane
 		public void drawNewTaskType()
 		{
 			log.debug("TaskListPanel.drawNewTaskType");
-			if(SwingUtilities.isEventDispatchThread())
+			if (SwingUtilities.isEventDispatchThread())
 			{
 				log.debug("TaskListPanel creating panels");
 				taskPanelsByStructId.clear();
@@ -261,7 +261,10 @@ public class TaskListPanel extends JScrollPane
 					add(taskPanel);
 					newTaskPanels.add(taskPanel);
 					taskPanelsByStructId.put(task.getStructId(), taskPanel);
-					if (indexPosition == (batchSize - 1)) taskPanels = newTaskPanels; // replace taskPanels list at end of first batch
+					if (indexPosition == (batchSize - 1))
+					{
+						taskPanels = newTaskPanels; // replace taskPanels list at end of first batch
+					}
 				});
 			}
 			else
@@ -273,7 +276,7 @@ public class TaskListPanel extends JScrollPane
 		public void redraw()
 		{
 			log.debug("TaskListPanel.redraw");
-			if(SwingUtilities.isEventDispatchThread())
+			if (SwingUtilities.isEventDispatchThread())
 			{
 				if (taskPanels == null || taskPanels.isEmpty())
 				{

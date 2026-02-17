@@ -10,7 +10,7 @@ import net.runelite.api.Client;
 
 /**
  * Service for resolving tier and unlock thresholds.
- *
+ * <p>
  * Resolution priority:
  * 1. Game varbit (if varbitId > 0 and returns > 0)
  * 2. Hardcoded JSON value

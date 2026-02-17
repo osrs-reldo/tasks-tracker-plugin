@@ -31,7 +31,7 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 		this.items = items;
 		this.configKey = taskType.getFilterConfigPrefix() + filterConfig.getConfigKey();
 
-		setLayout(new GridLayout(1,2));
+		setLayout(new GridLayout(1, 2));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		setBorder(new EmptyBorder(5, 10, 5, 10));
 	}
@@ -70,7 +70,7 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 
 	public void redraw()
 	{
-		if(SwingUtilities.isEventDispatchThread())
+		if (SwingUtilities.isEventDispatchThread())
 		{
 			removeAll();
 

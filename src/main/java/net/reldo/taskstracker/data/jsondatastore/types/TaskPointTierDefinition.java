@@ -5,7 +5,7 @@ import lombok.Data;
 /**
  * Point-based task thresholds.
  * Used for Combat Achievement tiers and Leagues relic tiers.
- *
+ * <p>
  * Resolution priority:
  * 1. If varbitId > 0: try reading from game varbit
  * 2. If game returns 0 or varbitId <= 0: use hardcoded points

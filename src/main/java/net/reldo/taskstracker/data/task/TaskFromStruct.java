@@ -24,17 +24,21 @@ public class TaskFromStruct
 	private final TaskDefinition taskDefinition;
 	@Getter
 	private boolean structLoaded;
-	@Getter @Setter
+	@Getter
+	@Setter
 	private long completedOn;
-	@Getter @Setter
+	@Getter
+	@Setter
 	private long trackedOn;
-	@Getter @Setter
+	@Getter
+	@Setter
 	private long ignoredOn;
 
 	private StructComposition _struct;
 	private final Map<String, String> _stringParams = new HashMap<>();
 	private final Map<String, Integer> _intParams = new HashMap<>();
-	@Getter @Setter
+	@Getter
+	@Setter
 	private String note;
 
 	public TaskFromStruct(TaskType taskType, TaskDefinition taskDefinition)
@@ -60,7 +64,8 @@ public class TaskFromStruct
 	{
 		assert client.isClientThread();
 
-		if (structLoaded) {
+		if (structLoaded)
+		{
 			return true;
 		}
 		try
@@ -206,7 +211,8 @@ public class TaskFromStruct
 		return new ConfigTaskSave(this);
 	}
 
-	public Float getCompletionPercent() {
+	public Float getCompletionPercent()
+	{
 		return getTaskDefinition().getCompletionPercent();
 	}
 }

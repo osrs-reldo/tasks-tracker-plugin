@@ -5,7 +5,7 @@ import lombok.Data;
 /**
  * Thresholds based on number of tasks completed
  * Primarily used for League region unlocks based on completed tasks.
- *
+ * <p>
  * Resolution priority:
  * 1. If varbitId > 0: try reading from game varbit
  * 2. If game returns 0 or varbitId <= 0: use hardcoded tasks

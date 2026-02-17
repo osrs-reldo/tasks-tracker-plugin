@@ -27,14 +27,14 @@ public class DynamicButtonFilterPanel extends FilterButtonPanel
 	 * Real skills, ordered in the way they should be displayed in the panel.
 	 */
 	private static final List<HiscoreSkill> SKILLS = ImmutableList.of(
-			ATTACK, HITPOINTS, MINING,
-			STRENGTH, AGILITY, SMITHING,
-			DEFENCE, HERBLORE, FISHING,
-			RANGED, THIEVING, COOKING,
-			PRAYER, CRAFTING, FIREMAKING,
-			MAGIC, FLETCHING, WOODCUTTING,
-			RUNECRAFT, SLAYER, FARMING,
-			CONSTRUCTION, HUNTER
+		ATTACK, HITPOINTS, MINING,
+		STRENGTH, AGILITY, SMITHING,
+		DEFENCE, HERBLORE, FISHING,
+		RANGED, THIEVING, COOKING,
+		PRAYER, CRAFTING, FIREMAKING,
+		MAGIC, FLETCHING, WOODCUTTING,
+		RUNECRAFT, SLAYER, FARMING,
+		CONSTRUCTION, HUNTER
 	);
 
 	public DynamicButtonFilterPanel(TasksTrackerPlugin plugin, FilterConfig filterConfig, TaskType taskType)

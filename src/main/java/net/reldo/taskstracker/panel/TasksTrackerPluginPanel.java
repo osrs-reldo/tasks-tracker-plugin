@@ -72,7 +72,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	public void setLoggedIn(boolean loggedIn)
 	{
-		if(SwingUtilities.isEventDispatchThread())
+		if (SwingUtilities.isEventDispatchThread())
 		{
 			updateVisiblePanel(loggedIn);
 		}
@@ -84,7 +84,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	public void hideLoggedInPanel()
 	{
-		if(SwingUtilities.isEventDispatchThread())
+		if (SwingUtilities.isEventDispatchThread())
 		{
 			updateVisiblePanel(false);
 		}

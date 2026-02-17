@@ -29,7 +29,8 @@ public class TasksSummary
 	public TasksSummary(Collection<TaskFromStruct> tasks)
 	{
 		tasks.forEach(task -> {
-			if (task.isTracked()) {
+			if (task.isTracked())
+			{
 				trackedTasksCount++;
 				int points = task.getPoints();
 				log.debug("TasksSummary {} {}", task.getName(), points);
@@ -41,8 +42,8 @@ public class TasksSummary
 	/**
 	 * New constructor - calculates filtered totals, tracked progress, and total completed.
 	 *
-	 * @param tasks All tasks to process
-	 * @param filterMatcher The filter matcher to determine which tasks pass current filters
+	 * @param tasks          All tasks to process
+	 * @param filterMatcher  The filter matcher to determine which tasks pass current filters
 	 * @param taskTextFilter The current text search filter (can be null)
 	 */
 	public TasksSummary(Collection<TaskFromStruct> tasks, FilterMatcher filterMatcher, String taskTextFilter)

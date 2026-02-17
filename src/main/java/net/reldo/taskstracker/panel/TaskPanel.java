@@ -291,33 +291,33 @@ public class TaskPanel extends JPanel
 		}
 	}
 
-    public void refresh()
-    {
-        setBackgroundColor(getTaskBackgroundColor());
-        name.setText(HtmlUtil.wrapWithHtml(task.getName()));
-        description.setText(HtmlUtil.wrapWithHtml(task.getDescription()));
+	public void refresh()
+	{
+		setBackgroundColor(getTaskBackgroundColor());
+		name.setText(HtmlUtil.wrapWithHtml(task.getName()));
+		description.setText(HtmlUtil.wrapWithHtml(task.getDescription()));
 
-        // If completed tasks are auto-untracked, don't allow users to add them to tracked tasks, that's silly.
-        boolean disableTrack = plugin.getConfig().untrackUponCompletion() && task.isCompleted();
-        toggleTrack.setEnabled(!disableTrack);
+		// If completed tasks are auto-untracked, don't allow users to add them to tracked tasks, that's silly.
+		boolean disableTrack = plugin.getConfig().untrackUponCompletion() && task.isCompleted();
+		toggleTrack.setEnabled(!disableTrack);
 
-        // Tell the user why it's greyed out
-        if (disableTrack)
-        {
-            toggleTrack.setToolTipText("Completed tasks cannot be tracked while 'Untrack Tasks Upon Completion' is enabled.");
-        }
-        else
-        {
-            toggleTrack.setToolTipText(null);
-        }
+		// Tell the user why it's greyed out
+		if (disableTrack)
+		{
+			toggleTrack.setToolTipText("Completed tasks cannot be tracked while 'Untrack Tasks Upon Completion' is enabled.");
+		}
+		else
+		{
+			toggleTrack.setToolTipText(null);
+		}
 
-        toggleTrack.setSelected(task.isTracked());
-        toggleIgnore.setSelected(task.isIgnored());
+		toggleTrack.setSelected(task.isTracked());
+		toggleIgnore.setSelected(task.isIgnored());
 
-        setVisible(meetsFilterCriteria());
+		setVisible(meetsFilterCriteria());
 
-        revalidate();
-    }
+		revalidate();
+	}
 
 	protected boolean meetsFilterCriteria()
 	{
