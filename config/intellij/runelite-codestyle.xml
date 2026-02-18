@@ -1,83 +1,63 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
-	RuneLite IntelliJ Code Style
-	Source: https://github.com/runelite/runelite/wiki/Code-Conventions
-
-	Import in IntelliJ:
-	Settings -> Editor -> Code Style -> Import Scheme -> IntelliJ IDEA code style XML
--->
 <code_scheme name="RuneLite" version="173">
-	<!-- Use tabs for indentation -->
-	<option name="OTHER_INDENT_OPTIONS">
-		<value>
-			<option name="INDENT_SIZE" value="4" />
-			<option name="CONTINUATION_INDENT_SIZE" value="4" />
-			<option name="TAB_SIZE" value="4" />
-			<option name="USE_TAB_CHARACTER" value="true" />
-			<option name="SMART_TABS" value="false" />
-		</value>
-	</option>
-
-	<JavaCodeStyleSettings>
-		<!-- Import settings -->
-		<option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="999" />
-		<option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="999" />
-		<option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
-			<value />
-		</option>
-		<option name="IMPORT_LAYOUT_TABLE">
-			<value>
-				<package name="" withSubpackages="true" static="false" />
-				<emptyLine />
-				<package name="" withSubpackages="true" static="true" />
-			</value>
-		</option>
-	</JavaCodeStyleSettings>
-
-	<codeStyleSettings language="JAVA">
-		<!-- Tabs and Indents -->
-		<option name="INDENT_SIZE" value="4" />
-		<option name="CONTINUATION_INDENT_SIZE" value="4" />
-		<option name="TAB_SIZE" value="4" />
-		<option name="USE_TAB_CHARACTER" value="true" />
-
-		<!-- Braces placement: Allman style (next line) -->
-		<option name="BRACE_STYLE" value="2" />
-		<option name="CLASS_BRACE_STYLE" value="2" />
-		<option name="METHOD_BRACE_STYLE" value="2" />
-		<option name="LAMBDA_BRACE_STYLE" value="1" />
-
-		<!-- else/catch/finally/while on new line -->
-		<option name="ELSE_ON_NEW_LINE" value="true" />
-		<option name="CATCH_ON_NEW_LINE" value="true" />
-		<option name="FINALLY_ON_NEW_LINE" value="true" />
-		<option name="WHILE_ON_NEW_LINE" value="true" />
-
-		<!-- Force braces -->
-		<option name="IF_BRACE_FORCE" value="3" />
-		<option name="DOWHILE_BRACE_FORCE" value="3" />
-		<option name="WHILE_BRACE_FORCE" value="3" />
-		<option name="FOR_BRACE_FORCE" value="3" />
-
-		<!-- Wrapping and Braces -->
-		<option name="KEEP_SIMPLE_BLOCKS_IN_ONE_LINE" value="false" />
-		<option name="KEEP_SIMPLE_METHODS_IN_ONE_LINE" value="false" />
-		<option name="KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE" value="true" />
-		<option name="KEEP_SIMPLE_CLASSES_IN_ONE_LINE" value="false" />
-
-		<!-- Spaces -->
-		<option name="SPACE_WITHIN_IF_PARENTHESES" value="false" />
-		<option name="SPACE_WITHIN_FOR_PARENTHESES" value="false" />
-		<option name="SPACE_WITHIN_WHILE_PARENTHESES" value="false" />
-		<option name="SPACE_WITHIN_SWITCH_PARENTHESES" value="false" />
-		<option name="SPACE_WITHIN_CATCH_PARENTHESES" value="false" />
-		<option name="SPACE_WITHIN_SYNCHRONIZED_PARENTHESES" value="false" />
-		<option name="SPACE_WITHIN_METHOD_CALL_PARENTHESES" value="false" />
-		<option name="SPACE_WITHIN_METHOD_PARENTHESES" value="false" />
-		<option name="SPACE_AFTER_COMMA" value="true" />
-		<option name="SPACE_BEFORE_COMMA" value="false" />
-
-		<!-- Right margin -->
-		<option name="RIGHT_MARGIN" value="120" />
-	</codeStyleSettings>
+  <option name="AUTODETECT_INDENTS" value="false" />
+  <option name="OTHER_INDENT_OPTIONS">
+    <value>
+      <option name="USE_TAB_CHARACTER" value="true" />
+    </value>
+  </option>
+  <option name="LINE_SEPARATOR" value="&#xA;" />
+  <JavaCodeStyleSettings>
+    <option name="LAYOUT_STATIC_IMPORTS_SEPARATELY" value="false" />
+    <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="999" />
+    <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="10" />
+    <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
+      <value />
+    </option>
+    <option name="IMPORT_LAYOUT_TABLE">
+      <value>
+        <package name="" withSubpackages="true" static="false" />
+      </value>
+    </option>
+  </JavaCodeStyleSettings>
+  <XML>
+    <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
+  </XML>
+  <codeStyleSettings language="JAVA">
+    <option name="BRACE_STYLE" value="2" />
+    <option name="CLASS_BRACE_STYLE" value="2" />
+    <option name="METHOD_BRACE_STYLE" value="2" />
+    <option name="ELSE_ON_NEW_LINE" value="true" />
+    <option name="CATCH_ON_NEW_LINE" value="true" />
+    <option name="FINALLY_ON_NEW_LINE" value="true" />
+    <option name="IF_BRACE_FORCE" value="3" />
+    <option name="DOWHILE_BRACE_FORCE" value="3" />
+    <option name="WHILE_BRACE_FORCE" value="3" />
+    <option name="FOR_BRACE_FORCE" value="3" />
+    <indentOptions>
+      <option name="CONTINUATION_INDENT_SIZE" value="4" />
+      <option name="USE_TAB_CHARACTER" value="true" />
+    </indentOptions>
+    <arrangement>
+      <groups>
+        <group>
+          <type>GETTERS_AND_SETTERS</type>
+          <order>KEEP</order>
+        </group>
+        <group>
+          <type>OVERRIDDEN_METHODS</type>
+          <order>BY_NAME</order>
+        </group>
+      </groups>
+    </arrangement>
+  </codeStyleSettings>
+  <codeStyleSettings language="Python">
+    <indentOptions>
+      <option name="USE_TAB_CHARACTER" value="true" />
+    </indentOptions>
+  </codeStyleSettings>
+  <codeStyleSettings language="XML">
+    <indentOptions>
+      <option name="USE_TAB_CHARACTER" value="true" />
+    </indentOptions>
+  </codeStyleSettings>
 </code_scheme>
