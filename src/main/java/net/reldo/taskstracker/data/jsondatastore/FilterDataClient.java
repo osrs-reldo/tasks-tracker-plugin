@@ -38,7 +38,7 @@ public class FilterDataClient
 	{
 		log.debug("get filter configs");
 		try (InputStream stream = this.dataStoreReader.readFilterConfigs(this.manifestClient.getManifest().filterMetadata);
-			 InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
+			InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
 		{
 			Type listType = TypeToken.getParameterized(ArrayList.class, FilterConfig.class).getType();
 
