@@ -23,6 +23,18 @@ public interface TasksTrackerConfig extends Config
 	String generalSettings = "generalSettings";
 
 	@ConfigItem(
+		position = 1,
+		keyName = "showOverlay",
+		name = "Show the tasks overlay",
+		description = "Enabled the task overlay panel.",
+		section = generalSettings
+	)
+	default boolean showOverlay()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		position = 10,
 		keyName = "untrackUponCompletion",
 		name = "Untrack Tasks Upon Completion",

@@ -20,7 +20,6 @@ import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
-import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
 import net.runelite.api.Skill;
 import net.runelite.client.ui.FontManager;
@@ -169,14 +168,7 @@ public class TaskListPanel extends JScrollPane
 		boolean isAnyTaskPanelVisible = taskPanelsByStructId.values().stream()
 			.anyMatch(TaskPanel::isVisible);
 
-		if (!isAnyTaskPanelVisible)
-		{
-			emptyTasks.setVisible(true);
-		}
-		else
-		{
-			emptyTasks.setVisible(false);
-		}
+		emptyTasks.setVisible(!isAnyTaskPanelVisible);
 	}
 
 	public void refreshTaskPanelsWithSkill(Skill skill)
@@ -205,6 +197,15 @@ public class TaskListPanel extends JScrollPane
 	public String getEmptyTaskListMessage()
 	{
 		return "No tasks match the current filters.";
+	}
+
+	public TaskFromStruct getPriorityTask()
+	{
+		Optional<TaskPanel> optionalTaskPanel = taskPanels.stream().filter(Component::isVisible).
+			min((panel1, panel2) ->
+				Integer.compare(getCurrentTaskListListPanel().getComponentZOrder(panel1),
+								getCurrentTaskListListPanel().getComponentZOrder(panel2)));
+		return optionalTaskPanel.map(taskPanel -> taskPanel.task).orElse(null);
 	}
 
 	private class TaskListListPanel extends FixedWidthPanel

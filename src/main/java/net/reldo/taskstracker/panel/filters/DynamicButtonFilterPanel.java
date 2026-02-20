@@ -7,7 +7,6 @@ import java.awt.image.BufferedImage;
 import java.util.LinkedHashMap;
 import java.util.List;
 import javax.swing.JPanel;
-import javax.swing.JToggleButton;
 import javax.swing.border.EmptyBorder;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;

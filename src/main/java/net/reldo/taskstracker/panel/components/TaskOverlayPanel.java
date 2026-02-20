@@ -1,6 +1,5 @@
 package net.reldo.taskstracker.panel.components;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import javax.inject.Inject;
@@ -27,28 +26,28 @@ public class TaskOverlayPanel extends OverlayPanel
 	{
 
 		panelComponent.getChildren().add(TitleComponent.builder()
-			.text("Task Title"/*task.getName()*/)
+			.text(task.getName())
 			.build());
 
 		panelComponent.getChildren().add(LineComponent.builder()
-			.left("Task description."/*task.getDescription()*/)
+			.left(task.getDescription())
 			.build());
 	}
 
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-//		if (!plugin.getConfig().showOverlay())
-//		{
-//			return super.render(graphics);
-//		}
+		if (!plugin.getConfig().showOverlay())
+		{
+			return super.render(graphics);
+		}
 
 		TaskFromStruct task = plugin.getPriorityTask();
 
-//		if (task == null)
-//		{
-//			return null;
-//		}
+		if (task == null)
+		{
+			return null;
+		}
 
 		buildOverlayText(task);
 
