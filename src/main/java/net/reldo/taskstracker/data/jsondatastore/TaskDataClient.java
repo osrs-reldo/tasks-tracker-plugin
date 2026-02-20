@@ -48,7 +48,7 @@ public class TaskDataClient
 	public HashMap<String, TaskType> getTaskTypes() throws Exception
 	{
 		try (InputStream stream = this.dataStoreReader.readTaskTypes(this.manifestClient.getManifest().taskTypeMetadata);
-			 InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
+			InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
 		{
 			Type listType = TypeToken.getParameterized(ArrayList.class, TaskTypeDefinition.class).getType();
 
@@ -66,7 +66,7 @@ public class TaskDataClient
 	public List<TaskDefinition> getTaskDefinitions(String jsonFilename) throws Exception
 	{
 		try (InputStream stream = this.dataStoreReader.readTasks(jsonFilename);
-			 InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
+			InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
 		{
 			Type listType = TypeToken.getParameterized(ArrayList.class, TaskDefinition.class).getType();
 			return this.gson.fromJson(responseReader, listType);

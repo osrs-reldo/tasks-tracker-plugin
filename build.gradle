@@ -1,5 +1,11 @@
 plugins {
 	id 'java'
+	id 'checkstyle'
+}
+
+checkstyle {
+	configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+	toolVersion = '10.21.4'
 }
 
 repositories {
