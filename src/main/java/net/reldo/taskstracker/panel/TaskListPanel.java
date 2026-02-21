@@ -37,6 +37,7 @@ public class TaskListPanel extends JScrollPane
 	private final JLabel emptyTasks = new JLabel();
 	@Setter
 	private int batchSize;
+	private boolean taskPanelListModificationInProgress = false;
 
 	public TaskListPanel(TasksTrackerPlugin plugin, TaskService taskService)
 	{
@@ -116,6 +117,7 @@ public class TaskListPanel extends JScrollPane
 			taskPanel.refresh();
 		}
 		refreshEmptyPanel();
+		taskPanelListModificationInProgress = false;
 	}
 
 	public void refreshMultipleTasks(Collection<TaskFromStruct> tasks)
@@ -201,10 +203,15 @@ public class TaskListPanel extends JScrollPane
 
 	public TaskFromStruct getPriorityTask()
 	{
+		if (taskPanelListModificationInProgress || taskPanels == null || taskPanels.isEmpty())
+		{
+			return null;
+		}
+
 		Optional<TaskPanel> optionalTaskPanel = taskPanels.stream().filter(Component::isVisible).
 			min((panel1, panel2) ->
 				Integer.compare(getCurrentTaskListListPanel().getComponentZOrder(panel1),
-								getCurrentTaskListListPanel().getComponentZOrder(panel2)));
+					getCurrentTaskListListPanel().getComponentZOrder(panel2)));
 		return optionalTaskPanel.map(taskPanel -> taskPanel.task).orElse(null);
 	}
 
@@ -240,6 +247,7 @@ public class TaskListPanel extends JScrollPane
 			if (SwingUtilities.isEventDispatchThread())
 			{
 				log.debug("TaskListPanel creating panels");
+				taskPanelListModificationInProgress = true;
 				taskPanelsByStructId.clear();
 				add(emptyTasks);
 
@@ -284,6 +292,7 @@ public class TaskListPanel extends JScrollPane
 					emptyTasks.setVisible(true);
 					return;
 				}
+				taskPanelListModificationInProgress = true;
 
 				for (int indexPosition = 0; indexPosition < taskPanels.size(); indexPosition++)
 				{
