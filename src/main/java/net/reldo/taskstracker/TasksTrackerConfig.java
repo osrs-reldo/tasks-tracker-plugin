@@ -23,18 +23,6 @@ public interface TasksTrackerConfig extends Config
 	String generalSettings = "generalSettings";
 
 	@ConfigItem(
-		position = 1,
-		keyName = "showOverlay",
-		name = "Show the tasks overlay",
-		description = "Enabled the task overlay panel.",
-		section = generalSettings
-	)
-	default boolean showOverlay()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		position = 10,
 		keyName = "untrackUponCompletion",
 		name = "Untrack Tasks Upon Completion",
@@ -81,12 +69,99 @@ public interface TasksTrackerConfig extends Config
 	{
 		return false;
 	}
+	/*=================================================================================================================
+	-- Overlay Panel settings                                                                                        --
+	=================================================================================================================*/
 
+
+	@ConfigSection(
+		name = "Overlay",
+		description = "Overlay settings",
+		position = 1
+	)
+	String overlaySettings = "overlaySettings";
+
+	@ConfigItem(
+		position = 1,
+		keyName = "showOverlay",
+		name = "Show the Tasks Overlay",
+		description = "Enabled the task overlay panel.",
+		section = overlaySettings
+	)
+	default boolean showOverlay()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		position = 10,
+		keyName = "dynamicOverlayPanelColourEnabled",
+		name = "Dynamic Panel Colour",
+		description = "Enable the dynamic task overlay panel colour.",
+		section = overlaySettings
+	)
+	default boolean dynamicOverlayPanelColourEnabled()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		position = 11,
+		keyName = "addTaskDescription",
+		name = "Task Description",
+		description = "Adds the task description to the overlay panel.",
+		section = overlaySettings
+	)
+	default boolean addTaskDescription()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		position = 12,
+		keyName = "addDynamicSkills",
+		name = "Dynamic Skill Requirements",
+		description = "Adds a list of dynamic skill requirements to the overlay panel.",
+		section = overlaySettings
+	)
+	default boolean addDynamicSkills()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		position = 13,
+		keyName = "addWikiNotes",
+		name = "Wiki Notes",
+		description = "Adds the wiki task notes to the overlay panel.",
+		section = overlaySettings
+	)
+	default boolean addWikiNotes()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		position = 14,
+		keyName = "addTaskNote",
+		name = "Task Notes",
+		description = "Adds the user note to the overlay panel if it exists.",
+		section = overlaySettings
+	)
+	default boolean addTaskNote()
+	{
+		return true;
+	}
+
+
+	/*=================================================================================================================
+	-- Internal settings                                                                                              --
+	=================================================================================================================*/
 
 	@ConfigSection(
 		name = "Internal Config",
 		description = "These settings change the internal behaviour of the plugin. Reset them if any issues occur.",
-		position = 10,
+		position = 100,
 		closedByDefault = true
 	)
 	String internalConfig = "internalConfig";
@@ -95,7 +170,7 @@ public interface TasksTrackerConfig extends Config
 		min = 10
 	)
 	@ConfigItem(
-		position = 13,
+		position = 1,
 		keyName = "taskPanelBatchSize",
 		name = "Task Panel Batch Size",
 		description = "Configures the number of task panels to create in each batch when redrawing the task list panel.",
@@ -213,7 +288,7 @@ public interface TasksTrackerConfig extends Config
 	@ConfigSection(
 		name = "Task List Tab 1",
 		description = "Tab 1 settings",
-		position = 1
+		position = 11
 	)
 	String tab1Settings = "tab1Settings";
 
@@ -308,7 +383,7 @@ public interface TasksTrackerConfig extends Config
 	@ConfigSection(
 		name = "Task List Tab 2",
 		description = "Tab 2 settings",
-		position = 2
+		position = 12
 	)
 	String tab2Settings = "tab2Settings";
 
@@ -403,7 +478,7 @@ public interface TasksTrackerConfig extends Config
 	@ConfigSection(
 		name = "Task List Tab 3",
 		description = "Tab 3 settings",
-		position = 3
+		position = 13
 	)
 	String tab3Settings = "tab3Settings";
 

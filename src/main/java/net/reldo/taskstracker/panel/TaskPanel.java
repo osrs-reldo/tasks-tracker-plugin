@@ -4,6 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -40,6 +43,10 @@ import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.overlay.components.ComponentConstants;
+import net.runelite.client.ui.overlay.components.LineComponent;
+import net.runelite.client.ui.overlay.components.PanelComponent;
+import net.runelite.client.ui.overlay.components.TitleComponent;
 import net.runelite.client.util.SwingUtil;
 
 @Slf4j
@@ -407,5 +414,138 @@ public class TaskPanel extends JPanel
 			return "";
 		}
 		return " - " + points + " points";
+	}
+
+	public void buildOverlayText(Graphics2D graphics, PanelComponent panelComponent)
+	{
+
+		TaskFromStruct task = this.task;
+
+		if (plugin.getConfig().dynamicOverlayPanelColourEnabled())
+		{
+			Color taskColour = getTaskBackgroundColor();
+			Color overlayColour = new Color(
+				taskColour.getRed(),
+				taskColour.getGreen(),
+				taskColour.getBlue(),
+				ComponentConstants.STANDARD_BACKGROUND_COLOR.getAlpha());
+			panelComponent.setBackgroundColor(overlayColour);
+		}
+		else
+		{
+			panelComponent.setBackgroundColor(ComponentConstants.STANDARD_BACKGROUND_COLOR);
+		}
+
+		// Title
+		final FontMetrics fontMetrics = graphics.getFontMetrics();
+		int panelWidth = Math.max(ComponentConstants.STANDARD_WIDTH, fontMetrics.stringWidth(task.getName()) +
+			ComponentConstants.STANDARD_BORDER + ComponentConstants.STANDARD_BORDER);
+
+		panelComponent.setPreferredSize(new Dimension(panelWidth, 0));
+		panelComponent.getChildren().add(TitleComponent.builder()
+			.text(task.getName())
+			.build());
+
+		// Description
+		if (plugin.getConfig().addTaskDescription())
+		{
+			panelComponent.getChildren().add(LineComponent.builder()
+				.build());
+
+			panelComponent.getChildren().add(LineComponent.builder()
+				.left(task.getDescription())
+				.build());
+		}
+
+		// Skills
+		if (plugin.getConfig().addDynamicSkills())
+		{
+			panelComponent.getChildren().add(LineComponent.builder()
+				.build());
+
+			buildOverlaySkillSection(panelComponent);
+		}
+
+		// Wiki notes
+		if (plugin.getConfig().addWikiNotes())
+		{
+			String wikiNotes = task.getTaskDefinition().getWikiNotes();
+			if (wikiNotes != null && !wikiNotes.isEmpty())
+			{
+				panelComponent.getChildren().add(LineComponent.builder()
+					.build());
+
+				panelComponent.getChildren().add(LineComponent.builder()
+					.left(wikiNotes)
+					.build());
+			}
+		}
+
+		// Task Note
+		if (plugin.getConfig().addTaskNote())
+		{
+			if (task.getNote() != null && !task.getNote().isEmpty())
+			{
+				panelComponent.getChildren().add(LineComponent.builder()
+					.build());
+
+				panelComponent.getChildren().add(LineComponent.builder()
+					.left("Note:")
+					.build());
+
+				panelComponent.getChildren().add(LineComponent.builder()
+					.left(task.getNote())
+					.leftFont(FontManager.getRunescapeFont().deriveFont(Font.ITALIC))
+					.build());
+			}
+		}
+	}
+
+	private void buildOverlaySkillSection(PanelComponent panelComponent)
+	{
+		List<TaskDefinitionSkill> requiredSkills = task.getTaskDefinition().getSkills();
+		if (requiredSkills == null)
+		{
+			return;
+		}
+
+		for (TaskDefinitionSkill requiredSkill : requiredSkills)
+		{
+			Skill skill;
+			try
+			{
+				skill = Skill.valueOf(requiredSkill.getSkill().toUpperCase());
+			}
+			catch (IllegalArgumentException ex)
+			{
+				log.warn("unknown skill: {}", requiredSkill.getSkill().toUpperCase(), ex);
+				continue;
+			}
+
+			Integer requiredLevel = requiredSkill.getLevel();
+			int playerLevel = -1;
+			if (requiredLevel == null)
+			{
+				continue;
+			}
+			if (plugin.playerSkills != null)
+			{
+				playerLevel = plugin.playerSkills[skill.ordinal()];
+			}
+
+			panelComponent.getChildren().add(getSkillRequirementLineComponent(requiredSkill.getSkill().toLowerCase(), playerLevel, requiredLevel));
+		}
+	}
+
+	private LineComponent getSkillRequirementLineComponent(String skillName, Integer playerLevel, int requiredLevel)
+	{
+		Color color = playerLevel >= requiredLevel ? Colors.QUALIFIED_TEXT_COLOR : Colors.UNQUALIFIED_TEXT_COLOR;
+		String skillString = playerLevel + "/" + requiredLevel;
+		return LineComponent.builder()
+			.left(skillName.substring(0, 1).toUpperCase() + skillName.substring(1))
+			.leftColor(color)
+			.right(skillString)
+			.rightColor(color)
+			.build();
 	}
 }
