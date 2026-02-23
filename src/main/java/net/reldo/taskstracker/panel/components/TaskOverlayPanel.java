@@ -1,5 +1,6 @@
 package net.reldo.taskstracker.panel.components;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -7,6 +8,7 @@ import java.awt.Graphics2D;
 import javax.inject.Inject;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.panel.TaskPanel;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPanel;
@@ -26,9 +28,20 @@ public class TaskOverlayPanel extends OverlayPanel
 		setPriority(PRIORITY_HIGHEST);
 	}
 
-	private void buildOverlayText(Graphics2D graphics, TaskFromStruct task)
+	private void buildOverlayText(Graphics2D graphics, TaskPanel taskPanel)
 	{
 
+		TaskFromStruct task = taskPanel.task;
+
+		Color taskColour = taskPanel.getTaskBackgroundColor();
+		Color overlayColour = new Color(
+			taskColour.getRed(),
+			taskColour.getGreen(),
+			taskColour.getBlue(),
+			ComponentConstants.STANDARD_BACKGROUND_COLOR.getAlpha());
+		panelComponent.setBackgroundColor(overlayColour);
+
+		// Title
 		final FontMetrics fontMetrics = graphics.getFontMetrics();
 		int panelWidth = Math.max(ComponentConstants.STANDARD_WIDTH, fontMetrics.stringWidth(task.getName()) +
 			ComponentConstants.STANDARD_BORDER + ComponentConstants.STANDARD_BORDER);
@@ -38,6 +51,7 @@ public class TaskOverlayPanel extends OverlayPanel
 			.text(task.getName())
 			.build());
 
+		// Description
 		panelComponent.getChildren().add(LineComponent.builder()
 			.build());
 
@@ -69,14 +83,14 @@ public class TaskOverlayPanel extends OverlayPanel
 			return super.render(graphics);
 		}
 
-		TaskFromStruct task = plugin.getPriorityTask();
+		TaskPanel taskPanel = plugin.getPriorityTask();
 
-		if (task == null)
+		if (taskPanel == null)
 		{
 			return null;
 		}
 
-		buildOverlayText(graphics, task);
+		buildOverlayText(graphics, taskPanel);
 
 		return super.render(graphics);
 	}

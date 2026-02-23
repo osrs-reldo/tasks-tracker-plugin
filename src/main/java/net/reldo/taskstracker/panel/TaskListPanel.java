@@ -201,7 +201,7 @@ public class TaskListPanel extends JScrollPane
 		return "No tasks match the current filters.";
 	}
 
-	public TaskFromStruct getPriorityTask()
+	public TaskPanel getPriorityTask()
 	{
 		if (taskPanelListModificationInProgress || taskPanels == null || taskPanels.isEmpty())
 		{
@@ -212,7 +212,7 @@ public class TaskListPanel extends JScrollPane
 			min((panel1, panel2) ->
 				Integer.compare(getCurrentTaskListListPanel().getComponentZOrder(panel1),
 					getCurrentTaskListListPanel().getComponentZOrder(panel2)));
-		return optionalTaskPanel.map(taskPanel -> taskPanel.task).orElse(null);
+		return optionalTaskPanel.orElse(null);
 	}
 
 	private class TaskListListPanel extends FixedWidthPanel

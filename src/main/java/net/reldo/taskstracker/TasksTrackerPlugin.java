@@ -39,6 +39,7 @@ import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.reldo.taskstracker.data.task.filters.FilterService;
 import net.reldo.taskstracker.data.task.filters.TextMatcher;
+import net.reldo.taskstracker.panel.TaskPanel;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
 import net.reldo.taskstracker.panel.components.TaskOverlayPanel;
 import net.runelite.api.ChatMessageType;
@@ -687,7 +688,7 @@ public class TasksTrackerPlugin extends Plugin
 		});
 	}
 
-	public TaskFromStruct getPriorityTask()
+	public TaskPanel getPriorityTask()
 	{
 		return pluginPanel.getPriorityTask();
 	}
