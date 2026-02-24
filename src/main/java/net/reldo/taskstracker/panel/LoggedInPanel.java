@@ -28,6 +28,9 @@ import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
+import net.reldo.taskstracker.data.task.filters.RegexTextMatcher;
+import net.reldo.taskstracker.data.task.filters.TextMatcher;
+import net.reldo.taskstracker.data.task.filters.TextMatcherFactory;
 import net.reldo.taskstracker.panel.components.SearchBox;
 import net.reldo.taskstracker.panel.components.TabMenuItem;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
@@ -532,7 +535,27 @@ public class LoggedInPanel extends JPanel
 
 		SearchBox textSearch = new SearchBox();
 		textSearch.addTextChangedListener(() -> {
-			plugin.taskTextFilter = textSearch.getText().toLowerCase();
+			String searchText = textSearch.getText();
+
+			// Create the appropriate matcher based on config
+			boolean regexEnabled = config.enableRegexSearch();
+			TextMatcher matcher = TextMatcherFactory.create(searchText, regexEnabled);
+			plugin.taskTextMatcher = matcher;
+
+			// Show feedback for regex mode/errors
+			if (regexEnabled && !matcher.isValid())
+			{
+				textSearch.setToolTipText("Invalid regex: " + matcher.getErrorMessage() + ". Falling back to literal search.");
+			}
+			else if (regexEnabled && matcher instanceof RegexTextMatcher)
+			{
+				textSearch.setToolTipText("Regex mode active");
+			}
+			else
+			{
+				textSearch.setToolTipText(null);
+			}
+
 			plugin.refreshAllTasks();
 		});
 
