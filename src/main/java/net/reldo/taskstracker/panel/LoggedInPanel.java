@@ -540,14 +540,16 @@ public class LoggedInPanel extends JPanel
 			// Create the appropriate matcher based on config
 			boolean regexEnabled = config.enableRegexSearch();
 			TextMatcher matcher = TextMatcherFactory.create(searchText, regexEnabled);
+
 			plugin.taskTextMatcher = matcher;
 
-			// Show feedback for regex mode/errors
-			if (regexEnabled && !matcher.isValid())
+			// Show tooltip feedback
+			String errorMessage = matcher.getErrorMessage();
+			if (errorMessage != null)
 			{
-				textSearch.setToolTipText("Invalid regex: " + matcher.getErrorMessage() + ". Falling back to literal search.");
+				textSearch.setToolTipText(errorMessage);
 			}
-			else if (regexEnabled && matcher instanceof RegexTextMatcher)
+			else if (matcher instanceof RegexTextMatcher)
 			{
 				textSearch.setToolTipText("Regex mode active");
 			}

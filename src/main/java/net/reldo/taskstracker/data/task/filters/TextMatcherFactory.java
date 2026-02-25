@@ -1,8 +1,5 @@
 package net.reldo.taskstracker.data.task.filters;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class TextMatcherFactory
 {
 	/** Characters that trigger regex mode when auto-detection is enabled. */
@@ -18,17 +15,12 @@ public class TextMatcherFactory
 		if (allowRegex && containsRegexMetacharacter(pattern))
 		{
 			RegexTextMatcher regexMatcher = new RegexTextMatcher(pattern);
-
 			if (regexMatcher.isValid())
 			{
 				return regexMatcher;
 			}
-			else
-			{
-				log.warn("Invalid regex pattern '{}': {}. Falling back to literal search.",
-					pattern, regexMatcher.getErrorMessage());
-				return new LiteralTextMatcher(pattern);
-			}
+			return new LiteralTextMatcher(pattern,
+				"Invalid regex: " + regexMatcher.getErrorMessage() + ". Using literal search.");
 		}
 
 		return new LiteralTextMatcher(pattern);

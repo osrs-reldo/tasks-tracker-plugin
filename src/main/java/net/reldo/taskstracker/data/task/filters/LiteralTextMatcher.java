@@ -3,10 +3,17 @@ package net.reldo.taskstracker.data.task.filters;
 public class LiteralTextMatcher implements TextMatcher
 {
 	private final String pattern;
+	private final String errorMessage;
 
 	public LiteralTextMatcher(String pattern)
 	{
+		this(pattern, null);
+	}
+
+	public LiteralTextMatcher(String pattern, String errorMessage)
+	{
 		this.pattern = pattern != null ? pattern.toLowerCase() : "";
+		this.errorMessage = errorMessage;
 	}
 
 	@Override
@@ -34,6 +41,6 @@ public class LiteralTextMatcher implements TextMatcher
 	@Override
 	public String getErrorMessage()
 	{
-		return null;
+		return errorMessage;
 	}
 }
