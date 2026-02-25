@@ -321,7 +321,7 @@ public class TaskPanel extends JPanel
 
 	protected boolean meetsFilterCriteria()
 	{
-		return filterMatcher.meetsFilterCriteria(task, plugin.taskTextFilter);
+		return filterMatcher.meetsFilterCriteria(task, plugin.taskTextMatcher);
 	}
 
 	private void setBackgroundColor(Color color)

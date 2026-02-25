@@ -38,6 +38,7 @@ import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.reldo.taskstracker.data.task.filters.FilterService;
+import net.reldo.taskstracker.data.task.filters.TextMatcher;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -77,7 +78,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	public int[] playerSkills;
 
-	public String taskTextFilter;
+	public TextMatcher taskTextMatcher;
 
 	public TasksTrackerPluginPanel pluginPanel;
 
@@ -486,7 +487,7 @@ public class TasksTrackerPlugin extends Plugin
 		TasksSummary summary = new TasksSummary(
 			taskService.getTasks(),
 			filterMatcher,
-			taskTextFilter
+			taskTextMatcher
 		);
 
 		String taskTypeName = taskService.getCurrentTaskType() != null

@@ -58,6 +58,18 @@ public interface TasksTrackerConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		position = 13,
+		keyName = "enableRegexSearch",
+		name = "Enable Regex Search",
+		description = "Enable regex pattern matching in search. Patterns with metacharacters (.*+?[]{}^$|) are automatically detected.",
+		section = generalSettings
+	)
+	default boolean enableRegexSearch()
+	{
+		return false;
+	}
+
 
 	@ConfigSection(
 		name = "Internal Config",

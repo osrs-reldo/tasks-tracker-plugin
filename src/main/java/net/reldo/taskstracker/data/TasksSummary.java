@@ -4,6 +4,7 @@ import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
+import net.reldo.taskstracker.data.task.filters.TextMatcher;
 
 @Slf4j
 public class TasksSummary
@@ -42,17 +43,17 @@ public class TasksSummary
 	/**
 	 * New constructor - calculates filtered totals, tracked progress, and total completed.
 	 *
-	 * @param tasks          All tasks to process
-	 * @param filterMatcher  The filter matcher to determine which tasks pass current filters
-	 * @param taskTextFilter The current text search filter (can be null)
+	 * @param tasks         All tasks to process
+	 * @param filterMatcher The filter matcher to determine which tasks pass current filters
+	 * @param textMatcher   The text matcher for search filtering (can be null)
 	 */
-	public TasksSummary(Collection<TaskFromStruct> tasks, FilterMatcher filterMatcher, String taskTextFilter)
+	public TasksSummary(Collection<TaskFromStruct> tasks, FilterMatcher filterMatcher, TextMatcher textMatcher)
 	{
 		tasks.forEach(task -> {
 			int points = task.getPoints();
 
 			// Calculate filtered totals
-			if (filterMatcher.meetsFilterCriteria(task, taskTextFilter))
+			if (filterMatcher.meetsFilterCriteria(task, textMatcher))
 			{
 				filteredTasksCount++;
 				filteredTasksPoints += points;
