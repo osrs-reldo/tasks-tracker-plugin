@@ -553,6 +553,10 @@ public class LoggedInPanel extends JPanel
 			{
 				textSearch.setToolTipText("Regex mode active");
 			}
+			else if (regexEnabled)
+			{
+				textSearch.setToolTipText("Regex mode inactive");
+			}
 			else
 			{
 				textSearch.setToolTipText(null);
