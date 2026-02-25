@@ -692,4 +692,14 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		return pluginPanel.getPriorityTask();
 	}
+
+	public void redraw()
+	{
+		pluginPanel.redraw();
+	}
+
+	public void redrawTaskList()
+	{
+		pluginPanel.redrawTaskList();
+	}
 }

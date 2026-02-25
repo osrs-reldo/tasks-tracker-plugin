@@ -294,6 +294,15 @@ public class TaskListPanel extends JScrollPane
 				}
 				taskPanelListModificationInProgress = true;
 
+				int numberOfPinnedTasks = 0;
+				Integer pinnedTaskStructId = null;
+				if (plugin.getConfig().pinnedTaskId() != 0)
+				{
+					pinnedTaskStructId = plugin.getConfig().pinnedTaskId();
+					setComponentZOrder(taskPanelsByStructId.get(pinnedTaskStructId), 0);
+					numberOfPinnedTasks++;
+				}
+
 				for (int indexPosition = 0; indexPosition < taskPanels.size(); indexPosition++)
 				{
 					int adjustedIndexPosition = indexPosition;
@@ -302,7 +311,11 @@ public class TaskListPanel extends JScrollPane
 						adjustedIndexPosition = taskPanels.size() - (adjustedIndexPosition + 1);
 					}
 					TaskPanel taskPanel = taskPanels.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition));
-					setComponentZOrder(taskPanel, indexPosition);
+					if (pinnedTaskStructId != null && pinnedTaskStructId.equals(taskPanel.task.getStructId()))
+					{
+						continue;
+					}
+					setComponentZOrder(taskPanel, indexPosition + numberOfPinnedTasks);
 				}
 
 				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);

@@ -29,6 +29,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.JToolTip;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
@@ -252,6 +253,18 @@ public class TaskPanel extends JPanel
 	public JPopupMenu createTaskPopupMenu()
 	{
 		JPopupMenu popupMenu = new JPopupMenu();
+		if (plugin.getConfig().pinnedTaskId().equals(task.getStructId()))
+		{
+			JMenuItem unpinTaskItem = new JMenuItem("Unpin");
+			unpinTaskItem.addActionListener(e -> unpinTaskPanel());
+			popupMenu.add(unpinTaskItem);
+		}
+		else
+		{
+			JMenuItem pinTaskItem = new JMenuItem("Pin task");
+			pinTaskItem.addActionListener(e -> pinTaskPanel());
+			popupMenu.add(pinTaskItem);
+		}
 		JMenuItem editNoteItem = new JMenuItem("Edit Note");
 		editNoteItem.addActionListener(e -> editTaskNote());
 		popupMenu.add(editNoteItem);
@@ -296,6 +309,18 @@ public class TaskPanel extends JPanel
 		{
 			log.warn("Desktop browsing is not supported on this system.");
 		}
+	}
+
+	private void pinTaskPanel()
+	{
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", task.getStructId());
+		SwingUtilities.invokeLater(plugin::redrawTaskList);
+	}
+
+	private void unpinTaskPanel()
+	{
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", 0);
+		SwingUtilities.invokeLater(plugin::redrawTaskList);
 	}
 
 	public void refresh()

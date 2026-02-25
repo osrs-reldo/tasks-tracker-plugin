@@ -119,6 +119,11 @@ public class LoggedInPanel extends JPanel
 		taskListPanel.redraw();
 	}
 
+	public void redrawTaskList()
+	{
+		taskListPanel.redraw();
+	}
+
 	public void refreshAllTasks()
 	{
 		updateCollapseButtonText();

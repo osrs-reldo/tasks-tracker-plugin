@@ -69,6 +69,31 @@ public interface TasksTrackerConfig extends Config
 	{
 		return false;
 	}
+	@ConfigItem(
+		position = 14,
+		keyName = "pinnedTaskId",
+		name = "Pinned Task ID",
+		description = "Task ID to pin to top of list.",
+		section = generalSettings,
+		hidden = true
+	)
+	default Integer pinnedTaskId()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
+		position = 15,
+		keyName = "showPinnedTask",
+		name = "Always Show Pinned Task",
+		description = "Always show the pinned task regardless of filters.",
+		section = generalSettings
+	)
+	default boolean showPinnedTask()
+	{
+		return true;
+	}
+
 	/*=================================================================================================================
 	-- Overlay Panel settings                                                                                        --
 	=================================================================================================================*/
@@ -90,7 +115,7 @@ public interface TasksTrackerConfig extends Config
 	)
 	default boolean showOverlay()
 	{
-		return true;
+		return false;
 	}
 
 	@ConfigItem(
