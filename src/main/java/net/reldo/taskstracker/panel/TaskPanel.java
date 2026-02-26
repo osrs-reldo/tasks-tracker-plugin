@@ -32,6 +32,7 @@ import javax.swing.JToolTip;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.HtmlUtil;
 import net.reldo.taskstracker.TasksTrackerPlugin;
@@ -57,6 +58,7 @@ public class TaskPanel extends JPanel
 
 	private final JLabel tierIcon = new JLabel();
 	private final JPanel container = new JPanel(new BorderLayout());
+	private final JPanel highlightContainer = new JPanel(new BorderLayout());
 	private final JPanel body = new JPanel(new BorderLayout());
 	private final JLabel name = new JLabel("task");
 	private final JLabel description = new JLabel("description");
@@ -175,6 +177,7 @@ public class TaskPanel extends JPanel
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(0, 0, 7, 0));
 
+		highlightContainer.setBorder(new EmptyBorder(0, 0, 0, 0));
 		container.setBorder(new EmptyBorder(7, 7, 6, 0));
 
 		// Body
@@ -234,7 +237,8 @@ public class TaskPanel extends JPanel
 			tierIcon.setBorder(new EmptyBorder(0, 0, 0, 0));
 		}
 
-		add(container, BorderLayout.NORTH);
+		highlightContainer.add(container, BorderLayout.NORTH);
+		add(highlightContainer, BorderLayout.NORTH);
 
 		addMouseListener(new MouseAdapter()
 		{
@@ -258,6 +262,10 @@ public class TaskPanel extends JPanel
 			JMenuItem unpinTaskItem = new JMenuItem("Unpin");
 			unpinTaskItem.addActionListener(e -> unpinTaskPanel());
 			popupMenu.add(unpinTaskItem);
+
+			JMenuItem addOverlay = new JMenuItem(plugin.getConfig().showOverlay() ? "Remove from canvas" : "Add to canvas");
+			addOverlay.addActionListener(e -> plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "showOverlay", !plugin.getConfig().showOverlay()));
+			popupMenu.add(addOverlay);
 		}
 		else
 		{
@@ -325,6 +333,14 @@ public class TaskPanel extends JPanel
 
 	public void refresh()
 	{
+		if (plugin.getConfig().pinnedTaskId().equals(task.getStructId()))
+		{
+			highlightContainer.setBorder(new LineBorder(ColorScheme.BRAND_ORANGE));
+		}
+		else
+		{
+			highlightContainer.setBorder(new EmptyBorder(0, 0, 0, 0));
+		}
 		setBackgroundColor(getTaskBackgroundColor());
 		name.setText(HtmlUtil.wrapWithHtml(task.getName()));
 		description.setText(HtmlUtil.wrapWithHtml(task.getDescription()));
