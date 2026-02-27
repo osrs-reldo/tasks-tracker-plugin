@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.IntConsumer;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -13,6 +12,7 @@ import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
@@ -37,7 +37,8 @@ public class TaskListPanel extends JScrollPane
 	private final JLabel emptyTasks = new JLabel();
 	@Setter
 	private int batchSize;
-	private boolean taskPanelListModificationInProgress = false;
+	@Getter
+	private TaskPanel priorityTask = null;
 
 	public TaskListPanel(TasksTrackerPlugin plugin, TaskService taskService)
 	{
@@ -117,7 +118,6 @@ public class TaskListPanel extends JScrollPane
 			taskPanel.refresh();
 		}
 		refreshEmptyPanel();
-		taskPanelListModificationInProgress = false;
 	}
 
 	public void refreshMultipleTasks(Collection<TaskFromStruct> tasks)
@@ -201,20 +201,6 @@ public class TaskListPanel extends JScrollPane
 		return "No tasks match the current filters.";
 	}
 
-	public TaskPanel getPriorityTask()
-	{
-		if (taskPanelListModificationInProgress || taskPanels == null || taskPanels.isEmpty())
-		{
-			return null;
-		}
-
-		Optional<TaskPanel> optionalTaskPanel = taskPanels.stream().filter(Component::isVisible).
-			min((panel1, panel2) ->
-				Integer.compare(getCurrentTaskListListPanel().getComponentZOrder(panel1),
-					getCurrentTaskListListPanel().getComponentZOrder(panel2)));
-		return optionalTaskPanel.orElse(null);
-	}
-
 	private class TaskListListPanel extends FixedWidthPanel
 	{
 		private final TasksTrackerPlugin plugin;
@@ -247,8 +233,8 @@ public class TaskListPanel extends JScrollPane
 			if (SwingUtilities.isEventDispatchThread())
 			{
 				log.debug("TaskListPanel creating panels");
-				taskPanelListModificationInProgress = true;
 				taskPanelsByStructId.clear();
+				priorityTask = null;
 				add(emptyTasks);
 
 				List<TaskFromStruct> tasks = taskService.getTasks();
@@ -287,12 +273,13 @@ public class TaskListPanel extends JScrollPane
 			log.debug("TaskListPanel.redraw");
 			if (SwingUtilities.isEventDispatchThread())
 			{
+
 				if (taskPanels == null || taskPanels.isEmpty())
 				{
+					priorityTask = null;
 					emptyTasks.setVisible(true);
 					return;
 				}
-				taskPanelListModificationInProgress = true;
 
 				int numberOfPinnedTasks = 0;
 				Integer pinnedTaskStructId = null;
@@ -311,10 +298,18 @@ public class TaskListPanel extends JScrollPane
 						adjustedIndexPosition = taskPanels.size() - (adjustedIndexPosition + 1);
 					}
 					TaskPanel taskPanel = taskPanels.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition));
+
 					if (pinnedTaskStructId != null && pinnedTaskStructId.equals(taskPanel.task.getStructId()))
 					{
+						priorityTask = taskPanel;
 						continue;
 					}
+
+					if (indexPosition + numberOfPinnedTasks == 0)
+					{
+						priorityTask = taskPanel;
+					}
+
 					setComponentZOrder(taskPanel, indexPosition + numberOfPinnedTasks);
 				}
 
@@ -361,7 +356,7 @@ public class TaskListPanel extends JScrollPane
 			}
 			else
 			{
-				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
+				SwingUtilities.invokeLater(this::redraw);
 			}
 		}
 	}
