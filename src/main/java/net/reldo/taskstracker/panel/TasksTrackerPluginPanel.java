@@ -143,6 +143,11 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	public TaskPanel getPriorityTask()
 	{
-		return taskListPanel.getPriorityTask();
+		if (loggedInPanelVisible)
+		{
+			return taskListPanel.getPriorityTask();
+		}
+
+		return null;
 	}
 }

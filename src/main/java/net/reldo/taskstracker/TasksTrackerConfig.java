@@ -26,7 +26,7 @@ public interface TasksTrackerConfig extends Config
 		position = 10,
 		keyName = "untrackUponCompletion",
 		name = "Untrack Tasks Upon Completion",
-		description = "Configures whether completed tasks should also automatically untracked when the task is completed.",
+		description = "Configures whether completed tasks should also be automatically untracked when the task is completed.",
 		section = generalSettings
 	)
 	default boolean untrackUponCompletion()
@@ -35,31 +35,7 @@ public interface TasksTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		position = 11,
-		keyName = "filterPanelCollapsible",
-		name = "Filter Panels Collapsible",
-		description = "Shows button that allows filter panels to be hidden.",
-		section = generalSettings
-	)
-	default boolean filterPanelCollapsible()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		position = 12,
-		keyName = "saveSubFilterState", //@todo generalise this to all sub-filters
-		name = "Save Filter State",
-		description = "Configures whether the state of area filters should be saved and recalled when switching task type or restarting the plugin.",
-		hidden = true //todo This is hidden because it currently doesn't do anything
-	)
-	default boolean saveSubFilterState()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		position = 13,
+		position = 20,
 		keyName = "enableRegexSearch",
 		name = "Enable Regex Search",
 		description = "Enable regex pattern matching in search. Patterns with metacharacters (.*+?[]{}^$|) are automatically detected.",
@@ -69,8 +45,9 @@ public interface TasksTrackerConfig extends Config
 	{
 		return false;
 	}
+
 	@ConfigItem(
-		position = 14,
+		position = 30,
 		keyName = "pinnedTaskId",
 		name = "Pinned Task ID",
 		description = "Task ID to pin to top of list.",
@@ -83,7 +60,7 @@ public interface TasksTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		position = 15,
+		position = 31,
 		keyName = "showPinnedTask",
 		name = "Always Show Pinned Task",
 		description = "Always show the pinned task regardless of filters.",
@@ -94,10 +71,46 @@ public interface TasksTrackerConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		position = 32,
+		keyName = "unpinUponCompletion",
+		name = "Unpin Tasks Upon Completion",
+		description = "Configures whether completed tasks should also be automatically unpinned when the task is completed.",
+		section = generalSettings
+	)
+	default boolean unpinUponCompletion()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		position = 40,
+		keyName = "filterPanelCollapsible",
+		name = "Filter Panels Collapsible",
+		description = "Shows button that allows filter panels to be hidden.",
+		section = generalSettings
+	)
+	default boolean filterPanelCollapsible()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		position = 99,
+		keyName = "saveSubFilterState", //@todo generalise this to all sub-filters
+		name = "Save Filter State",
+		description = "Configures whether the state of area filters should be saved and recalled when switching task type or restarting the plugin.",
+		hidden = true //todo This is hidden because it currently doesn't do anything
+	)
+	default boolean saveSubFilterState()
+	{
+		return true;
+	}
+
+
 	/*=================================================================================================================
 	-- Overlay Panel settings                                                                                        --
 	=================================================================================================================*/
-
 
 	@ConfigSection(
 		name = "Overlay",
@@ -211,6 +224,7 @@ public interface TasksTrackerConfig extends Config
 		keyName = "completedFilter",
 		name = "Completed Tasks Filter",
 		description = "Configures whether completed tasks should be displayed.",
+		section = internalConfig,
 		hidden = true
 	)
 	default ConfigValues.CompletedFilterValues completedFilter()
@@ -223,6 +237,7 @@ public interface TasksTrackerConfig extends Config
 		keyName = "trackedFilter",
 		name = "Tracked Tasks Filter",
 		description = "Configures whether tracked tasks should be displayed.",
+		section = internalConfig,
 		hidden = true
 	)
 	default ConfigValues.TrackedFilterValues trackedFilter()
@@ -235,6 +250,7 @@ public interface TasksTrackerConfig extends Config
 		keyName = "ignoredFilter",
 		name = "Ignored Tasks Filter",
 		description = "Configures whether ignored tasks should be displayed.",
+		section = internalConfig,
 		hidden = true
 	)
 	default ConfigValues.IgnoredFilterValues ignoredFilter()
@@ -247,6 +263,7 @@ public interface TasksTrackerConfig extends Config
 		keyName = "taskListTab",
 		name = "Selected Task List Tab",
 		description = "Configures the currently selected tab on the task list.",
+		section = internalConfig,
 		hidden = true
 	)
 	default ConfigValues.TaskListTabs taskListTab()
@@ -259,6 +276,7 @@ public interface TasksTrackerConfig extends Config
 		keyName = "taskTypeJsonName",
 		name = "Task Type",
 		description = "Configures the task type which is displayed in the panel.",
+		section = internalConfig,
 		hidden = true
 	)
 	default String taskTypeJsonName()
@@ -271,6 +289,7 @@ public interface TasksTrackerConfig extends Config
 		keyName = "dropdownFilter",
 		name = "Dropdown Filter",
 		description = "Configures the dropdown to filter tasks on.",
+		section = internalConfig,
 		hidden = true
 	)
 	default String dropdownFilter()
@@ -283,6 +302,7 @@ public interface TasksTrackerConfig extends Config
 		keyName = "sortCriteria",
 		name = "Sort Criteria",
 		description = "Configures the criteria to sort tasks on.",
+		section = internalConfig,
 		hidden = true
 	)
 	default String sortCriteria()
@@ -295,6 +315,7 @@ public interface TasksTrackerConfig extends Config
 		keyName = "sortDirection",
 		name = "Sort Direction",
 		description = "Configures the direction to sort tasks.",
+		section = internalConfig,
 		hidden = true
 	)
 	default ConfigValues.SortDirections sortDirection()
