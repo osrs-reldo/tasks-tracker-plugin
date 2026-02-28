@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Optional;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -20,7 +19,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
-import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicButtonUI;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
@@ -30,8 +28,11 @@ import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
+import net.reldo.taskstracker.data.task.filters.RegexTextMatcher;
+import net.reldo.taskstracker.data.task.filters.TextMatcher;
+import net.reldo.taskstracker.data.task.filters.TextMatcherFactory;
 import net.reldo.taskstracker.panel.components.SearchBox;
-import net.reldo.taskstracker.panel.components.TabMenuItem;
+import net.reldo.taskstracker.panel.components.FilterLockTabMenuItem;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
 import net.reldo.taskstracker.panel.filters.ComboItem;
 import net.runelite.client.ui.ColorScheme;
@@ -115,6 +116,11 @@ public class LoggedInPanel extends JPanel
 		sortPanel.redraw();
 		updateCollapseButtonText();
 
+		taskListPanel.redraw();
+	}
+
+	public void redrawTaskList()
+	{
 		taskListPanel.redraw();
 	}
 
@@ -272,24 +278,31 @@ public class LoggedInPanel extends JPanel
 		JMenuItem saveFiltersItem = new JMenuItem("Save Filter States");
 		saveFiltersItem.addActionListener(e -> saveCurrentTabFilters());
 
-		JMenuItem labelItem = new JMenuItem("-----------------");
-		labelItem.setEnabled(false);
+		JMenuItem lineBreakItem = new JMenuItem("-----------------");
+		lineBreakItem.setEnabled(false);
+		JMenuItem lineBreakItemTwo = new JMenuItem("-----------------");
+		lineBreakItemTwo.setEnabled(false);
 
-		JMenuItem completedItem = new TabMenuItem("Completed", completedFilterBtn, e -> {
+		JMenuItem completedItem = new FilterLockTabMenuItem("Completed", completedFilterBtn, e -> {
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "CompletedLock", completedFilterBtn.isEnabled());
 		});
-		JMenuItem trackedItem = new TabMenuItem("Tracked", trackedFilterBtn, e -> {
+		JMenuItem trackedItem = new FilterLockTabMenuItem("Tracked", trackedFilterBtn, e -> {
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "TrackedLock", trackedFilterBtn.isEnabled());
 		});
-		JMenuItem ignoredItem = new TabMenuItem("Ignored", ignoredFilterBtn, e -> {
+		JMenuItem ignoredItem = new FilterLockTabMenuItem("Ignored", ignoredFilterBtn, e -> {
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "IgnoredLock", ignoredFilterBtn.isEnabled());
 		});
 
+		JMenuItem taskOverlayItem = new JMenuItem("Toggle canvas overlay");
+		taskOverlayItem.addActionListener(e -> plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "showOverlay", !config.showOverlay()));
+
 		popupMenu.add(saveFiltersItem);
-		popupMenu.add(labelItem);
+		popupMenu.add(lineBreakItem);
 		popupMenu.add(completedItem);
 		popupMenu.add(trackedItem);
 		popupMenu.add(ignoredItem);
+		popupMenu.add(lineBreakItemTwo);
+		popupMenu.add(taskOverlayItem);
 
 		button.addChangeListener(e -> {
 			if (saveFiltersItem.isEnabled() != button.isSelected())
@@ -534,7 +547,33 @@ public class LoggedInPanel extends JPanel
 
 		SearchBox textSearch = new SearchBox();
 		textSearch.addTextChangedListener(() -> {
-			plugin.taskTextFilter = textSearch.getText().toLowerCase();
+			String searchText = textSearch.getText();
+
+			// Create the appropriate matcher based on config
+			boolean regexEnabled = config.enableRegexSearch();
+			TextMatcher matcher = TextMatcherFactory.create(searchText, regexEnabled);
+
+			plugin.taskTextMatcher = matcher;
+
+			// Show tooltip feedback
+			String errorMessage = matcher.getErrorMessage();
+			if (errorMessage != null)
+			{
+				textSearch.setToolTipText(errorMessage);
+			}
+			else if (matcher instanceof RegexTextMatcher)
+			{
+				textSearch.setToolTipText("Regex mode active");
+			}
+			else if (regexEnabled)
+			{
+				textSearch.setToolTipText("Regex mode inactive");
+			}
+			else
+			{
+				textSearch.setToolTipText(null);
+			}
+
 			plugin.refreshAllTasks();
 		});
 

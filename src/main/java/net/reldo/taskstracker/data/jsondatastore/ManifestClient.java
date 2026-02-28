@@ -37,7 +37,7 @@ public class ManifestClient
 			return _manifest;
 		}
 		try (InputStream stream = this.dataStoreReader.readManifestData();
-			 InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
+			InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
 		{
 			String manifestJson = CharStreams.toString(responseReader); // ew, why not a stream? not working...
 			_manifest = this.gson.fromJson(manifestJson, Manifest.class);

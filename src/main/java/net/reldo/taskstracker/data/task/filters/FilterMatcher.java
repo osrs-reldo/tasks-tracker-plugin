@@ -63,19 +63,25 @@ public class FilterMatcher
 	 * Checks if a task meets current UI filters.
 	 * Show all by default, each filter then restricts. Fast fail out.
 	 *
-	 * @param task           The task to check
-	 * @param taskTextFilter The current text search filter, already lowercased (can be null)
+	 * @param task        The task to check
+	 * @param textMatcher The text matcher for search filtering (can be null to skip text filter)
 	 * @return true if the task passes all filters, false otherwise
 	 */
-	public boolean meetsFilterCriteria(TaskFromStruct task, String taskTextFilter)
+	public boolean meetsFilterCriteria(TaskFromStruct task, TextMatcher textMatcher)
 	{
-		// Text filter
-		if (taskTextFilter != null && !taskTextFilter.isEmpty())
+		// Pinned task check
+		if (config.showPinnedTask() && task.getStructId().equals(config.pinnedTaskId()))
 		{
-			String nameLowercase = task.getName().toLowerCase();
-			String descriptionLowercase = task.getDescription().toLowerCase();
+			return true;
+		}
 
-			if (!nameLowercase.contains(taskTextFilter) && !descriptionLowercase.contains(taskTextFilter))
+		// Text filter via TextMatcher
+		if (textMatcher != null && textMatcher.isValid())
+		{
+			String name = task.getName();
+			String description = task.getDescription();
+
+			if (!textMatcher.matches(name) && !textMatcher.matches(description))
 			{
 				return false;
 			}

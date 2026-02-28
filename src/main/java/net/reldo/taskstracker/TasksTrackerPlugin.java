@@ -38,7 +38,10 @@ import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.reldo.taskstracker.data.task.filters.FilterService;
+import net.reldo.taskstracker.data.task.filters.TextMatcher;
+import net.reldo.taskstracker.panel.TaskPanel;
 import net.reldo.taskstracker.panel.TasksTrackerPluginPanel;
+import net.reldo.taskstracker.panel.components.TaskOverlayPanel;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.Experience;
@@ -64,6 +67,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
 
@@ -77,7 +81,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	public int[] playerSkills;
 
-	public String taskTextFilter;
+	public TextMatcher taskTextMatcher;
 
 	public TasksTrackerPluginPanel pluginPanel;
 
@@ -102,6 +106,8 @@ public class TasksTrackerPlugin extends Plugin
 	@Inject
 	private PluginManager pluginManager;
 	@Inject
+	private OverlayManager overlayManager;
+	@Inject
 	private ClientToolbar clientToolbar;
 	@Inject
 	private ClientThread clientThread;
@@ -120,6 +126,8 @@ public class TasksTrackerPlugin extends Plugin
 	private TaskService taskService;
 	@Inject
 	private FilterService filterService;
+	@Inject
+	private TaskOverlayPanel overlay;
 
 	@Getter
 	private FilterMatcher filterMatcher;
@@ -159,6 +167,7 @@ public class TasksTrackerPlugin extends Plugin
 		if (isLoggedIn)
 		{
 			forceUpdateVarpsFlag = true;
+			overlayManager.add(overlay);
 		}
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
@@ -263,6 +272,18 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			pluginPanel.taskListPanel.setBatchSize(config.taskPanelBatchSize());
 		}
+
+		if (configChanged.getKey().equals("showOverlay"))
+		{
+			if (config.showOverlay())
+			{
+				overlayManager.add(overlay);
+			}
+			else
+			{
+				overlayManager.remove(overlay);
+			}
+		}
 	}
 
 	@Subscribe
@@ -278,6 +299,10 @@ public class TasksTrackerPlugin extends Plugin
 		if (newGameState == GameState.LOGGING_IN)
 		{
 			forceUpdateVarpsFlag = true;
+			if (config.showOverlay())
+			{
+				overlayManager.add(overlay);
+			}
 		}
 		// Changed game mode
 		if (isLoggedInState(newGameState) && currentProfileType != null && currentProfileType != newProfileType)
@@ -486,7 +511,7 @@ public class TasksTrackerPlugin extends Plugin
 		TasksSummary summary = new TasksSummary(
 			taskService.getTasks(),
 			filterMatcher,
-			taskTextFilter
+			taskTextMatcher
 		);
 
 		String taskTypeName = taskService.getCurrentTaskType() != null
@@ -661,5 +686,20 @@ public class TasksTrackerPlugin extends Plugin
 				LinkBrowser.browse("https://www.osleague.tools/tracker?open=import&tab=tasks");
 			}
 		});
+	}
+
+	public TaskPanel getPriorityTask()
+	{
+		return pluginPanel.getPriorityTask();
+	}
+
+	public void redraw()
+	{
+		pluginPanel.redraw();
+	}
+
+	public void redrawTaskList()
+	{
+		pluginPanel.redrawTaskList();
 	}
 }
