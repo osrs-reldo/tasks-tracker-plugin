@@ -54,6 +54,14 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		}
 	}
 
+	public void redrawTaskList()
+	{
+		if (loggedInPanelVisible)
+		{
+			loggedInPanel.redrawTaskList();
+		}
+	}
+
 	public void refreshAllTasks()
 	{
 		if (loggedInPanelVisible)
@@ -131,5 +139,15 @@ public class TasksTrackerPluginPanel extends PluginPanel
 			loggedInPanel.saveCurrentTabFilters();
 		}
 
+	}
+
+	public TaskPanel getPriorityTask()
+	{
+		if (loggedInPanelVisible)
+		{
+			return taskListPanel.getPriorityTask();
+		}
+
+		return null;
 	}
 }

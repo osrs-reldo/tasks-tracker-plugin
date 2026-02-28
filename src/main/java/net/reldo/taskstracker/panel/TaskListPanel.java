@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.IntConsumer;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -13,6 +12,7 @@ import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
@@ -20,7 +20,6 @@ import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
-import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
 import net.runelite.api.Skill;
 import net.runelite.client.ui.FontManager;
@@ -38,6 +37,8 @@ public class TaskListPanel extends JScrollPane
 	private final JLabel emptyTasks = new JLabel();
 	@Setter
 	private int batchSize;
+	@Getter
+	private TaskPanel priorityTask = null;
 
 	public TaskListPanel(TasksTrackerPlugin plugin, TaskService taskService)
 	{
@@ -169,14 +170,7 @@ public class TaskListPanel extends JScrollPane
 		boolean isAnyTaskPanelVisible = taskPanelsByStructId.values().stream()
 			.anyMatch(TaskPanel::isVisible);
 
-		if (!isAnyTaskPanelVisible)
-		{
-			emptyTasks.setVisible(true);
-		}
-		else
-		{
-			emptyTasks.setVisible(false);
-		}
+		emptyTasks.setVisible(!isAnyTaskPanelVisible);
 	}
 
 	public void refreshTaskPanelsWithSkill(Skill skill)
@@ -240,6 +234,7 @@ public class TaskListPanel extends JScrollPane
 			{
 				log.debug("TaskListPanel creating panels");
 				taskPanelsByStructId.clear();
+				priorityTask = null;
 				add(emptyTasks);
 
 				List<TaskFromStruct> tasks = taskService.getTasks();
@@ -278,10 +273,21 @@ public class TaskListPanel extends JScrollPane
 			log.debug("TaskListPanel.redraw");
 			if (SwingUtilities.isEventDispatchThread())
 			{
+
 				if (taskPanels == null || taskPanels.isEmpty())
 				{
+					priorityTask = null;
 					emptyTasks.setVisible(true);
 					return;
+				}
+
+				int numberOfPinnedTasks = 0;
+				Integer pinnedTaskStructId = null;
+				if (plugin.getConfig().pinnedTaskId() != 0)
+				{
+					pinnedTaskStructId = plugin.getConfig().pinnedTaskId();
+					setComponentZOrder(taskPanelsByStructId.get(pinnedTaskStructId), 0);
+					numberOfPinnedTasks++;
 				}
 
 				for (int indexPosition = 0; indexPosition < taskPanels.size(); indexPosition++)
@@ -292,7 +298,19 @@ public class TaskListPanel extends JScrollPane
 						adjustedIndexPosition = taskPanels.size() - (adjustedIndexPosition + 1);
 					}
 					TaskPanel taskPanel = taskPanels.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition));
-					setComponentZOrder(taskPanel, indexPosition);
+
+					if (pinnedTaskStructId != null && pinnedTaskStructId.equals(taskPanel.task.getStructId()))
+					{
+						priorityTask = taskPanel;
+						continue;
+					}
+
+					if (indexPosition + numberOfPinnedTasks == 0)
+					{
+						priorityTask = taskPanel;
+					}
+
+					setComponentZOrder(taskPanel, indexPosition + numberOfPinnedTasks);
 				}
 
 				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
@@ -338,7 +356,7 @@ public class TaskListPanel extends JScrollPane
 			}
 			else
 			{
-				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
+				SwingUtilities.invokeLater(this::redraw);
 			}
 		}
 	}

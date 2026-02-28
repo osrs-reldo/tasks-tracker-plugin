@@ -69,6 +69,12 @@ public class FilterMatcher
 	 */
 	public boolean meetsFilterCriteria(TaskFromStruct task, TextMatcher textMatcher)
 	{
+		// Pinned task check
+		if (config.showPinnedTask() && task.getStructId().equals(config.pinnedTaskId()))
+		{
+			return true;
+		}
+
 		// Text filter via TextMatcher
 		if (textMatcher != null && textMatcher.isValid())
 		{

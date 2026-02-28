@@ -4,6 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -26,8 +29,10 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.JToolTip;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.HtmlUtil;
 import net.reldo.taskstracker.TasksTrackerPlugin;
@@ -40,6 +45,10 @@ import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.overlay.components.ComponentConstants;
+import net.runelite.client.ui.overlay.components.LineComponent;
+import net.runelite.client.ui.overlay.components.PanelComponent;
+import net.runelite.client.ui.overlay.components.TitleComponent;
 import net.runelite.client.util.SwingUtil;
 
 @Slf4j
@@ -49,6 +58,7 @@ public class TaskPanel extends JPanel
 
 	private final JLabel tierIcon = new JLabel();
 	private final JPanel container = new JPanel(new BorderLayout());
+	private final JPanel highlightContainer = new JPanel(new BorderLayout());
 	private final JPanel body = new JPanel(new BorderLayout());
 	private final JLabel name = new JLabel("task");
 	private final JLabel description = new JLabel("description");
@@ -167,6 +177,7 @@ public class TaskPanel extends JPanel
 		setLayout(new BorderLayout());
 		setBorder(new EmptyBorder(0, 0, 7, 0));
 
+		highlightContainer.setBorder(new EmptyBorder(0, 0, 0, 0));
 		container.setBorder(new EmptyBorder(7, 7, 6, 0));
 
 		// Body
@@ -226,7 +237,8 @@ public class TaskPanel extends JPanel
 			tierIcon.setBorder(new EmptyBorder(0, 0, 0, 0));
 		}
 
-		add(container, BorderLayout.NORTH);
+		highlightContainer.add(container, BorderLayout.NORTH);
+		add(highlightContainer, BorderLayout.NORTH);
 
 		addMouseListener(new MouseAdapter()
 		{
@@ -245,6 +257,22 @@ public class TaskPanel extends JPanel
 	public JPopupMenu createTaskPopupMenu()
 	{
 		JPopupMenu popupMenu = new JPopupMenu();
+		if (plugin.getConfig().pinnedTaskId().equals(task.getStructId()))
+		{
+			JMenuItem unpinTaskItem = new JMenuItem("Unpin");
+			unpinTaskItem.addActionListener(e -> unpinTaskPanel());
+			popupMenu.add(unpinTaskItem);
+
+			JMenuItem addOverlay = new JMenuItem(plugin.getConfig().showOverlay() ? "Remove from canvas" : "Add to canvas");
+			addOverlay.addActionListener(e -> plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "showOverlay", !plugin.getConfig().showOverlay()));
+			popupMenu.add(addOverlay);
+		}
+		else
+		{
+			JMenuItem pinTaskItem = new JMenuItem("Pin task");
+			pinTaskItem.addActionListener(e -> pinTaskPanel());
+			popupMenu.add(pinTaskItem);
+		}
 		JMenuItem editNoteItem = new JMenuItem("Edit Note");
 		editNoteItem.addActionListener(e -> editTaskNote());
 		popupMenu.add(editNoteItem);
@@ -291,8 +319,28 @@ public class TaskPanel extends JPanel
 		}
 	}
 
+	private void pinTaskPanel()
+	{
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", task.getStructId());
+		SwingUtilities.invokeLater(plugin::redrawTaskList);
+	}
+
+	private void unpinTaskPanel()
+	{
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", 0);
+		SwingUtilities.invokeLater(plugin::redrawTaskList);
+	}
+
 	public void refresh()
 	{
+		if (plugin.getConfig().pinnedTaskId().equals(task.getStructId()))
+		{
+			highlightContainer.setBorder(new LineBorder(ColorScheme.BRAND_ORANGE));
+		}
+		else
+		{
+			highlightContainer.setBorder(new EmptyBorder(0, 0, 0, 0));
+		}
 		setBackgroundColor(getTaskBackgroundColor());
 		name.setText(HtmlUtil.wrapWithHtml(task.getName()));
 		description.setText(HtmlUtil.wrapWithHtml(task.getDescription()));
@@ -407,5 +455,138 @@ public class TaskPanel extends JPanel
 			return "";
 		}
 		return " - " + points + " points";
+	}
+
+	public void buildOverlayText(Graphics2D graphics, PanelComponent panelComponent)
+	{
+
+		TaskFromStruct task = this.task;
+
+		if (plugin.getConfig().dynamicOverlayPanelColourEnabled())
+		{
+			Color taskColour = getTaskBackgroundColor();
+			Color overlayColour = new Color(
+				taskColour.getRed(),
+				taskColour.getGreen(),
+				taskColour.getBlue(),
+				ComponentConstants.STANDARD_BACKGROUND_COLOR.getAlpha());
+			panelComponent.setBackgroundColor(overlayColour);
+		}
+		else
+		{
+			panelComponent.setBackgroundColor(ComponentConstants.STANDARD_BACKGROUND_COLOR);
+		}
+
+		// Title
+		final FontMetrics fontMetrics = graphics.getFontMetrics();
+		int panelWidth = Math.max(ComponentConstants.STANDARD_WIDTH, fontMetrics.stringWidth(task.getName()) +
+			ComponentConstants.STANDARD_BORDER + ComponentConstants.STANDARD_BORDER);
+
+		panelComponent.setPreferredSize(new Dimension(panelWidth, 0));
+		panelComponent.getChildren().add(TitleComponent.builder()
+			.text(task.getName())
+			.build());
+
+		// Description
+		if (plugin.getConfig().addTaskDescription())
+		{
+			panelComponent.getChildren().add(LineComponent.builder()
+				.build());
+
+			panelComponent.getChildren().add(LineComponent.builder()
+				.left(task.getDescription())
+				.build());
+		}
+
+		// Skills
+		if (plugin.getConfig().addDynamicSkills())
+		{
+			panelComponent.getChildren().add(LineComponent.builder()
+				.build());
+
+			buildOverlaySkillSection(panelComponent);
+		}
+
+		// Wiki notes
+		if (plugin.getConfig().addWikiNotes())
+		{
+			String wikiNotes = task.getTaskDefinition().getWikiNotes();
+			if (wikiNotes != null && !wikiNotes.isEmpty())
+			{
+				panelComponent.getChildren().add(LineComponent.builder()
+					.build());
+
+				panelComponent.getChildren().add(LineComponent.builder()
+					.left(wikiNotes)
+					.build());
+			}
+		}
+
+		// Task Note
+		if (plugin.getConfig().addTaskNote())
+		{
+			if (task.getNote() != null && !task.getNote().isEmpty())
+			{
+				panelComponent.getChildren().add(LineComponent.builder()
+					.build());
+
+				panelComponent.getChildren().add(LineComponent.builder()
+					.left("Note:")
+					.build());
+
+				panelComponent.getChildren().add(LineComponent.builder()
+					.left(task.getNote())
+					.leftFont(FontManager.getRunescapeFont().deriveFont(Font.ITALIC))
+					.build());
+			}
+		}
+	}
+
+	private void buildOverlaySkillSection(PanelComponent panelComponent)
+	{
+		List<TaskDefinitionSkill> requiredSkills = task.getTaskDefinition().getSkills();
+		if (requiredSkills == null)
+		{
+			return;
+		}
+
+		for (TaskDefinitionSkill requiredSkill : requiredSkills)
+		{
+			Skill skill;
+			try
+			{
+				skill = Skill.valueOf(requiredSkill.getSkill().toUpperCase());
+			}
+			catch (IllegalArgumentException ex)
+			{
+				log.warn("unknown skill: {}", requiredSkill.getSkill().toUpperCase(), ex);
+				continue;
+			}
+
+			Integer requiredLevel = requiredSkill.getLevel();
+			int playerLevel = -1;
+			if (requiredLevel == null)
+			{
+				continue;
+			}
+			if (plugin.playerSkills != null)
+			{
+				playerLevel = plugin.playerSkills[skill.ordinal()];
+			}
+
+			panelComponent.getChildren().add(getSkillRequirementLineComponent(requiredSkill.getSkill().toLowerCase(), playerLevel, requiredLevel));
+		}
+	}
+
+	private LineComponent getSkillRequirementLineComponent(String skillName, Integer playerLevel, int requiredLevel)
+	{
+		Color color = playerLevel >= requiredLevel ? Colors.QUALIFIED_TEXT_COLOR : Colors.UNQUALIFIED_TEXT_COLOR;
+		String skillString = playerLevel + "/" + requiredLevel;
+		return LineComponent.builder()
+			.left(skillName.substring(0, 1).toUpperCase() + skillName.substring(1))
+			.leftColor(color)
+			.right(skillString)
+			.rightColor(color)
+			.build();
 	}
 }

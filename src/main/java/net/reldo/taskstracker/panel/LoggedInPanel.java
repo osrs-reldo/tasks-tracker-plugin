@@ -32,7 +32,7 @@ import net.reldo.taskstracker.data.task.filters.RegexTextMatcher;
 import net.reldo.taskstracker.data.task.filters.TextMatcher;
 import net.reldo.taskstracker.data.task.filters.TextMatcherFactory;
 import net.reldo.taskstracker.panel.components.SearchBox;
-import net.reldo.taskstracker.panel.components.TabMenuItem;
+import net.reldo.taskstracker.panel.components.FilterLockTabMenuItem;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
 import net.reldo.taskstracker.panel.filters.ComboItem;
 import net.runelite.client.ui.ColorScheme;
@@ -116,6 +116,11 @@ public class LoggedInPanel extends JPanel
 		sortPanel.redraw();
 		updateCollapseButtonText();
 
+		taskListPanel.redraw();
+	}
+
+	public void redrawTaskList()
+	{
 		taskListPanel.redraw();
 	}
 
@@ -273,24 +278,31 @@ public class LoggedInPanel extends JPanel
 		JMenuItem saveFiltersItem = new JMenuItem("Save Filter States");
 		saveFiltersItem.addActionListener(e -> saveCurrentTabFilters());
 
-		JMenuItem labelItem = new JMenuItem("-----------------");
-		labelItem.setEnabled(false);
+		JMenuItem lineBreakItem = new JMenuItem("-----------------");
+		lineBreakItem.setEnabled(false);
+		JMenuItem lineBreakItemTwo = new JMenuItem("-----------------");
+		lineBreakItemTwo.setEnabled(false);
 
-		JMenuItem completedItem = new TabMenuItem("Completed", completedFilterBtn, e -> {
+		JMenuItem completedItem = new FilterLockTabMenuItem("Completed", completedFilterBtn, e -> {
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "CompletedLock", completedFilterBtn.isEnabled());
 		});
-		JMenuItem trackedItem = new TabMenuItem("Tracked", trackedFilterBtn, e -> {
+		JMenuItem trackedItem = new FilterLockTabMenuItem("Tracked", trackedFilterBtn, e -> {
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "TrackedLock", trackedFilterBtn.isEnabled());
 		});
-		JMenuItem ignoredItem = new TabMenuItem("Ignored", ignoredFilterBtn, e -> {
+		JMenuItem ignoredItem = new FilterLockTabMenuItem("Ignored", ignoredFilterBtn, e -> {
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "IgnoredLock", ignoredFilterBtn.isEnabled());
 		});
 
+		JMenuItem taskOverlayItem = new JMenuItem("Toggle canvas overlay");
+		taskOverlayItem.addActionListener(e -> plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "showOverlay", !config.showOverlay()));
+
 		popupMenu.add(saveFiltersItem);
-		popupMenu.add(labelItem);
+		popupMenu.add(lineBreakItem);
 		popupMenu.add(completedItem);
 		popupMenu.add(trackedItem);
 		popupMenu.add(ignoredItem);
+		popupMenu.add(lineBreakItemTwo);
+		popupMenu.add(taskOverlayItem);
 
 		button.addChangeListener(e -> {
 			if (saveFiltersItem.isEnabled() != button.isSelected())

@@ -5,12 +5,12 @@ import javax.swing.JMenuItem;
 import java.awt.event.ActionListener;
 
 
-public class TabMenuItem extends JMenuItem
+public class FilterLockTabMenuItem extends JMenuItem
 {
 	private final String labelText;
 	private final TriToggleButton filterBtn;
 
-	public TabMenuItem(String label, TriToggleButton filterBtn, ActionListener actionListener)
+	public FilterLockTabMenuItem(String label, TriToggleButton filterBtn, ActionListener actionListener)
 	{
 		super(label);
 		this.labelText = label;
