@@ -65,20 +65,10 @@ public class RouteSection
 	/** Extracts just the task IDs from this section (ignoring custom items). */
 	public List<Integer> getTaskIds()
 	{
-		if (items != null && !items.isEmpty())
-		{
-			return items.stream()
-				.filter(RouteItem::isTask)
-				.map(RouteItem::getTaskId)
-				.collect(Collectors.toList());
-		}
-		if (taskIds != null)
-		{
-			return taskIds.stream()
-				.filter(id -> id != null)
-				.collect(Collectors.toList());
-		}
-		return new ArrayList<>();
+		return getItems().stream()
+			.filter(RouteItem::isTask)
+			.map(RouteItem::getTaskId)
+			.collect(Collectors.toList());
 	}
 
 	/** Returns only the custom items (non-task items) in this section. */

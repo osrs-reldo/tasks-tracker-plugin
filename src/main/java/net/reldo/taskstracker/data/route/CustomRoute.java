@@ -108,9 +108,10 @@ public class CustomRoute
 		}
 		for (RouteSection section : sections)
 		{
-			if (section.containsTask(taskId))
+			CustomRouteItem result = section.insertCustomItem(taskId, customType, insertAfter);
+			if (result != null)
 			{
-				return section.insertCustomItem(taskId, customType, insertAfter);
+				return result;
 			}
 		}
 		return null;
