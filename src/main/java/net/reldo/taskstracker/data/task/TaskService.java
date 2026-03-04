@@ -343,12 +343,10 @@ public class TaskService
 	// Route State Management
 	// Manages in-memory route state per tab. When a route is activated,
 	// a sort index is pre-computed mapping positions to task indexes.
-	// This allows efficient lookup during list rendering.
 	// ========================================================================
 
 	/**
 	 * Sets the active route for a tab. Pass null to clear.
-	 * When a route is set, a sort index is built for efficient position lookups.
 	 */
 	public void setActiveRoute(ConfigValues.TaskListTabs tab, CustomRoute route)
 	{
@@ -406,8 +404,7 @@ public class TaskService
 	}
 
 	/**
-	 * Builds a sort index array for a route. The index maps positions (0, 1, 2, ...)
-	 * to task list indexes, so position 0 gives the first task in route order, etc.
+	 * Builds a sort index array for a route.
 	 *
 	 * Tasks in the route are ordered by their route position.
 	 * Tasks NOT in the route are placed after, ordered by their task ID.

@@ -10,10 +10,6 @@ import java.util.stream.Collectors;
  * A named section within a route, containing an ordered list of items.
  * Sections allow routes to be organized into logical groups (e.g., by region or theme).
  *
- * Supports two JSON formats for backwards compatibility:
- * - Legacy: "taskIds" array containing only task IDs
- * - Current: "items" array containing RouteItem objects (tasks and custom items)
- *
  * When reading, the "items" format takes precedence if present.
  * When writing, only the "items" format is used (taskIds is cleared).
  */
@@ -35,8 +31,7 @@ public class RouteSection
 	private List<RouteItem> items;
 
 	/**
-	 * Returns all items in this section. If using the new "items" format, returns those directly.
-	 * If using the legacy "taskIds" format, converts them to RouteItem objects.
+	 * Returns all items in this section.
 	 */
 	public List<RouteItem> getItems()
 	{
@@ -46,7 +41,6 @@ public class RouteSection
 		}
 		if (taskIds != null)
 		{
-			// Convert legacy taskIds to RouteItem format
 			return taskIds.stream()
 				.filter(id -> id != null)
 				.map(id -> RouteItem.forTask(id))
@@ -55,7 +49,6 @@ public class RouteSection
 		return new ArrayList<>();
 	}
 
-	/** Sets the items list and clears the legacy taskIds (migrating to new format). */
 	public void setItems(List<RouteItem> items)
 	{
 		this.items = items;
@@ -94,7 +87,6 @@ public class RouteSection
 
 	/**
 	 * Inserts a new custom item before or after the specified task.
-	 * Automatically migrates to the new "items" format if needed.
 	 *
 	 * @param taskId the task to insert relative to
 	 * @param customType the type of custom item to create
@@ -131,7 +123,6 @@ public class RouteSection
 		return customItem;
 	}
 
-	/** Removes a custom item by its unique ID. Returns true if found and removed. */
 	public boolean removeCustomItem(String customItemId)
 	{
 		if (items == null)

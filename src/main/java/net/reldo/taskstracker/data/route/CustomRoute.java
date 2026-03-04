@@ -23,11 +23,9 @@ public class CustomRoute
 	@Expose
 	private String taskType;
 
-	/** Optional author name for imported routes. */
 	@Expose
 	private String author;
 
-	/** Optional description of the route's purpose or strategy. */
 	@Expose
 	private String description;
 
@@ -59,7 +57,6 @@ public class CustomRoute
 			.collect(Collectors.toList());
 	}
 
-	/** Finds and returns the section containing the given task ID, or null if not found. */
 	public RouteSection getSectionForTask(int taskId)
 	{
 		if (sections == null)
@@ -72,7 +69,6 @@ public class CustomRoute
 			.orElse(null);
 	}
 
-	/** Returns the total number of tasks across all sections. */
 	public int getTaskCount()
 	{
 		return getFlattenedOrder().size();

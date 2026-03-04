@@ -5,8 +5,7 @@ import lombok.Data;
 
 /**
  * A single item in a route section. Can be either a task reference (by taskId)
- * or a custom item (waypoint, reminder, etc.). This polymorphic design allows
- * routes to interleave tasks with helpful markers.
+ * or a custom item (waypoint, reminder, etc.).
  *
  * Exactly one of taskId or customItem should be non-null.
  */
@@ -41,7 +40,6 @@ public class RouteItem
 		return "invalid";
 	}
 
-	/** Factory method to create a RouteItem for a task. */
 	public static RouteItem forTask(int taskId)
 	{
 		RouteItem item = new RouteItem();
@@ -49,7 +47,6 @@ public class RouteItem
 		return item;
 	}
 
-	/** Factory method to create a RouteItem wrapping an existing custom item. */
 	public static RouteItem forCustom(CustomRouteItem customItem)
 	{
 		RouteItem item = new RouteItem();
@@ -57,7 +54,6 @@ public class RouteItem
 		return item;
 	}
 
-	/** Factory method to create a RouteItem with a new custom item of the given type. */
 	public static RouteItem forCustomType(String type)
 	{
 		return forCustom(CustomRouteItem.create(type));

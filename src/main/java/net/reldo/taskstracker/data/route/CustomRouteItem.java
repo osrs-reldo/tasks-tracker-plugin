@@ -20,7 +20,7 @@ public class CustomRouteItem
 	@Expose
 	private String type;
 
-	/** Returns a human-readable display name for this item type. */
+	/** Human-readable display name for this item type. */
 	public String getDisplayName()
 	{
 		if (type == null || type.isEmpty())
@@ -41,7 +41,6 @@ public class CustomRouteItem
 		}
 	}
 
-	/** Factory method to create a new custom item with a generated unique ID. */
 	public static CustomRouteItem create(String type)
 	{
 		CustomRouteItem item = new CustomRouteItem();
