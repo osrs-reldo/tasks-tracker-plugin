@@ -101,7 +101,7 @@ public class TrackerConfigStore
 
 	// ========================================================================
 	// Route Persistence
-	// Routes are stored per-taskType (shared across all tabs).
+	// Routes are stored per-taskType in global config (shared across all profiles).
 	// Config key pattern: "routes-{taskType}"
 	// ========================================================================
 
@@ -110,14 +110,14 @@ public class TrackerConfigStore
 	{
 		String key = "routes" + CONFIG_GROUP_PREFIX_SEPARATOR + taskType;
 		String json = customGson.toJson(routes);
-		configManager.setRSProfileConfiguration(CONFIG_GROUP_NAME, key, json);
+		configManager.setConfiguration(CONFIG_GROUP_NAME, key, json);
 	}
 
 	/** Loads all routes for a given task type. Returns empty list if none exist or on parse error. */
 	public List<CustomRoute> loadRoutes(String taskType)
 	{
 		String key = "routes" + CONFIG_GROUP_PREFIX_SEPARATOR + taskType;
-		String configJson = configManager.getRSProfileConfiguration(CONFIG_GROUP_NAME, key);
+		String configJson = configManager.getConfiguration(CONFIG_GROUP_NAME, key);
 		if (configJson == null || configJson.isEmpty())
 		{
 			return new ArrayList<>();
@@ -172,6 +172,7 @@ public class TrackerConfigStore
 	// ========================================================================
 	// Active Route Selection
 	// Each tab can have a different route selected (per tab AND per taskType).
+	// Stored in global config (shared across all profiles).
 	// Config key pattern: "activeRoute-{tabId}-{taskType}"
 	// ========================================================================
 
@@ -181,11 +182,11 @@ public class TrackerConfigStore
 		String key = "activeRoute" + CONFIG_GROUP_PREFIX_SEPARATOR + tab.configID + CONFIG_GROUP_PREFIX_SEPARATOR + taskType;
 		if (routeName == null || routeName.isEmpty())
 		{
-			configManager.unsetRSProfileConfiguration(CONFIG_GROUP_NAME, key);
+			configManager.unsetConfiguration(CONFIG_GROUP_NAME, key);
 		}
 		else
 		{
-			configManager.setRSProfileConfiguration(CONFIG_GROUP_NAME, key, routeName);
+			configManager.setConfiguration(CONFIG_GROUP_NAME, key, routeName);
 		}
 	}
 
@@ -193,7 +194,7 @@ public class TrackerConfigStore
 	public String loadActiveRouteName(ConfigValues.TaskListTabs tab, String taskType)
 	{
 		String key = "activeRoute" + CONFIG_GROUP_PREFIX_SEPARATOR + tab.configID + CONFIG_GROUP_PREFIX_SEPARATOR + taskType;
-		String name = configManager.getRSProfileConfiguration(CONFIG_GROUP_NAME, key);
+		String name = configManager.getConfiguration(CONFIG_GROUP_NAME, key);
 		if (name == null || name.isEmpty())
 		{
 			return null;
@@ -218,7 +219,7 @@ public class TrackerConfigStore
 	// ========================================================================
 	// Custom Item Completion Tracking
 	// Tracks which custom items (bank stops, teleports, etc.) have been marked complete.
-	// Stored per taskType + routeName (shared across tabs using the same route).
+	// Stored in global config per taskType + routeName (shared across tabs using the same route).
 	// Config key pattern: "customCompletion-{taskType}-{routeName}"
 	// ========================================================================
 
@@ -229,12 +230,12 @@ public class TrackerConfigStore
 			+ CONFIG_GROUP_PREFIX_SEPARATOR + routeName;
 		if (completedIds == null || completedIds.isEmpty())
 		{
-			configManager.unsetRSProfileConfiguration(CONFIG_GROUP_NAME, key);
+			configManager.unsetConfiguration(CONFIG_GROUP_NAME, key);
 		}
 		else
 		{
 			String value = String.join(",", completedIds);
-			configManager.setRSProfileConfiguration(CONFIG_GROUP_NAME, key, value);
+			configManager.setConfiguration(CONFIG_GROUP_NAME, key, value);
 		}
 	}
 
@@ -243,7 +244,7 @@ public class TrackerConfigStore
 	{
 		String key = "customCompletion" + CONFIG_GROUP_PREFIX_SEPARATOR + taskType
 			+ CONFIG_GROUP_PREFIX_SEPARATOR + routeName;
-		String value = configManager.getRSProfileConfiguration(CONFIG_GROUP_NAME, key);
+		String value = configManager.getConfiguration(CONFIG_GROUP_NAME, key);
 		if (value == null || value.isEmpty())
 		{
 			return new HashSet<>();
