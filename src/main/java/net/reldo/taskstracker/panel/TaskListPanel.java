@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.IntConsumer;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -39,6 +40,7 @@ public class TaskListPanel extends JScrollPane
 	private int batchSize;
 	@Getter
 	private TaskPanel priorityTask = null;
+	private boolean forceUpdatePriorityTaskFlag = false;
 
 	public TaskListPanel(TasksTrackerPlugin plugin, TaskService taskService)
 	{
@@ -118,6 +120,7 @@ public class TaskListPanel extends JScrollPane
 			taskPanel.refresh();
 		}
 		refreshEmptyPanel();
+		updatePriorityTaskAfterRefresh();
 	}
 
 	public void refreshMultipleTasks(Collection<TaskFromStruct> tasks)
@@ -130,17 +133,21 @@ public class TaskListPanel extends JScrollPane
 		}
 		for (TaskFromStruct task : tasks)
 		{
-			refresh(task);
+			refresh(task, true);
+		}
+		if (forceUpdatePriorityTaskFlag)
+		{
+			updatePriorityTaskAfterRefresh();
 		}
 	}
 
 	public void refreshTask(TaskFromStruct task)
 	{
-		log.debug("TaskListPanel.refreshMultipleTasks {}", task.getName());
-		refresh(task);
+		log.debug("TaskListPanel.refreshTask {}", task.getName());
+		refresh(task, false);
 	}
 
-	private void refresh(TaskFromStruct task)
+	private void refresh(TaskFromStruct task, boolean delayPriorityTaskRefresh)
 	{
 		if (!SwingUtilities.isEventDispatchThread())
 		{
@@ -159,6 +166,19 @@ public class TaskListPanel extends JScrollPane
 		if (panel != null)
 		{
 			panel.refresh();
+		}
+
+		if (getCurrentTaskListListPanel().getComponentZOrder(panel) <=
+			getCurrentTaskListListPanel().getComponentZOrder(priorityTask))
+		{
+			if (delayPriorityTaskRefresh)
+			{
+				forceUpdatePriorityTaskFlag = true;
+			}
+			else
+			{
+				updatePriorityTaskAfterRefresh();
+			}
 		}
 
 		refreshEmptyPanel();
@@ -194,6 +214,17 @@ public class TaskListPanel extends JScrollPane
 					);
 			})
 			.forEach(TaskPanel::refresh);
+	}
+
+	public void updatePriorityTaskAfterRefresh()
+	{
+		forceUpdatePriorityTaskFlag = false;
+
+		Optional<TaskPanel> optionalTaskPanel = taskPanels.stream().filter(Component::isVisible).
+			min((panel1, panel2) ->
+				Integer.compare(getCurrentTaskListListPanel().getComponentZOrder(panel1),
+					getCurrentTaskListListPanel().getComponentZOrder(panel2)));
+		priorityTask = optionalTaskPanel.orElse(null);
 	}
 
 	public String getEmptyTaskListMessage()
