@@ -4,8 +4,11 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.IntConsumer;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -19,9 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
+import net.reldo.taskstracker.data.route.CustomRoute;
+import net.reldo.taskstracker.data.route.RouteItem;
+import net.reldo.taskstracker.data.route.RouteSection;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
+import net.reldo.taskstracker.panel.components.SectionHeaderPanel;
 import net.runelite.api.Skill;
 import net.runelite.client.ui.FontManager;
 
@@ -41,6 +48,12 @@ public class TaskListPanel extends JScrollPane
 	@Getter
 	private TaskPanel priorityTask = null;
 	private boolean forceUpdatePriorityTaskFlag = false;
+
+	/** Section header panels keyed by section name */
+	private final Map<String, SectionHeaderPanel> sectionHeaderPanels = new HashMap<>();
+
+	/** Names of currently collapsed sections */
+	private final Set<String> collapsedSections = new HashSet<>();
 
 	public TaskListPanel(TasksTrackerPlugin plugin, TaskService taskService)
 	{
@@ -118,9 +131,45 @@ public class TaskListPanel extends JScrollPane
 		for (TaskPanel taskPanel : taskPanelsByStructId.values())
 		{
 			taskPanel.refresh();
+			// Re-hide tasks in collapsed sections after refresh resets visibility
+			if (taskPanel.isVisible() && isTaskInCollapsedSection(taskPanel.task))
+			{
+				taskPanel.setVisible(false);
+			}
 		}
 		refreshEmptyPanel();
 		updatePriorityTaskAfterRefresh();
+	}
+
+	/**
+	 * Checks if a task belongs to a currently collapsed section.
+	 */
+	private boolean isTaskInCollapsedSection(TaskFromStruct task)
+	{
+		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+		CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
+		if (activeRoute == null || activeRoute.getSections() == null)
+		{
+			return false;
+		}
+
+		int taskId = task.getIntParam("id");
+		for (RouteSection section : activeRoute.getSections())
+		{
+			if (section.getTaskIds() != null && section.getTaskIds().contains(taskId))
+			{
+				String sectionKey = section.getName() != null ? section.getName() : "Section";
+				return collapsedSections.contains(sectionKey);
+			}
+		}
+
+		// Task not in any route section — check if "Other Tasks" is collapsed
+		if (!activeRoute.getFlattenedOrder().contains(taskId))
+		{
+			return collapsedSections.contains("Other Tasks");
+		}
+
+		return false;
 	}
 
 	public void refreshMultipleTasks(Collection<TaskFromStruct> tasks)
@@ -232,6 +281,27 @@ public class TaskListPanel extends JScrollPane
 		return "No tasks match the current filters.";
 	}
 
+	/**
+	 * Returns the task IDs of currently visible tasks in display order.
+	 */
+	public List<Integer> getVisibleTaskIds()
+	{
+		List<Integer> ids = new ArrayList<>();
+
+		Component[] components = getCurrentTaskListListPanel().getComponents();
+
+		for (Component comp : components)
+		{
+			if (comp instanceof TaskPanel && comp.isVisible())
+			{
+				TaskPanel panel = (TaskPanel) comp;
+				ids.add(panel.task.getIntParam("id"));
+			}
+		}
+
+		return ids;
+	}
+
 	private class TaskListListPanel extends FixedWidthPanel
 	{
 		private final TasksTrackerPlugin plugin;
@@ -266,6 +336,15 @@ public class TaskListPanel extends JScrollPane
 				log.debug("TaskListPanel creating panels");
 				taskPanelsByStructId.clear();
 				priorityTask = null;
+
+				// Clear section headers from previous task type
+				for (SectionHeaderPanel header : sectionHeaderPanels.values())
+				{
+					remove(header);
+				}
+				sectionHeaderPanels.clear();
+				collapsedSections.clear();
+
 				add(emptyTasks);
 
 				List<TaskFromStruct> tasks = taskService.getTasks();
@@ -304,7 +383,6 @@ public class TaskListPanel extends JScrollPane
 			log.debug("TaskListPanel.redraw");
 			if (SwingUtilities.isEventDispatchThread())
 			{
-
 				if (taskPanels == null || taskPanels.isEmpty())
 				{
 					priorityTask = null;
@@ -312,44 +390,271 @@ public class TaskListPanel extends JScrollPane
 					return;
 				}
 
-				int numberOfPinnedTasks = 0;
-				Integer pinnedTaskStructId = null;
-				if (plugin.getConfig().pinnedTaskId() != 0)
+				ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+				CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
+
+				// Hide all section headers before redraw
+				for (SectionHeaderPanel header : sectionHeaderPanels.values())
 				{
-					pinnedTaskStructId = plugin.getConfig().pinnedTaskId();
-					setComponentZOrder(taskPanelsByStructId.get(pinnedTaskStructId), 0);
-					numberOfPinnedTasks++;
+					header.setVisible(false);
 				}
 
-				for (int indexPosition = 0; indexPosition < taskPanels.size(); indexPosition++)
+				if (activeRoute != null && activeRoute.getSections() != null)
 				{
-					int adjustedIndexPosition = indexPosition;
-					if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
-					{
-						adjustedIndexPosition = taskPanels.size() - (adjustedIndexPosition + 1);
-					}
-					TaskPanel taskPanel = taskPanels.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition));
-
-					if (pinnedTaskStructId != null && pinnedTaskStructId.equals(taskPanel.task.getStructId()))
-					{
-						priorityTask = taskPanel;
-						continue;
-					}
-
-					if (indexPosition + numberOfPinnedTasks == 0)
-					{
-						priorityTask = taskPanel;
-					}
-
-					setComponentZOrder(taskPanel, indexPosition + numberOfPinnedTasks);
+					redrawWithSections(activeRoute);
+				}
+				else
+				{
+					redrawWithoutSections();
 				}
 
+				// TODO: refreshAllTasks re-runs visibility on every panel after redraw already positioned them.
+				//  Ideally refresh() would update display data without re-toggling visibility.
 				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
 			}
 			else
 			{
 				log.error("Task list panel redraw failed - not event dispatch thread.");
 			}
+		}
+
+		private void redrawWithoutSections()
+		{
+			// Remove section headers
+			for (SectionHeaderPanel header : sectionHeaderPanels.values())
+			{
+				remove(header);
+			}
+			sectionHeaderPanels.clear();
+
+			int numberOfPinnedTasks = 0;
+			Integer pinnedTaskStructId = null;
+			if (plugin.getConfig().pinnedTaskId() != 0)
+			{
+				pinnedTaskStructId = plugin.getConfig().pinnedTaskId();
+				setComponentZOrder(taskPanelsByStructId.get(pinnedTaskStructId), 0);
+				numberOfPinnedTasks++;
+			}
+
+			for (int indexPosition = 0; indexPosition < taskPanels.size(); indexPosition++)
+			{
+				int adjustedIndexPosition = indexPosition;
+				if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
+				{
+					adjustedIndexPosition = taskPanels.size() - (adjustedIndexPosition + 1);
+				}
+				TaskPanel taskPanel = taskPanels.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition));
+
+				if (pinnedTaskStructId != null && pinnedTaskStructId.equals(taskPanel.task.getStructId()))
+				{
+					priorityTask = taskPanel;
+					continue;
+				}
+
+				if (indexPosition + numberOfPinnedTasks == 0)
+				{
+					priorityTask = taskPanel;
+				}
+
+				setComponentZOrder(taskPanel, indexPosition + numberOfPinnedTasks);
+			}
+		}
+
+		private void redrawWithSections(CustomRoute route)
+		{
+			// Build map of task ID -> TaskPanel for quick lookup
+			Map<Integer, TaskPanel> taskPanelById = new HashMap<>();
+			for (TaskPanel tp : taskPanels)
+			{
+				taskPanelById.put(tp.task.getIntParam("id"), tp);
+			}
+
+			int componentPosition = 0;
+
+			// Iterate through sections and position components
+			for (RouteSection section : route.getSections())
+			{
+				List<RouteItem> items = section.getItems();
+				if (items == null || items.isEmpty())
+				{
+					continue;
+				}
+
+				// Count visible/completed items for this section
+				int visibleTaskCount = 0;
+				int completedTaskCount = 0;
+				List<Component> visiblePanels = new ArrayList<>();
+
+				for (RouteItem item : items)
+				{
+					if (item.isTask())
+					{
+						TaskPanel tp = taskPanelById.get(item.getTaskId());
+						if (tp != null)
+						{
+							if (meetsFilterCriteria(tp))
+							{
+								visibleTaskCount++;
+								visiblePanels.add(tp);
+								if (tp.task.isCompleted())
+								{
+									completedTaskCount++;
+								}
+							}
+						}
+					}
+				}
+
+				// Skip sections with no visible items
+				if (visiblePanels.isEmpty())
+				{
+					continue;
+				}
+
+				// Get or create section header
+				String sectionKey = section.getName() != null ? section.getName() : "Section";
+				SectionHeaderPanel header = sectionHeaderPanels.get(sectionKey);
+				if (header == null)
+				{
+					header = new SectionHeaderPanel(sectionKey, section.getDescription());
+					sectionHeaderPanels.put(sectionKey, header);
+					add(header);
+				}
+
+				// Update progress
+				header.setProgress(completedTaskCount, visibleTaskCount);
+
+				// Restore collapsed state and set up callback
+				boolean isCollapsed = collapsedSections.contains(sectionKey);
+				header.setCollapsedSilent(isCollapsed);
+				final String finalSectionKey = sectionKey;
+				final List<Component> finalVisiblePanels = visiblePanels;
+				header.setCollapseCallback(collapsed -> {
+					if (collapsed)
+					{
+						collapsedSections.add(finalSectionKey);
+					}
+					else
+					{
+						collapsedSections.remove(finalSectionKey);
+					}
+					// Toggle visibility of panels in this section directly
+					for (Component panel : finalVisiblePanels)
+					{
+						if (panel instanceof TaskPanel)
+						{
+							TaskPanel tp = (TaskPanel) panel;
+							tp.setVisible(!collapsed && meetsFilterCriteria(tp));
+						}
+						else
+						{
+							panel.setVisible(!collapsed);
+						}
+					}
+					revalidate();
+					repaint();
+				});
+
+				header.setVisible(true);
+				setComponentZOrder(header, componentPosition++);
+
+				// Position all visible panels in this section
+				// Hide them if section is collapsed
+				for (Component panel : visiblePanels)
+				{
+					setComponentZOrder(panel, componentPosition++);
+					if (isCollapsed)
+					{
+						panel.setVisible(false);
+					}
+				}
+			}
+
+			// Append non-route tasks under a separate section
+			Set<Integer> routeTaskIds = new HashSet<>(route.getFlattenedOrder());
+			List<Component> nonRoutePanels = new ArrayList<>();
+			for (TaskPanel tp : taskPanels)
+			{
+				int taskId = tp.task.getIntParam("id");
+				if (!routeTaskIds.contains(taskId) && tp.isVisible())
+				{
+					nonRoutePanels.add(tp);
+				}
+			}
+
+			if (!nonRoutePanels.isEmpty())
+			{
+				String sectionKey = "Other Tasks";
+				SectionHeaderPanel header = sectionHeaderPanels.get(sectionKey);
+				if (header == null)
+				{
+					header = new SectionHeaderPanel(sectionKey, "Tasks not in this route");
+					sectionHeaderPanels.put(sectionKey, header);
+					add(header);
+				}
+
+				int completedCount = 0;
+				for (Component panel : nonRoutePanels)
+				{
+					if (panel instanceof TaskPanel && ((TaskPanel) panel).task.isCompleted())
+					{
+						completedCount++;
+					}
+				}
+				header.setProgress(completedCount, nonRoutePanels.size());
+
+				boolean isCollapsed = collapsedSections.contains(sectionKey);
+				header.setCollapsedSilent(isCollapsed);
+				final List<Component> finalNonRoutePanels = nonRoutePanels;
+				header.setCollapseCallback(collapsed -> {
+					if (collapsed)
+					{
+						collapsedSections.add("Other Tasks");
+					}
+					else
+					{
+						collapsedSections.remove("Other Tasks");
+					}
+					for (Component panel : finalNonRoutePanels)
+					{
+						panel.setVisible(!collapsed);
+					}
+					revalidate();
+					repaint();
+				});
+
+				header.setVisible(true);
+				setComponentZOrder(header, componentPosition++);
+
+				for (Component panel : nonRoutePanels)
+				{
+					setComponentZOrder(panel, componentPosition++);
+					if (isCollapsed)
+					{
+						panel.setVisible(false);
+					}
+				}
+			}
+		}
+
+		/**
+		 * Helper to check if a task panel meets filter criteria.
+		 * Returns true for all tasks when a route is active — route mode bypasses filters.
+		 * This will need to change if routes are allowed to use filters in the future.
+		 */
+		private boolean meetsFilterCriteria(TaskPanel tp)
+		{
+			ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+			CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
+			if (activeRoute != null)
+			{
+				return true;
+			}
+			if (plugin.getFilterMatcher() == null)
+			{
+				return true;
+			}
+			return plugin.getFilterMatcher().meetsFilterCriteria(tp.task, plugin.taskTextMatcher);
 		}
 
 		private void processInBatches(int objectCount, IntConsumer method)

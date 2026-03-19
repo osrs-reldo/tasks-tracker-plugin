@@ -36,6 +36,8 @@ import javax.swing.border.LineBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.HtmlUtil;
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
@@ -369,6 +371,13 @@ public class TaskPanel extends JPanel
 
 	protected boolean meetsFilterCriteria()
 	{
+		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+		CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
+		if (activeRoute != null)
+		{
+			// Route mode: all tasks visible, positioning handled by redrawWithSections
+			return true;
+		}
 		return filterMatcher.meetsFilterCriteria(task, plugin.taskTextMatcher);
 	}
 
