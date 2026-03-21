@@ -163,12 +163,6 @@ public class TaskListPanel extends JScrollPane
 			}
 		}
 
-		// Task not in any route section — check if "Other Tasks" is collapsed
-		if (!activeRoute.getFlattenedOrder().contains(taskId))
-		{
-			return collapsedSections.contains("Other Tasks");
-		}
-
 		return false;
 	}
 
@@ -408,8 +402,6 @@ public class TaskListPanel extends JScrollPane
 					redrawWithoutSections();
 				}
 
-				// TODO: refreshAllTasks re-runs visibility on every panel after redraw already positioned them.
-				//  Ideally refresh() would update display data without re-toggling visibility.
 				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
 			}
 			else
@@ -570,77 +562,22 @@ public class TaskListPanel extends JScrollPane
 				}
 			}
 
-			// Append non-route tasks under a separate section
+			// Hide tasks not in the route
 			Set<Integer> routeTaskIds = new HashSet<>(route.getFlattenedOrder());
-			List<Component> nonRoutePanels = new ArrayList<>();
 			for (TaskPanel tp : taskPanels)
 			{
 				int taskId = tp.task.getIntParam("id");
-				if (!routeTaskIds.contains(taskId) && tp.isVisible())
+				if (!routeTaskIds.contains(taskId))
 				{
-					nonRoutePanels.add(tp);
-				}
-			}
-
-			if (!nonRoutePanels.isEmpty())
-			{
-				String sectionKey = "Other Tasks";
-				SectionHeaderPanel header = sectionHeaderPanels.get(sectionKey);
-				if (header == null)
-				{
-					header = new SectionHeaderPanel(sectionKey, "Tasks not in this route");
-					sectionHeaderPanels.put(sectionKey, header);
-					add(header);
-				}
-
-				int completedCount = 0;
-				for (Component panel : nonRoutePanels)
-				{
-					if (panel instanceof TaskPanel && ((TaskPanel) panel).task.isCompleted())
-					{
-						completedCount++;
-					}
-				}
-				header.setProgress(completedCount, nonRoutePanels.size());
-
-				boolean isCollapsed = collapsedSections.contains(sectionKey);
-				header.setCollapsedSilent(isCollapsed);
-				final List<Component> finalNonRoutePanels = nonRoutePanels;
-				header.setCollapseCallback(collapsed -> {
-					if (collapsed)
-					{
-						collapsedSections.add("Other Tasks");
-					}
-					else
-					{
-						collapsedSections.remove("Other Tasks");
-					}
-					for (Component panel : finalNonRoutePanels)
-					{
-						panel.setVisible(!collapsed);
-					}
-					revalidate();
-					repaint();
-				});
-
-				header.setVisible(true);
-				setComponentZOrder(header, componentPosition++);
-
-				for (Component panel : nonRoutePanels)
-				{
-					setComponentZOrder(panel, componentPosition++);
-					if (isCollapsed)
-					{
-						panel.setVisible(false);
-					}
+					tp.setVisible(false);
 				}
 			}
 		}
 
 		/**
 		 * Helper to check if a task panel meets filter criteria.
-		 * Returns true for all tasks when a route is active — route mode bypasses filters.
-		 * This will need to change if routes are allowed to use filters in the future.
+		 * Returns true for all route tasks when a route is active — route mode bypasses filters.
+		 * Only called for tasks already in the route (from redrawWithSections iteration).
 		 */
 		private boolean meetsFilterCriteria(TaskPanel tp)
 		{
