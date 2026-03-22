@@ -383,8 +383,7 @@ public class TaskPanel extends JPanel
 		if (activeRoute != null)
 		{
 			// Route mode: only tasks in the route are visible
-			int taskId = task.getIntParam("id");
-			return activeRoute.getFlattenedOrder().contains(taskId);
+			return activeRoute.getFlattenedOrder().contains(task.getStructId());
 		}
 		return filterMatcher.meetsFilterCriteria(task, plugin.taskTextMatcher);
 	}

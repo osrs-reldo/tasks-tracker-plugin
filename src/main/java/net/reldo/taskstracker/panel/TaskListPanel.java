@@ -153,10 +153,10 @@ public class TaskListPanel extends JScrollPane
 			return false;
 		}
 
-		int taskId = task.getIntParam("id");
+		int structId = task.getStructId();
 		for (RouteSection section : activeRoute.getSections())
 		{
-			if (section.getTaskIds() != null && section.getTaskIds().contains(taskId))
+			if (section.getTaskIds() != null && section.getTaskIds().contains(structId))
 			{
 				String sectionKey = section.getName() != null ? section.getName() : "Section";
 				return collapsedSections.contains(sectionKey);
@@ -289,7 +289,7 @@ public class TaskListPanel extends JScrollPane
 			if (comp instanceof TaskPanel && comp.isVisible())
 			{
 				TaskPanel panel = (TaskPanel) comp;
-				ids.add(panel.task.getIntParam("id"));
+				ids.add(panel.task.getStructId());
 			}
 		}
 
@@ -454,13 +454,6 @@ public class TaskListPanel extends JScrollPane
 
 		private void redrawWithSections(CustomRoute route)
 		{
-			// Build map of task ID -> TaskPanel for quick lookup
-			Map<Integer, TaskPanel> taskPanelById = new HashMap<>();
-			for (TaskPanel tp : taskPanels)
-			{
-				taskPanelById.put(tp.task.getIntParam("id"), tp);
-			}
-
 			int componentPosition = 0;
 
 			// Iterate through sections and position components
@@ -481,7 +474,7 @@ public class TaskListPanel extends JScrollPane
 				{
 					if (item.isTask())
 					{
-						TaskPanel tp = taskPanelById.get(item.getTaskId());
+						TaskPanel tp = taskPanelsByStructId.get(item.getTaskId());
 						if (tp != null)
 						{
 							if (meetsFilterCriteria(tp))
@@ -563,11 +556,10 @@ public class TaskListPanel extends JScrollPane
 			}
 
 			// Hide tasks not in the route
-			Set<Integer> routeTaskIds = new HashSet<>(route.getFlattenedOrder());
+			Set<Integer> routeStructIds = new HashSet<>(route.getFlattenedOrder());
 			for (TaskPanel tp : taskPanels)
 			{
-				int taskId = tp.task.getIntParam("id");
-				if (!routeTaskIds.contains(taskId))
+				if (!routeStructIds.contains(tp.task.getStructId()))
 				{
 					tp.setVisible(false);
 				}
