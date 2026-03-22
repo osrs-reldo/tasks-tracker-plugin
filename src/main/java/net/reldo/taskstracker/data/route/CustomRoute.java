@@ -74,6 +74,11 @@ public class CustomRoute
 		return getFlattenedOrder().size();
 	}
 
+	public int getItemCount()
+	{
+		return getFlattenedItems().size();
+	}
+
 	/** Returns true if the given task is the first task in its section (useful for rendering section headers). */
 	public boolean isFirstTaskInSection(int taskId)
 	{

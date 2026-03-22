@@ -17,6 +17,7 @@ import javax.inject.Singleton;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
@@ -25,6 +26,8 @@ import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterValueType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
 import net.reldo.taskstracker.data.route.CustomRoute;
+import net.reldo.taskstracker.data.route.RouteItem;
+import net.reldo.taskstracker.data.route.RouteSection;
 import net.reldo.taskstracker.data.task.filters.FilterService;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
@@ -57,6 +60,8 @@ public class TaskService
 	private final List<TaskFromStruct> tasks = new ArrayList<>();
 	@Getter
 	private final HashMap<String, HashMap<Integer, Integer>> sortedIndexes = new HashMap<>();
+	@Getter
+	private final HashMap<String, HashMap<Integer, Integer>> routeIndexes = new HashMap<>();
 	private HashMap<String, TaskType> _taskTypes = new HashMap<>();
 	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
 	private final ExecutorService futureExecutor = Executors.newSingleThreadExecutor();
@@ -217,7 +222,37 @@ public class TaskService
 		sortedIndexes.put(paramName, sortedIndex);
 	}
 
-	/** Finds a task by its ID. Returns null if not found. */
+	public void addRouteIndex(CustomRoute route)
+	{
+		List<RouteSection> sections = route.getSections();
+		HashMap<Integer, Integer> routeIndex = new HashMap<>();
+		int sectionStartIndex = 0;
+		for (RouteSection section : sections)
+		{
+			List<RouteItem> items = section.getItems();
+			for (RouteItem item : items)
+			{
+				if (item.isTask())
+				{
+					routeIndex.put(item.getTaskId(), items.indexOf(item) + sectionStartIndex + 1);
+				}
+			}
+			sectionStartIndex += items.size() + 1;
+		}
+
+		int afterRouteIndex = route.getItemCount() + sections.size();
+		for (TaskFromStruct task : tasks)
+		{
+			if (!route.getFlattenedOrder().contains(task.getStructId()))
+			{
+				routeIndex.put(task.getStructId(), ++afterRouteIndex);
+			}
+		}
+
+		routeIndexes.put(route.getName(), routeIndex);
+	}
+
+	/** Finds a task by its struct ID. Returns null if not found. */
 	public TaskFromStruct getTaskByStructId(Integer taskStructId)
 	{
 		return tasks.stream()
@@ -226,22 +261,29 @@ public class TaskService
 			.orElse(null);
 	}
 
-	public int getSortedTaskIndex(String sortCriteria, Integer taskStructId)
+	public int getTaskIndex(String sortCriteria, Integer taskStructId)
 	{
-		return getSortedTaskIndex(sortCriteria, taskStructId, true);
+		return getTaskIndex(sortCriteria, taskStructId, true);
 	}
 
-	public int getSortedTaskIndex(String sortCriteria, Integer taskStructId, Boolean ascending)
+	public int getTaskIndex(String indexName, Integer taskStructId, Boolean ascending)
 	{
 		int position;
+		ConfigValues.TaskListTabs currentTab = configManager.getConfig(TasksTrackerConfig.class).taskListTab();
+		boolean activeRoute = hasActiveRoute(currentTab);
 
-		if (sortedIndexes.containsKey(sortCriteria))
+		if (!activeRoute && sortedIndexes.containsKey(indexName))
 		{
-			position = sortedIndexes.get(sortCriteria).get(taskStructId);
+			position = sortedIndexes.get(indexName).get(taskStructId);
+		}
+		else if (activeRoute && routeIndexes.containsKey(indexName))
+		{
+			position = routeIndexes.get(indexName).get(taskStructId);
 		}
 		else
 		{
-			position = getTaskByStructId(taskStructId).getSortId(); // Game UI sort order
+			// Fall back to game UI sort order
+			position = getTaskByStructId(taskStructId).getSortId();
 		}
 
 		return ascending ? position : tasks.size() - (position + 1);
@@ -377,6 +419,7 @@ public class TaskService
 		{
 			tabActiveRoutes.put(tab, route);
 			buildRouteSortIndex(tab, route);
+			addRouteIndex(route);
 		}
 	}
 
