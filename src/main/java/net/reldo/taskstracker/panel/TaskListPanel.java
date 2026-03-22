@@ -399,7 +399,7 @@ public class TaskListPanel extends JScrollPane
 				}
 				else
 				{
-					redrawWithoutSections();
+					redrawAll();
 				}
 
 				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
@@ -448,6 +448,52 @@ public class TaskListPanel extends JScrollPane
 					priorityTaskPanel = taskPanel;
 				}
 
+				setComponentZOrder(taskPanel, indexPosition + numberOfPinnedTasks);
+			}
+		}
+
+		private void redrawAll()
+		{
+			// Remove section headers
+			for (SectionHeaderPanel header : sectionHeaderPanels.values())
+			{
+				remove(header);
+			}
+			sectionHeaderPanels.clear();
+
+			int numberOfPinnedTasks = 0;
+			Integer pinnedTaskStructId = null;
+			if (plugin.getConfig().pinnedTaskId() != 0)
+			{
+				pinnedTaskStructId = plugin.getConfig().pinnedTaskId();
+				setComponentZOrder(taskPanelsByStructId.get(pinnedTaskStructId), 0);
+				numberOfPinnedTasks++;
+			}
+
+			// Set task panel positions
+			for (Integer taskStructId : taskPanelsByStructId.keySet())
+			{
+				TaskPanel taskPanel = taskPanelsByStructId.get(taskStructId);
+
+				// ignore if structId matches pinned task
+				if (pinnedTaskStructId != null && pinnedTaskStructId.equals(taskStructId))
+				{
+					priorityTaskPanel = taskPanel;
+					continue;
+				}
+
+				Boolean isAscending = plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.ASCENDING);
+
+				// get sorted index for task
+				int indexPosition = taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), taskStructId, isAscending);
+
+				// set priority task if not pinned
+				if (indexPosition + numberOfPinnedTasks == 0)
+				{
+					priorityTaskPanel = taskPanel;
+				}
+
+				// set taskPanel zOrder to sorted index
 				setComponentZOrder(taskPanel, indexPosition + numberOfPinnedTasks);
 			}
 		}

@@ -56,7 +56,7 @@ public class TaskService
 	@Getter
 	private final List<TaskFromStruct> tasks = new ArrayList<>();
 	@Getter
-	private final HashMap<String, int[]> sortedIndexes = new HashMap<>();
+	private final HashMap<String, HashMap<Integer, Integer>> sortedIndexes = new HashMap<>();
 	private HashMap<String, TaskType> _taskTypes = new HashMap<>();
 	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
 	private final ExecutorService futureExecutor = Executors.newSingleThreadExecutor();
@@ -209,24 +209,42 @@ public class TaskService
 		List<TaskFromStruct> sortedTasks = tasks.stream()
 			.sorted(comparator)
 			.collect(Collectors.toCollection(ArrayList::new));
-		int[] sortedIndex = new int[tasks.size()];
-		for (int i = 0; i < sortedTasks.size(); i++)
+		HashMap<Integer, Integer> sortedIndex = new HashMap<>();
+		for (TaskFromStruct task : tasks)
 		{
-			sortedIndex[i] = tasks.indexOf(sortedTasks.get(i));
+			sortedIndex.put(task.getStructId(), sortedTasks.indexOf(task));
 		}
 		sortedIndexes.put(paramName, sortedIndex);
 	}
 
-	public int getSortedTaskIndex(String sortCriteria, int position)
+	/** Finds a task by its ID. Returns null if not found. */
+	public TaskFromStruct getTaskByStructId(Integer taskStructId)
 	{
+		return tasks.stream()
+			.filter(t -> t.getStructId().equals(taskStructId))
+			.findFirst()
+			.orElse(null);
+	}
+
+	public int getSortedTaskIndex(String sortCriteria, Integer taskStructId)
+	{
+		return getSortedTaskIndex(sortCriteria, taskStructId, true);
+	}
+
+	public int getSortedTaskIndex(String sortCriteria, Integer taskStructId, Boolean ascending)
+	{
+		int position;
+
 		if (sortedIndexes.containsKey(sortCriteria))
 		{
-			return sortedIndexes.get(sortCriteria)[position];
+			position = sortedIndexes.get(sortCriteria).get(taskStructId);
 		}
 		else
 		{
-			return position;
+			position = getTaskByStructId(taskStructId).getSortId(); // Game UI sort order
 		}
+
+		return ascending ? position : tasks.size() - (position + 1);
 	}
 
 	public boolean isVarpInCurrentTaskType(int varpId)
