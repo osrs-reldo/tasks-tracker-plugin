@@ -46,7 +46,7 @@ public class TaskListPanel extends JScrollPane
 	@Setter
 	private int batchSize;
 	@Getter
-	private TaskPanel priorityTask = null;
+	private TaskPanel priorityTaskPanel = null;
 	private boolean forceUpdatePriorityTaskFlag = false;
 
 	/** Section header panels keyed by section name */
@@ -212,7 +212,7 @@ public class TaskListPanel extends JScrollPane
 		}
 
 		if (getCurrentTaskListListPanel().getComponentZOrder(panel) <=
-			getCurrentTaskListListPanel().getComponentZOrder(priorityTask))
+			getCurrentTaskListListPanel().getComponentZOrder(priorityTaskPanel))
 		{
 			if (delayPriorityTaskRefresh)
 			{
@@ -267,7 +267,7 @@ public class TaskListPanel extends JScrollPane
 			min((panel1, panel2) ->
 				Integer.compare(getCurrentTaskListListPanel().getComponentZOrder(panel1),
 					getCurrentTaskListListPanel().getComponentZOrder(panel2)));
-		priorityTask = optionalTaskPanel.orElse(null);
+		priorityTaskPanel = optionalTaskPanel.orElse(null);
 	}
 
 	public String getEmptyTaskListMessage()
@@ -329,7 +329,7 @@ public class TaskListPanel extends JScrollPane
 			{
 				log.debug("TaskListPanel creating panels");
 				taskPanelsByStructId.clear();
-				priorityTask = null;
+				priorityTaskPanel = null;
 
 				// Clear section headers from previous task type
 				for (SectionHeaderPanel header : sectionHeaderPanels.values())
@@ -379,7 +379,7 @@ public class TaskListPanel extends JScrollPane
 			{
 				if (taskPanels == null || taskPanels.isEmpty())
 				{
-					priorityTask = null;
+					priorityTaskPanel = null;
 					emptyTasks.setVisible(true);
 					return;
 				}
@@ -433,19 +433,19 @@ public class TaskListPanel extends JScrollPane
 				int adjustedIndexPosition = indexPosition;
 				if (plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.DESCENDING))
 				{
-					adjustedIndexPosition = taskPanels.size() - (adjustedIndexPosition + 1);
+					adjustedIndexPosition = taskPanels.size() - (indexPosition + 1);
 				}
 				TaskPanel taskPanel = taskPanels.get(taskService.getSortedTaskIndex(plugin.getConfig().sortCriteria(), adjustedIndexPosition));
 
 				if (pinnedTaskStructId != null && pinnedTaskStructId.equals(taskPanel.task.getStructId()))
 				{
-					priorityTask = taskPanel;
+					priorityTaskPanel = taskPanel;
 					continue;
 				}
 
 				if (indexPosition + numberOfPinnedTasks == 0)
 				{
-					priorityTask = taskPanel;
+					priorityTaskPanel = taskPanel;
 				}
 
 				setComponentZOrder(taskPanel, indexPosition + numberOfPinnedTasks);
