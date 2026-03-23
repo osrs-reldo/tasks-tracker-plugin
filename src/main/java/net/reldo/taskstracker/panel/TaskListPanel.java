@@ -234,35 +234,49 @@ public class TaskListPanel extends JScrollPane
 	{
 		panel.refresh();
 
-		if (!panel.isVisible())
+		boolean routeModeActive = plugin.getConfig().sortCriteria().equals("route");
+
+		// Hide tasks not in the current route when in route mode
+		if (!panel.isVisible() || !routeModeActive)
 		{
 			return;
 		}
 
-		// Check if panel is in a collapsed route section
+		// Check if there is an active route, whether the panel is in a route section, and if it is collapsed
 		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
 		CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
-		if (activeRoute == null || activeRoute.getSectionForTask(panel.task.getStructId()) == null)
+		if (activeRoute == null ||
+			activeRoute.getSectionForTask(panel.task.getStructId()) == null ||
+			sectionHeaderPanels.get(activeRoute.getSectionForTask(panel.task.getStructId()).getName()).isCollapsed())
 		{
-			return;
-		}
-
-		String sectionName = activeRoute.getSectionForTask(panel.task.getStructId()).getName();
-		if (sectionHeaderPanels.get(sectionName) != null)
-		{
-			panel.setVisible(!sectionHeaderPanels.get(sectionName).isCollapsed());
+			panel.setVisible(false);
 		}
 	}
 
 	private void refreshEmptyPanel()
 	{
-		boolean isAnyTaskPanelVisible = taskPanelsByStructId.values().stream()
-			.anyMatch(TaskPanel::isVisible);
+		boolean showEmptyPanel;
+		String emptyPanelString;
 
-		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
-		boolean routeModeActive = plugin.getTaskService().hasActiveRoute(currentTab);
+		boolean routeModeActive = plugin.getConfig().sortCriteria().equals("route");
 
-		emptyTasks.setVisible(!isAnyTaskPanelVisible && !routeModeActive);
+		if (routeModeActive)
+		{
+			ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+			CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
+
+			emptyPanelString = getEmptyRouteListMessage();
+			showEmptyPanel = activeRoute == null || activeRoute.getSections().isEmpty();
+		}
+		else
+		{
+			emptyPanelString = getEmptyTaskListMessage();
+			showEmptyPanel = !taskPanelsByStructId.values().stream()
+				.anyMatch(TaskPanel::isVisible);
+		}
+
+		emptyTasks.setText("<html><center>" + emptyPanelString + "</center></html>");
+		emptyTasks.setVisible(showEmptyPanel);
 	}
 
 	public void refreshTaskPanelsWithSkill(Skill skill)
@@ -302,6 +316,11 @@ public class TaskListPanel extends JScrollPane
 	public String getEmptyTaskListMessage()
 	{
 		return "No tasks match the current filters.";
+	}
+
+	public String getEmptyRouteListMessage()
+	{
+		return "Route Mode coming soon!";
 	}
 
 	/**
