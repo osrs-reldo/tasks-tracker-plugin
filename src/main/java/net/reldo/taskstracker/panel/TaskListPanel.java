@@ -248,7 +248,10 @@ public class TaskListPanel extends JScrollPane
 		}
 
 		String sectionName = activeRoute.getSectionForTask(panel.task.getStructId()).getName();
-		panel.setVisible(!sectionHeaderPanels.get(sectionName).isCollapsed());
+		if (sectionHeaderPanels.get(sectionName) != null)
+		{
+			panel.setVisible(!sectionHeaderPanels.get(sectionName).isCollapsed());
+		}
 	}
 
 	private void refreshEmptyPanel()
@@ -432,6 +435,8 @@ public class TaskListPanel extends JScrollPane
 			int numberOfPinnedTasks = 0;
 			Integer pinnedTaskStructId = null;
 
+			int listSize = this.getComponentCount();
+
 			ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
 			CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
 			boolean routeModeActive = taskService.hasActiveRoute(currentTab);
@@ -467,9 +472,15 @@ public class TaskListPanel extends JScrollPane
 					});
 					header.setVisible(true);
 
-					setComponentZOrder(header, sectionStartIndex);
+					if (sectionStartIndex < listSize)
+					{
+						setComponentZOrder(header, sectionStartIndex);
+					}
 					sectionStartIndex += section.getItems().size() + 1;
 				}
+
+				listSize = this.getComponentCount();
+
 			}
 			else
 			{
@@ -498,15 +509,19 @@ public class TaskListPanel extends JScrollPane
 				// get sorted index for task
 				String indexName = routeModeActive ? activeRoute.getName() : plugin.getConfig().sortCriteria();
 				int indexPosition = taskService.getTaskIndex(indexName, taskStructId, isAscending);
+				indexPosition += numberOfPinnedTasks;
 
 				// set priority task if not pinned
-				if (indexPosition + numberOfPinnedTasks == 0)
+				if (indexPosition == 0)
 				{
 					priorityTaskPanel = taskPanel;
 				}
 
-				// set taskPanel zOrder to sorted index
-				setComponentZOrder(taskPanel, indexPosition + numberOfPinnedTasks);
+				if (indexPosition < listSize)
+				{
+					// set taskPanel zOrder to sorted index
+					setComponentZOrder(taskPanel, indexPosition );
+				}
 			}
 
 			// @todo Set custom item panel positions
