@@ -36,6 +36,8 @@ import javax.swing.border.LineBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.HtmlUtil;
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
@@ -257,21 +259,26 @@ public class TaskPanel extends JPanel
 	public JPopupMenu createTaskPopupMenu()
 	{
 		JPopupMenu popupMenu = new JPopupMenu();
-		if (plugin.getConfig().pinnedTaskId().equals(task.getStructId()))
+		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+		boolean isRouteMode = plugin.getTaskService().getActiveRoute(currentTab) != null;
+		if (!isRouteMode)
 		{
-			JMenuItem unpinTaskItem = new JMenuItem("Unpin");
-			unpinTaskItem.addActionListener(e -> unpinTaskPanel());
-			popupMenu.add(unpinTaskItem);
+			if (plugin.getConfig().pinnedTaskId().equals(task.getStructId()))
+			{
+				JMenuItem unpinTaskItem = new JMenuItem("Unpin");
+				unpinTaskItem.addActionListener(e -> unpinTaskPanel());
+				popupMenu.add(unpinTaskItem);
 
-			JMenuItem addOverlay = new JMenuItem(plugin.getConfig().showOverlay() ? "Remove from canvas" : "Add to canvas");
-			addOverlay.addActionListener(e -> plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "showOverlay", !plugin.getConfig().showOverlay()));
-			popupMenu.add(addOverlay);
-		}
-		else
-		{
-			JMenuItem pinTaskItem = new JMenuItem("Pin task");
-			pinTaskItem.addActionListener(e -> pinTaskPanel());
-			popupMenu.add(pinTaskItem);
+				JMenuItem addOverlay = new JMenuItem(plugin.getConfig().showOverlay() ? "Remove from canvas" : "Add to canvas");
+				addOverlay.addActionListener(e -> plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "showOverlay", !plugin.getConfig().showOverlay()));
+				popupMenu.add(addOverlay);
+			}
+			else
+			{
+				JMenuItem pinTaskItem = new JMenuItem("Pin task");
+				pinTaskItem.addActionListener(e -> pinTaskPanel());
+				popupMenu.add(pinTaskItem);
+			}
 		}
 		JMenuItem editNoteItem = new JMenuItem("Edit Note");
 		editNoteItem.addActionListener(e -> editTaskNote());
@@ -333,7 +340,9 @@ public class TaskPanel extends JPanel
 
 	public void refresh()
 	{
-		if (plugin.getConfig().pinnedTaskId().equals(task.getStructId()))
+		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+		boolean isRouteMode = plugin.getTaskService().getActiveRoute(currentTab) != null;
+		if (!isRouteMode && plugin.getConfig().pinnedTaskId().equals(task.getStructId()))
 		{
 			highlightContainer.setBorder(new LineBorder(ColorScheme.BRAND_ORANGE));
 		}
@@ -369,6 +378,13 @@ public class TaskPanel extends JPanel
 
 	protected boolean meetsFilterCriteria()
 	{
+		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+		CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
+		if (activeRoute != null)
+		{
+			// Route mode: only tasks in the route are visible
+			return activeRoute.getFlattenedOrder().contains(task.getStructId());
+		}
 		return filterMatcher.meetsFilterCriteria(task, plugin.taskTextMatcher);
 	}
 

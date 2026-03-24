@@ -394,11 +394,11 @@ public class TaskService
 		return index[position];
 	}
 
-	/** Finds a task by its ID. Returns null if not found. */
-	public TaskFromStruct getTaskById(int taskId)
+	/** Finds a task by its struct ID. Returns null if not found. */
+	public TaskFromStruct getTaskByStructId(int structId)
 	{
 		return tasks.stream()
-			.filter(t -> t.getIntParam("id") == taskId)
+			.filter(t -> t.getStructId() == structId)
 			.findFirst()
 			.orElse(null);
 	}
@@ -413,7 +413,7 @@ public class TaskService
 	{
 		List<Integer> routeOrder = route.getFlattenedOrder();
 
-		// Map taskId -> position in route
+		// Map structId -> position in route
 		Map<Integer, Integer> positionMap = new HashMap<>();
 		for (int i = 0; i < routeOrder.size(); i++)
 		{
@@ -425,18 +425,18 @@ public class TaskService
 		for (int i = 0; i < tasks.size(); i++)
 		{
 			TaskFromStruct task = tasks.get(i);
-			int taskId = task.getIntParam("id");
+			int structId = task.getStructId();
 
 			int sortKey;
-			if (positionMap.containsKey(taskId))
+			if (positionMap.containsKey(structId))
 			{
 				// Task is in route: use its route position
-				sortKey = positionMap.get(taskId);
+				sortKey = positionMap.get(structId);
 			}
 			else
 			{
-				// Task not in route: place after all route tasks, ordered by ID
-				sortKey = routeOrder.size() + taskId;
+				// Task not in route: place after all route tasks, ordered by struct ID
+				sortKey = routeOrder.size() + structId;
 			}
 
 			indexedTasks.add(new int[]{i, sortKey});

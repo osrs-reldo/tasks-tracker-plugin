@@ -29,7 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.Export;
 import net.reldo.taskstracker.data.LongSerializer;
 import net.reldo.taskstracker.data.TasksSummary;
+import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.TrackerRSProfileConfigStore;
+import net.reldo.taskstracker.data.route.RouteManager;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.reader.HttpDataStoreReader;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
@@ -122,8 +124,14 @@ public class TasksTrackerPlugin extends Plugin
 
 	@Inject
 	private TrackerRSProfileConfigStore trackerRSProfileConfigStore;
+	@Getter
+	@Inject
+	private TrackerGlobalConfigStore trackerGlobalConfigStore;
+	@Getter
 	@Inject
 	private TaskService taskService;
+	@Inject
+	private RouteManager routeManager;
 	@Inject
 	private FilterService filterService;
 	@Inject
@@ -160,7 +168,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		forceUpdateVarpsFlag = false;
 
-		pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService);
+		pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService, routeManager);
 
 		boolean isLoggedIn = isLoggedInState(client.getGameState());
 		pluginPanel.setLoggedIn(isLoggedIn);
