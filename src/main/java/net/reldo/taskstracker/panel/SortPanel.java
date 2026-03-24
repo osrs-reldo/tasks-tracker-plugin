@@ -17,6 +17,7 @@ import net.reldo.taskstracker.panel.components.FixedWidthPanel;
 import net.reldo.taskstracker.panel.components.MultiToggleButton;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
 import net.runelite.client.util.SwingUtil;
 
 @Slf4j
@@ -114,7 +115,8 @@ public class SortPanel extends FixedWidthPanel
 			SwingUtilities.invokeLater(taskListPanel::redraw);
 		});
 
-		routeInfoLabel = new JLabel("\u2139");
+		routeInfoLabel = new JLabel("i");
+		routeInfoLabel.setFont(FontManager.getDefaultBoldFont());
 		routeInfoLabel.setToolTipText(ROUTE_INFO_TOOLTIP);
 		routeInfoLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		routeInfoLabel.setPreferredSize(new Dimension(24, 24));
