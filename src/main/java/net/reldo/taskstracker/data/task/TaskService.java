@@ -17,6 +17,7 @@ import javax.inject.Singleton;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
@@ -25,6 +26,8 @@ import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterValueType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
 import net.reldo.taskstracker.data.route.CustomRoute;
+import net.reldo.taskstracker.data.route.RouteItem;
+import net.reldo.taskstracker.data.route.RouteSection;
 import net.reldo.taskstracker.data.task.filters.FilterService;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
@@ -56,14 +59,15 @@ public class TaskService
 	@Getter
 	private final List<TaskFromStruct> tasks = new ArrayList<>();
 	@Getter
-	private final HashMap<String, int[]> sortedIndexes = new HashMap<>();
+	private final HashMap<String, HashMap<Integer, Integer>> sortedIndexes = new HashMap<>();
 	private HashMap<String, TaskType> _taskTypes = new HashMap<>();
 	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
 	private final ExecutorService futureExecutor = Executors.newSingleThreadExecutor();
 
-	// Route state: in-memory cache of active routes and pre-computed sort indexes per tab
+	// Route state: in-memory cache of active routes per tab and pre-computed sort indexes per route
 	private final Map<ConfigValues.TaskListTabs, CustomRoute> tabActiveRoutes = new HashMap<>();
-	private final Map<ConfigValues.TaskListTabs, int[]> tabRouteSortIndexes = new HashMap<>();
+	@Getter
+	private final HashMap<String, HashMap<Integer, Integer>> routeIndexes = new HashMap<>();
 
 	public CompletableFuture<Boolean> setTaskType(String taskTypeJsonName)
 	{
@@ -209,24 +213,79 @@ public class TaskService
 		List<TaskFromStruct> sortedTasks = tasks.stream()
 			.sorted(comparator)
 			.collect(Collectors.toCollection(ArrayList::new));
-		int[] sortedIndex = new int[tasks.size()];
-		for (int i = 0; i < sortedTasks.size(); i++)
+		HashMap<Integer, Integer> sortedIndex = new HashMap<>();
+		for (TaskFromStruct task : tasks)
 		{
-			sortedIndex[i] = tasks.indexOf(sortedTasks.get(i));
+			sortedIndex.put(task.getStructId(), sortedTasks.indexOf(task));
 		}
 		sortedIndexes.put(paramName, sortedIndex);
 	}
 
-	public int getSortedTaskIndex(String sortCriteria, int position)
+	public void addRouteIndex(CustomRoute route)
 	{
-		if (sortedIndexes.containsKey(sortCriteria))
+		List<RouteSection> sections = route.getSections();
+		HashMap<Integer, Integer> routeIndex = new HashMap<>();
+		int sectionStartIndex = 0;
+		for (RouteSection section : sections)
 		{
-			return sortedIndexes.get(sortCriteria)[position];
+			List<RouteItem> items = section.getItems();
+			for (RouteItem item : items)
+			{
+				if (item.isTask())
+				{
+					routeIndex.put(item.getTaskId(), items.indexOf(item) + sectionStartIndex + 1);
+				}
+			}
+			sectionStartIndex += items.size() + 1;
+		}
+
+		int afterRouteIndex = route.getItemCount() + sections.size();
+		for (TaskFromStruct task : tasks)
+		{
+			if (!route.getFlattenedOrder().contains(task.getStructId()))
+			{
+				routeIndex.put(task.getStructId(), ++afterRouteIndex);
+			}
+		}
+
+		routeIndexes.put(route.getName(), routeIndex);
+	}
+
+	/** Finds a task by its struct ID. Returns null if not found. */
+	public TaskFromStruct getTaskByStructId(Integer taskStructId)
+	{
+		return tasks.stream()
+			.filter(t -> t.getStructId().equals(taskStructId))
+			.findFirst()
+			.orElse(null);
+	}
+
+	public int getTaskIndex(String sortCriteria, Integer taskStructId)
+	{
+		return getTaskIndex(sortCriteria, taskStructId, true);
+	}
+
+	public int getTaskIndex(String indexName, Integer taskStructId, Boolean ascending)
+	{
+		int position;
+		ConfigValues.TaskListTabs currentTab = configManager.getConfig(TasksTrackerConfig.class).taskListTab();
+		boolean activeRoute = hasActiveRoute(currentTab);
+
+		if (!activeRoute && sortedIndexes.containsKey(indexName))
+		{
+			position = sortedIndexes.get(indexName).get(taskStructId);
+		}
+		else if (activeRoute && routeIndexes.containsKey(indexName))
+		{
+			position = routeIndexes.get(indexName).get(taskStructId);
 		}
 		else
 		{
-			return position;
+			// Fall back to game UI sort order
+			position = getTaskByStructId(taskStructId).getSortId();
 		}
+
+		return ascending ? position : tasks.size() - (position + 1);
 	}
 
 	public boolean isVarpInCurrentTaskType(int varpId)
@@ -353,12 +412,11 @@ public class TaskService
 		if (route == null)
 		{
 			tabActiveRoutes.remove(tab);
-			tabRouteSortIndexes.remove(tab);
 		}
 		else
 		{
 			tabActiveRoutes.put(tab, route);
-			buildRouteSortIndex(tab, route);
+			addRouteIndex(route);
 		}
 	}
 
@@ -380,20 +438,6 @@ public class TaskService
 		setActiveRoute(tab, null);
 	}
 
-	/**
-	 * Given a position in route order, returns the index into the tasks list.
-	 * Returns -1 if no route is active or position is out of bounds.
-	 */
-	public int getRouteSortedTaskIndex(ConfigValues.TaskListTabs tab, int position)
-	{
-		int[] index = tabRouteSortIndexes.get(tab);
-		if (index == null || position < 0 || position >= index.length)
-		{
-			return -1;
-		}
-		return index[position];
-	}
-
 	/** Finds a task by its struct ID. Returns null if not found. */
 	public TaskFromStruct getTaskByStructId(int structId)
 	{
@@ -401,57 +445,5 @@ public class TaskService
 			.filter(t -> t.getStructId() == structId)
 			.findFirst()
 			.orElse(null);
-	}
-
-	/**
-	 * Builds a sort index array for a route.
-	 *
-	 * Tasks in the route are ordered by their route position.
-	 * Tasks NOT in the route are placed after, ordered by their task ID.
-	 */
-	private void buildRouteSortIndex(ConfigValues.TaskListTabs tab, CustomRoute route)
-	{
-		List<Integer> routeOrder = route.getFlattenedOrder();
-
-		// Map structId -> position in route
-		Map<Integer, Integer> positionMap = new HashMap<>();
-		for (int i = 0; i < routeOrder.size(); i++)
-		{
-			positionMap.put(routeOrder.get(i), i);
-		}
-
-		// Build list of [taskListIndex, sortKey] pairs
-		List<int[]> indexedTasks = new ArrayList<>();
-		for (int i = 0; i < tasks.size(); i++)
-		{
-			TaskFromStruct task = tasks.get(i);
-			int structId = task.getStructId();
-
-			int sortKey;
-			if (positionMap.containsKey(structId))
-			{
-				// Task is in route: use its route position
-				sortKey = positionMap.get(structId);
-			}
-			else
-			{
-				// Task not in route: place after all route tasks, ordered by struct ID
-				sortKey = routeOrder.size() + structId;
-			}
-
-			indexedTasks.add(new int[]{i, sortKey});
-		}
-
-		// Sort by sortKey
-		indexedTasks.sort(Comparator.comparingInt(a -> a[1]));
-
-		// Extract task indexes in sorted order
-		int[] sortIndex = new int[indexedTasks.size()];
-		for (int i = 0; i < indexedTasks.size(); i++)
-		{
-			sortIndex[i] = indexedTasks.get(i)[0];
-		}
-
-		tabRouteSortIndexes.put(tab, sortIndex);
 	}
 }

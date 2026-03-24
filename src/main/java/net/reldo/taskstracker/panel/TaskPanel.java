@@ -378,11 +378,17 @@ public class TaskPanel extends JPanel
 
 	protected boolean meetsFilterCriteria()
 	{
-		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
-		CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
-		if (activeRoute != null)
+		if ("route".equals(plugin.getConfig().sortCriteria()))
 		{
 			// Route mode: only tasks in the route are visible
+			ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+			CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
+
+			if (activeRoute == null)
+			{
+				return false;
+			}
+
 			return activeRoute.getFlattenedOrder().contains(task.getStructId());
 		}
 		return filterMatcher.meetsFilterCriteria(task, plugin.taskTextMatcher);

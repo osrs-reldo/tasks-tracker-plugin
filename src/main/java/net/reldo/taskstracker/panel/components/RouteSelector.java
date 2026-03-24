@@ -22,9 +22,9 @@ public class RouteSelector extends JPanel
 	public RouteSelector()
 	{
 		setLayout(new BorderLayout(5, 0));
-		setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		JLabel label = new JLabel("Route:");
+		JLabel label = new JLabel(" L");
 		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 
 		routeDropdown = new JComboBox<>();

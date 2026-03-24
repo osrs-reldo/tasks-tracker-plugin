@@ -10,6 +10,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
+import lombok.Setter;
 import net.runelite.client.ui.FontManager;
 
 public class SectionHeaderPanel extends JPanel
@@ -26,12 +27,14 @@ public class SectionHeaderPanel extends JPanel
 	@Getter
 	private final String sectionName;
 
+	@Getter
 	private boolean collapsed = false;
 
 	private final JLabel titleLabel;
 	private final JLabel progressLabel;
 	private final String description;
 
+	@Setter
 	private Consumer<Boolean> collapseCallback;
 
 	public SectionHeaderPanel(String sectionName, String description)
@@ -93,11 +96,6 @@ public class SectionHeaderPanel extends JPanel
 		{
 			progressLabel.setForeground(PROGRESS_COLOR);
 		}
-	}
-
-	public void setCollapseCallback(Consumer<Boolean> callback)
-	{
-		this.collapseCallback = callback;
 	}
 
 	private void toggleCollapse()
