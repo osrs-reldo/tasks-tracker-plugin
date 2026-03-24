@@ -60,15 +60,14 @@ public class TaskService
 	private final List<TaskFromStruct> tasks = new ArrayList<>();
 	@Getter
 	private final HashMap<String, HashMap<Integer, Integer>> sortedIndexes = new HashMap<>();
-	@Getter
-	private final HashMap<String, HashMap<Integer, Integer>> routeIndexes = new HashMap<>();
 	private HashMap<String, TaskType> _taskTypes = new HashMap<>();
 	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
 	private final ExecutorService futureExecutor = Executors.newSingleThreadExecutor();
 
-	// Route state: in-memory cache of active routes and pre-computed sort indexes per tab
+	// Route state: in-memory cache of active routes per tab and pre-computed sort indexes per route
 	private final Map<ConfigValues.TaskListTabs, CustomRoute> tabActiveRoutes = new HashMap<>();
-	private final Map<ConfigValues.TaskListTabs, int[]> tabRouteSortIndexes = new HashMap<>();
+	@Getter
+	private final HashMap<String, HashMap<Integer, Integer>> routeIndexes = new HashMap<>();
 
 	public CompletableFuture<Boolean> setTaskType(String taskTypeJsonName)
 	{
@@ -413,12 +412,10 @@ public class TaskService
 		if (route == null)
 		{
 			tabActiveRoutes.remove(tab);
-			tabRouteSortIndexes.remove(tab);
 		}
 		else
 		{
 			tabActiveRoutes.put(tab, route);
-			buildRouteSortIndex(tab, route);
 			addRouteIndex(route);
 		}
 	}
@@ -441,20 +438,6 @@ public class TaskService
 		setActiveRoute(tab, null);
 	}
 
-	/**
-	 * Given a position in route order, returns the index into the tasks list.
-	 * Returns -1 if no route is active or position is out of bounds.
-	 */
-	public int getRouteSortedTaskIndex(ConfigValues.TaskListTabs tab, int position)
-	{
-		int[] index = tabRouteSortIndexes.get(tab);
-		if (index == null || position < 0 || position >= index.length)
-		{
-			return -1;
-		}
-		return index[position];
-	}
-
 	/** Finds a task by its struct ID. Returns null if not found. */
 	public TaskFromStruct getTaskByStructId(int structId)
 	{
@@ -462,57 +445,5 @@ public class TaskService
 			.filter(t -> t.getStructId() == structId)
 			.findFirst()
 			.orElse(null);
-	}
-
-	/**
-	 * Builds a sort index array for a route.
-	 *
-	 * Tasks in the route are ordered by their route position.
-	 * Tasks NOT in the route are placed after, ordered by their task ID.
-	 */
-	private void buildRouteSortIndex(ConfigValues.TaskListTabs tab, CustomRoute route)
-	{
-		List<Integer> routeOrder = route.getFlattenedOrder();
-
-		// Map structId -> position in route
-		Map<Integer, Integer> positionMap = new HashMap<>();
-		for (int i = 0; i < routeOrder.size(); i++)
-		{
-			positionMap.put(routeOrder.get(i), i);
-		}
-
-		// Build list of [taskListIndex, sortKey] pairs
-		List<int[]> indexedTasks = new ArrayList<>();
-		for (int i = 0; i < tasks.size(); i++)
-		{
-			TaskFromStruct task = tasks.get(i);
-			int structId = task.getStructId();
-
-			int sortKey;
-			if (positionMap.containsKey(structId))
-			{
-				// Task is in route: use its route position
-				sortKey = positionMap.get(structId);
-			}
-			else
-			{
-				// Task not in route: place after all route tasks, ordered by struct ID
-				sortKey = routeOrder.size() + structId;
-			}
-
-			indexedTasks.add(new int[]{i, sortKey});
-		}
-
-		// Sort by sortKey
-		indexedTasks.sort(Comparator.comparingInt(a -> a[1]));
-
-		// Extract task indexes in sorted order
-		int[] sortIndex = new int[indexedTasks.size()];
-		for (int i = 0; i < indexedTasks.size(); i++)
-		{
-			sortIndex[i] = indexedTasks.get(i)[0];
-		}
-
-		tabRouteSortIndexes.put(tab, sortIndex);
 	}
 }
