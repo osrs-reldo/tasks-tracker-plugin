@@ -127,11 +127,13 @@ public class LoggedInPanel extends JPanel
 		sortPanel.redraw();
 		updateCollapseButtonText();
 
+		taskListPanel.setRedrawTrigger("fullRedraw");
 		taskListPanel.redraw();
 	}
 
 	public void redrawTaskList()
 	{
+		taskListPanel.setRedrawTrigger("redrawTaskList");
 		taskListPanel.redraw();
 	}
 
@@ -199,6 +201,7 @@ public class LoggedInPanel extends JPanel
 			refreshFilterButtonsFromConfig(newTab);
 			sortPanel.refreshFromConfig();
 			onSortChanged(); // handles refreshRouteSelector() when in route mode, clears route when not
+			taskListPanel.setRedrawTrigger("tabChange");
 			taskListPanel.redraw();
 		}
 	}
@@ -452,6 +455,7 @@ public class LoggedInPanel extends JPanel
 			taskService.setActiveRoute(currentTab, route);
 
 			// Redraw
+			taskListPanel.setRedrawTrigger("routeChange");
 			taskListPanel.redraw();
 		});
 
@@ -476,7 +480,7 @@ public class LoggedInPanel extends JPanel
 		{
 			savedSort = config.sortCriteria();
 		}
-		boolean isRouteMode = "route".equals(savedSort);
+		boolean isRouteMode = "Route".equals(savedSort);
 		routeSelector.setVisible(isRouteMode);
 		subFilterWrapper.setVisible(!isRouteMode);
 
@@ -574,6 +578,7 @@ public class LoggedInPanel extends JPanel
 	private void refreshAfterRouteChange()
 	{
 		refreshRouteSelector();
+		taskListPanel.setRedrawTrigger("routeImportExport");
 		taskListPanel.redraw();
 	}
 
@@ -629,10 +634,10 @@ public class LoggedInPanel extends JPanel
 		deleteItem.setEnabled(routeSelector.getSelectedRouteName() != null);
 
 		// Route management menu items disabled while route editor in development
-		importItem.setEnabled(false);
-		exportItem.setEnabled(false);
-		createItem.setEnabled(false);
-		deleteItem.setEnabled(false);
+		// importItem.setEnabled(false);
+		// exportItem.setEnabled(false);
+		// createItem.setEnabled(false);
+		// deleteItem.setEnabled(false);
 
 		menu.add(importItem);
 		menu.add(exportItem);

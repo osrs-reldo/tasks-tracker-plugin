@@ -49,6 +49,11 @@ public class TaskListPanel extends JScrollPane
 	private TaskPanel priorityTaskPanel = null;
 	private boolean forceUpdatePriorityTaskFlag = false;
 
+	/** Redraw sequence counter and trigger for performance tracking */
+	private int redrawSequence = 0;
+	@Setter
+	private String redrawTrigger = "unknown";
+
 	/** Section header panels keyed by section name */
 	private final Map<String, SectionHeaderPanel> sectionHeaderPanels = new HashMap<>();
 
@@ -128,12 +133,18 @@ public class TaskListPanel extends JScrollPane
 			log.error("Task list panel refresh failed - not event dispatch thread.");
 			return;
 		}
+		long startNanos = System.nanoTime();
+		int refreshCount = 0;
 		for (TaskPanel taskPanel : taskPanelsByStructId.values())
 		{
 			refreshTaskPanel(taskPanel);
+			refreshCount++;
 		}
 		refreshEmptyPanel();
 		updatePriorityTaskAfterRefresh();
+		long elapsedMs = (System.nanoTime() - startNanos) / 1_000_000;
+		log.info("[PERF] refreshAllTasks #{}: {}ms, panels refreshed={}",
+			redrawSequence, elapsedMs, refreshCount);
 	}
 
 	/**
@@ -234,7 +245,7 @@ public class TaskListPanel extends JScrollPane
 	{
 		panel.refresh();
 
-		boolean routeModeActive = plugin.getConfig().sortCriteria().equals("route");
+		boolean routeModeActive = plugin.getConfig().sortCriteria().equals("Route");
 
 		// Hide tasks not in the current route when in route mode
 		if (!panel.isVisible() || !routeModeActive)
@@ -258,7 +269,7 @@ public class TaskListPanel extends JScrollPane
 		boolean showEmptyPanel;
 		String emptyPanelString;
 
-		boolean routeModeActive = plugin.getConfig().sortCriteria().equals("route");
+		boolean routeModeActive = plugin.getConfig().sortCriteria().equals("Route");
 
 		if (routeModeActive)
 		{
@@ -432,6 +443,12 @@ public class TaskListPanel extends JScrollPane
 					return;
 				}
 
+				redrawSequence++;
+				long startNanos = System.nanoTime();
+
+				ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+				CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
+
 				// Hide all section headers before redraw
 				for (SectionHeaderPanel header : sectionHeaderPanels.values())
 				{
@@ -439,6 +456,13 @@ public class TaskListPanel extends JScrollPane
 				}
 
 				redrawListItems();
+
+				long elapsedMs = (System.nanoTime() - startNanos) / 1_000_000;
+				log.info("[PERF] redraw #{} trigger={} ({}): {}ms, totalPanels={}",
+					redrawSequence, redrawTrigger,
+					activeRoute != null ? "route:" + activeRoute.getName() : "noRoute",
+					elapsedMs, taskPanelsByStructId.size());
+				redrawTrigger = "unknown";
 
 				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
 			}
@@ -450,6 +474,9 @@ public class TaskListPanel extends JScrollPane
 
 		private void redrawListItems()
 		{
+			long startNanos = System.nanoTime();
+			int zOrderCalls = 0;
+			int zOrderRedundant = 0;
 
 			int numberOfPinnedTasks = 0;
 			Integer pinnedTaskStructId = null;
@@ -464,9 +491,21 @@ public class TaskListPanel extends JScrollPane
 			if (!routeModeActive && plugin.getConfig().pinnedTaskId() != 0)
 			{
 				pinnedTaskStructId = plugin.getConfig().pinnedTaskId();
-				setComponentZOrder(taskPanelsByStructId.get(pinnedTaskStructId), 0);
-				numberOfPinnedTasks++;
+				TaskPanel pinnedPanel = taskPanelsByStructId.get(pinnedTaskStructId);
+				if (pinnedPanel != null && pinnedPanel.getParent() == this)
+				{
+					setComponentZOrder(pinnedPanel, 0);
+					zOrderCalls++;
+					numberOfPinnedTasks++;
+				}
+				else
+				{
+					pinnedTaskStructId = null;
+				}
 			}
+
+			taskService.resetIndexCounters();
+			long positionStartNanos = System.nanoTime();
 
 			// Set section header panel positions
 			if (routeModeActive)
@@ -493,6 +532,7 @@ public class TaskListPanel extends JScrollPane
 
 					if (sectionStartIndex < listSize)
 					{
+						zOrderCalls++;
 						setComponentZOrder(header, sectionStartIndex);
 					}
 					sectionStartIndex += section.getItems().size() + 1;
@@ -538,10 +578,26 @@ public class TaskListPanel extends JScrollPane
 
 				if (indexPosition < listSize)
 				{
-					// set taskPanel zOrder to sorted index
-					setComponentZOrder(taskPanel, indexPosition );
+					// Check if panel is already at this position
+					int currentZOrder = getComponentZOrder(taskPanel);
+					if (currentZOrder == indexPosition)
+					{
+						zOrderRedundant++;
+					}
+					else
+					{
+						zOrderCalls++;
+						setComponentZOrder(taskPanel, indexPosition);
+					}
 				}
 			}
+
+			long positionUs = (System.nanoTime() - positionStartNanos) / 1_000;
+			long totalUs = (System.nanoTime() - startNanos) / 1_000;
+			log.info("[PERF] redrawListItems #{} ({}): totalTime={}us, positionTime={}us, zOrder calls={} (redundant={}), totalPanels={}, indexPath=[sorted={}, route={}, fallback={}]",
+				redrawSequence, routeModeActive ? "route" : "noRoute",
+				totalUs, positionUs, zOrderCalls, zOrderRedundant, taskPanelsByStructId.size(),
+				taskService.getIndexHitSorted(), taskService.getIndexHitRoute(), taskService.getIndexFallback());
 
 			// @todo Set custom item panel positions
 		}

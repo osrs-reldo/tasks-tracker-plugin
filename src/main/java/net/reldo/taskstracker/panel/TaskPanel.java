@@ -378,7 +378,7 @@ public class TaskPanel extends JPanel
 
 	protected boolean meetsFilterCriteria()
 	{
-		if ("route".equals(plugin.getConfig().sortCriteria()))
+		if ("Route".equals(plugin.getConfig().sortCriteria()))
 		{
 			// Route mode: only tasks in the route are visible
 			ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();

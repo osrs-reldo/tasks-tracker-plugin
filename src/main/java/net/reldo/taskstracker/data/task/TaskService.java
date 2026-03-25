@@ -265,6 +265,21 @@ public class TaskService
 		return getTaskIndex(sortCriteria, taskStructId, true);
 	}
 
+	// Index path counters for performance tracking (reset each redraw cycle)
+	@Getter
+	private int indexHitSorted = 0;
+	@Getter
+	private int indexHitRoute = 0;
+	@Getter
+	private int indexFallback = 0;
+
+	public void resetIndexCounters()
+	{
+		indexHitSorted = 0;
+		indexHitRoute = 0;
+		indexFallback = 0;
+	}
+
 	public int getTaskIndex(String indexName, Integer taskStructId, Boolean ascending)
 	{
 		int position;
@@ -273,16 +288,38 @@ public class TaskService
 
 		if (!activeRoute && sortedIndexes.containsKey(indexName))
 		{
-			position = sortedIndexes.get(indexName).get(taskStructId);
+			Integer pos = sortedIndexes.get(indexName).get(taskStructId);
+			if (pos != null)
+			{
+				position = pos;
+				indexHitSorted++;
+			}
+			else
+			{
+				position = tasks.size();
+				indexFallback++;
+			}
 		}
 		else if (activeRoute && routeIndexes.containsKey(indexName))
 		{
-			position = routeIndexes.get(indexName).get(taskStructId);
+			Integer pos = routeIndexes.get(indexName).get(taskStructId);
+			if (pos != null)
+			{
+				position = pos;
+				indexHitRoute++;
+			}
+			else
+			{
+				position = tasks.size();
+				indexFallback++;
+			}
 		}
 		else
 		{
 			// Fall back to game UI sort order
-			position = getTaskByStructId(taskStructId).getSortId();
+			TaskFromStruct task = getTaskByStructId(taskStructId);
+			position = task != null ? task.getSortId() : tasks.size();
+			indexFallback++;
 		}
 
 		return ascending ? position : tasks.size() - (position + 1);
