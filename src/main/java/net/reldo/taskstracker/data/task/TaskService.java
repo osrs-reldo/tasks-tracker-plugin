@@ -177,6 +177,10 @@ public class TaskService
 			tasks.clear();
 			tasks.addAll(newTasks);
 
+			// Clear route state from previous task type
+			routeIndexes.clear();
+			tabActiveRoutes.clear();
+
 			// Index task list for each property
 			sortedIndexes.clear();
 			currentTaskType.getIntParamMap().keySet().forEach(paramName -> {
@@ -228,18 +232,23 @@ public class TaskService
 		int sectionStartIndex = 0;
 		for (RouteSection section : sections)
 		{
-			List<RouteItem> items = section.getItems();
-			for (RouteItem item : items)
+			// TODO (custom items): once custom item panels exist, index them here too
+			// and use section.getItems().size() instead of getTaskIds().size() below
+			int taskOffset = 0;
+			for (RouteItem item : section.getItems())
 			{
 				if (item.isTask())
 				{
-					routeIndex.put(item.getTaskId(), items.indexOf(item) + sectionStartIndex + 1);
+					routeIndex.put(item.getTaskId(), sectionStartIndex + taskOffset + 1);
+					taskOffset++;
 				}
 			}
-			sectionStartIndex += items.size() + 1;
+			// Tasks only — custom items are not yet rendered as panels
+			sectionStartIndex += section.getTaskIds().size() + 1;
 		}
 
-		int afterRouteIndex = route.getItemCount() + sections.size();
+		// TODO (custom items): switch to route.getItemCount() once custom item panels are rendered
+		int afterRouteIndex = route.getTaskCount() + sections.size();
 		for (TaskFromStruct task : tasks)
 		{
 			if (!route.getFlattenedOrder().contains(task.getStructId()))
@@ -249,15 +258,6 @@ public class TaskService
 		}
 
 		routeIndexes.put(route.getName(), routeIndex);
-	}
-
-	/** Finds a task by its struct ID. Returns null if not found. */
-	public TaskFromStruct getTaskByStructId(Integer taskStructId)
-	{
-		return tasks.stream()
-			.filter(t -> t.getStructId().equals(taskStructId))
-			.findFirst()
-			.orElse(null);
 	}
 
 	public int getTaskIndex(String sortCriteria, Integer taskStructId)
@@ -426,9 +426,28 @@ public class TaskService
 		return tabActiveRoutes.get(tab);
 	}
 
-	/** Returns true if a route is currently active for the given tab. */
+	/**
+	 * Returns true if the sort dropdown is set to "Route".
+	 * Use for UI decisions (show/hide route selector, suppress pin, etc.)
+	 */
+	public boolean isRouteMode()
+	{
+		String sortCriteria = configManager.getConfig(TasksTrackerConfig.class).sortCriteria();
+		return "route".equalsIgnoreCase(sortCriteria);
+	}
+
+	/**
+	 * Returns true if there is an actual route loaded for the given tab.
+	 * Use for data decisions (index lookup, route membership, rendering).
+	 * Always false when isRouteMode() is false, since routes are only
+	 * loaded while in route sort mode.
+	 */
 	public boolean hasActiveRoute(ConfigValues.TaskListTabs tab)
 	{
+		if (!isRouteMode())
+		{
+			return false;
+		}
 		return tabActiveRoutes.containsKey(tab);
 	}
 
@@ -439,10 +458,10 @@ public class TaskService
 	}
 
 	/** Finds a task by its struct ID. Returns null if not found. */
-	public TaskFromStruct getTaskByStructId(int structId)
+	public TaskFromStruct getTaskByStructId(Integer taskStructId)
 	{
 		return tasks.stream()
-			.filter(t -> t.getStructId() == structId)
+			.filter(t -> t.getStructId().equals(taskStructId))
 			.findFirst()
 			.orElse(null);
 	}

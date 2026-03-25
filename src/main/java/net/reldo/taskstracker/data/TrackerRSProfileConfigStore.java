@@ -75,6 +75,7 @@ public class TrackerRSProfileConfigStore
 	{
 		log.debug("saveTaskTypeToConfig");
 		Map<Integer, ConfigTaskSave> saveDataByStructId = taskService.getTasks().stream()
+			// TODO: tasks with only a note (not completed/tracked/ignored) are excluded and their note is lost
 			.filter(task -> task.getCompletedOn() != 0 || task.getIgnoredOn() != 0 || task.getTrackedOn() != 0)
 			.collect(Collectors.toMap(
 				TaskFromStruct::getStructId,

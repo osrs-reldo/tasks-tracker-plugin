@@ -1,8 +1,10 @@
 package net.reldo.taskstracker.panel;
 
+import java.util.AbstractMap;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -164,7 +166,9 @@ public class TaskListPanel extends JScrollPane
 	public void refreshMultipleStructIds(Collection<Integer> structIds)
 	{
 		refreshMultipleTasks(structIds.stream()
-			.map(structId -> taskPanelsByStructId.get(structId).task)
+			.map(structId -> taskPanelsByStructId.get(structId))
+			.filter(panel -> panel != null)
+			.map(panel -> panel.task)
 			.collect(Collectors.toList()));
 	}
 
@@ -234,20 +238,32 @@ public class TaskListPanel extends JScrollPane
 	{
 		panel.refresh();
 
-		boolean routeModeActive = plugin.getConfig().sortCriteria().equals("route");
+		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
 
-		// Hide tasks not in the current route when in route mode
-		if (!panel.isVisible() || !routeModeActive)
+		// Only do route-specific hiding when in route mode
+		if (!panel.isVisible() || !taskService.isRouteMode())
 		{
 			return;
 		}
 
 		// Check if there is an active route, whether the panel is in a route section, and if it is collapsed
-		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
-		CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
-		if (activeRoute == null ||
-			activeRoute.getSectionForTask(panel.task.getStructId()) == null ||
-			sectionHeaderPanels.get(activeRoute.getSectionForTask(panel.task.getStructId()).getName()).isCollapsed())
+		CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
+		if (activeRoute == null)
+		{
+			panel.setVisible(false);
+			return;
+		}
+
+		RouteSection section = activeRoute.getSectionForTask(panel.task.getStructId());
+		if (section == null)
+		{
+			panel.setVisible(false);
+			return;
+		}
+
+		String sectionKey = section.getName() != null ? section.getName() : "Section";
+		SectionHeaderPanel header = sectionHeaderPanels.get(sectionKey);
+		if (header != null && header.isCollapsed())
 		{
 			panel.setVisible(false);
 		}
@@ -258,15 +274,22 @@ public class TaskListPanel extends JScrollPane
 		boolean showEmptyPanel;
 		String emptyPanelString;
 
-		boolean routeModeActive = plugin.getConfig().sortCriteria().equals("route");
+		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
 
-		if (routeModeActive)
+		if (taskService.isRouteMode())
 		{
-			ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
-			CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
+			CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
 
-			emptyPanelString = getEmptyRouteListMessage();
-			showEmptyPanel = activeRoute == null || activeRoute.getSections().isEmpty();
+			if (activeRoute == null)
+			{
+				emptyPanelString = getNoRouteSelectedMessage();
+				showEmptyPanel = true;
+			}
+			else
+			{
+				emptyPanelString = getEmptyRouteListMessage();
+				showEmptyPanel = activeRoute.getSections().isEmpty();
+			}
 		}
 		else
 		{
@@ -320,7 +343,16 @@ public class TaskListPanel extends JScrollPane
 
 	public String getEmptyRouteListMessage()
 	{
-		return "Route Mode coming soon!";
+		return "This route has no tasks.";
+	}
+
+	public String getNoRouteSelectedMessage()
+	{
+		return "<b>Routes</b><br>"
+			+ "A new feature for Leagues 6: Demonic Pacts<br><br>"
+			+ "&#8226; Import a route from clipboard<br>"
+			+ "&#8226; Create route directly in plugin<br>"
+			+ "&nbsp;&nbsp;(coming soon!)";
 	}
 
 	/**
@@ -450,28 +482,44 @@ public class TaskListPanel extends JScrollPane
 
 		private void redrawListItems()
 		{
-
 			int numberOfPinnedTasks = 0;
 			Integer pinnedTaskStructId = null;
 
-			int listSize = this.getComponentCount();
-
 			ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+			boolean isRouteMode = taskService.isRouteMode();
 			CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
-			boolean routeModeActive = taskService.hasActiveRoute(currentTab);
+			boolean hasRoute = activeRoute != null;
 
-			// Set pinned task if route mode not active
-			if (!routeModeActive && plugin.getConfig().pinnedTaskId() != 0)
+			// Route mode with no route selected — hide all tasks
+			if (isRouteMode && !hasRoute)
 			{
-				pinnedTaskStructId = plugin.getConfig().pinnedTaskId();
-				setComponentZOrder(taskPanelsByStructId.get(pinnedTaskStructId), 0);
-				numberOfPinnedTasks++;
+				for (TaskPanel taskPanel : taskPanelsByStructId.values())
+				{
+					taskPanel.setVisible(false);
+				}
+				return;
 			}
 
-			// Set section header panel positions
-			if (routeModeActive)
+			// Set pinned task if not in route mode
+			if (!isRouteMode && plugin.getConfig().pinnedTaskId() != 0)
 			{
-				int sectionStartIndex = 0;
+				pinnedTaskStructId = plugin.getConfig().pinnedTaskId();
+				TaskPanel pinnedPanel = taskPanelsByStructId.get(pinnedTaskStructId);
+				if (pinnedPanel != null && pinnedPanel.getParent() == this)
+				{
+					setComponentZOrder(pinnedPanel, 0);
+					numberOfPinnedTasks++;
+				}
+			}
+
+			// Track which structIds are in the route for the hide pass
+			Set<Integer> routeTaskIds = hasRoute
+				? new HashSet<>(activeRoute.getFlattenedOrder())
+				: null;
+
+			// Create/update section headers (positioning happens in the unified pass below)
+			if (hasRoute)
+			{
 				for (RouteSection section : activeRoute.getSections())
 				{
 					// Get or create section header
@@ -486,20 +534,34 @@ public class TaskListPanel extends JScrollPane
 					// Restore collapsed state and set up callback
 					boolean isCollapsed = collapsedSections.contains(sectionKey);
 					header.setCollapsedSilent(isCollapsed);
+					final String callbackSectionKey = sectionKey;
 					header.setCollapseCallback(collapsed -> {
+						if (collapsed)
+						{
+							collapsedSections.add(callbackSectionKey);
+						}
+						else
+						{
+							collapsedSections.remove(callbackSectionKey);
+						}
 						SwingUtilities.invokeLater(() -> refreshMultipleStructIds(section.getTaskIds()));
 					});
 					header.setVisible(true);
 
-					if (sectionStartIndex < listSize)
+					// Count section progress
+					int completed = 0;
+					int total = 0;
+					for (int taskId : section.getTaskIds())
 					{
-						setComponentZOrder(header, sectionStartIndex);
+						total++;
+						TaskPanel tp = taskPanelsByStructId.get(taskId);
+						if (tp != null && tp.task.isCompleted())
+						{
+							completed++;
+						}
 					}
-					sectionStartIndex += section.getItems().size() + 1;
+					header.setProgress(completed, total);
 				}
-
-				listSize = this.getComponentCount();
-
 			}
 			else
 			{
@@ -511,10 +573,41 @@ public class TaskListPanel extends JScrollPane
 				sectionHeaderPanels.clear();
 			}
 
-			// Set task panel positions
-			for (Integer taskStructId : taskPanelsByStructId.keySet())
+			int listSize = this.getComponentCount();
+			boolean isAscending = plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.ASCENDING);
+			String indexName = hasRoute ? activeRoute.getName() : plugin.getConfig().sortCriteria();
+
+			// Collect all panels (section headers + tasks) with their target positions,
+			// then apply z-orders in ascending order. setComponentZOrder out of order
+			// causes Swing to shift components and scramble positions.
+			List<Map.Entry<Integer, Component>> pendingPositions = new ArrayList<>();
+
+			// Add section headers to the positioning list
+			if (hasRoute)
 			{
-				TaskPanel taskPanel = taskPanelsByStructId.get(taskStructId);
+				int sectionStartIndex = 0;
+				for (RouteSection section : activeRoute.getSections())
+				{
+					String sectionKey = section.getName() != null ? section.getName() : "Section";
+					SectionHeaderPanel header = sectionHeaderPanels.get(sectionKey);
+					if (header != null)
+					{
+						pendingPositions.add(new AbstractMap.SimpleEntry<>(sectionStartIndex, header));
+					}
+					sectionStartIndex += section.getTaskIds().size() + 1;
+				}
+			}
+
+			for (Map.Entry<Integer, TaskPanel> entry : taskPanelsByStructId.entrySet())
+			{
+				int taskStructId = entry.getKey();
+				TaskPanel taskPanel = entry.getValue();
+
+				// Skip panels not in this buffer (stale panels from task type swap)
+				if (taskPanel.getParent() != this)
+				{
+					continue;
+				}
 
 				// ignore if structId matches pinned task
 				if (pinnedTaskStructId != null && pinnedTaskStructId.equals(taskStructId))
@@ -523,27 +616,56 @@ public class TaskListPanel extends JScrollPane
 					continue;
 				}
 
-				Boolean isAscending = plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.ASCENDING);
+				// In route mode, hide tasks not in the route
+				if (hasRoute && !routeTaskIds.contains(taskStructId))
+				{
+					taskPanel.setVisible(false);
+					continue;
+				}
 
 				// get sorted index for task
-				String indexName = routeModeActive ? activeRoute.getName() : plugin.getConfig().sortCriteria();
 				int indexPosition = taskService.getTaskIndex(indexName, taskStructId, isAscending);
 				indexPosition += numberOfPinnedTasks;
 
-				// set priority task if not pinned
-				if (indexPosition == 0)
-				{
-					priorityTaskPanel = taskPanel;
-				}
+				pendingPositions.add(new AbstractMap.SimpleEntry<>(indexPosition, taskPanel));
+			}
+
+			// Sort by target position so setComponentZOrder calls don't shift earlier placements
+			pendingPositions.sort(Comparator.comparingInt(Map.Entry::getKey));
+
+			for (Map.Entry<Integer, Component> positioned : pendingPositions)
+			{
+				int indexPosition = positioned.getKey();
+				Component component = positioned.getValue();
 
 				if (indexPosition < listSize)
 				{
-					// set taskPanel zOrder to sorted index
-					setComponentZOrder(taskPanel, indexPosition );
+					setComponentZOrder(component, indexPosition);
+				}
+
+				// Task-specific logic (priority task, collapsed section visibility)
+				if (component instanceof TaskPanel)
+				{
+					TaskPanel taskPanel = (TaskPanel) component;
+
+					if (indexPosition == 0)
+					{
+						priorityTaskPanel = taskPanel;
+					}
+
+					if (hasRoute && isTaskInCollapsedSection(taskPanel.task))
+					{
+						taskPanel.setVisible(false);
+					}
+					else
+					{
+						taskPanel.setVisible(true);
+					}
 				}
 			}
 
-			// @todo Set custom item panel positions
+			// TODO (custom items): create and position custom item panels (bank stops, waypoints, etc.)
+			// Once implemented, update sectionStartIndex math above to include them in the count
 		}
 
 		private void processInBatches(int objectCount, IntConsumer method)

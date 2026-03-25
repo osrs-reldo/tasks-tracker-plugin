@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
+import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 
 /**
@@ -24,6 +25,8 @@ import net.reldo.taskstracker.data.task.TaskService;
 @Singleton
 public class RouteManager
 {
+	private static final String GROOTS_SOURCE = "GrootsLeagueMap";
+
 	@Inject
 	private Gson gson;
 	@Inject
@@ -35,6 +38,7 @@ public class RouteManager
 
 	/**
 	 * Imports a route from the system clipboard.
+	 * If the route has a source field, runs the matching tool-specific conversion.
 	 * Shows confirmation dialog if task type mismatches.
 	 * @return true if a route was imported successfully
 	 */
@@ -62,6 +66,25 @@ public class RouteManager
 				route.setName("Imported Route");
 			}
 
+			// GrootsLeagueMap: prompt for a route name since the web tool doesn't include one
+			if (GROOTS_SOURCE.equals(route.getSource()))
+			{
+				String name = JOptionPane.showInputDialog(
+					null,
+					"Enter a name for this route:",
+					"Import from Groot's League Map",
+					JOptionPane.PLAIN_MESSAGE
+				);
+				if (name == null)
+				{
+					return false;
+				}
+				if (!name.trim().isEmpty())
+				{
+					route.setName(name.trim());
+				}
+			}
+
 			String currentTaskType = taskService.getCurrentTaskType().getTaskJsonName();
 
 			if (route.getTaskType() != null && !route.getTaskType().equals(currentTaskType))
@@ -82,6 +105,15 @@ public class RouteManager
 
 			route.setTaskType(currentTaskType);
 
+			// Tool-specific import conversions (keyed by source)
+			if (route.getSource() != null)
+			{
+				if (route.getSource().equals(GROOTS_SOURCE))
+				{
+					convertGrootsRoute(route);
+				}
+			}
+
 			ConfigValues.TaskListTabs currentTab = config.taskListTab();
 
 			trackerGlobalConfigStore.addRoute(currentTaskType, route);
@@ -97,6 +129,35 @@ public class RouteManager
 			showErrorMessage("Failed to import route: " + e.getMessage());
 			return false;
 		}
+	}
+
+	/**
+	 * GrootsLeagueMap-specific import conversion.
+	 * - Joins per-item comments into the task's note field (in memory; persisted on next save trigger)
+	 * - pinCoords are preserved on RouteItem for re-export
+	 */
+	private void convertGrootsRoute(CustomRoute route)
+	{
+		for (RouteSection section : route.getSections())
+		{
+			for (RouteItem item : section.getItems())
+			{
+				// Join comments into a single note and apply to the task
+				if (item.getTaskId() != null && item.getComments() != null && !item.getComments().isEmpty())
+				{
+					String joinedNote = String.join(" | ", item.getComments());
+					TaskFromStruct task = taskService.getTaskByStructId(item.getTaskId());
+					if (task != null && (task.getNote() == null || task.getNote().isEmpty()))
+					{
+						task.setNote(joinedNote);
+					}
+				}
+			}
+		}
+
+		// Clear GrootsLeagueMap metadata from stored route
+		route.setSource(null);
+		route.setVersion(null);
 	}
 
 	/**

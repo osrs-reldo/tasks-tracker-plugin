@@ -29,6 +29,14 @@ public class CustomRoute
 	@Expose
 	private String description;
 
+	/** Source identifier for external tool imports (e.g., "GrootsLeagueMap"). Used to trigger tool-specific conversion. */
+	@Expose
+	private String source;
+
+	/** GrootsLeagueMap: format version (e.g., 2 for groups, 3 for sections). */
+	@Expose
+	private Integer version;
+
 	/** Ordered list of sections making up this route. */
 	@Expose
 	private List<RouteSection> sections;

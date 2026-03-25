@@ -116,6 +116,15 @@ public class LoggedInPanel extends JPanel
 		sortPanel.redraw();
 		updateCollapseButtonText();
 
+		// Clear stale route state before refreshing for the new task type.
+		// setTaskType() clears tabActiveRoutes asynchronously, but drawNewTaskType
+		// can be called from multiple paths (config change, game tick) and may
+		// race with the async clear.
+		for (ConfigValues.TaskListTabs tab : ConfigValues.TaskListTabs.values())
+		{
+			taskService.clearActiveRoute(tab);
+		}
+
 		refreshRouteSelector();
 		taskListPanel.drawNewTaskType();
 		refreshFilterButtonsFromConfig(config.taskListTab());
@@ -470,13 +479,7 @@ public class LoggedInPanel extends JPanel
 		northPanel.add(subFilterWrapper);
 
 		// Route selector and sub-filter visibility based on sort mode
-		String tabId = config.taskListTab().configID;
-		String savedSort = plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tabId + "SortCriteria");
-		if (savedSort == null)
-		{
-			savedSort = config.sortCriteria();
-		}
-		boolean isRouteMode = "route".equals(savedSort);
+		boolean isRouteMode = taskService.isRouteMode();
 		routeSelector.setVisible(isRouteMode);
 		subFilterWrapper.setVisible(!isRouteMode);
 
@@ -628,17 +631,16 @@ public class LoggedInPanel extends JPanel
 		});
 		deleteItem.setEnabled(routeSelector.getSelectedRouteName() != null);
 
-		// Route management menu items disabled while route editor in development
-		importItem.setEnabled(false);
-		exportItem.setEnabled(false);
-		createItem.setEnabled(false);
-		deleteItem.setEnabled(false);
+		JMenuItem editorItem = new JMenuItem("Route Editor (Coming soon)");
+		editorItem.setEnabled(false);
 
 		menu.add(importItem);
 		menu.add(exportItem);
 		menu.addSeparator();
 		menu.add(createItem);
 		menu.add(deleteItem);
+		menu.addSeparator();
+		menu.add(editorItem);
 
 		// Show below the manage button
 		menu.show(routeSelector, routeSelector.getWidth() - menu.getPreferredSize().width,

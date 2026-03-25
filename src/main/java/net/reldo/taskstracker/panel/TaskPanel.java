@@ -259,8 +259,7 @@ public class TaskPanel extends JPanel
 	public JPopupMenu createTaskPopupMenu()
 	{
 		JPopupMenu popupMenu = new JPopupMenu();
-		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
-		boolean isRouteMode = plugin.getTaskService().getActiveRoute(currentTab) != null;
+		boolean isRouteMode = plugin.getTaskService().isRouteMode();
 		if (!isRouteMode)
 		{
 			if (plugin.getConfig().pinnedTaskId().equals(task.getStructId()))
@@ -340,8 +339,7 @@ public class TaskPanel extends JPanel
 
 	public void refresh()
 	{
-		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
-		boolean isRouteMode = plugin.getTaskService().getActiveRoute(currentTab) != null;
+		boolean isRouteMode = plugin.getTaskService().isRouteMode();
 		if (!isRouteMode && plugin.getConfig().pinnedTaskId().equals(task.getStructId()))
 		{
 			highlightContainer.setBorder(new LineBorder(ColorScheme.BRAND_ORANGE));
@@ -378,9 +376,8 @@ public class TaskPanel extends JPanel
 
 	protected boolean meetsFilterCriteria()
 	{
-		if ("route".equals(plugin.getConfig().sortCriteria()))
+		if (plugin.getTaskService().isRouteMode())
 		{
-			// Route mode: only tasks in the route are visible
 			ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
 			CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
 
