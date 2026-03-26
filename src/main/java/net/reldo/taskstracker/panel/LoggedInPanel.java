@@ -470,13 +470,7 @@ public class LoggedInPanel extends JPanel
 		northPanel.add(subFilterWrapper);
 
 		// Route selector and sub-filter visibility based on sort mode
-		String tabId = config.taskListTab().configID;
-		String savedSort = plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tabId + "SortCriteria");
-		if (savedSort == null)
-		{
-			savedSort = config.sortCriteria();
-		}
-		boolean isRouteMode = "route".equals(savedSort);
+		boolean isRouteMode = plugin.isRouteMode();
 		routeSelector.setVisible(isRouteMode);
 		subFilterWrapper.setVisible(!isRouteMode);
 
@@ -629,10 +623,10 @@ public class LoggedInPanel extends JPanel
 		deleteItem.setEnabled(routeSelector.getSelectedRouteName() != null);
 
 		// Route management menu items disabled while route editor in development
-		importItem.setEnabled(false);
-		exportItem.setEnabled(false);
-		createItem.setEnabled(false);
-		deleteItem.setEnabled(false);
+//		importItem.setEnabled(false);
+//		exportItem.setEnabled(false);
+//		createItem.setEnabled(false);
+//		deleteItem.setEnabled(false);
 
 		menu.add(importItem);
 		menu.add(exportItem);
