@@ -153,7 +153,7 @@ public class TaskListPanel extends JScrollPane
 		{
 			if (section.getTaskIds() != null && section.getTaskIds().contains(structId))
 			{
-				String sectionKey = section.getName() != null ? section.getName() : "Section";
+				String sectionKey = section.getName();
 				return collapsedSections.contains(sectionKey);
 			}
 		}
@@ -475,7 +475,7 @@ public class TaskListPanel extends JScrollPane
 				for (RouteSection section : activeRoute.getSections())
 				{
 					// Get or create section header
-					String sectionKey = section.getName() != null ? section.getName() : "Section";
+					String sectionKey = section.getName();
 					SectionHeaderPanel header = sectionHeaderPanels.get(sectionKey);
 					if (header == null)
 					{
