@@ -203,7 +203,7 @@ public class TaskListPanel extends JScrollPane
 	{
 		panel.refresh();
 
-		boolean routeModeActive = plugin.getConfig().sortCriteria().equals("route");
+		boolean routeModeActive = plugin.isRouteMode();
 
 		// Hide tasks not in the current route when in route mode
 		if (!panel.isVisible() || !routeModeActive)
@@ -229,7 +229,7 @@ public class TaskListPanel extends JScrollPane
 		boolean showEmptyPanel;
 		String emptyPanelString;
 
-		boolean routeModeActive = plugin.getConfig().sortCriteria().equals("route");
+		boolean routeModeActive = plugin.isRouteMode();
 
 		if (routeModeActive)
 		{
@@ -416,12 +416,22 @@ public class TaskListPanel extends JScrollPane
 
 			int numberOfPinnedTasks = 0;
 			Integer pinnedTaskStructId = null;
+			CustomRoute activeRoute = null;
 
 			int listSize = this.getComponentCount();
 
-			ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
-			CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
-			boolean routeModeActive = taskService.hasActiveRoute(currentTab);
+			boolean routeModeActive = plugin.isRouteMode();
+			boolean hasActiveRoute = false;
+
+			if (routeModeActive)
+			{
+				ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+				activeRoute = taskService.getActiveRoute(currentTab);
+				hasActiveRoute = activeRoute != null;
+			}
+
+			String indexName = hasActiveRoute ? activeRoute.getName() : plugin.getConfig().sortCriteria();
+			Boolean isAscending = plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.ASCENDING);
 
 			// Set pinned task if route mode not active
 			if (!routeModeActive && plugin.getConfig().pinnedTaskId() != 0)
@@ -432,7 +442,7 @@ public class TaskListPanel extends JScrollPane
 			}
 
 			// Set section header panel positions
-			if (routeModeActive)
+			if (hasActiveRoute)
 			{
 
 				sectionHeaderPanels.computeIfAbsent(activeRoute.getName(), k -> new HashMap<>());
@@ -465,6 +475,8 @@ public class TaskListPanel extends JScrollPane
 
 			}
 
+			// @todo Set custom item panel positions
+
 			// Set task panel positions
 			for (Integer taskStructId : taskPanelsByStructId.keySet())
 			{
@@ -477,10 +489,7 @@ public class TaskListPanel extends JScrollPane
 					continue;
 				}
 
-				Boolean isAscending = plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.ASCENDING);
-
 				// get sorted index for task
-				String indexName = routeModeActive ? activeRoute.getName() : plugin.getConfig().sortCriteria();
 				int indexPosition = taskService.getTaskIndex(indexName, taskStructId, isAscending);
 				indexPosition += numberOfPinnedTasks;
 
@@ -496,8 +505,6 @@ public class TaskListPanel extends JScrollPane
 					setComponentZOrder(taskPanel, indexPosition );
 				}
 			}
-
-			// @todo Set custom item panel positions
 		}
 
 		private void processInBatches(int objectCount, IntConsumer method)

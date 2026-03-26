@@ -710,4 +710,12 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		pluginPanel.redrawTaskList();
 	}
+
+	/**
+	 * Returns true if the sort criteria config option is set to "Route".
+	 */
+	public boolean isRouteMode()
+	{
+		return "route".equalsIgnoreCase(config.sortCriteria());
+	}
 }
