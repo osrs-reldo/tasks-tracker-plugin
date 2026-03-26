@@ -177,6 +177,10 @@ public class TaskService
 			tasks.clear();
 			tasks.addAll(newTasks);
 
+			// Clear route state from previous task type
+			routeIndexes.clear();
+			tabActiveRoutes.clear();
+
 			// Index task list for each property
 			sortedIndexes.clear();
 			currentTaskType.getIntParamMap().keySet().forEach(paramName -> {
@@ -249,15 +253,6 @@ public class TaskService
 		}
 
 		routeIndexes.put(route.getName(), routeIndex);
-	}
-
-	/** Finds a task by its struct ID. Returns null if not found. */
-	public TaskFromStruct getTaskByStructId(Integer taskStructId)
-	{
-		return tasks.stream()
-			.filter(t -> t.getStructId().equals(taskStructId))
-			.findFirst()
-			.orElse(null);
 	}
 
 	public int getTaskIndex(String sortCriteria, Integer taskStructId)
@@ -416,7 +411,7 @@ public class TaskService
 		else
 		{
 			tabActiveRoutes.put(tab, route);
-			addRouteIndex(route);
+			addRouteIndex(route); // @todo move this on on task type change and route modification only
 		}
 	}
 
@@ -439,10 +434,10 @@ public class TaskService
 	}
 
 	/** Finds a task by its struct ID. Returns null if not found. */
-	public TaskFromStruct getTaskByStructId(int structId)
+	public TaskFromStruct getTaskByStructId(Integer taskStructId)
 	{
 		return tasks.stream()
-			.filter(t -> t.getStructId() == structId)
+			.filter(t -> t.getStructId().equals(taskStructId))
 			.findFirst()
 			.orElse(null);
 	}
