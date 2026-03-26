@@ -547,7 +547,7 @@ public class TaskPanel extends JPanel
 		// Task Note
 		if (plugin.getConfig().addTaskNote())
 		{
-			if (task.getNote() != null && !task.getNote().isEmpty())
+			if (task.hasNote())
 			{
 				panelComponent.getChildren().add(LineComponent.builder()
 					.build());
