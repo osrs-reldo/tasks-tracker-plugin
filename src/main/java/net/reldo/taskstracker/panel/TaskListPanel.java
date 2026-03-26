@@ -464,8 +464,12 @@ public class TaskListPanel extends JScrollPane
 			if (!routeModeActive && plugin.getConfig().pinnedTaskId() != 0)
 			{
 				pinnedTaskStructId = plugin.getConfig().pinnedTaskId();
-				setComponentZOrder(taskPanelsByStructId.get(pinnedTaskStructId), 0);
-				numberOfPinnedTasks++;
+				TaskPanel pinnedPanel = taskPanelsByStructId.get(pinnedTaskStructId);
+				if (pinnedPanel != null && pinnedPanel.getParent() == this)
+				{
+					setComponentZOrder(pinnedPanel, 0);
+					numberOfPinnedTasks++;
+				}
 			}
 
 			// Set section header panel positions
@@ -515,6 +519,11 @@ public class TaskListPanel extends JScrollPane
 			for (Integer taskStructId : taskPanelsByStructId.keySet())
 			{
 				TaskPanel taskPanel = taskPanelsByStructId.get(taskStructId);
+
+				if (taskPanel.getParent() != this)
+				{
+					continue;
+				}
 
 				// ignore if structId matches pinned task
 				if (pinnedTaskStructId != null && pinnedTaskStructId.equals(taskStructId))
