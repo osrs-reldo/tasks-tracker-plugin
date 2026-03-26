@@ -75,7 +75,7 @@ public class TrackerRSProfileConfigStore
 	{
 		log.debug("saveTaskTypeToConfig");
 		Map<Integer, ConfigTaskSave> saveDataByStructId = taskService.getTasks().stream()
-			.filter(task -> task.getCompletedOn() != 0 || task.getIgnoredOn() != 0 || task.getTrackedOn() != 0)
+			.filter(task -> task.getCompletedOn() != 0 || task.getIgnoredOn() != 0 || task.getTrackedOn() != 0 || task.hasNote())
 			.collect(Collectors.toMap(
 				TaskFromStruct::getStructId,
 				TaskFromStruct::getSaveData,
