@@ -1,6 +1,8 @@
 package net.reldo.taskstracker.data.route;
 
+import com.google.gson.JsonElement;
 import com.google.gson.annotations.Expose;
+import java.util.List;
 import lombok.Data;
 
 /**
@@ -19,6 +21,14 @@ public class RouteItem
 	/** The custom item if this is not a task, null otherwise. */
 	@Expose
 	private CustomRouteItem customItem;
+
+	/** Opaque tool-specific map coordinates (preserved for re-export). */
+	@Expose
+	private JsonElement pinCoords;
+
+	/** Per-item notes from external tools (joined into task notes on import). */
+	@Expose
+	private List<String> comments;
 
 	/** Returns true if this item represents a task (vs a custom item). */
 	public boolean isTask()

@@ -12,6 +12,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -607,9 +608,29 @@ public class LoggedInPanel extends JPanel
 			}
 		});
 
-		JMenuItem exportItem = new JMenuItem("Export Active Route to Clipboard");
-		exportItem.addActionListener(e -> routeManager.exportActiveRoute());
-		exportItem.setEnabled(routeSelector.getSelectedRouteName() != null);
+		ConfigValues.TaskListTabs currentTab = config.taskListTab();
+		String taskType = plugin.getTaskService().getCurrentTaskType() != null
+			? plugin.getTaskService().getCurrentTaskType().getTaskJsonName()
+			: null;
+		CustomRoute activeRoute = taskType != null
+			? plugin.getTrackerGlobalConfigStore().getActiveRoute(currentTab, taskType)
+			: null;
+		String source = activeRoute != null ? activeRoute.getSource() : null;
+		String sourceLabel = source != null ? source + " format" : "Source format";
+
+		JMenu exportMenu = new JMenu("Export Active Route to Clipboard");
+		boolean hasActiveRoute = routeSelector.getSelectedRouteName() != null;
+		exportMenu.setEnabled(hasActiveRoute);
+
+		JMenuItem exportNativeItem = new JMenuItem("Plugin native format");
+		exportNativeItem.addActionListener(e -> routeManager.exportActiveRouteNative());
+
+		JMenuItem exportSourceItem = new JMenuItem(sourceLabel);
+		exportSourceItem.addActionListener(e -> routeManager.exportActiveRouteSourceFormat());
+		exportSourceItem.setEnabled(source != null);
+
+		exportMenu.add(exportNativeItem);
+		exportMenu.add(exportSourceItem);
 
 		JMenuItem createItem = new JMenuItem("Create Route from Current Order...");
 		createItem.addActionListener(e -> {
@@ -630,12 +651,12 @@ public class LoggedInPanel extends JPanel
 
 		// Route management menu items disabled while route editor in development
 		importItem.setEnabled(false);
-		exportItem.setEnabled(false);
+		exportMenu.setEnabled(false);
 		createItem.setEnabled(false);
 		deleteItem.setEnabled(false);
 
 		menu.add(importItem);
-		menu.add(exportItem);
+		menu.add(exportMenu);
 		menu.addSeparator();
 		menu.add(createItem);
 		menu.add(deleteItem);

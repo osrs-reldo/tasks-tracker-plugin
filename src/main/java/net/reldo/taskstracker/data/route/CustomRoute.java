@@ -29,6 +29,14 @@ public class CustomRoute
 	@Expose
 	private String description;
 
+	/** Source tool identifier (e.g., "GrootsLeagueMap"). Null for plugin-native routes. */
+	@Expose
+	private String source;
+
+	/** Format version from the source tool. Null for plugin-native routes. */
+	@Expose
+	private Integer version;
+
 	/** Ordered list of sections making up this route. */
 	@Expose
 	private List<RouteSection> sections;

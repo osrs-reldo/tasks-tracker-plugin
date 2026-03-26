@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
+import net.reldo.taskstracker.data.route.interop.RouteConverterDispatcher;
 import net.reldo.taskstracker.data.task.TaskService;
 
 /**
@@ -32,6 +33,8 @@ public class RouteManager
 	private TasksTrackerConfig config;
 	@Inject
 	private TrackerGlobalConfigStore trackerGlobalConfigStore;
+	@Inject
+	private RouteConverterDispatcher routeConverterDispatcher;
 
 	/**
 	 * Imports a route from the system clipboard.
@@ -62,6 +65,11 @@ public class RouteManager
 				route.setName("Imported Route");
 			}
 
+			if (!routeConverterDispatcher.runBeforeImport(route))
+			{
+				return false;
+			}
+
 			String currentTaskType = taskService.getCurrentTaskType().getTaskJsonName();
 
 			if (route.getTaskType() != null && !route.getTaskType().equals(currentTaskType))
@@ -82,6 +90,8 @@ public class RouteManager
 
 			route.setTaskType(currentTaskType);
 
+			routeConverterDispatcher.runImportConvert(route);
+
 			ConfigValues.TaskListTabs currentTab = config.taskListTab();
 
 			trackerGlobalConfigStore.addRoute(currentTaskType, route);
@@ -100,10 +110,48 @@ public class RouteManager
 	}
 
 	/**
-	 * Exports the active route to the system clipboard as JSON.
+	 * Exports the active route to the system clipboard in plugin-native JSON format.
+	 * Strips source/version so the exported JSON is clean plugin-native.
 	 * @return true if a route was exported
 	 */
-	public boolean exportActiveRoute()
+	public boolean exportActiveRouteNative()
+	{
+		CustomRoute exportCopy = getActiveRouteExportCopy();
+		if (exportCopy == null)
+		{
+			return false;
+		}
+
+		exportCopy.setSource(null);
+		exportCopy.setVersion(null);
+
+		return copyRouteToClipboard(exportCopy);
+	}
+
+	/**
+	 * Exports the active route to the system clipboard in its original source format.
+	 * Runs the source converter's beforeExport/convertToExternal hooks.
+	 * @return true if a route was exported
+	 */
+	public boolean exportActiveRouteSourceFormat()
+	{
+		CustomRoute exportCopy = getActiveRouteExportCopy();
+		if (exportCopy == null)
+		{
+			return false;
+		}
+
+		if (!routeConverterDispatcher.runBeforeExport(exportCopy))
+		{
+			return false;
+		}
+
+		routeConverterDispatcher.runExportConvert(exportCopy);
+
+		return copyRouteToClipboard(exportCopy);
+	}
+
+	private CustomRoute getActiveRouteExportCopy()
 	{
 		ConfigValues.TaskListTabs currentTab = config.taskListTab();
 		String taskType = taskService.getCurrentTaskType().getTaskJsonName();
@@ -113,9 +161,19 @@ public class RouteManager
 		if (route == null)
 		{
 			showErrorMessage("No active route to export");
-			return false;
+			return null;
 		}
 
+		Gson routeGson = gson.newBuilder()
+			.excludeFieldsWithoutExposeAnnotation()
+			.setPrettyPrinting()
+			.create();
+
+		return routeGson.fromJson(routeGson.toJson(route), CustomRoute.class);
+	}
+
+	private boolean copyRouteToClipboard(CustomRoute route)
+	{
 		Gson routeGson = gson.newBuilder()
 			.excludeFieldsWithoutExposeAnnotation()
 			.setPrettyPrinting()
