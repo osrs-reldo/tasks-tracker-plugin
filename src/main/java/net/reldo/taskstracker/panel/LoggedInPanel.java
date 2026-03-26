@@ -786,16 +786,7 @@ public class LoggedInPanel extends JPanel
 			taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
 			taskTypeDropdown.addActionListener(e -> {
 				TaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
-				taskService.setTaskType(taskType).thenAccept(wasTaskTypeChanged -> {
-					if (wasTaskTypeChanged)
-					{
-						SwingUtilities.invokeLater(() ->
-						{
-							redraw();
-							plugin.refreshAllTasks();
-						});
-					}
-				});
+				taskService.setTaskType(taskType);
 			});
 		});
 	}
