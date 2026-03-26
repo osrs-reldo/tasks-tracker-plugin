@@ -4,6 +4,7 @@ import com.google.gson.annotations.Expose;
 import lombok.Data;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.NonNull;
 
 /**
  * A user-defined or imported route for completing tasks in a specific order.
@@ -17,6 +18,7 @@ public class CustomRoute
 {
 	/** Unique name identifying this route (used as lookup key). */
 	@Expose
+	@NonNull
 	private String name;
 
 	/** The task type this route applies to (e.g., "COMBAT", "EXPLORATION"). */

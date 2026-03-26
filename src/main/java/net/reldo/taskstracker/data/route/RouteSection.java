@@ -5,6 +5,7 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.NonNull;
 
 /**
  * A named section within a route, containing an ordered list of items.
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 public class RouteSection
 {
 	@Expose
+	@NonNull
 	private String name;
 
 	@Expose
