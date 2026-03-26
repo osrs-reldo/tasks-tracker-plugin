@@ -4,10 +4,8 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
@@ -50,9 +48,6 @@ public class TaskListPanel extends JScrollPane
 
 	/** Section header panels keyed by route name then section name */
 	private final HashMap<String, HashMap<String, SectionHeaderPanel>> sectionHeaderPanels = new HashMap<>();
-
-	/** Names of currently collapsed sections */
-	private final Set<String> collapsedSections = new HashSet<>();
 
 	public TaskListPanel(TasksTrackerPlugin plugin, TaskService taskService)
 	{
@@ -133,31 +128,6 @@ public class TaskListPanel extends JScrollPane
 		}
 		refreshEmptyPanel();
 		updatePriorityTaskAfterRefresh();
-	}
-
-	/**
-	 * Checks if a task belongs to a currently collapsed section.
-	 */
-	private boolean isTaskInCollapsedSection(TaskFromStruct task)
-	{
-		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
-		CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
-		if (activeRoute == null || activeRoute.getSections() == null)
-		{
-			return false;
-		}
-
-		int structId = task.getStructId();
-		for (RouteSection section : activeRoute.getSections())
-		{
-			if (section.getTaskIds() != null && section.getTaskIds().contains(structId))
-			{
-				String sectionKey = section.getName();
-				return collapsedSections.contains(sectionKey);
-			}
-		}
-
-		return false;
 	}
 
 	public void refreshMultipleStructIds(Collection<Integer> structIds)
@@ -379,14 +349,7 @@ public class TaskListPanel extends JScrollPane
 				log.debug("TaskListPanel creating panels");
 				taskPanelsByStructId.clear();
 				priorityTaskPanel = null;
-
-				// Clear section headers from previous task type
-				for (SectionHeaderPanel header : sectionHeaderPanels.values())
-				{
-					remove(header);
-				}
 				sectionHeaderPanels.clear();
-				collapsedSections.clear();
 
 				add(emptyTasks);
 
@@ -500,15 +463,6 @@ public class TaskListPanel extends JScrollPane
 
 				listSize = this.getComponentCount();
 
-			}
-			else
-			{
-				// Remove section headers
-				for (SectionHeaderPanel header : sectionHeaderPanels.values())
-				{
-					remove(header);
-				}
-				sectionHeaderPanels.clear();
 			}
 
 			// Set task panel positions
