@@ -10,7 +10,6 @@ import net.reldo.taskstracker.data.task.TaskService;
 public class GrootsLeagueMapConverter implements RouteConverter
 {
 	private static final String SOURCE = "GrootsLeagueMap";
-	private static final int CURRENT_VERSION = 1;
 
 	@Override
 	public String getSource()
@@ -54,7 +53,6 @@ public class GrootsLeagueMapConverter implements RouteConverter
 	public void convertToExternal(CustomRoute route, TaskService taskService)
 	{
 		route.setSource(SOURCE);
-		route.setVersion(CURRENT_VERSION);
 
 		if (route.getSections() == null)
 		{

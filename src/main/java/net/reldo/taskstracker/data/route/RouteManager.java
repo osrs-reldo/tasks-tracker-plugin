@@ -111,7 +111,8 @@ public class RouteManager
 
 	/**
 	 * Exports the active route to the system clipboard in plugin-native JSON format.
-	 * Strips source/version so the exported JSON is clean plugin-native.
+	 * Strips source so importing plugins don't run a converter on it.
+	 * Version is preserved as opaque metadata from the original source.
 	 * @return true if a route was exported
 	 */
 	public boolean exportActiveRouteNative()
@@ -123,7 +124,6 @@ public class RouteManager
 		}
 
 		exportCopy.setSource(null);
-		exportCopy.setVersion(null);
 
 		return copyRouteToClipboard(exportCopy);
 	}
