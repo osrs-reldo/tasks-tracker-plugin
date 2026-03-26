@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntConsumer;
@@ -49,8 +48,8 @@ public class TaskListPanel extends JScrollPane
 	private TaskPanel priorityTaskPanel = null;
 	private boolean forceUpdatePriorityTaskFlag = false;
 
-	/** Section header panels keyed by section name */
-	private final Map<String, SectionHeaderPanel> sectionHeaderPanels = new HashMap<>();
+	/** Section header panels keyed by route name then section name */
+	private final HashMap<String, HashMap<String, SectionHeaderPanel>> sectionHeaderPanels = new HashMap<>();
 
 	/** Names of currently collapsed sections */
 	private final Set<String> collapsedSections = new HashSet<>();
@@ -247,7 +246,9 @@ public class TaskListPanel extends JScrollPane
 		CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
 		if (activeRoute == null ||
 			activeRoute.getSectionForTask(panel.task.getStructId()) == null ||
-			sectionHeaderPanels.get(activeRoute.getSectionForTask(panel.task.getStructId()).getName()).isCollapsed())
+			sectionHeaderPanels.get(activeRoute.getName())
+				.get(activeRoute.getSectionForTask(panel.task.getStructId()).getName())
+				.isCollapsed())
 		{
 			panel.setVisible(false);
 		}
@@ -433,10 +434,9 @@ public class TaskListPanel extends JScrollPane
 				}
 
 				// Hide all section headers before redraw
-				for (SectionHeaderPanel header : sectionHeaderPanels.values())
-				{
-					header.setVisible(false);
-				}
+				sectionHeaderPanels.values()
+					.forEach(sectionPanels -> sectionPanels.values()
+						.forEach(sectionHeaderPanel -> sectionHeaderPanel.setVisible(false)));
 
 				redrawListItems();
 
@@ -471,23 +471,23 @@ public class TaskListPanel extends JScrollPane
 			// Set section header panel positions
 			if (routeModeActive)
 			{
+
+				sectionHeaderPanels.computeIfAbsent(activeRoute.getName(), k -> new HashMap<>());
+
 				int sectionStartIndex = 0;
 				for (RouteSection section : activeRoute.getSections())
 				{
 					// Get or create section header
 					String sectionKey = section.getName();
-					SectionHeaderPanel header = sectionHeaderPanels.get(sectionKey);
+					SectionHeaderPanel header = sectionHeaderPanels.get(activeRoute.getName()).get(sectionKey);
 					if (header == null)
 					{
 						header = new SectionHeaderPanel(sectionKey, section.getDescription());
-						sectionHeaderPanels.put(sectionKey, header);
+						sectionHeaderPanels.get(activeRoute.getName()).put(sectionKey, header);
 						add(header);
 					}
-					// Restore collapsed state and set up callback
-					boolean isCollapsed = collapsedSections.contains(sectionKey);
-					header.setCollapsedSilent(isCollapsed);
 					header.setCollapseCallback(collapsed -> {
-						SwingUtilities.invokeLater(() -> refreshMultipleStructIds(section.getTaskIds()));
+						SwingUtilities.invokeLater(() -> refreshMultipleStructIds(section.getTaskIds())); // @todo change this to header.section.getTaskIds() so it doesn't need to be updated when the route list changes
 					});
 					header.setVisible(true);
 
