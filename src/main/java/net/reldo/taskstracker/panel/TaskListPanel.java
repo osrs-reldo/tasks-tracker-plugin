@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
@@ -133,7 +134,9 @@ public class TaskListPanel extends JScrollPane
 	public void refreshMultipleStructIds(Collection<Integer> structIds)
 	{
 		refreshMultipleTasks(structIds.stream()
-			.map(structId -> taskPanelsByStructId.get(structId).task)
+			.map(taskPanelsByStructId::get)
+			.filter(Objects::nonNull)
+			.map(panel -> panel.task)
 			.collect(Collectors.toList()));
 	}
 
@@ -203,22 +206,32 @@ public class TaskListPanel extends JScrollPane
 	{
 		panel.refresh();
 
-		boolean routeModeActive = plugin.isRouteMode();
-
-		// Hide tasks not in the current route when in route mode
-		if (!panel.isVisible() || !routeModeActive)
+		// Only do route-specific hiding when in route mode
+		if (!panel.isVisible() || !plugin.isRouteMode())
 		{
 			return;
 		}
 
 		// Check if there is an active route, whether the panel is in a route section, and if it is collapsed
 		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
-		CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
-		if (activeRoute == null ||
-			activeRoute.getSectionForTask(panel.task.getStructId()) == null ||
-			sectionHeaderPanels.get(activeRoute.getName())
-				.get(activeRoute.getSectionForTask(panel.task.getStructId()).getName())
-				.isCollapsed())
+		CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
+
+		if (activeRoute == null)
+		{
+			panel.setVisible(false);
+			return;
+		}
+
+		RouteSection section = activeRoute.getSectionForTask(panel.task.getStructId());
+		if (section == null)
+		{
+			panel.setVisible(false);
+			return;
+		}
+
+		String sectionKey = section.getName();
+		SectionHeaderPanel header = sectionHeaderPanels.get(activeRoute.getName()).get(sectionKey);
+		if (header != null && header.isCollapsed())
 		{
 			panel.setVisible(false);
 		}
@@ -229,15 +242,21 @@ public class TaskListPanel extends JScrollPane
 		boolean showEmptyPanel;
 		String emptyPanelString;
 
-		boolean routeModeActive = plugin.isRouteMode();
-
-		if (routeModeActive)
+		if (plugin.isRouteMode())
 		{
 			ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
-			CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
+			CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
 
-			emptyPanelString = getEmptyRouteListMessage();
-			showEmptyPanel = activeRoute == null || activeRoute.getSections().isEmpty();
+			if (activeRoute == null)
+			{
+				emptyPanelString = getNoRouteSelectedMessage();
+				showEmptyPanel = true;
+			}
+			else
+			{
+				emptyPanelString = getEmptyRouteListMessage();
+				showEmptyPanel = activeRoute.getSections().isEmpty();
+			}
 		}
 		else
 		{
@@ -291,7 +310,16 @@ public class TaskListPanel extends JScrollPane
 
 	public String getEmptyRouteListMessage()
 	{
-		return "Route Mode coming soon!";
+		return "This route has no tasks.";
+	}
+
+	public String getNoRouteSelectedMessage()
+	{
+		return "<b>Routes</b><br>"
+			+ "A new feature for Leagues 6: Demonic Pacts<br><br>"
+			+ "&#8226; Import a route from clipboard<br>"
+			+ "&#8226; Create route directly in plugin<br>"
+			+ "&nbsp;&nbsp;(coming soon!)";
 	}
 
 	/**
