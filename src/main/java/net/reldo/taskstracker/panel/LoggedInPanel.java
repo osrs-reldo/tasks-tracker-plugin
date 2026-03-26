@@ -623,6 +623,8 @@ public class LoggedInPanel extends JPanel
 		deleteItem.setEnabled(routeSelector.getSelectedRouteName() != null);
 
 		// Route management menu items disabled while route editor in development
+		JMenuItem editorItem = new JMenuItem("Route Editor (Coming soon)");
+		editorItem.setEnabled(false);
 //		importItem.setEnabled(false);
 //		exportItem.setEnabled(false);
 //		createItem.setEnabled(false);
@@ -633,6 +635,8 @@ public class LoggedInPanel extends JPanel
 		menu.addSeparator();
 		menu.add(createItem);
 		menu.add(deleteItem);
+		menu.addSeparator();
+		menu.add(editorItem);
 
 		// Show below the manage button
 		menu.show(routeSelector, routeSelector.getWidth() - menu.getPreferredSize().width,
