@@ -718,4 +718,9 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		return "route".equalsIgnoreCase(config.sortCriteria());
 	}
+
+	public void enableTaskTypeDropdown()
+	{
+		pluginPanel.enableTaskTypeDropdown();
+	}
 }

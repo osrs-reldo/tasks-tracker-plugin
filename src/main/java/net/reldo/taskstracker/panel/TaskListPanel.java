@@ -570,6 +570,7 @@ public class TaskListPanel extends JScrollPane
 			}
 			else
 			{
+				plugin.enableTaskTypeDropdown();
 				SwingUtilities.invokeLater(this::redraw);
 			}
 		}

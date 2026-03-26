@@ -767,6 +767,15 @@ public class LoggedInPanel extends JPanel
 		collapseBtn.setText(countInclusive + " inclusive, " + countExclusive + " exclusive filters");
 	}
 
+
+	public void enableTaskTypeDropdown()
+	{
+		if (taskTypeDropdown != null)
+		{
+			taskTypeDropdown.setEnabled(true);
+		}
+	}
+
 	private void initTaskTypeDropdownAsync()
 	{
 		TaskType currentTaskType = taskService.getCurrentTaskType();
@@ -783,6 +792,7 @@ public class LoggedInPanel extends JPanel
 				.findFirst().orElseGet(() -> taskTypeItems.get(0));
 			taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
 			taskTypeDropdown.addActionListener(e -> {
+				taskTypeDropdown.setEnabled(false);
 				TaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
 				taskService.setTaskType(taskType);
 			});
