@@ -60,7 +60,7 @@ public class RouteManager
 				return false;
 			}
 
-			if (route.getName() == null || route.getName().isEmpty())
+			if (route.getName().isEmpty())
 			{
 				route.setName("Imported Route");
 			}
@@ -216,14 +216,12 @@ public class RouteManager
 			return false;
 		}
 
-		CustomRoute route = new CustomRoute();
-		route.setName(name);
+		CustomRoute route = new CustomRoute(name);
 		route.setTaskType(taskService.getCurrentTaskType().getTaskJsonName());
 		route.setAuthor("User");
 		route.setDescription("Created from current task order");
 
-		RouteSection section = new RouteSection();
-		section.setName("All Tasks");
+		RouteSection section = new RouteSection("All Tasks");
 		section.setTaskIds(visibleTaskIds);
 
 		route.setSections(List.of(section));

@@ -471,13 +471,7 @@ public class LoggedInPanel extends JPanel
 		northPanel.add(subFilterWrapper);
 
 		// Route selector and sub-filter visibility based on sort mode
-		String tabId = config.taskListTab().configID;
-		String savedSort = plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tabId + "SortCriteria");
-		if (savedSort == null)
-		{
-			savedSort = config.sortCriteria();
-		}
-		boolean isRouteMode = "route".equals(savedSort);
+		boolean isRouteMode = plugin.isRouteMode();
 		routeSelector.setVisible(isRouteMode);
 		subFilterWrapper.setVisible(!isRouteMode);
 
@@ -650,16 +644,20 @@ public class LoggedInPanel extends JPanel
 		deleteItem.setEnabled(routeSelector.getSelectedRouteName() != null);
 
 		// Route management menu items disabled while route editor in development
-		importItem.setEnabled(false);
-		exportMenu.setEnabled(false);
-		createItem.setEnabled(false);
-		deleteItem.setEnabled(false);
+		JMenuItem editorItem = new JMenuItem("Route Editor (Coming soon)");
+		editorItem.setEnabled(false);
+  		importItem.setEnabled(false);
+  		exportItem.setEnabled(false);
+  		createItem.setEnabled(false);
+  		deleteItem.setEnabled(false);
 
 		menu.add(importItem);
 		menu.add(exportMenu);
 		menu.addSeparator();
 		menu.add(createItem);
 		menu.add(deleteItem);
+		menu.addSeparator();
+		menu.add(editorItem);
 
 		// Show below the manage button
 		menu.show(routeSelector, routeSelector.getWidth() - menu.getPreferredSize().width,
@@ -790,6 +788,15 @@ public class LoggedInPanel extends JPanel
 		collapseBtn.setText(countInclusive + " inclusive, " + countExclusive + " exclusive filters");
 	}
 
+
+	public void enableTaskTypeDropdown()
+	{
+		if (taskTypeDropdown != null)
+		{
+			taskTypeDropdown.setEnabled(true);
+		}
+	}
+
 	private void initTaskTypeDropdownAsync()
 	{
 		TaskType currentTaskType = taskService.getCurrentTaskType();
@@ -806,17 +813,9 @@ public class LoggedInPanel extends JPanel
 				.findFirst().orElseGet(() -> taskTypeItems.get(0));
 			taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
 			taskTypeDropdown.addActionListener(e -> {
+				taskTypeDropdown.setEnabled(false);
 				TaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
-				taskService.setTaskType(taskType).thenAccept(wasTaskTypeChanged -> {
-					if (wasTaskTypeChanged)
-					{
-						SwingUtilities.invokeLater(() ->
-						{
-							redraw();
-							plugin.refreshAllTasks();
-						});
-					}
-				});
+				taskService.setTaskType(taskType);
 			});
 		});
 	}
