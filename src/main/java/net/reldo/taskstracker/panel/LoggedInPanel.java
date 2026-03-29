@@ -233,6 +233,17 @@ public class LoggedInPanel extends JPanel
 	// TODO reduce duplication
 	public void refreshFilterButtonsFromConfig(ConfigValues.TaskListTabs tab)
 	{
+		if (plugin.isRouteMode())
+		{
+			trackedFilterBtn.setState(ConfigValues.TrackedFilterValues.TRACKED_AND_UNTRACKED.ordinal());
+			trackedFilterBtn.setEnabled(false);
+			completedFilterBtn.setState(ConfigValues.CompletedFilterValues.COMPLETE_AND_INCOMPLETE.ordinal());
+			completedFilterBtn.setEnabled(false);
+			ignoredFilterBtn.setState(ConfigValues.IgnoredFilterValues.IGNORED_AND_NOT_IGNORED.ordinal());
+			ignoredFilterBtn.setEnabled(false);
+			return;
+		}
+
 		switch (tab)
 		{
 			case TAB_ONE:
@@ -293,11 +304,6 @@ public class LoggedInPanel extends JPanel
 		JMenuItem saveFiltersItem = new JMenuItem("Save Filter States");
 		saveFiltersItem.addActionListener(e -> saveCurrentTabFilters());
 
-		JMenuItem lineBreakItem = new JMenuItem("-----------------");
-		lineBreakItem.setEnabled(false);
-		JMenuItem lineBreakItemTwo = new JMenuItem("-----------------");
-		lineBreakItemTwo.setEnabled(false);
-
 		JMenuItem completedItem = new FilterLockTabMenuItem("Completed", completedFilterBtn, e -> {
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "CompletedLock", completedFilterBtn.isEnabled());
 		});
@@ -312,11 +318,11 @@ public class LoggedInPanel extends JPanel
 		taskOverlayItem.addActionListener(e -> plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "showOverlay", !config.showOverlay()));
 
 		popupMenu.add(saveFiltersItem);
-		popupMenu.add(lineBreakItem);
+		popupMenu.addSeparator();
 		popupMenu.add(completedItem);
 		popupMenu.add(trackedItem);
 		popupMenu.add(ignoredItem);
-		popupMenu.add(lineBreakItemTwo);
+		popupMenu.addSeparator();
 		popupMenu.add(taskOverlayItem);
 
 		button.addChangeListener(e -> {
