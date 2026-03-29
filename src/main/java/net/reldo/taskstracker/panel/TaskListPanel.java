@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
@@ -453,6 +455,7 @@ public class TaskListPanel extends JScrollPane
 			CustomRoute activeRoute = null;
 
 			int listSize = this.getComponentCount();
+			Map<Integer, JComponent> listPanelsToDraw = new HashMap<>(listSize);
 
 			boolean routeModeActive = plugin.isRouteMode();
 			boolean hasActiveRoute = false;
@@ -502,10 +505,8 @@ public class TaskListPanel extends JScrollPane
 					});
 					header.setVisible(true);
 
-					if (sectionStartIndex < listSize)
-					{
-						setComponentZOrder(header, sectionStartIndex);
-					}
+					listPanelsToDraw.put(sectionStartIndex, header);
+
 					sectionStartIndex += section.getItems().size() + 1;
 				}
 
@@ -537,10 +538,15 @@ public class TaskListPanel extends JScrollPane
 					priorityTaskPanel = taskPanel;
 				}
 
-				if (indexPosition < listSize)
+				listPanelsToDraw.put(indexPosition, taskPanel);
+			}
+
+			int maxZIndex = Math.min(listPanelsToDraw.size(), listSize);
+			for (int zIndex = 0; zIndex < maxZIndex; zIndex++)
+			{
+				if (listPanelsToDraw.containsKey(zIndex))
 				{
-					// set taskPanel zOrder to sorted index
-					setComponentZOrder(taskPanel, indexPosition );
+					setComponentZOrder(listPanelsToDraw.get(zIndex), zIndex);
 				}
 			}
 		}
