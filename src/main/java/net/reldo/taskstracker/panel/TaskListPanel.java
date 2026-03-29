@@ -230,7 +230,13 @@ public class TaskListPanel extends JScrollPane
 		}
 
 		String sectionKey = section.getName();
-		SectionHeaderPanel header = sectionHeaderPanels.get(activeRoute.getName()).get(sectionKey);
+		HashMap<String, SectionHeaderPanel> routeHeaders = sectionHeaderPanels.get(activeRoute.getName());
+		if (routeHeaders == null)
+		{
+			return;
+		}
+
+		SectionHeaderPanel header = routeHeaders.get(sectionKey);
 		if (header != null && header.isCollapsed())
 		{
 			panel.setVisible(false);
