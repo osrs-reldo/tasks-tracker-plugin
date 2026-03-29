@@ -98,7 +98,7 @@ public class RouteManager
 			trackerGlobalConfigStore.saveActiveRouteName(currentTab, currentTaskType, route.getName());
 			taskService.setActiveRoute(currentTab, route);
 
-			log.info("Imported route: {}", route.getName());
+			log.debug("Imported route: {}", route.getName());
 			return true;
 		}
 		catch (Exception e)
@@ -184,7 +184,7 @@ public class RouteManager
 		StringSelection selection = new StringSelection(json);
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
 
-		log.info("Exported route to clipboard: {}", route.getName());
+		log.debug("Exported route to clipboard: {}", route.getName());
 		return true;
 	}
 
@@ -233,7 +233,7 @@ public class RouteManager
 		trackerGlobalConfigStore.saveActiveRouteName(currentTab, taskType, name);
 		taskService.setActiveRoute(currentTab, route);
 
-		log.info("Created route from current order: {}", name);
+		log.debug("Created route from current order: {}", name);
 		return true;
 	}
 
@@ -279,7 +279,7 @@ public class RouteManager
 			}
 		}
 
-		log.info("Deleted route: {}", routeName);
+		log.debug("Deleted route: {}", routeName);
 		return true;
 	}
 
