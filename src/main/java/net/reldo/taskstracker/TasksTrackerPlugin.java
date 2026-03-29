@@ -292,6 +292,11 @@ public class TasksTrackerPlugin extends Plugin
 				overlayManager.remove(overlay);
 			}
 		}
+
+		if (configChanged.getKey().equals("sortCriteria"))
+		{
+			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
+		}
 	}
 
 	@Subscribe
