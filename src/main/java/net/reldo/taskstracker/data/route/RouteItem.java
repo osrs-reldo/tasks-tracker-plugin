@@ -1,9 +1,8 @@
 package net.reldo.taskstracker.data.route;
 
-import com.google.gson.JsonElement;
 import com.google.gson.annotations.Expose;
-import java.util.List;
 import lombok.Data;
+import net.runelite.api.coords.WorldPoint;
 
 /**
  * A single item in a route section. Can be either a task reference (by taskId)
@@ -22,13 +21,13 @@ public class RouteItem
 	@Expose
 	private CustomRouteItem customItem;
 
-	/** Opaque tool-specific map coordinates (preserved for re-export). */
+	/** Optional location data for this item (e.g., coordinates) */
 	@Expose
-	private JsonElement pinCoords;
+	private WorldPoint location;
 
-	/** Per-item notes from external tools (joined into task notes on import). */
+	/** Note for a route item */
 	@Expose
-	private List<String> comments;
+	private String note;
 
 	/** Returns true if this item represents a task (vs a custom item). */
 	public boolean isTask()
