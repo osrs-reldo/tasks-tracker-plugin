@@ -472,7 +472,6 @@ public class TaskListPanel extends JScrollPane
 			// Set section header panel positions
 			if (hasActiveRoute)
 			{
-
 				sectionHeaderPanels.computeIfAbsent(activeRoute.getName(), k -> new HashMap<>());
 
 				int sectionStartIndex = 0;
@@ -480,7 +479,12 @@ public class TaskListPanel extends JScrollPane
 				{
 					// Get or create section header
 					String sectionKey = section.getName();
-					SectionHeaderPanel header = sectionHeaderPanels.get(activeRoute.getName()).get(sectionKey);
+					HashMap<String, SectionHeaderPanel> routeHeaders = sectionHeaderPanels.get(activeRoute.getName());
+					if (routeHeaders == null)
+					{
+						return;
+					}
+					SectionHeaderPanel header = routeHeaders.get(sectionKey);
 					if (header == null)
 					{
 						header = new SectionHeaderPanel(sectionKey, section.getDescription());
