@@ -29,7 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.Export;
 import net.reldo.taskstracker.data.LongSerializer;
 import net.reldo.taskstracker.data.TasksSummary;
-import net.reldo.taskstracker.data.TrackerConfigStore;
+import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
+import net.reldo.taskstracker.data.TrackerRSProfileConfigStore;
+import net.reldo.taskstracker.data.route.RouteManager;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.reader.HttpDataStoreReader;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
@@ -121,9 +123,15 @@ public class TasksTrackerPlugin extends Plugin
 	private TasksTrackerConfig config;
 
 	@Inject
-	private TrackerConfigStore trackerConfigStore;
+	private TrackerRSProfileConfigStore trackerRSProfileConfigStore;
+	@Getter
+	@Inject
+	private TrackerGlobalConfigStore trackerGlobalConfigStore;
+	@Getter
 	@Inject
 	private TaskService taskService;
+	@Inject
+	private RouteManager routeManager;
 	@Inject
 	private FilterService filterService;
 	@Inject
@@ -160,7 +168,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		forceUpdateVarpsFlag = false;
 
-		pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService);
+		pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService, routeManager);
 
 		boolean isLoggedIn = isLoggedInState(client.getGameState());
 		pluginPanel.setLoggedIn(isLoggedIn);
@@ -284,6 +292,11 @@ public class TasksTrackerPlugin extends Plugin
 				overlayManager.remove(overlay);
 			}
 		}
+
+		if (configChanged.getKey().equals("sortCriteria"))
+		{
+			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
+		}
 	}
 
 	@Subscribe
@@ -324,7 +337,7 @@ public class TasksTrackerPlugin extends Plugin
 		if (forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
 		{
 			log.debug("forceUpdateVarpsFlag game tick {} {}", forceUpdateVarpsFlag, taskService.isTaskTypeChanged());
-			trackerConfigStore.loadCurrentTaskTypeFromConfig();
+			trackerRSProfileConfigStore.loadCurrentTaskTypeFromConfig();
 			forceVarpUpdate();
 			updateFilterMatcher();
 			SwingUtilities.invokeLater(() -> pluginPanel.drawNewTaskType());
@@ -424,7 +437,7 @@ public class TasksTrackerPlugin extends Plugin
 	public void saveCurrentTaskTypeData()
 	{
 		log.debug("saveCurrentTaskTypeData");
-		trackerConfigStore.saveCurrentTaskTypeData();
+		trackerRSProfileConfigStore.saveCurrentTaskTypeData();
 	}
 
 	public void openImportJsonDialog()
@@ -483,7 +496,7 @@ public class TasksTrackerPlugin extends Plugin
 				task.loadReldoSave(reldoTaskSave);
 			});
 
-			trackerConfigStore.saveCurrentTaskTypeData();
+			trackerRSProfileConfigStore.saveCurrentTaskTypeData();
 			pluginPanel.redraw();
 		}
 	}
@@ -701,5 +714,18 @@ public class TasksTrackerPlugin extends Plugin
 	public void redrawTaskList()
 	{
 		pluginPanel.redrawTaskList();
+	}
+
+	/**
+	 * Returns true if the sort criteria config option is set to "Route".
+	 */
+	public boolean isRouteMode()
+	{
+		return "route".equalsIgnoreCase(config.sortCriteria());
+	}
+
+	public void enableTaskTypeDropdown()
+	{
+		pluginPanel.enableTaskTypeDropdown();
 	}
 }

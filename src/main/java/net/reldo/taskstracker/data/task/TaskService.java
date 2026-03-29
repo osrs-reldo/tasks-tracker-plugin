@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -16,12 +17,17 @@ import javax.inject.Singleton;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
 import net.reldo.taskstracker.data.jsondatastore.TaskDataClient;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterValueType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
+import net.reldo.taskstracker.data.route.CustomRoute;
+import net.reldo.taskstracker.data.route.RouteItem;
+import net.reldo.taskstracker.data.route.RouteSection;
 import net.reldo.taskstracker.data.task.filters.FilterService;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
@@ -53,10 +59,15 @@ public class TaskService
 	@Getter
 	private final List<TaskFromStruct> tasks = new ArrayList<>();
 	@Getter
-	private final HashMap<String, int[]> sortedIndexes = new HashMap<>();
+	private final HashMap<String, HashMap<Integer, Integer>> sortedIndexes = new HashMap<>();
 	private HashMap<String, TaskType> _taskTypes = new HashMap<>();
 	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
 	private final ExecutorService futureExecutor = Executors.newSingleThreadExecutor();
+
+	// Route state: in-memory cache of active routes per tab and pre-computed sort indexes per route
+	private final Map<ConfigValues.TaskListTabs, CustomRoute> tabActiveRoutes = new HashMap<>();
+	@Getter
+	private final HashMap<String, HashMap<Integer, Integer>> routeIndexes = new HashMap<>();
 
 	public CompletableFuture<Boolean> setTaskType(String taskTypeJsonName)
 	{
@@ -166,6 +177,10 @@ public class TaskService
 			tasks.clear();
 			tasks.addAll(newTasks);
 
+			// Clear route state from previous task type
+			routeIndexes.clear();
+			tabActiveRoutes.clear();
+
 			// Index task list for each property
 			sortedIndexes.clear();
 			currentTaskType.getIntParamMap().keySet().forEach(paramName -> {
@@ -202,24 +217,70 @@ public class TaskService
 		List<TaskFromStruct> sortedTasks = tasks.stream()
 			.sorted(comparator)
 			.collect(Collectors.toCollection(ArrayList::new));
-		int[] sortedIndex = new int[tasks.size()];
-		for (int i = 0; i < sortedTasks.size(); i++)
+		HashMap<Integer, Integer> sortedIndex = new HashMap<>();
+		for (TaskFromStruct task : tasks)
 		{
-			sortedIndex[i] = tasks.indexOf(sortedTasks.get(i));
+			sortedIndex.put(task.getStructId(), sortedTasks.indexOf(task));
 		}
 		sortedIndexes.put(paramName, sortedIndex);
 	}
 
-	public int getSortedTaskIndex(String sortCriteria, int position)
+	public void addRouteIndex(CustomRoute route)
 	{
-		if (sortedIndexes.containsKey(sortCriteria))
+		List<RouteSection> sections = route.getSections();
+		HashMap<Integer, Integer> routeIndex = new HashMap<>();
+		int sectionStartIndex = 0;
+		for (RouteSection section : sections)
 		{
-			return sortedIndexes.get(sortCriteria)[position];
+			List<RouteItem> items = section.getItems();
+			for (RouteItem item : items)
+			{
+				if (item.isTask())
+				{
+					routeIndex.put(item.getTaskId(), items.indexOf(item) + sectionStartIndex + 1);
+				}
+			}
+			sectionStartIndex += items.size() + 1;
+		}
+
+		int afterRouteIndex = route.getItemCount() + sections.size();
+		for (TaskFromStruct task : tasks)
+		{
+			if (!route.getFlattenedOrder().contains(task.getStructId()))
+			{
+				routeIndex.put(task.getStructId(), ++afterRouteIndex);
+			}
+		}
+
+		routeIndexes.put(route.getName(), routeIndex);
+	}
+
+	public int getTaskIndex(String sortCriteria, Integer taskStructId)
+	{
+		return getTaskIndex(sortCriteria, taskStructId, true);
+	}
+
+	public int getTaskIndex(String indexName, Integer taskStructId, Boolean ascending)
+	{
+		int position;
+		ConfigValues.TaskListTabs currentTab = configManager.getConfig(TasksTrackerConfig.class).taskListTab();
+		boolean activeRoute = hasActiveRoute(currentTab);
+
+		if (!activeRoute && sortedIndexes.containsKey(indexName))
+		{
+			position = sortedIndexes.get(indexName).get(taskStructId);
+		}
+		else if (activeRoute && routeIndexes.containsKey(indexName))
+		{
+			position = routeIndexes.get(indexName).get(taskStructId);
 		}
 		else
 		{
-			return position;
+			// Fall back to game UI sort order
+			position = getTaskByStructId(taskStructId).getSortId();
 		}
+
+		return ascending ? position : tasks.size() - (position + 1);
 	}
 
 	public boolean isVarpInCurrentTaskType(int varpId)
@@ -330,5 +391,54 @@ public class TaskService
 			int taskId = t.getIntParam("id");
 			return taskId >= minTaskId && taskId <= maxTaskId;
 		}).collect(Collectors.toList());
+	}
+
+	// ========================================================================
+	// Route State Management
+	// Manages in-memory route state per tab. When a route is activated,
+	// a sort index is pre-computed mapping positions to task indexes.
+	// ========================================================================
+
+	/**
+	 * Sets the active route for a tab. Pass null to clear.
+	 */
+	public void setActiveRoute(ConfigValues.TaskListTabs tab, CustomRoute route)
+	{
+		if (route == null)
+		{
+			tabActiveRoutes.remove(tab);
+		}
+		else
+		{
+			tabActiveRoutes.put(tab, route);
+			addRouteIndex(route); // @todo move this on on task type change and route modification only
+		}
+	}
+
+	/** Returns the active route for a tab, or null if none. */
+	public CustomRoute getActiveRoute(ConfigValues.TaskListTabs tab)
+	{
+		return tabActiveRoutes.get(tab);
+	}
+
+	/** Returns true if a route is currently active for the given tab. */
+	public boolean hasActiveRoute(ConfigValues.TaskListTabs tab)
+	{
+		return tabActiveRoutes.containsKey(tab);
+	}
+
+	/** Clears the active route for a tab. */
+	public void clearActiveRoute(ConfigValues.TaskListTabs tab)
+	{
+		setActiveRoute(tab, null);
+	}
+
+	/** Finds a task by its struct ID. Returns null if not found. */
+	public TaskFromStruct getTaskByStructId(Integer taskStructId)
+	{
+		return tasks.stream()
+			.filter(t -> t.getStructId().equals(taskStructId))
+			.findFirst()
+			.orElse(null);
 	}
 }

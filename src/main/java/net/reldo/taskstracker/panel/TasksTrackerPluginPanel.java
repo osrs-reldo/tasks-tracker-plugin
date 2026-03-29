@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.data.route.RouteManager;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
@@ -23,7 +24,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	private boolean loggedInPanelVisible = false;
 
-	public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, SpriteManager spriteManager, TaskService taskService)
+	public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, SpriteManager spriteManager, TaskService taskService, RouteManager routeManager)
 	{
 		super(false);
 
@@ -31,7 +32,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 		setLayout(new BorderLayout());
 
-		loggedInPanel = new LoggedInPanel(plugin, config, taskService);
+		loggedInPanel = new LoggedInPanel(plugin, config, taskService, routeManager);
 		taskListPanel = loggedInPanel.taskListPanel;
 		add(loggedInPanel, BorderLayout.NORTH);
 		loggedInPanel.setVisible(false);
@@ -145,9 +146,17 @@ public class TasksTrackerPluginPanel extends PluginPanel
 	{
 		if (loggedInPanelVisible)
 		{
-			return taskListPanel.getPriorityTask();
+			return taskListPanel.getPriorityTaskPanel();
 		}
 
 		return null;
+	}
+
+	public void enableTaskTypeDropdown()
+	{
+		if (loggedInPanelVisible)
+		{
+			loggedInPanel.enableTaskTypeDropdown();
+		}
 	}
 }

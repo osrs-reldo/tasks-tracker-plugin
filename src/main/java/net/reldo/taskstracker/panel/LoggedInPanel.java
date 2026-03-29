@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -26,13 +27,16 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
+import net.reldo.taskstracker.data.route.CustomRoute;
+import net.reldo.taskstracker.data.route.RouteManager;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.data.task.filters.RegexTextMatcher;
 import net.reldo.taskstracker.data.task.filters.TextMatcher;
 import net.reldo.taskstracker.data.task.filters.TextMatcherFactory;
-import net.reldo.taskstracker.panel.components.SearchBox;
 import net.reldo.taskstracker.panel.components.FilterLockTabMenuItem;
+import net.reldo.taskstracker.panel.components.RouteSelector;
+import net.reldo.taskstracker.panel.components.SearchBox;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
 import net.reldo.taskstracker.panel.filters.ComboItem;
 import net.runelite.client.ui.ColorScheme;
@@ -49,6 +53,7 @@ public class LoggedInPanel extends JPanel
 	private final TaskService taskService;
 	private final TasksTrackerPlugin plugin;
 	private final TasksTrackerConfig config;
+	private final RouteManager routeManager;
 
 	// Filter buttons
 	private final TriToggleButton completedFilterBtn = new TriToggleButton();
@@ -59,20 +64,25 @@ public class LoggedInPanel extends JPanel
 	// Task list tabs
 	private final JPanel tabPane = new JPanel();
 
+	// Route selector
+	private RouteSelector routeSelector;
+
 	// sub-filter panel
 	private SubFilterPanel subFilterPanel;
+	private JPanel subFilterWrapper;
 	private SortPanel sortPanel;
 	private final JToggleButton collapseBtn = new JToggleButton();
 	private JToggleButton tabOne;
 	private JToggleButton tabTwo;
 	private JToggleButton tabThree;
 
-	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, TaskService taskService)
+	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, TaskService taskService, RouteManager routeManager)
 	{
 		super(false);
 		this.plugin = plugin;
 		this.taskService = taskService;
 		this.config = config;
+		this.routeManager = routeManager;
 
 		createPanel();
 	}
@@ -106,6 +116,7 @@ public class LoggedInPanel extends JPanel
 		sortPanel.redraw();
 		updateCollapseButtonText();
 
+		refreshRouteSelector();
 		taskListPanel.drawNewTaskType();
 		refreshFilterButtonsFromConfig(config.taskListTab());
 	}
@@ -186,7 +197,9 @@ public class LoggedInPanel extends JPanel
 			saveCurrentTabFilters();
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", newTab);
 			refreshFilterButtonsFromConfig(newTab);
-			plugin.refreshAllTasks();
+			sortPanel.refreshFromConfig();
+			onSortChanged(); // handles refreshRouteSelector() when in route mode, clears route when not
+			taskListPanel.redraw();
 		}
 	}
 
@@ -213,11 +226,24 @@ public class LoggedInPanel extends JPanel
 			configValue = ConfigValues.IgnoredFilterValues.values()[ignoredFilterBtn.getState()];
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "IgnoredValue", configValue);
 		}
+
+		// Sort state is saved by SortPanel.updateConfig() which writes per-tab keys on every change
 	}
 
 	// TODO reduce duplication
 	public void refreshFilterButtonsFromConfig(ConfigValues.TaskListTabs tab)
 	{
+		if (plugin.isRouteMode())
+		{
+			trackedFilterBtn.setState(ConfigValues.TrackedFilterValues.TRACKED_AND_UNTRACKED.ordinal());
+			trackedFilterBtn.setEnabled(false);
+			completedFilterBtn.setState(ConfigValues.CompletedFilterValues.COMPLETE_AND_INCOMPLETE.ordinal());
+			completedFilterBtn.setEnabled(false);
+			ignoredFilterBtn.setState(ConfigValues.IgnoredFilterValues.IGNORED_AND_NOT_IGNORED.ordinal());
+			ignoredFilterBtn.setEnabled(false);
+			return;
+		}
+
 		switch (tab)
 		{
 			case TAB_ONE:
@@ -278,11 +304,6 @@ public class LoggedInPanel extends JPanel
 		JMenuItem saveFiltersItem = new JMenuItem("Save Filter States");
 		saveFiltersItem.addActionListener(e -> saveCurrentTabFilters());
 
-		JMenuItem lineBreakItem = new JMenuItem("-----------------");
-		lineBreakItem.setEnabled(false);
-		JMenuItem lineBreakItemTwo = new JMenuItem("-----------------");
-		lineBreakItemTwo.setEnabled(false);
-
 		JMenuItem completedItem = new FilterLockTabMenuItem("Completed", completedFilterBtn, e -> {
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "CompletedLock", completedFilterBtn.isEnabled());
 		});
@@ -297,11 +318,11 @@ public class LoggedInPanel extends JPanel
 		taskOverlayItem.addActionListener(e -> plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "showOverlay", !config.showOverlay()));
 
 		popupMenu.add(saveFiltersItem);
-		popupMenu.add(lineBreakItem);
+		popupMenu.addSeparator();
 		popupMenu.add(completedItem);
 		popupMenu.add(trackedItem);
 		popupMenu.add(ignoredItem);
-		popupMenu.add(lineBreakItemTwo);
+		popupMenu.addSeparator();
 		popupMenu.add(taskOverlayItem);
 
 		button.addChangeListener(e -> {
@@ -387,7 +408,7 @@ public class LoggedInPanel extends JPanel
 		initTaskTypeDropdownAsync();
 
 		// Wrapper for collapsible sub-filter menu
-		JPanel subFilterWrapper = new JPanel();
+		subFilterWrapper = new JPanel();
 		subFilterWrapper.setLayout(new BorderLayout());
 		subFilterWrapper.setBorder(new MatteBorder(1, 0, 1, 0, ColorScheme.MEDIUM_GRAY_COLOR));
 		subFilterWrapper.setAlignmentX(LEFT_ALIGNMENT);
@@ -415,7 +436,32 @@ public class LoggedInPanel extends JPanel
 		subFilterWrapper.add(collapseBtn, BorderLayout.NORTH);
 		subFilterWrapper.add(subFilterPanel, BorderLayout.CENTER);
 
-		sortPanel = new SortPanel(plugin, taskService, taskListPanel);
+		sortPanel = new SortPanel(plugin.getConfigManager(), config, taskService, taskListPanel);
+		sortPanel.setSortChangeCallback(this::onSortChanged);
+
+		// Route selector (visible only when sort is "Route")
+		routeSelector = new RouteSelector();
+		routeSelector.setAlignmentX(LEFT_ALIGNMENT);
+
+		routeSelector.addRouteChangeListener(e -> {
+			String selectedName = routeSelector.getSelectedRouteName();
+			ConfigValues.TaskListTabs currentTab = config.taskListTab();
+			String taskType = taskService.getCurrentTaskType().getTaskJsonName();
+
+			// Save selection
+			plugin.getTrackerGlobalConfigStore().saveActiveRouteName(currentTab, taskType, selectedName);
+
+			// Update TaskService
+			CustomRoute route = selectedName != null
+				? plugin.getTrackerGlobalConfigStore().getActiveRoute(currentTab, taskType)
+				: null;
+			taskService.setActiveRoute(currentTab, route);
+
+			// Redraw
+			taskListPanel.redraw();
+		});
+
+		routeSelector.addManageListener(e -> showRouteManagementMenu());
 
 		northPanel.add(getTitleAndButtonPanel());
 		northPanel.add(Box.createVerticalStrut(10));
@@ -425,7 +471,14 @@ public class LoggedInPanel extends JPanel
 		northPanel.add(Box.createVerticalStrut(2));
 		northPanel.add(sortPanel);
 		northPanel.add(Box.createVerticalStrut(2));
+		northPanel.add(routeSelector);
+		northPanel.add(Box.createVerticalStrut(2));
 		northPanel.add(subFilterWrapper);
+
+		// Route selector and sub-filter visibility based on sort mode
+		boolean isRouteMode = plugin.isRouteMode();
+		routeSelector.setVisible(isRouteMode);
+		subFilterWrapper.setVisible(!isRouteMode);
 
 		return northPanel;
 	}
@@ -493,6 +546,109 @@ public class LoggedInPanel extends JPanel
 		return titlePanel;
 	}
 
+	public void refreshRouteSelector()
+	{
+		if (taskService.getCurrentTaskType() == null)
+		{
+			return;
+		}
+
+		ConfigValues.TaskListTabs currentTab = config.taskListTab();
+		String taskType = taskService.getCurrentTaskType().getTaskJsonName();
+
+		List<CustomRoute> routes = plugin.getTrackerGlobalConfigStore().loadRoutes(taskType);
+		String activeName = plugin.getTrackerGlobalConfigStore().loadActiveRouteName(currentTab, taskType);
+
+		routeSelector.setRoutes(routes, activeName);
+
+		// Only set active route in TaskService when in route sort mode
+		if (sortPanel.isRouteMode())
+		{
+			CustomRoute activeRoute = activeName != null
+				? plugin.getTrackerGlobalConfigStore().getActiveRoute(currentTab, taskType)
+				: null;
+			taskService.setActiveRoute(currentTab, activeRoute);
+		}
+	}
+
+	private void refreshAfterRouteChange()
+	{
+		refreshRouteSelector();
+		taskListPanel.redraw();
+	}
+
+	private void onSortChanged()
+	{
+		boolean isRouteMode = sortPanel.isRouteMode();
+		routeSelector.setVisible(isRouteMode);
+		subFilterWrapper.setVisible(!isRouteMode);
+
+		if (isRouteMode)
+		{
+			refreshRouteSelector();
+		}
+		else
+		{
+			// Clear active route so tasks aren't filtered
+			ConfigValues.TaskListTabs currentTab = config.taskListTab();
+			taskService.clearActiveRoute(currentTab);
+		}
+	}
+
+	private void showRouteManagementMenu()
+	{
+		JPopupMenu menu = new JPopupMenu();
+
+		JMenuItem importItem = new JMenuItem("Import Route from Clipboard");
+		importItem.addActionListener(e -> {
+			if (routeManager.importRouteFromClipboard())
+			{
+				SwingUtilities.invokeLater(this::refreshAfterRouteChange);
+			}
+		});
+
+		JMenuItem exportItem = new JMenuItem("Export Active Route to Clipboard");
+		exportItem.addActionListener(e -> routeManager.exportActiveRoute());
+		exportItem.setEnabled(routeSelector.getSelectedRouteName() != null);
+
+		JMenuItem createItem = new JMenuItem("Create Route from Current Order...");
+		createItem.addActionListener(e -> {
+			if (routeManager.createRouteFromCurrentOrder(taskListPanel.getVisibleTaskIds()))
+			{
+				SwingUtilities.invokeLater(this::refreshAfterRouteChange);
+			}
+		});
+
+		JMenuItem deleteItem = new JMenuItem("Delete Active Route");
+		deleteItem.addActionListener(e -> {
+			if (routeManager.deleteActiveRoute())
+			{
+				SwingUtilities.invokeLater(this::refreshAfterRouteChange);
+			}
+		});
+		deleteItem.setEnabled(routeSelector.getSelectedRouteName() != null);
+
+		// Route management menu items disabled while route editor in development
+		JMenuItem editorItem = new JMenuItem("Route Editor (Coming soon)");
+		editorItem.setEnabled(false);
+  		importItem.setEnabled(false);
+  		exportItem.setEnabled(false);
+  		createItem.setEnabled(false);
+  		deleteItem.setEnabled(false);
+
+		menu.add(importItem);
+		menu.add(exportItem);
+		menu.addSeparator();
+		menu.add(createItem);
+		menu.add(deleteItem);
+		menu.addSeparator();
+		menu.add(editorItem);
+
+		// Show below the manage button
+		menu.show(routeSelector, routeSelector.getWidth() - menu.getPreferredSize().width,
+			routeSelector.getHeight());
+	}
+
 	private void filterButtonActionNoRefresh(String filter)
 	{
 		int state;
@@ -533,6 +689,7 @@ public class LoggedInPanel extends JPanel
 		filterButtonActionNoRefresh("completed");
 	}
 
+	// TODO: unused — remove if no callers are added
 	private void actionAllFilterButtons()
 	{
 		actionAllFilterButtonsNoRefresh();
@@ -616,6 +773,15 @@ public class LoggedInPanel extends JPanel
 		collapseBtn.setText(countInclusive + " inclusive, " + countExclusive + " exclusive filters");
 	}
 
+
+	public void enableTaskTypeDropdown()
+	{
+		if (taskTypeDropdown != null)
+		{
+			taskTypeDropdown.setEnabled(true);
+		}
+	}
+
 	private void initTaskTypeDropdownAsync()
 	{
 		TaskType currentTaskType = taskService.getCurrentTaskType();
@@ -632,17 +798,9 @@ public class LoggedInPanel extends JPanel
 				.findFirst().orElseGet(() -> taskTypeItems.get(0));
 			taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
 			taskTypeDropdown.addActionListener(e -> {
+				taskTypeDropdown.setEnabled(false);
 				TaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
-				taskService.setTaskType(taskType).thenAccept(wasTaskTypeChanged -> {
-					if (wasTaskTypeChanged)
-					{
-						SwingUtilities.invokeLater(() ->
-						{
-							redraw();
-							plugin.refreshAllTasks();
-						});
-					}
-				});
+				taskService.setTaskType(taskType);
 			});
 		});
 	}

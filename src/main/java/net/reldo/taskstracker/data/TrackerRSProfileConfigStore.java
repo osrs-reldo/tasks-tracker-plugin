@@ -11,18 +11,19 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.task.ConfigTaskSave;
+import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.data.task.TaskType;
 import net.runelite.client.config.ConfigManager;
 
 @Singleton
 @Slf4j
-public class TrackerConfigStore
+public class TrackerRSProfileConfigStore
 {
-	public static final String CONFIG_TASKS_PREFIX = "tasks";
-	public static final String CONFIG_GROUP_PREFIX_SEPARATOR = "-";
+	public static final String CONFIG_TASKS_PREFIX = ConfigValues.CONFIG_TASKS_PREFIX;
+	public static final String CONFIG_GROUP_PREFIX_SEPARATOR = ConfigValues.CONFIG_GROUP_PREFIX_SEPARATOR;
 	public static final String CONFIG_GROUP_NAME = TasksTrackerPlugin.CONFIG_GROUP_NAME;
 
 	private final Gson customGson;
@@ -32,7 +33,7 @@ public class TrackerConfigStore
 	private ConfigManager configManager;
 
 	@Inject
-	public TrackerConfigStore(Gson gson)
+	public TrackerRSProfileConfigStore(Gson gson)
 	{
 		this.customGson = gson.newBuilder()
 			.excludeFieldsWithoutExposeAnnotation()
@@ -74,7 +75,7 @@ public class TrackerConfigStore
 	{
 		log.debug("saveTaskTypeToConfig");
 		Map<Integer, ConfigTaskSave> saveDataByStructId = taskService.getTasks().stream()
-			.filter(task -> task.getCompletedOn() != 0 || task.getIgnoredOn() != 0 || task.getTrackedOn() != 0)
+			.filter(task -> task.getCompletedOn() != 0 || task.getIgnoredOn() != 0 || task.getTrackedOn() != 0 || task.hasNote())
 			.collect(Collectors.toMap(
 				TaskFromStruct::getStructId,
 				TaskFromStruct::getSaveData,
@@ -91,4 +92,5 @@ public class TrackerConfigStore
 	{
 		return CONFIG_TASKS_PREFIX + CONFIG_GROUP_PREFIX_SEPARATOR + taskService.getCurrentTaskType().getTaskJsonName();
 	}
+
 }

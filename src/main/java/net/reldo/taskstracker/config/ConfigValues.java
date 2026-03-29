@@ -3,6 +3,8 @@ package net.reldo.taskstracker.config;
 
 public class ConfigValues
 {
+	public static final String CONFIG_TASKS_PREFIX = "tasks";
+	public static final String CONFIG_GROUP_PREFIX_SEPARATOR = "-";
 
 	public enum CompletedFilterValues
 	{
