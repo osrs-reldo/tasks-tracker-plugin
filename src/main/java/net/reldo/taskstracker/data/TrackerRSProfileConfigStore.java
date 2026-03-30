@@ -12,6 +12,7 @@ import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.data.gson.GsonFactory;
 import net.reldo.taskstracker.data.task.ConfigTaskSave;
 import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
@@ -35,10 +36,7 @@ public class TrackerRSProfileConfigStore
 	@Inject
 	public TrackerRSProfileConfigStore(Gson gson)
 	{
-		this.customGson = gson.newBuilder()
-			.excludeFieldsWithoutExposeAnnotation()
-			.registerTypeAdapter(float.class, new LongSerializer())
-			.create();
+		this.customGson = GsonFactory.newBuilder(gson).create();
 	}
 
 	public void loadCurrentTaskTypeFromConfig()

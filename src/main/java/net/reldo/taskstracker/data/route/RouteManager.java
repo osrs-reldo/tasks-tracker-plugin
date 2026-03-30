@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
+import net.reldo.taskstracker.data.gson.GsonFactory;
 import net.reldo.taskstracker.data.task.TaskService;
 
 /**
@@ -45,9 +46,7 @@ public class RouteManager
 			String clipboard = Toolkit.getDefaultToolkit().getSystemClipboard()
 				.getData(DataFlavor.stringFlavor).toString();
 
-			Gson routeGson = gson.newBuilder()
-				.excludeFieldsWithoutExposeAnnotation()
-				.create();
+			Gson routeGson = GsonFactory.newBuilder(gson).create();
 
 			CustomRoute route = routeGson.fromJson(clipboard, CustomRoute.class);
 
@@ -116,10 +115,7 @@ public class RouteManager
 			return false;
 		}
 
-		Gson routeGson = gson.newBuilder()
-			.excludeFieldsWithoutExposeAnnotation()
-			.setPrettyPrinting()
-			.create();
+		Gson routeGson = GsonFactory.newBuilder(gson).setPrettyPrinting().create();
 
 		String json = routeGson.toJson(route);
 

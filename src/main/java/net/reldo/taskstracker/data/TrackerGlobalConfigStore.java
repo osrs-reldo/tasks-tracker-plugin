@@ -14,6 +14,7 @@ import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
+import net.reldo.taskstracker.data.gson.GsonFactory;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.runelite.client.config.ConfigManager;
@@ -35,10 +36,7 @@ public class TrackerGlobalConfigStore
 	@Inject
 	public TrackerGlobalConfigStore(Gson gson)
 	{
-		this.customGson = gson.newBuilder()
-			.excludeFieldsWithoutExposeAnnotation()
-			.registerTypeAdapter(float.class, new LongSerializer())
-			.create();
+		this.customGson = GsonFactory.newBuilder(gson).create();
 	}
 
 	// ========================================================================
