@@ -21,21 +21,21 @@ public class CustomRouteItem
 	/** Sprite archive ID for transportation map icon. */
 	public static final int TELEPORT_ICON_SPRITE = 1504;
 
-	/** Unique identifier for this item instance (8-char UUID prefix). */
+	/** Unique identifier (8-char UUID prefix). Counterpart to structId/taskId. */
 	@Expose
 	@NonNull
 	private String id;
 
-	/** Display category (e.g., "Bank", "Teleport", or any text). */
+	/** Primary display text (e.g., "Bank", "Teleport"). Counterpart to task name. */
 	@Expose
 	@NonNull
 	private String label;
 
-	/** Sprite archive ID for the icon. Null means generate text fallback from label. */
+	/** Sprite archive ID for the icon. Counterpart to tier sprite. Null for text fallback. */
 	@Expose
 	private Integer icon;
 
-	/** Description text shown below the label. */
+	/** Detail text shown below the label. Counterpart to task description. */
 	@Expose
 	private String description;
 

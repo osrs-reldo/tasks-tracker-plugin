@@ -89,7 +89,7 @@ public class RouteManager
 				int result = JOptionPane.showConfirmDialog(
 					null,
 					"Duplicate custom item IDs detected.\n"
-						+ "The imported route may behave differently than expected.\n\n"
+						+ "The imported route may be different than expected.\n\n"
 						+ "Import anyway?",
 					"Duplicate IDs",
 					JOptionPane.OK_CANCEL_OPTION,
