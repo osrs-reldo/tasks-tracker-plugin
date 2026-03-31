@@ -129,6 +129,24 @@ public class TaskPanel extends JPanel
 			tooltipText.append(HtmlUtil.wrapWithItalics(userNotes)).append(HtmlUtil.HTML_LINE_BREAK);
 		}
 
+		if (plugin.isRouteMode())
+		{
+			ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+			CustomRoute activeRoute = plugin.getTaskService().getActiveRoute(currentTab);
+			if (activeRoute != null)
+			{
+				activeRoute.getFlattenedItems().stream()
+					.filter(routeItem -> routeItem.isTask() && task.getStructId().equals(routeItem.getTaskId()))
+					.map(item -> item.getNote())
+					.filter(note -> note != null && !note.isEmpty())
+					.findFirst()
+					.ifPresent(note -> {
+						tooltipText.append(HtmlUtil.HTML_LINE_BREAK).append(HtmlUtil.HTML_LINE_BREAK);
+						tooltipText.append(HtmlUtil.wrapWithItalics(note)).append(HtmlUtil.HTML_LINE_BREAK);
+					});
+			}
+		}
+
 		return HtmlUtil.wrapWithHtml(
 			HtmlUtil.wrapWithWrappingParagraph(tooltipText.toString(), 200)
 		);
