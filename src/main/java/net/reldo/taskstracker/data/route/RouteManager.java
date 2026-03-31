@@ -58,7 +58,8 @@ public class RouteManager
 
 			if (route.getName().isEmpty())
 			{
-				route.setName("Imported Route");
+				showErrorMessage("Missing route name");
+				return false;
 			}
 
 			String currentTaskType = taskService.getCurrentTaskType().getTaskJsonName();
