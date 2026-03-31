@@ -103,6 +103,7 @@ public class TasksTrackerPlugin extends Plugin
 	private Gson gson;
 	@Inject
 	private Client client;
+	@Getter
 	@Inject
 	private SpriteManager spriteManager;
 	@Inject
@@ -168,7 +169,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		forceUpdateVarpsFlag = false;
 
-		pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, clientThread, taskService, routeManager);
+		pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService, routeManager);
 
 		boolean isLoggedIn = isLoggedInState(client.getGameState());
 		pluginPanel.setLoggedIn(isLoggedIn);

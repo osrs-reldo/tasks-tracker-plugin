@@ -11,7 +11,6 @@ import net.reldo.taskstracker.config.ConfigValues;
 import javax.swing.JComponent;
 import net.reldo.taskstracker.data.route.RouteManager;
 import net.reldo.taskstracker.data.task.TaskService;
-import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
@@ -26,7 +25,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	private boolean loggedInPanelVisible = false;
 
-	public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, SpriteManager spriteManager, ClientThread clientThread, TaskService taskService, RouteManager routeManager)
+	public TasksTrackerPluginPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, SpriteManager spriteManager, TaskService taskService, RouteManager routeManager)
 	{
 		super(false);
 
@@ -34,7 +33,7 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 		setLayout(new BorderLayout());
 
-		loggedInPanel = new LoggedInPanel(plugin, config, taskService, routeManager, spriteManager, clientThread);
+		loggedInPanel = new LoggedInPanel(plugin, config, taskService, routeManager);
 		taskListPanel = loggedInPanel.taskListPanel;
 		add(loggedInPanel, BorderLayout.NORTH);
 		loggedInPanel.setVisible(false);

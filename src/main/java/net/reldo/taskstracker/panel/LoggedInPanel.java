@@ -37,8 +37,6 @@ import net.reldo.taskstracker.data.task.filters.TextMatcherFactory;
 import net.reldo.taskstracker.panel.components.FilterLockTabMenuItem;
 import net.reldo.taskstracker.panel.components.RouteSelector;
 import net.reldo.taskstracker.panel.components.SearchBox;
-import net.runelite.client.callback.ClientThread;
-import net.runelite.client.game.SpriteManager;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
 import net.reldo.taskstracker.panel.filters.ComboItem;
 import net.runelite.client.ui.ColorScheme;
@@ -56,8 +54,6 @@ public class LoggedInPanel extends JPanel
 	private final TasksTrackerPlugin plugin;
 	private final TasksTrackerConfig config;
 	private final RouteManager routeManager;
-	private final SpriteManager spriteManager;
-	private final ClientThread clientThread;
 
 	// Filter buttons
 	private final TriToggleButton completedFilterBtn = new TriToggleButton();
@@ -80,15 +76,13 @@ public class LoggedInPanel extends JPanel
 	private JToggleButton tabTwo;
 	private JToggleButton tabThree;
 
-	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, TaskService taskService, RouteManager routeManager, SpriteManager spriteManager, ClientThread clientThread)
+	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, TaskService taskService, RouteManager routeManager)
 	{
 		super(false);
 		this.plugin = plugin;
 		this.taskService = taskService;
 		this.config = config;
 		this.routeManager = routeManager;
-		this.spriteManager = spriteManager;
-		this.clientThread = clientThread;
 
 		createPanel();
 	}
@@ -153,7 +147,7 @@ public class LoggedInPanel extends JPanel
 		setLayout(new BorderLayout());
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		taskListPanel = new TaskListPanel(plugin, taskService, spriteManager, clientThread);
+		taskListPanel = new TaskListPanel(plugin, taskService);
 
 		add(getNorthPanel(), BorderLayout.NORTH);
 		add(getCenterPanel(), BorderLayout.CENTER);
@@ -639,8 +633,8 @@ public class LoggedInPanel extends JPanel
 		editorItem.setEnabled(false);
   		importItem.setEnabled(true);
   		exportItem.setEnabled(true);
-  		// createItem.setEnabled(false);
-  		// deleteItem.setEnabled(false);
+  		createItem.setEnabled(false);
+  		deleteItem.setEnabled(false);
 
 		menu.add(importItem);
 		menu.add(exportItem);

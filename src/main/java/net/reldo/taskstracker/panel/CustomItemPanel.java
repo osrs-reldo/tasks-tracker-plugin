@@ -3,19 +3,18 @@ package net.reldo.taskstracker.panel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.util.HashMap;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Set;
-import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
-import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 import javax.swing.JToolTip;
 import javax.swing.ToolTipManager;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import lombok.Getter;
@@ -38,150 +37,140 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 public class CustomItemPanel extends JPanel
 {
 	private static final Color BORDER_COLOR = new Color(90, 90, 90);
-	private static final Color LABEL_COLOR = Color.WHITE;
-	private static final Color NAME_COLOR = Color.GRAY;
-	private static final int ICON_SIZE = 16;
+	private static final Color BACKGROUND_DEFAULT = ColorScheme.DARKER_GRAY_COLOR;
+	private static final Color BACKGROUND_HOVER = ColorScheme.DARK_GRAY_HOVER_COLOR;
+	private static final Color BACKGROUND_COMPLETED = new Color(40, 60, 40);
 
 	private final TasksTrackerPlugin plugin;
 	private final RouteItem routeItem;
 	private final CustomRouteItem customItem;
-	private final HashMap<Integer, BufferedImage> spriteCache;
-
+	private final JPanel container;
 	private final JLabel iconLabel;
-	private final JCheckBox completionCheckbox;
-	private boolean iconLoaded = false;
+	private final JToggleButton completeToggle;
 
 	@Getter
 	private boolean completed = false;
 
-	public CustomItemPanel(TasksTrackerPlugin plugin, RouteItem routeItem, HashMap<Integer, BufferedImage> spriteCache)
+	public CustomItemPanel(TasksTrackerPlugin plugin, RouteItem routeItem)
 	{
 		super(new BorderLayout());
 		this.plugin = plugin;
 		this.routeItem = routeItem;
 		this.customItem = routeItem.getCustomItem();
-		this.spriteCache = spriteCache;
 
-		// Outer panel: transparent, provides bottom gap (matching TaskPanel)
 		setOpaque(false);
 		setBorder(new EmptyBorder(0, 0, 7, 0));
 
-		// Inner container with left accent border
-		JPanel container = new JPanel(new BorderLayout());
-		container.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		container.setBorder(new MatteBorder(0, 3, 0, 0, BORDER_COLOR));
+		container = new JPanel(new BorderLayout());
+		container.setBorder(new CompoundBorder(
+			new MatteBorder(0, 3, 0, 0, BORDER_COLOR),
+			new EmptyBorder(7, 4, 6, 0)
+		));
+		container.setBackground(BACKGROUND_DEFAULT);
 
-		JPanel contentPanel = new JPanel(new BorderLayout());
-		contentPanel.setOpaque(false);
-		contentPanel.setBorder(new EmptyBorder(7, 7, 6, 5));
+		iconLabel = new JLabel();
+		iconLabel.setPreferredSize(new Dimension(16, 16));
+		setFallbackIcon();
+		loadSpriteIcon();
 
-		// Icon (WEST)
-		iconLabel = createIconLabel();
-		iconLabel.setBorder(new EmptyBorder(0, 0, 0, 5));
-		contentPanel.add(iconLabel, BorderLayout.WEST);
+		JLabel nameLabel = new JLabel();
+		nameLabel.setFont(FontManager.getRunescapeSmallFont());
+		nameLabel.setForeground(Color.WHITE);
+		nameLabel.setText(customItem.getDisplayLabel());
 
-		// Body (CENTER) - label + name stacked
-		JPanel body = new JPanel();
-		body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
-		body.setOpaque(false);
-
-		JLabel labelText = new JLabel(customItem.getDisplayLabel());
-		labelText.setFont(FontManager.getRunescapeBoldFont());
-		labelText.setForeground(LABEL_COLOR);
-		body.add(labelText);
-
-		if (customItem.getDescription() != null && !customItem.getDescription().isEmpty())
+		JLabel descriptionLabel = new JLabel();
+		descriptionLabel.setFont(FontManager.getRunescapeSmallFont());
+		descriptionLabel.setForeground(Color.GRAY);
+		String desc = customItem.getDescription();
+		if (desc != null && !desc.isEmpty())
 		{
-			JLabel nameText = new JLabel(customItem.getDescription());
-			nameText.setFont(FontManager.getRunescapeSmallFont());
-			nameText.setForeground(NAME_COLOR);
-			body.add(nameText);
+			descriptionLabel.setText("<html>" + desc + "</html>");
 		}
 
-		contentPanel.add(body, BorderLayout.CENTER);
+		completeToggle = new JToggleButton();
+		completeToggle.setIcon(Icons.INCOMPLETE_ONLY_ICON);
+		completeToggle.setSelectedIcon(Icons.COMPLETE_ONLY_ICON);
+		completeToggle.setPreferredSize(new Dimension(20, 20));
+		completeToggle.setBorder(new EmptyBorder(0, 0, 0, 0));
+		completeToggle.setBorderPainted(false);
+		completeToggle.setFocusPainted(false);
+		completeToggle.setContentAreaFilled(false);
+		completeToggle.setToolTipText("Toggle completion");
+		completeToggle.addActionListener(e -> onCompletionToggled());
 
-		// Completion checkbox (EAST) - scaled down to ~66%
-		completionCheckbox = new JCheckBox();
-		completionCheckbox.setOpaque(false);
-		completionCheckbox.setBorderPainted(false);
-		completionCheckbox.setFocusPainted(false);
-		completionCheckbox.setPreferredSize(new Dimension(14, 14));
-		completionCheckbox.setMaximumSize(new Dimension(14, 14));
-		completionCheckbox.addActionListener(e -> onCompletionToggled());
+		JPanel body = new JPanel(new BorderLayout());
+		body.setOpaque(false);
+		body.setBorder(new EmptyBorder(0, 6, 0, 0));
+		body.add(nameLabel, BorderLayout.NORTH);
+		body.add(descriptionLabel, BorderLayout.CENTER);
 
-		JPanel checkboxWrapper = new JPanel(new BorderLayout());
-		checkboxWrapper.setOpaque(false);
-		checkboxWrapper.setBorder(new EmptyBorder(0, 0, 0, 2));
-		checkboxWrapper.add(completionCheckbox, BorderLayout.NORTH);
+		JPanel left = new JPanel(new BorderLayout());
+		left.setOpaque(false);
+		left.add(iconLabel, BorderLayout.WEST);
+		left.add(body, BorderLayout.CENTER);
 
-		contentPanel.add(checkboxWrapper, BorderLayout.EAST);
+		container.add(left, BorderLayout.CENTER);
+		container.add(completeToggle, BorderLayout.EAST);
 
-		container.add(contentPanel, BorderLayout.CENTER);
 		add(container, BorderLayout.NORTH);
+
+		addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				if (!CustomItemPanel.this.completed)
+				{
+					container.setBackground(BACKGROUND_HOVER);
+				}
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				container.setBackground(CustomItemPanel.this.completed ? BACKGROUND_COMPLETED : BACKGROUND_DEFAULT);
+			}
+		});
 
 		ToolTipManager.sharedInstance().registerComponent(this);
 	}
 
-	private JLabel createIconLabel()
+	private void setFallbackIcon()
 	{
-		JLabel label = new JLabel();
-		label.setMinimumSize(new Dimension(ICON_SIZE, ICON_SIZE));
-		label.setPreferredSize(new Dimension(ICON_SIZE, ICON_SIZE));
-		setIconFromCache(label);
-		return label;
-	}
+		String letter = "C";
+		Color color = new Color(180, 180, 180);
 
-	/**
-	 * Tries to load the sprite from cache. If not available, renders a letter fallback.
-	 * Called on creation and again from updateIcon() when sprites finish loading.
-	 */
-	private void setIconFromCache(JLabel label)
-	{
-		if (customItem.getIcon() != null)
+		String label = customItem.getLabel();
+		if (label != null && !label.isEmpty())
 		{
-			BufferedImage sprite = spriteCache.get(customItem.getIcon());
-			if (sprite != null)
+			letter = label.substring(0, 1).toUpperCase();
+			if ("Bank".equals(label))
 			{
-				label.setIcon(new ImageIcon(sprite));
-				iconLoaded = true;
-				return;
+				color = new Color(255, 215, 0);
+			}
+			else if ("Teleport".equals(label))
+			{
+				color = new Color(100, 200, 255);
 			}
 		}
 
-		// Letter fallback: first letter of label on a colored square
-		String displayLabel = customItem.getDisplayLabel();
-		if (!displayLabel.isEmpty())
-		{
-			BufferedImage letterIcon = new BufferedImage(ICON_SIZE, ICON_SIZE, BufferedImage.TYPE_INT_ARGB);
-			Graphics2D g = letterIcon.createGraphics();
-			g.setColor(BORDER_COLOR);
-			g.fillRect(0, 0, ICON_SIZE, ICON_SIZE);
-			g.setColor(Color.WHITE);
-			g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 11));
-			FontMetrics fm = g.getFontMetrics();
-			String letter = displayLabel.substring(0, 1).toUpperCase();
-			int x = (ICON_SIZE - fm.stringWidth(letter)) / 2;
-			int y = (ICON_SIZE + fm.getAscent() - fm.getDescent()) / 2;
-			g.drawString(letter, x, y);
-			g.dispose();
-			label.setIcon(new ImageIcon(letterIcon));
-		}
+		iconLabel.setIcon(new ImageIcon(Icons.createTextIcon(letter, color)));
 	}
 
-	/**
-	 * Re-checks the sprite cache and updates the icon if sprites have loaded since creation.
-	 */
-	public void updateIcon()
+	private void loadSpriteIcon()
 	{
-		if (!iconLoaded && customItem.getIcon() != null)
+		Integer spriteId = customItem.getIcon();
+		if (spriteId == null)
 		{
-			setIconFromCache(iconLabel);
+			return;
 		}
+		plugin.getSpriteManager().addSpriteTo(iconLabel, spriteId, 0);
 	}
 
 	private void onCompletionToggled()
 	{
-		completed = completionCheckbox.isSelected();
+		completed = completeToggle.isSelected();
+		updateAppearance();
 
 		String taskType = plugin.getTaskService().getCurrentTaskType().getTaskJsonName();
 		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
@@ -207,10 +196,16 @@ public class CustomItemPanel extends JPanel
 		plugin.pluginPanel.redraw();
 	}
 
+	private void updateAppearance()
+	{
+		container.setBackground(completed ? BACKGROUND_COMPLETED : BACKGROUND_DEFAULT);
+	}
+
 	public void setCompleted(boolean completed)
 	{
 		this.completed = completed;
-		completionCheckbox.setSelected(completed);
+		completeToggle.setSelected(completed);
+		updateAppearance();
 	}
 
 	public String getCustomItemId()
@@ -222,7 +217,6 @@ public class CustomItemPanel extends JPanel
 	{
 		boolean isComplete = completedIds.contains(customItem.getId());
 		setCompleted(isComplete);
-		updateIcon();
 	}
 
 	@Override

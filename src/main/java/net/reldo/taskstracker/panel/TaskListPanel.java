@@ -1,11 +1,9 @@
 package net.reldo.taskstracker.panel;
 
 import java.awt.Component;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,8 +33,6 @@ import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
 import net.reldo.taskstracker.panel.components.SectionHeaderPanel;
 import net.runelite.api.Skill;
-import net.runelite.client.callback.ClientThread;
-import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.FontManager;
 
 @Slf4j
@@ -49,8 +45,6 @@ public class TaskListPanel extends JScrollPane
 	private final ArrayList<TaskListListPanel> taskListBuffers = new ArrayList<>(TASK_LIST_BUFFER_COUNT);
 	private int currentTaskListBufferIndex;
 	private final TaskService taskService;
-	private final SpriteManager spriteManager;
-	private final ClientThread clientThread;
 	private final JLabel emptyTasks = new JLabel();
 	@Setter
 	private int batchSize;
@@ -66,18 +60,13 @@ public class TaskListPanel extends JScrollPane
 	/** Custom item panels keyed by custom item ID */
 	private final HashMap<String, CustomItemPanel> customItemPanels = new HashMap<>();
 
-	/** Shared sprite cache for custom item icons */
-	private final HashMap<Integer, BufferedImage> customItemSpriteCache = new HashMap<>();
-
 	/** Tracks which route's custom items are currently cached */
 	private String cachedCustomItemRouteName = null;
 
-	public TaskListPanel(TasksTrackerPlugin plugin, TaskService taskService, SpriteManager spriteManager, ClientThread clientThread)
+	public TaskListPanel(TasksTrackerPlugin plugin, TaskService taskService)
 	{
 		this.plugin = plugin;
 		this.taskService = taskService;
-		this.spriteManager = spriteManager;
-		this.clientThread = clientThread;
 		batchSize = plugin.getConfig().taskPanelBatchSize();
 
 		FixedWidthPanel taskListListPanelWrapper = new FixedWidthPanel();
@@ -164,13 +153,8 @@ public class TaskListPanel extends JScrollPane
 				Set<String> completedIds = plugin.getTrackerGlobalConfigStore()
 					.loadCustomItemCompletion(taskType, activeRoute.getName());
 
-				// Refresh custom item visibility (collapse state)
 				for (CustomItemPanel panel : customItemPanels.values())
 				{
-					if (!panel.isVisible())
-					{
-						continue;
-					}
 					refreshCustomItemPanel(panel, activeRoute);
 				}
 
@@ -218,7 +202,6 @@ public class TaskListPanel extends JScrollPane
 
 	private void refreshCustomItemPanel(CustomItemPanel panel, CustomRoute activeRoute)
 	{
-		// Find which section this custom item belongs to and check collapse state
 		for (RouteSection section : activeRoute.getSections())
 		{
 			boolean found = section.getCustomItems().stream()
@@ -229,10 +212,8 @@ public class TaskListPanel extends JScrollPane
 				if (routeHeaders != null)
 				{
 					SectionHeaderPanel header = routeHeaders.get(section.getName());
-					if (header != null && header.isCollapsed())
-					{
-						panel.setVisible(false);
-					}
+					boolean collapsed = header != null && header.isCollapsed();
+					panel.setVisible(!collapsed);
 				}
 				return;
 			}
@@ -526,7 +507,6 @@ public class TaskListPanel extends JScrollPane
 				priorityCustomItemPanel = null;
 				sectionHeaderPanels.clear();
 				customItemPanels.clear();
-				customItemSpriteCache.clear();
 				cachedCustomItemRouteName = null;
 
 				add(emptyTasks);
@@ -587,14 +567,7 @@ public class TaskListPanel extends JScrollPane
 						remove(panel);
 					}
 					customItemPanels.clear();
-					customItemSpriteCache.clear();
 					cachedCustomItemRouteName = currentRouteName;
-
-					// Preload sprites for new route
-					if (currentRoute != null)
-					{
-						preloadCustomItemSprites(currentRoute);
-					}
 				}
 
 				// Hide all section headers and custom item panels before redraw
@@ -700,11 +673,10 @@ public class TaskListPanel extends JScrollPane
 						CustomRouteItem ci = item.getCustomItem();
 						String ciId = ci.getId();
 
-						// Get or create panel (lazy, like section headers)
 						CustomItemPanel customPanel = customItemPanels.get(ciId);
 						if (customPanel == null)
 						{
-							customPanel = new CustomItemPanel(plugin, item, customItemSpriteCache);
+							customPanel = new CustomItemPanel(plugin, item);
 							customItemPanels.put(ciId, customPanel);
 							add(customPanel);
 						}
@@ -761,41 +733,6 @@ public class TaskListPanel extends JScrollPane
 					setComponentZOrder(listPanelsToDraw.get(zIndex), zIndex);
 				}
 			}
-		}
-
-		private void preloadCustomItemSprites(CustomRoute route)
-		{
-			Set<Integer> spriteIds = new HashSet<>();
-			for (RouteItem item : route.getFlattenedItems())
-			{
-				if (!item.isTask() && item.getCustomItem() != null && item.getCustomItem().getIcon() != null)
-				{
-					spriteIds.add(item.getCustomItem().getIcon());
-				}
-			}
-
-			if (spriteIds.isEmpty())
-			{
-				return;
-			}
-
-			clientThread.invoke(() ->
-			{
-				for (int spriteId : spriteIds)
-				{
-					if (!customItemSpriteCache.containsKey(spriteId))
-					{
-						BufferedImage sprite = spriteManager.getSprite(spriteId, 0);
-						if (sprite != null)
-						{
-							customItemSpriteCache.put(spriteId, sprite);
-						}
-					}
-				}
-				// Update icons on EDT after sprites are loaded
-				SwingUtilities.invokeLater(() ->
-					customItemPanels.values().forEach(CustomItemPanel::updateIcon));
-			});
 		}
 
 		private void processInBatches(int objectCount, IntConsumer method)

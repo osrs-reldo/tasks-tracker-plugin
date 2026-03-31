@@ -11,12 +11,13 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import lombok.Setter;
+import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
 public class SectionHeaderPanel extends JPanel
 {
-	private static final Color BACKGROUND_COLOR = new Color(60, 63, 65);
-	private static final Color HOVER_COLOR = new Color(70, 73, 75);
+	private static final Color BACKGROUND_COLOR = ColorScheme.DARKER_GRAY_COLOR.darker();
+	private static final Color HOVER_COLOR = ColorScheme.DARKER_GRAY_COLOR;
 	private static final Color TEXT_COLOR = Color.WHITE;
 	private static final Color PROGRESS_COLOR = new Color(180, 180, 180);
 	private static final Color PROGRESS_COMPLETE_COLOR = new Color(100, 200, 100);
@@ -43,27 +44,25 @@ public class SectionHeaderPanel extends JPanel
 		this.sectionName = sectionName;
 		this.description = description;
 
-		// Outer panel: transparent, provides bottom gap
 		setLayout(new BorderLayout());
 		setOpaque(false);
-		setBorder(new EmptyBorder(0, 0, 7, 0));
+		setBorder(new EmptyBorder(0, 0, 4, 0));
 
-		// Inner container: visible background and padding
 		container = new JPanel(new BorderLayout());
 		container.setBackground(BACKGROUND_COLOR);
-		container.setBorder(new EmptyBorder(8, 12, 8, 12));
+		container.setBorder(new EmptyBorder(6, 10, 6, 10));
 		container.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
 		// Title with arrow and optional description
 		titleLabel = new JLabel();
 		titleLabel.setForeground(TEXT_COLOR);
-		titleLabel.setFont(FontManager.getRunescapeBoldFont());
+		titleLabel.setFont(FontManager.getRunescapeFont());
 		updateTitleText();
 
 		// Progress label (right side)
 		progressLabel = new JLabel();
 		progressLabel.setForeground(PROGRESS_COLOR);
-		progressLabel.setFont(FontManager.getRunescapeFont());
+		progressLabel.setFont(FontManager.getRunescapeSmallFont());
 
 		container.add(titleLabel, BorderLayout.CENTER);
 		container.add(progressLabel, BorderLayout.EAST);
@@ -126,7 +125,7 @@ public class SectionHeaderPanel extends JPanel
 
 		if (description != null && !description.isEmpty())
 		{
-			html.append(" <span style='color: rgb(150,150,150); font-style: italic;'>- ").append(description)
+			html.append(" <span style='color: rgb(120,120,120); font-style: italic;'>- ").append(description)
 				.append("</span>");
 		}
 

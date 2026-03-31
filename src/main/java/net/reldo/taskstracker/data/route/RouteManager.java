@@ -83,7 +83,24 @@ public class RouteManager
 			}
 
 			route.setTaskType(currentTaskType);
-			deduplicateCustomItemIds(route);
+
+			if (hasDuplicateCustomItemIds(route))
+			{
+				int result = JOptionPane.showConfirmDialog(
+					null,
+					"Duplicate custom item IDs detected.\n"
+						+ "The imported route may behave differently than expected.\n\n"
+						+ "Import anyway?",
+					"Duplicate IDs",
+					JOptionPane.OK_CANCEL_OPTION,
+					JOptionPane.WARNING_MESSAGE
+				);
+				if (result != JOptionPane.OK_OPTION)
+				{
+					return false;
+				}
+				deduplicateCustomItemIds(route);
+			}
 
 			ConfigValues.TaskListTabs currentTab = config.taskListTab();
 
@@ -225,10 +242,29 @@ public class RouteManager
 		return true;
 	}
 
-	/**
-	 * Regenerates any duplicate custom item IDs in the route.
-	 * IDs must be unique for completion tracking to work correctly.
-	 */
+	private boolean hasDuplicateCustomItemIds(CustomRoute route)
+	{
+		if (route.getSections() == null)
+		{
+			return false;
+		}
+		Set<String> seen = new HashSet<>();
+		for (RouteSection section : route.getSections())
+		{
+			for (RouteItem item : section.getItems())
+			{
+				if (!item.isTask() && item.getCustomItem() != null)
+				{
+					if (!seen.add(item.getCustomItem().getId()))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
 	private void deduplicateCustomItemIds(CustomRoute route)
 	{
 		if (route.getSections() == null)
