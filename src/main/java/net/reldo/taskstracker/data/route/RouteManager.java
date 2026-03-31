@@ -4,7 +4,10 @@ import com.google.gson.Gson;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.JOptionPane;
@@ -80,6 +83,7 @@ public class RouteManager
 			}
 
 			route.setTaskType(currentTaskType);
+			deduplicateCustomItemIds(route);
 
 			ConfigValues.TaskListTabs currentTab = config.taskListTab();
 
@@ -219,6 +223,36 @@ public class RouteManager
 
 		log.debug("Deleted route: {}", routeName);
 		return true;
+	}
+
+	/**
+	 * Regenerates any duplicate custom item IDs in the route.
+	 * IDs must be unique for completion tracking to work correctly.
+	 */
+	private void deduplicateCustomItemIds(CustomRoute route)
+	{
+		if (route.getSections() == null)
+		{
+			return;
+		}
+
+		Set<String> seen = new HashSet<>();
+		for (RouteSection section : route.getSections())
+		{
+			for (RouteItem item : section.getItems())
+			{
+				if (!item.isTask() && item.getCustomItem() != null)
+				{
+					CustomRouteItem ci = item.getCustomItem();
+					if (!seen.add(ci.getId()))
+					{
+						String newId = UUID.randomUUID().toString().substring(0, 8);
+						log.warn("Duplicate custom item ID '{}' found, regenerated as '{}'", ci.getId(), newId);
+						ci.setId(newId);
+					}
+				}
+			}
+		}
 	}
 
 	private void showErrorMessage(String message)

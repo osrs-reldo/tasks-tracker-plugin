@@ -2,6 +2,7 @@ package net.reldo.taskstracker.data.route;
 
 import com.google.gson.annotations.Expose;
 import lombok.Data;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.NonNull;
@@ -103,7 +104,7 @@ public class CustomRoute
 	 * Inserts a custom item before or after the specified task.
 	 * Searches all sections to find the task.
 	 */
-	public CustomRouteItem insertCustomItem(int taskId, String customType, boolean insertAfter)
+	public CustomRouteItem insertCustomItem(int taskId, CustomRouteItem customItem, boolean insertAfter)
 	{
 		if (sections == null)
 		{
@@ -111,13 +112,31 @@ public class CustomRoute
 		}
 		for (RouteSection section : sections)
 		{
-			CustomRouteItem result = section.insertCustomItem(taskId, customType, insertAfter);
+			CustomRouteItem result = section.insertCustomItem(taskId, customItem, insertAfter);
 			if (result != null)
 			{
 				return result;
 			}
 		}
 		return null;
+	}
+
+	/** Returns all custom item IDs across all sections (for duplicate detection). */
+	public List<String> getAllCustomItemIds()
+	{
+		if (sections == null)
+		{
+			return List.of();
+		}
+		List<String> ids = new ArrayList<>();
+		for (RouteSection section : sections)
+		{
+			for (CustomRouteItem ci : section.getCustomItems())
+			{
+				ids.add(ci.getId());
+			}
+		}
+		return ids;
 	}
 
 	/** Finds a custom item by its unique ID across all sections. */

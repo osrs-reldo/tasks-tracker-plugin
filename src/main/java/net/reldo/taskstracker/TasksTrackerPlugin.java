@@ -168,7 +168,7 @@ public class TasksTrackerPlugin extends Plugin
 
 		forceUpdateVarpsFlag = false;
 
-		pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService, routeManager);
+		pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, clientThread, taskService, routeManager);
 
 		boolean isLoggedIn = isLoggedInState(client.getGameState());
 		pluginPanel.setLoggedIn(isLoggedIn);
@@ -701,6 +701,11 @@ public class TasksTrackerPlugin extends Plugin
 	public TaskPanel getPriorityTask()
 	{
 		return pluginPanel.getPriorityTask();
+	}
+
+	public javax.swing.JComponent getPriorityPanel()
+	{
+		return pluginPanel.getPriorityPanel();
 	}
 
 	public void redraw()

@@ -30,6 +30,7 @@ public class SectionHeaderPanel extends JPanel
 	@Getter
 	private boolean collapsed = false;
 
+	private final JPanel container;
 	private final JLabel titleLabel;
 	private final JLabel progressLabel;
 	private final String description;
@@ -42,10 +43,16 @@ public class SectionHeaderPanel extends JPanel
 		this.sectionName = sectionName;
 		this.description = description;
 
+		// Outer panel: transparent, provides bottom gap
 		setLayout(new BorderLayout());
-		setBackground(BACKGROUND_COLOR);
-		setBorder(new EmptyBorder(8, 12, 8, 12));
-		setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		setOpaque(false);
+		setBorder(new EmptyBorder(0, 0, 7, 0));
+
+		// Inner container: visible background and padding
+		container = new JPanel(new BorderLayout());
+		container.setBackground(BACKGROUND_COLOR);
+		container.setBorder(new EmptyBorder(8, 12, 8, 12));
+		container.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
 		// Title with arrow and optional description
 		titleLabel = new JLabel();
@@ -56,13 +63,15 @@ public class SectionHeaderPanel extends JPanel
 		// Progress label (right side)
 		progressLabel = new JLabel();
 		progressLabel.setForeground(PROGRESS_COLOR);
-		progressLabel.setFont(FontManager.getRunescapeSmallFont());
+		progressLabel.setFont(FontManager.getRunescapeFont());
 
-		add(titleLabel, BorderLayout.CENTER);
-		add(progressLabel, BorderLayout.EAST);
+		container.add(titleLabel, BorderLayout.CENTER);
+		container.add(progressLabel, BorderLayout.EAST);
+
+		add(container, BorderLayout.CENTER);
 
 		// Click to toggle collapse
-		addMouseListener(new MouseAdapter()
+		container.addMouseListener(new MouseAdapter()
 		{
 			@Override
 			public void mouseClicked(MouseEvent e)
@@ -73,13 +82,13 @@ public class SectionHeaderPanel extends JPanel
 			@Override
 			public void mouseEntered(MouseEvent e)
 			{
-				setBackground(HOVER_COLOR);
+				container.setBackground(HOVER_COLOR);
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e)
 			{
-				setBackground(BACKGROUND_COLOR);
+				container.setBackground(BACKGROUND_COLOR);
 			}
 		});
 	}
@@ -117,7 +126,7 @@ public class SectionHeaderPanel extends JPanel
 
 		if (description != null && !description.isEmpty())
 		{
-			html.append(" <span style='color: rgb(150,150,150); font-style: italic;'>").append("\u2014 ").append(description)
+			html.append(" <span style='color: rgb(150,150,150); font-style: italic;'>- ").append(description)
 				.append("</span>");
 		}
 

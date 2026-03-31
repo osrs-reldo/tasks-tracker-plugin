@@ -191,4 +191,10 @@ public class TrackerGlobalConfigStore
 		}
 		return new HashSet<>(Arrays.asList(value.split(",")));
 	}
+
+	/** Clears all custom item completion data for a route. */
+	public void resetCustomItemCompletion(String taskType, String routeName)
+	{
+		saveCustomItemCompletion(taskType, routeName, null);
+	}
 }

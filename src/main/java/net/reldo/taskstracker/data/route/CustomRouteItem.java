@@ -1,51 +1,86 @@
 package net.reldo.taskstracker.data.route;
 
 import com.google.gson.annotations.Expose;
-import lombok.Data;
 import java.util.UUID;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 /**
- * Represents a non-task item in a route, such as a bank stop, teleport, or other waypoint.
- * Custom items allow route authors to include helpful reminders between tasks.
- * Each item has a unique ID (for tracking completion) and a type (for display/behavior).
+ * Represents a non-task item in a route, such as a bank stop, teleport, or custom step.
+ * Generic data model: label + icon + name, no hardcoded types.
+ * Factory presets provide convenience for common items.
  */
 @Data
+@NoArgsConstructor
 public class CustomRouteItem
 {
+	/** Sprite archive ID for bank map icon. */
+	public static final int BANK_ICON_SPRITE = 1453;
+
+	/** Sprite archive ID for transportation map icon. */
+	public static final int TELEPORT_ICON_SPRITE = 1504;
+
 	/** Unique identifier for this item instance (8-char UUID prefix). */
 	@Expose
+	@NonNull
 	private String id;
 
-	/** The type of custom item (e.g., "bank", "home_teleport", "fairy_ring"). */
+	/** Display category (e.g., "Bank", "Teleport", or any text). */
 	@Expose
-	private String type;
+	@NonNull
+	private String label;
 
-	/** Human-readable display name for this item type. */
-	public String getDisplayName()
+	/** Sprite archive ID for the icon. Null means generate text fallback from label. */
+	@Expose
+	private Integer icon;
+
+	/** Description text shown below the label. */
+	@Expose
+	private String description;
+
+	/** Returns the label for display, falling back to "Custom" if empty. */
+	public String getDisplayLabel()
 	{
-		if (type == null || type.isEmpty())
+		if (label == null || label.isEmpty())
 		{
-			return "Unknown";
+			return "Custom";
 		}
-		switch (type)
-		{
-			case "bank":
-				return "Bank";
-			case "home_teleport":
-				return "Home Teleport";
-			case "fairy_ring":
-				return "Fairy Ring";
-			default:
-				return type.substring(0, 1).toUpperCase()
-					+ type.substring(1).replace("_", " ");
-		}
+		return label;
 	}
 
-	public static CustomRouteItem create(String type)
+	private static String generateId()
+	{
+		return UUID.randomUUID().toString().substring(0, 8);
+	}
+
+	public static CustomRouteItem createBank(String description)
 	{
 		CustomRouteItem item = new CustomRouteItem();
-		item.setId(UUID.randomUUID().toString().substring(0, 8));
-		item.setType(type);
+		item.setId(generateId());
+		item.setLabel("Bank");
+		item.setIcon(BANK_ICON_SPRITE);
+		item.setDescription(description);
+		return item;
+	}
+
+	public static CustomRouteItem createTeleport(String description)
+	{
+		CustomRouteItem item = new CustomRouteItem();
+		item.setId(generateId());
+		item.setLabel("Teleport");
+		item.setIcon(TELEPORT_ICON_SPRITE);
+		item.setDescription(description);
+		return item;
+	}
+
+	public static CustomRouteItem createCustom(String label, String description)
+	{
+		CustomRouteItem item = new CustomRouteItem();
+		item.setId(generateId());
+		item.setLabel(label);
+		item.setIcon(null);
+		item.setDescription(description);
 		return item;
 	}
 }
