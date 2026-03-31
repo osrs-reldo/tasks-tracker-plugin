@@ -17,7 +17,12 @@ import lombok.NonNull;
 @Data
 public class CustomRoute
 {
-	/** Unique name identifying this route (used as lookup key). */
+	/** Unique ID for this route. */
+	@Expose
+	@NonNull
+	private String id;
+
+	/** Unique name identifying this route. */
 	@Expose
 	@NonNull
 	private String name;

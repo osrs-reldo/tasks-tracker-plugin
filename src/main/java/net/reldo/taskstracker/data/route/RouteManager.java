@@ -61,7 +61,8 @@ public class RouteManager
 
 			if (route.getName().isEmpty())
 			{
-				route.setName("Imported Route");
+				showErrorMessage("Missing route name");
+				return false;
 			}
 
 			String currentTaskType = taskService.getCurrentTaskType().getTaskJsonName();
@@ -175,12 +176,12 @@ public class RouteManager
 			return false;
 		}
 
-		CustomRoute route = new CustomRoute(name);
+		CustomRoute route = new CustomRoute(name, UUID.randomUUID().toString());
 		route.setTaskType(taskService.getCurrentTaskType().getTaskJsonName());
 		route.setAuthor("User");
 		route.setDescription("Created from current task order");
 
-		RouteSection section = new RouteSection("All Tasks");
+		RouteSection section = new RouteSection("All Tasks", UUID.randomUUID().toString());
 		section.setTaskIds(visibleTaskIds);
 
 		route.setSections(List.of(section));

@@ -19,6 +19,10 @@ public class RouteSection
 {
 	@Expose
 	@NonNull
+	private String id;
+
+	@Expose
+	@NonNull
 	private String name;
 
 	@Expose

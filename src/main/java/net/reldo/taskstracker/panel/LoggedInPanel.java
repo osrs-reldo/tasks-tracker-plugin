@@ -634,7 +634,7 @@ public class LoggedInPanel extends JPanel
   		importItem.setEnabled(true);
   		exportItem.setEnabled(true);
   		createItem.setEnabled(false);
-  		deleteItem.setEnabled(false);
+		deleteItem.setEnabled(true);
 
 		menu.add(importItem);
 		menu.add(exportItem);
