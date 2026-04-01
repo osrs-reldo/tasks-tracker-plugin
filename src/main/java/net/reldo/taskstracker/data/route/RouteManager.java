@@ -65,6 +65,11 @@ public class RouteManager
 				return false;
 			}
 
+			if (route.getId() == null || route.getId().isEmpty())
+			{
+				route.setId(UUID.randomUUID().toString());
+			}
+
 			String currentTaskType = taskService.getCurrentTaskType().getTaskJsonName();
 
 			if (route.getTaskType() != null && !route.getTaskType().equals(currentTaskType))
@@ -85,8 +90,8 @@ public class RouteManager
 
 			route.setTaskType(currentTaskType);
 
-			if (hasDuplicateCustomItemIds(route))
-			{
+			Set<CustomRouteItem> duplicates = getDuplicateCustomRouteItems(route);
+			if (!duplicates.isEmpty()) {
 				int result = JOptionPane.showConfirmDialog(
 					null,
 					"Duplicate custom item IDs detected.\n"
@@ -96,13 +101,15 @@ public class RouteManager
 					JOptionPane.OK_CANCEL_OPTION,
 					JOptionPane.WARNING_MESSAGE
 				);
-				if (result != JOptionPane.OK_OPTION)
-				{
+				if (result != JOptionPane.OK_OPTION) {
 					return false;
 				}
-				deduplicateCustomItemIds(route);
+				for (CustomRouteItem ci : duplicates) {
+					String newId = UUID.randomUUID().toString().substring(0, 8);
+					log.warn("Duplicate custom item ID '{}' found, regenerated as '{}'", ci.getId(), newId);
+					ci.setId(newId);
+				}
 			}
-
 			ConfigValues.TaskListTabs currentTab = config.taskListTab();
 
 			trackerGlobalConfigStore.addRoute(currentTaskType, route);
@@ -243,37 +250,18 @@ public class RouteManager
 		return true;
 	}
 
-	private boolean hasDuplicateCustomItemIds(CustomRoute route)
+	/**
+	 * Returns a set of duplicate CustomRouteItems (by ID) found in the route.
+	 * If empty, there are no duplicates.
+	 */
+	private Set<CustomRouteItem> getDuplicateCustomRouteItems(CustomRoute route)
 	{
+		Set<CustomRouteItem> duplicates = new HashSet<>();
 		if (route.getSections() == null)
 		{
-			return false;
+			return duplicates;
 		}
-		Set<String> seen = new HashSet<>();
-		for (RouteSection section : route.getSections())
-		{
-			for (RouteItem item : section.getItems())
-			{
-				if (!item.isTask() && item.getCustomItem() != null)
-				{
-					if (!seen.add(item.getCustomItem().getId()))
-					{
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	}
-
-	private void deduplicateCustomItemIds(CustomRoute route)
-	{
-		if (route.getSections() == null)
-		{
-			return;
-		}
-
-		Set<String> seen = new HashSet<>();
+		Set<String> seenIds = new HashSet<>();
 		for (RouteSection section : route.getSections())
 		{
 			for (RouteItem item : section.getItems())
@@ -281,15 +269,14 @@ public class RouteManager
 				if (!item.isTask() && item.getCustomItem() != null)
 				{
 					CustomRouteItem ci = item.getCustomItem();
-					if (!seen.add(ci.getId()))
+					if (!seenIds.add(ci.getId()))
 					{
-						String newId = UUID.randomUUID().toString().substring(0, 8);
-						log.warn("Duplicate custom item ID '{}' found, regenerated as '{}'", ci.getId(), newId);
-						ci.setId(newId);
+						duplicates.add(ci);
 					}
 				}
 			}
 		}
+		return duplicates;
 	}
 
 	private void showErrorMessage(String message)
