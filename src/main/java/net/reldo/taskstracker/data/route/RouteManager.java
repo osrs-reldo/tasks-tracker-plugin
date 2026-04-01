@@ -63,6 +63,11 @@ public class RouteManager
                 throw new Exception("Missing route name");
 			}
 
+			if (route.getTaskType() == null || route.getTaskType().isEmpty())
+			{
+				throw new Exception("Missing route task type");
+			}
+
 			if (route.getId() == null || route.getId().isEmpty())
 			{
 				route.setId(UUID.randomUUID().toString());
@@ -184,7 +189,7 @@ public class RouteManager
 			return false;
 		}
 
-		CustomRoute route = new CustomRoute(name, UUID.randomUUID().toString());
+		CustomRoute route = new CustomRoute(name, UUID.randomUUID().toString(), taskService.getCurrentTaskType().getTaskJsonName());
 		route.setTaskType(taskService.getCurrentTaskType().getTaskJsonName());
 		route.setAuthor("User");
 		route.setDescription("Created from current task order");

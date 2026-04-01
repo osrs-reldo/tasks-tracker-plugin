@@ -27,8 +27,9 @@ public class CustomRoute
 	@NonNull
 	private String name;
 
-	/** The task type this route applies to (e.g., "COMBAT", "EXPLORATION"). */
+	/** The task type this route applies to (e.g., "COMBAT", "LEAGUE_5"). */
 	@Expose
+	@NonNull
 	private String taskType;
 
 	@Expose
