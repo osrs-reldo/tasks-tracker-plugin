@@ -55,14 +55,12 @@ public class RouteManager
 
 			if (route == null)
 			{
-				showErrorMessage("Invalid route JSON");
-				return false;
+				throw new Exception("Invalid route JSON");
 			}
 
-			if (route.getName().isEmpty())
+			if (route.getName() == null || route.getName().isEmpty())
 			{
-				showErrorMessage("Missing route name");
-				return false;
+                throw new Exception("Missing route name");
 			}
 
 			if (route.getId() == null || route.getId().isEmpty())
@@ -91,7 +89,8 @@ public class RouteManager
 			route.setTaskType(currentTaskType);
 
 			Set<CustomRouteItem> duplicates = getDuplicateCustomRouteItems(route);
-			if (!duplicates.isEmpty()) {
+			if (!duplicates.isEmpty())
+			{
 				int result = JOptionPane.showConfirmDialog(
 					null,
 					"Duplicate custom item IDs detected.\n"
@@ -101,11 +100,13 @@ public class RouteManager
 					JOptionPane.OK_CANCEL_OPTION,
 					JOptionPane.WARNING_MESSAGE
 				);
-				if (result != JOptionPane.OK_OPTION) {
+				if (result != JOptionPane.OK_OPTION)
+				{
 					return false;
 				}
-				for (CustomRouteItem ci : duplicates) {
-					String newId = UUID.randomUUID().toString().substring(0, 8);
+				for (CustomRouteItem ci : duplicates)
+				{
+					String newId = UUID.randomUUID().toString();
 					log.warn("Duplicate custom item ID '{}' found, regenerated as '{}'", ci.getId(), newId);
 					ci.setId(newId);
 				}

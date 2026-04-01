@@ -51,7 +51,7 @@ public class CustomRouteItem
 
 	private static String generateId()
 	{
-		return UUID.randomUUID().toString().substring(0, 8);
+		return UUID.randomUUID().toString();
 	}
 
 	public static CustomRouteItem createBank(String description)
