@@ -32,6 +32,7 @@ import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.TrackerRSProfileConfigStore;
 import net.reldo.taskstracker.data.gson.GsonFactory;
 import net.reldo.taskstracker.data.route.RouteManager;
+import net.reldo.taskstracker.data.route.ShortestPathService;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.reader.HttpDataStoreReader;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
@@ -137,6 +138,9 @@ public class TasksTrackerPlugin extends Plugin
 	private FilterService filterService;
 	@Inject
 	private TaskOverlayPanel overlay;
+	@Getter
+	@Inject
+	private ShortestPathService shortestPathService;
 
 	@Getter
 	private FilterMatcher filterMatcher;
@@ -194,6 +198,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		shortestPathService.clearGps();
 		pluginPanel.saveCurrentTabFilters();
 		pluginPanel.hideLoggedInPanel();
 		pluginPanel = null;
@@ -292,6 +297,11 @@ public class TasksTrackerPlugin extends Plugin
 			{
 				overlayManager.remove(overlay);
 			}
+		}
+
+		if (configChanged.getKey().equals("useShortestPath"))
+		{
+			pluginPanel.taskListPanel.updatePriorityTaskAfterRefresh();
 		}
 
 		if (configChanged.getKey().equals("sortCriteria"))

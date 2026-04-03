@@ -26,6 +26,7 @@ import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.route.CustomRouteItem;
 import net.reldo.taskstracker.data.route.RouteItem;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.components.ComponentConstants;
@@ -211,6 +212,11 @@ public class CustomItemPanel extends JPanel
 	public String getCustomItemId()
 	{
 		return customItem.getId();
+	}
+
+	public WorldPoint getWorldLocation()
+	{
+		return routeItem.getLocation();
 	}
 
 	public void refresh(Set<String> completedIds)
