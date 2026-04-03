@@ -34,7 +34,7 @@ public class ShortestPathService
 	 */
 	public void setGpsTarget(WorldPoint target)
 	{
-		if (!config.useShortestPath())
+		if (!config.useShortestPath() || !config.showOverlay())
 		{
 			clearGps();
 			return;

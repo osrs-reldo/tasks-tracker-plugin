@@ -297,6 +297,7 @@ public class TasksTrackerPlugin extends Plugin
 			{
 				overlayManager.remove(overlay);
 			}
+			pluginPanel.taskListPanel.updatePriorityTaskAfterRefresh();
 		}
 
 		if (configChanged.getKey().equals("useShortestPath"))
