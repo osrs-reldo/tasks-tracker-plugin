@@ -278,5 +278,18 @@ public class CustomItemPanel extends JPanel
 				.left(desc)
 				.build());
 		}
+
+		String note = routeItem.getNote();
+		if (note != null && !note.isEmpty())
+		{
+			panelComponent.getChildren().add(LineComponent.builder().build());
+			panelComponent.getChildren().add(LineComponent.builder()
+				.left("Note:")
+				.build());
+			panelComponent.getChildren().add(LineComponent.builder()
+				.left(note)
+				.leftFont(FontManager.getRunescapeFont().deriveFont(java.awt.Font.ITALIC))
+				.build());
+		}
 	}
 }
