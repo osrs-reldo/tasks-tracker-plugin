@@ -4,9 +4,10 @@ import com.google.gson.Gson;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.JOptionPane;
@@ -54,14 +55,22 @@ public class RouteManager
 
 			if (route == null)
 			{
-				showErrorMessage("Invalid route JSON");
-				return false;
+				throw new Exception("Invalid route JSON");
 			}
 
-			if (route.getName().isEmpty())
+			if (route.getName() == null || route.getName().isEmpty())
 			{
-				showErrorMessage("Missing route name");
-				return false;
+                throw new Exception("Missing route name");
+			}
+
+			if (route.getTaskType() == null || route.getTaskType().isEmpty())
+			{
+				throw new Exception("Missing route task type");
+			}
+
+			if (route.getId() == null || route.getId().isEmpty())
+			{
+				route.setId(UUID.randomUUID().toString());
 			}
 
 			String currentTaskType = taskService.getCurrentTaskType().getTaskJsonName();
@@ -84,6 +93,29 @@ public class RouteManager
 
 			route.setTaskType(currentTaskType);
 
+			Set<CustomRouteItem> duplicates = getDuplicateCustomRouteItems(route);
+			if (!duplicates.isEmpty())
+			{
+				int result = JOptionPane.showConfirmDialog(
+					null,
+					"Duplicate custom item IDs detected.\n"
+						+ "The imported route may be different than expected.\n\n"
+						+ "Import anyway?",
+					"Duplicate IDs",
+					JOptionPane.OK_CANCEL_OPTION,
+					JOptionPane.WARNING_MESSAGE
+				);
+				if (result != JOptionPane.OK_OPTION)
+				{
+					return false;
+				}
+				for (CustomRouteItem ci : duplicates)
+				{
+					String newId = UUID.randomUUID().toString();
+					log.warn("Duplicate custom item ID '{}' found, regenerated as '{}'", ci.getId(), newId);
+					ci.setId(newId);
+				}
+			}
 			ConfigValues.TaskListTabs currentTab = config.taskListTab();
 
 			trackerGlobalConfigStore.addRoute(currentTaskType, route);
@@ -157,7 +189,7 @@ public class RouteManager
 			return false;
 		}
 
-		CustomRoute route = new CustomRoute(name, UUID.randomUUID().toString());
+		CustomRoute route = new CustomRoute(name, UUID.randomUUID().toString(), taskService.getCurrentTaskType().getTaskJsonName());
 		route.setTaskType(taskService.getCurrentTaskType().getTaskJsonName());
 		route.setAuthor("User");
 		route.setDescription("Created from current task order");
@@ -222,6 +254,35 @@ public class RouteManager
 
 		log.debug("Deleted route: {}", routeName);
 		return true;
+	}
+
+	/**
+	 * Returns a set of duplicate CustomRouteItems (by ID) found in the route.
+	 * If empty, there are no duplicates.
+	 */
+	private Set<CustomRouteItem> getDuplicateCustomRouteItems(CustomRoute route)
+	{
+		Set<CustomRouteItem> duplicates = new HashSet<>();
+		if (route.getSections() == null)
+		{
+			return duplicates;
+		}
+		Set<String> seenIds = new HashSet<>();
+		for (RouteSection section : route.getSections())
+		{
+			for (RouteItem item : section.getItems())
+			{
+				if (!item.isTask() && item.getCustomItem() != null)
+				{
+					CustomRouteItem ci = item.getCustomItem();
+					if (!seenIds.add(ci.getId()))
+					{
+						duplicates.add(ci);
+					}
+				}
+			}
+		}
+		return duplicates;
 	}
 
 	private void showErrorMessage(String message)

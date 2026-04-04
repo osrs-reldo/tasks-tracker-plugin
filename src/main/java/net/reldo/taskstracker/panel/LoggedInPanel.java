@@ -592,6 +592,7 @@ public class LoggedInPanel extends JPanel
 			// Clear active route so tasks aren't filtered
 			ConfigValues.TaskListTabs currentTab = config.taskListTab();
 			taskService.clearActiveRoute(currentTab);
+			plugin.getShortestPathService().clearGps();
 		}
 	}
 

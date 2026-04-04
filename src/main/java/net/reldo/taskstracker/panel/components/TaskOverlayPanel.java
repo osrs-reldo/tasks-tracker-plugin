@@ -3,7 +3,9 @@ package net.reldo.taskstracker.panel.components;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import javax.inject.Inject;
+import javax.swing.JComponent;
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.panel.CustomItemPanel;
 import net.reldo.taskstracker.panel.TaskPanel;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPanel;
@@ -28,14 +30,21 @@ public class TaskOverlayPanel extends OverlayPanel
 			return super.render(graphics);
 		}
 
-		TaskPanel taskPanel = plugin.getPriorityTask();
+		JComponent priorityPanel = plugin.getPriorityPanel();
 
-		if (taskPanel == null)
+		if (priorityPanel == null)
 		{
 			return null;
 		}
 
-		taskPanel.buildOverlayText(graphics, panelComponent);
+		if (priorityPanel instanceof TaskPanel)
+		{
+			((TaskPanel) priorityPanel).buildOverlayText(graphics, panelComponent);
+		}
+		else if (priorityPanel instanceof CustomItemPanel)
+		{
+			((CustomItemPanel) priorityPanel).buildOverlayText(graphics, panelComponent);
+		}
 
 		return super.render(graphics);
 	}

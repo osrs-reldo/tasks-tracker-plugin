@@ -68,6 +68,8 @@ public class TaskService
 	private final Map<ConfigValues.TaskListTabs, CustomRoute> tabActiveRoutes = new HashMap<>();
 	@Getter
 	private final HashMap<String, HashMap<Integer, Integer>> routeIndexes = new HashMap<>();
+	@Getter
+	private final HashMap<String, HashMap<String, Integer>> customItemRouteIndexes = new HashMap<>();
 
 	public CompletableFuture<Boolean> setTaskType(String taskTypeJsonName)
 	{
@@ -179,6 +181,7 @@ public class TaskService
 
 			// Clear route state from previous task type
 			routeIndexes.clear();
+			customItemRouteIndexes.clear();
 			tabActiveRoutes.clear();
 
 			// Index task list for each property
@@ -229,15 +232,22 @@ public class TaskService
 	{
 		List<RouteSection> sections = route.getSections();
 		HashMap<Integer, Integer> routeIndex = new HashMap<>();
+		HashMap<String, Integer> customIndex = new HashMap<>();
 		int sectionStartIndex = 0;
 		for (RouteSection section : sections)
 		{
 			List<RouteItem> items = section.getItems();
-			for (RouteItem item : items)
+			for (int i = 0; i < items.size(); i++)
 			{
+				RouteItem item = items.get(i);
+				int position = i + sectionStartIndex + 1;
 				if (item.isTask())
 				{
-					routeIndex.put(item.getTaskId(), items.indexOf(item) + sectionStartIndex + 1);
+					routeIndex.put(item.getTaskId(), position);
+				}
+				else if (item.getCustomItem() != null)
+				{
+					customIndex.put(item.getCustomItem().getId(), position);
 				}
 			}
 			sectionStartIndex += items.size() + 1;
@@ -253,6 +263,7 @@ public class TaskService
 		}
 
 		routeIndexes.put(route.getName(), routeIndex);
+		customItemRouteIndexes.put(route.getName(), customIndex);
 	}
 
 	public int getTaskIndex(String sortCriteria, Integer taskStructId)
@@ -281,6 +292,16 @@ public class TaskService
 		}
 
 		return ascending ? position : tasks.size() - (position + 1);
+	}
+
+	public int getCustomItemIndex(String routeName, String customItemId)
+	{
+		HashMap<String, Integer> index = customItemRouteIndexes.get(routeName);
+		if (index == null || !index.containsKey(customItemId))
+		{
+			return -1;
+		}
+		return index.get(customItemId);
 	}
 
 	public boolean isVarpInCurrentTaskType(int varpId)
