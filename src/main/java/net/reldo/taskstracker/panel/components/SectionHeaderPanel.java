@@ -11,12 +11,13 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import lombok.Setter;
+import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
 public class SectionHeaderPanel extends JPanel
 {
-	private static final Color BACKGROUND_COLOR = new Color(60, 63, 65);
-	private static final Color HOVER_COLOR = new Color(70, 73, 75);
+	private static final Color BACKGROUND_COLOR = ColorScheme.DARKER_GRAY_COLOR.darker();
+	private static final Color HOVER_COLOR = ColorScheme.DARKER_GRAY_COLOR;
 	private static final Color TEXT_COLOR = Color.WHITE;
 	private static final Color PROGRESS_COLOR = new Color(180, 180, 180);
 	private static final Color PROGRESS_COMPLETE_COLOR = new Color(100, 200, 100);
@@ -30,6 +31,7 @@ public class SectionHeaderPanel extends JPanel
 	@Getter
 	private boolean collapsed = false;
 
+	private final JPanel container;
 	private final JLabel titleLabel;
 	private final JLabel progressLabel;
 	private final String description;
@@ -43,14 +45,18 @@ public class SectionHeaderPanel extends JPanel
 		this.description = description;
 
 		setLayout(new BorderLayout());
-		setBackground(BACKGROUND_COLOR);
-		setBorder(new EmptyBorder(8, 12, 8, 12));
-		setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		setOpaque(false);
+		setBorder(new EmptyBorder(0, 0, 4, 0));
+
+		container = new JPanel(new BorderLayout());
+		container.setBackground(BACKGROUND_COLOR);
+		container.setBorder(new EmptyBorder(6, 10, 6, 10));
+		container.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
 		// Title with arrow and optional description
 		titleLabel = new JLabel();
 		titleLabel.setForeground(TEXT_COLOR);
-		titleLabel.setFont(FontManager.getRunescapeBoldFont());
+		titleLabel.setFont(FontManager.getRunescapeFont());
 		updateTitleText();
 
 		// Progress label (right side)
@@ -58,11 +64,13 @@ public class SectionHeaderPanel extends JPanel
 		progressLabel.setForeground(PROGRESS_COLOR);
 		progressLabel.setFont(FontManager.getRunescapeSmallFont());
 
-		add(titleLabel, BorderLayout.CENTER);
-		add(progressLabel, BorderLayout.EAST);
+		container.add(titleLabel, BorderLayout.CENTER);
+		container.add(progressLabel, BorderLayout.EAST);
+
+		add(container, BorderLayout.CENTER);
 
 		// Click to toggle collapse
-		addMouseListener(new MouseAdapter()
+		container.addMouseListener(new MouseAdapter()
 		{
 			@Override
 			public void mouseClicked(MouseEvent e)
@@ -73,13 +81,13 @@ public class SectionHeaderPanel extends JPanel
 			@Override
 			public void mouseEntered(MouseEvent e)
 			{
-				setBackground(HOVER_COLOR);
+				container.setBackground(HOVER_COLOR);
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e)
 			{
-				setBackground(BACKGROUND_COLOR);
+				container.setBackground(BACKGROUND_COLOR);
 			}
 		});
 	}
@@ -117,7 +125,7 @@ public class SectionHeaderPanel extends JPanel
 
 		if (description != null && !description.isEmpty())
 		{
-			html.append(" <span style='color: rgb(150,150,150); font-style: italic;'>").append("\u2014 ").append(description)
+			html.append(" <span style='color: rgb(120,120,120); font-style: italic;'>- ").append(description)
 				.append("</span>");
 		}
 

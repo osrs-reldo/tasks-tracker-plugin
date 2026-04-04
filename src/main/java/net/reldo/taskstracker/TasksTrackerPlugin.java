@@ -103,6 +103,7 @@ public class TasksTrackerPlugin extends Plugin
 	private Gson gson;
 	@Inject
 	private Client client;
+	@Getter
 	@Inject
 	private SpriteManager spriteManager;
 	@Inject
@@ -701,6 +702,11 @@ public class TasksTrackerPlugin extends Plugin
 	public TaskPanel getPriorityTask()
 	{
 		return pluginPanel.getPriorityTask();
+	}
+
+	public javax.swing.JComponent getPriorityPanel()
+	{
+		return pluginPanel.getPriorityPanel();
 	}
 
 	public void redraw()

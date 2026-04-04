@@ -1,5 +1,10 @@
 package net.reldo.taskstracker.panel;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -38,4 +43,31 @@ public class Icons
 	public static final ImageIcon MINUS_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "minus.png"));
 	public static final ImageIcon EYE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "eye.png"));
 	public static final ImageIcon EYE_CROSS_GREY = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "eye-cross-grey.png"));
+
+	/**
+	 * Creates a 16x16 text icon with a colored rounded background and black letter.
+	 */
+	static BufferedImage createTextIcon(String letter, Color bgColor)
+	{
+		int size = 16;
+		BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = img.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+		g.setColor(bgColor);
+		g.fillRoundRect(0, 0, size, size, 4, 4);
+
+		g.setColor(bgColor.darker());
+		g.drawRoundRect(0, 0, size - 1, size - 1, 4, 4);
+
+		g.setColor(Color.BLACK);
+		g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 11));
+		FontMetrics fm = g.getFontMetrics();
+		int x = (size - fm.stringWidth(letter)) / 2;
+		int y = (size - fm.getHeight()) / 2 + fm.getAscent();
+		g.drawString(letter, x, y);
+
+		g.dispose();
+		return img;
+	}
 }
