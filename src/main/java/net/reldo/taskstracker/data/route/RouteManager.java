@@ -189,12 +189,12 @@ public class RouteManager
 			return false;
 		}
 
-		CustomRoute route = new CustomRoute(name, UUID.randomUUID().toString(), taskService.getCurrentTaskType().getTaskJsonName());
+		CustomRoute route = new CustomRoute(UUID.randomUUID().toString(), name, taskService.getCurrentTaskType().getTaskJsonName());
 		route.setTaskType(taskService.getCurrentTaskType().getTaskJsonName());
 		route.setAuthor("User");
 		route.setDescription("Created from current task order");
 
-		RouteSection section = new RouteSection("All Tasks", UUID.randomUUID().toString());
+		RouteSection section = new RouteSection(UUID.randomUUID().toString(), "All Tasks");
 		section.setTaskIds(visibleTaskIds);
 
 		route.setSections(List.of(section));
