@@ -334,7 +334,7 @@ public class TaskPanel extends JPanel
 			}
 			catch (IOException | URISyntaxException ex)
 			{
-				ex.printStackTrace();
+				log.error("Error opening RuneScape Wiki.", ex);
 			}
 		}
 		else
