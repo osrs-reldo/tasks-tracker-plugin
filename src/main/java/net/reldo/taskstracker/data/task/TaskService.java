@@ -240,9 +240,14 @@ public class TaskService
 			for (int i = 0; i < items.size(); i++)
 			{
 				RouteItem item = items.get(i);
+				int position = i + sectionStartIndex + 1;
 				if (item.isTask())
 				{
-					routeIndex.put(item.getTaskId(), i + sectionStartIndex + 1);
+					routeIndex.put(item.getTaskId(), position);
+				}
+				else if (item.getCustomItem() != null)
+				{
+					customIndex.put(item.getCustomItem().getId(), position);
 				}
 			}
 			sectionStartIndex += items.size() + 1;
