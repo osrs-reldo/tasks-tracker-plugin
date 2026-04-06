@@ -54,14 +54,22 @@ public class RouteManager
 
 			if (route == null)
 			{
-				showErrorMessage("Invalid route JSON");
-				return false;
+				throw new Exception("Invalid route JSON");
 			}
 
-			if (route.getName().isEmpty())
+			if (route.getName() == null || route.getName().isEmpty())
 			{
-				showErrorMessage("Missing route name");
-				return false;
+				throw new Exception("Missing route name");
+			}
+
+			if (route.getTaskType() == null || route.getTaskType().isEmpty())
+			{
+				throw new Exception("Missing route task type");
+			}
+
+			if (route.getId() == null || route.getId().isEmpty())
+			{
+				route.setId(UUID.randomUUID().toString());
 			}
 
 			String currentTaskType = taskService.getCurrentTaskType().getTaskJsonName();
