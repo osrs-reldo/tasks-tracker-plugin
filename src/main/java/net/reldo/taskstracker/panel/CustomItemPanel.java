@@ -5,8 +5,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.Set;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -34,6 +32,7 @@ import net.runelite.client.ui.overlay.components.ComponentConstants;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
+import net.runelite.client.util.SwingUtil;
 
 @Slf4j
 public class CustomItemPanel extends JPanel
@@ -90,15 +89,20 @@ public class CustomItemPanel extends JPanel
 		}
 
 		completeToggle = new JToggleButton();
-		completeToggle.setIcon(Icons.INCOMPLETE_ONLY_ICON);
-		completeToggle.setSelectedIcon(Icons.COMPLETE_ONLY_ICON);
-		completeToggle.setPreferredSize(new Dimension(20, 20));
+		completeToggle.setIcon(Icons.CHECKBOX_ICON);
+		completeToggle.setSelectedIcon(Icons.CHECKBOX_SELECTED_ICON);
+		completeToggle.setPreferredSize(new Dimension(18, 18));
 		completeToggle.setBorder(new EmptyBorder(0, 0, 0, 0));
-		completeToggle.setBorderPainted(false);
-		completeToggle.setFocusPainted(false);
-		completeToggle.setContentAreaFilled(false);
+		completeToggle.setFocusable(false);
 		completeToggle.setToolTipText("Toggle completion");
 		completeToggle.addActionListener(e -> onCompletionToggled());
+		SwingUtil.removeButtonDecorations(completeToggle);
+
+		JPanel checkboxPanel = new JPanel(new BorderLayout());
+		checkboxPanel.setPreferredSize(new Dimension(18, 18));
+		checkboxPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+		checkboxPanel.setBackground(BACKGROUND_HOVER);
+		checkboxPanel.add(completeToggle, BorderLayout.NORTH);
 
 		JPanel body = new JPanel(new BorderLayout());
 		body.setOpaque(false);
@@ -114,30 +118,12 @@ public class CustomItemPanel extends JPanel
 		JPanel rightPanel = new JPanel(new BorderLayout());
 		rightPanel.setOpaque(false);
 		rightPanel.setBorder(new EmptyBorder(0, 0, 0, 7));
-		rightPanel.add(completeToggle, BorderLayout.CENTER);
+		rightPanel.add(checkboxPanel, BorderLayout.NORTH);
 
 		container.add(left, BorderLayout.CENTER);
 		container.add(rightPanel, BorderLayout.EAST);
 
 		add(container, BorderLayout.NORTH);
-
-		addMouseListener(new MouseAdapter()
-		{
-			@Override
-			public void mouseEntered(MouseEvent e)
-			{
-				if (!CustomItemPanel.this.completed)
-				{
-					container.setBackground(BACKGROUND_HOVER);
-				}
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e)
-			{
-				container.setBackground(CustomItemPanel.this.completed ? BACKGROUND_COMPLETED : BACKGROUND_DEFAULT);
-			}
-		});
 
 		ToolTipManager.sharedInstance().registerComponent(this);
 	}
