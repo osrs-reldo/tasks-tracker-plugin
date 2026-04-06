@@ -233,11 +233,12 @@ public class TaskService
 		for (RouteSection section : sections)
 		{
 			List<RouteItem> items = section.getItems();
-			for (RouteItem item : items)
+			for (int i = 0; i < items.size(); i++)
 			{
+				RouteItem item = items.get(i);
 				if (item.isTask())
 				{
-					routeIndex.put(item.getTaskId(), items.indexOf(item) + sectionStartIndex + 1);
+					routeIndex.put(item.getTaskId(), i + sectionStartIndex + 1);
 				}
 			}
 			sectionStartIndex += items.size() + 1;

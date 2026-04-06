@@ -501,7 +501,7 @@ public class TaskListPanel extends JScrollPane
 						add(header);
 					}
 					header.setCollapseCallback(collapsed -> {
-						SwingUtilities.invokeLater(() -> refreshMultipleStructIds(section.getTaskIds())); // @todo test if this needs to be updated when the route list changes
+						SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
 					});
 					header.setVisible(true);
 
