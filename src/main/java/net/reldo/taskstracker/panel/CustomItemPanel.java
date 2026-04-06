@@ -12,6 +12,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 import javax.swing.JToolTip;
 import javax.swing.ToolTipManager;
 import javax.swing.border.CompoundBorder;
@@ -27,6 +28,7 @@ import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.route.CustomRouteItem;
 import net.reldo.taskstracker.data.route.RouteItem;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.util.ImageUtil;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.components.ComponentConstants;
 import net.runelite.client.ui.overlay.components.LineComponent;
@@ -109,8 +111,13 @@ public class CustomItemPanel extends JPanel
 		left.add(iconLabel, BorderLayout.WEST);
 		left.add(body, BorderLayout.CENTER);
 
+		JPanel rightPanel = new JPanel(new BorderLayout());
+		rightPanel.setOpaque(false);
+		rightPanel.setBorder(new EmptyBorder(0, 0, 0, 7));
+		rightPanel.add(completeToggle, BorderLayout.CENTER);
+
 		container.add(left, BorderLayout.CENTER);
-		container.add(completeToggle, BorderLayout.EAST);
+		container.add(rightPanel, BorderLayout.EAST);
 
 		add(container, BorderLayout.NORTH);
 
@@ -164,7 +171,11 @@ public class CustomItemPanel extends JPanel
 		{
 			return;
 		}
-		plugin.getSpriteManager().addSpriteTo(iconLabel, spriteId, 0);
+		plugin.getSpriteManager().getSpriteAsync(spriteId, 0, img -> {
+			SwingUtilities.invokeLater(() -> {
+				iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(img, 16, 16)));
+			});
+		});
 	}
 
 	private void onCompletionToggled()
