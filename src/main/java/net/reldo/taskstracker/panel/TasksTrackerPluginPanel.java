@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
+import javax.swing.JComponent;
 import net.reldo.taskstracker.data.route.RouteManager;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.runelite.client.game.SpriteManager;
@@ -147,6 +148,16 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		if (loggedInPanelVisible)
 		{
 			return taskListPanel.getPriorityTaskPanel();
+		}
+
+		return null;
+	}
+
+	public JComponent getPriorityPanel()
+	{
+		if (loggedInPanelVisible)
+		{
+			return taskListPanel.getPriorityPanel();
 		}
 
 		return null;

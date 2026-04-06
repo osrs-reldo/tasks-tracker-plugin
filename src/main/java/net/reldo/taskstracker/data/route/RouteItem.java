@@ -62,9 +62,4 @@ public class RouteItem
 		item.setCustomItem(customItem);
 		return item;
 	}
-
-	public static RouteItem forCustomType(String type)
-	{
-		return forCustom(CustomRouteItem.create(type));
-	}
 }
