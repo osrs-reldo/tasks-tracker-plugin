@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.util.Set;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -39,8 +40,11 @@ public class CustomItemPanel extends JPanel
 {
 	private static final Color BORDER_COLOR = new Color(90, 90, 90);
 	private static final Color BACKGROUND_DEFAULT = ColorScheme.DARKER_GRAY_COLOR;
-	private static final Color BACKGROUND_HOVER = ColorScheme.DARK_GRAY_HOVER_COLOR;
 	private static final Color BACKGROUND_COMPLETED = new Color(40, 60, 40);
+
+	private static final int UNCHECKED_ICON = 697;
+	private static final int CHECKED_ICON = 699;
+	private static final int MAX_ICON_DIMENSION = 22;
 
 	private final TasksTrackerPlugin plugin;
 	private final RouteItem routeItem;
@@ -65,12 +69,11 @@ public class CustomItemPanel extends JPanel
 		container = new JPanel(new BorderLayout());
 		container.setBorder(new CompoundBorder(
 			new MatteBorder(0, 3, 0, 0, BORDER_COLOR),
-			new EmptyBorder(7, 4, 6, 0)
+			new EmptyBorder(7, 2, 6, 0)
 		));
 		container.setBackground(BACKGROUND_DEFAULT);
 
 		iconLabel = new JLabel();
-		iconLabel.setPreferredSize(new Dimension(16, 16));
 		setFallbackIcon();
 		loadSpriteIcon();
 
@@ -89,38 +92,36 @@ public class CustomItemPanel extends JPanel
 		}
 
 		completeToggle = new JToggleButton();
-		completeToggle.setIcon(Icons.CHECKBOX_ICON);
-		completeToggle.setSelectedIcon(Icons.CHECKBOX_SELECTED_ICON);
-		completeToggle.setPreferredSize(new Dimension(18, 18));
+		plugin.getSpriteManager().getSpriteAsync(UNCHECKED_ICON, 0, img -> {
+			SwingUtilities.invokeLater(() -> {
+				completeToggle.setIcon(new ImageIcon(img));
+			});
+		});
+		plugin.getSpriteManager().getSpriteAsync(CHECKED_ICON, 0, img -> {
+			SwingUtilities.invokeLater(() -> {
+				completeToggle.setSelectedIcon(new ImageIcon(img));
+			});
+		});
+		completeToggle.setPreferredSize(new Dimension(17, 17));
 		completeToggle.setBorder(new EmptyBorder(0, 0, 0, 0));
 		completeToggle.setFocusable(false);
 		completeToggle.setToolTipText("Toggle completion");
 		completeToggle.addActionListener(e -> onCompletionToggled());
 		SwingUtil.removeButtonDecorations(completeToggle);
 
-		JPanel checkboxPanel = new JPanel(new BorderLayout());
-		checkboxPanel.setPreferredSize(new Dimension(18, 18));
-		checkboxPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-		checkboxPanel.setBackground(BACKGROUND_HOVER);
-		checkboxPanel.add(completeToggle, BorderLayout.NORTH);
-
 		JPanel body = new JPanel(new BorderLayout());
 		body.setOpaque(false);
-		body.setBorder(new EmptyBorder(0, 6, 0, 0));
+		body.setBorder(new EmptyBorder(0, 1, 0, 0));
 		body.add(nameLabel, BorderLayout.NORTH);
 		body.add(descriptionLabel, BorderLayout.CENTER);
-
-		JPanel left = new JPanel(new BorderLayout());
-		left.setOpaque(false);
-		left.add(iconLabel, BorderLayout.WEST);
-		left.add(body, BorderLayout.CENTER);
 
 		JPanel rightPanel = new JPanel(new BorderLayout());
 		rightPanel.setOpaque(false);
 		rightPanel.setBorder(new EmptyBorder(0, 0, 0, 7));
-		rightPanel.add(checkboxPanel, BorderLayout.NORTH);
+		rightPanel.add(completeToggle, BorderLayout.CENTER);
 
-		container.add(left, BorderLayout.CENTER);
+		container.add(iconLabel, BorderLayout.WEST);
+		container.add(body, BorderLayout.CENTER);
 		container.add(rightPanel, BorderLayout.EAST);
 
 		add(container, BorderLayout.NORTH);
@@ -148,6 +149,7 @@ public class CustomItemPanel extends JPanel
 		}
 
 		iconLabel.setIcon(new ImageIcon(Icons.createTextIcon(letter, color)));
+		iconLabel.setBorder(new EmptyBorder(0, 2, 0, 4));
 	}
 
 	private void loadSpriteIcon()
@@ -159,7 +161,18 @@ public class CustomItemPanel extends JPanel
 		}
 		plugin.getSpriteManager().getSpriteAsync(spriteId, 0, img -> {
 			SwingUtilities.invokeLater(() -> {
-				iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(img, 16, 16)));
+				BufferedImage finalImg = img;
+				if (img.getHeight() > MAX_ICON_DIMENSION || img.getWidth() > MAX_ICON_DIMENSION)
+				{
+					finalImg = ImageUtil.resizeImage(img, MAX_ICON_DIMENSION, MAX_ICON_DIMENSION);
+				}
+
+				iconLabel.setIcon(new ImageIcon(finalImg));
+
+				int offsetX = (MAX_ICON_DIMENSION - finalImg.getWidth());
+				int offsetLeft = (int)Math.floor((double)offsetX / 2);
+				int offsetRight = offsetX - offsetLeft;
+				iconLabel.setBorder(new EmptyBorder(0, offsetLeft, 0, offsetRight));
 			});
 		});
 	}

@@ -44,10 +44,6 @@ public class Icons
 	public static final ImageIcon EYE_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "eye.png"));
 	public static final ImageIcon EYE_CROSS_GREY = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, "eye-cross-grey.png"));
 
-	private static final String checkboxIconPath = "panel/components/checkbox/";
-	public static final Icon CHECKBOX_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, checkboxIconPath + "checkbox.png"));
-	public static final Icon CHECKBOX_SELECTED_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, checkboxIconPath + "checkbox_selected.png"));
-
 	/**
 	 * Creates a 16x16 text icon with a colored rounded background and black letter.
 	 */
