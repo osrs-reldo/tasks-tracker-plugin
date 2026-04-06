@@ -19,6 +19,10 @@ public class RouteSection
 {
 	@Expose
 	@NonNull
+	private String id;
+
+	@Expose
+	@NonNull
 	private String name;
 
 	@Expose
@@ -87,15 +91,21 @@ public class RouteSection
 		return getTaskIds().size();
 	}
 
+	/** Returns the total number of items (tasks + custom items) in this section. */
+	public int getItemCount()
+	{
+		return getItems().size();
+	}
+
 	/**
-	 * Inserts a new custom item before or after the specified task.
+	 * Inserts a custom item before or after the specified task.
 	 *
 	 * @param taskId the task to insert relative to
-	 * @param customType the type of custom item to create
+	 * @param customItem the custom item to insert
 	 * @param insertAfter true to insert after the task, false to insert before
-	 * @return the created CustomRouteItem, or null if the task was not found
+	 * @return the inserted CustomRouteItem, or null if the task was not found
 	 */
-	public CustomRouteItem insertCustomItem(int taskId, String customType, boolean insertAfter)
+	public CustomRouteItem insertCustomItem(int taskId, CustomRouteItem customItem, boolean insertAfter)
 	{
 		List<RouteItem> currentItems = new ArrayList<>(getItems());
 		int position = -1;
@@ -115,7 +125,6 @@ public class RouteSection
 			return null;
 		}
 
-		CustomRouteItem customItem = CustomRouteItem.create(customType);
 		int insertPos = insertAfter ? position + 1 : position;
 		currentItems.add(insertPos, RouteItem.forCustom(customItem));
 

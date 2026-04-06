@@ -4,7 +4,10 @@ import com.google.gson.Gson;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.JOptionPane;
@@ -12,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
+import net.reldo.taskstracker.data.gson.GsonFactory;
 import net.reldo.taskstracker.data.task.TaskService;
 
 /**
@@ -45,21 +49,28 @@ public class RouteManager
 			String clipboard = Toolkit.getDefaultToolkit().getSystemClipboard()
 				.getData(DataFlavor.stringFlavor).toString();
 
-			Gson routeGson = gson.newBuilder()
-				.excludeFieldsWithoutExposeAnnotation()
-				.create();
+			Gson routeGson = GsonFactory.newBuilder(gson).create();
 
 			CustomRoute route = routeGson.fromJson(clipboard, CustomRoute.class);
 
 			if (route == null)
 			{
-				showErrorMessage("Invalid route JSON");
-				return false;
+				throw new Exception("Invalid route JSON");
 			}
 
-			if (route.getName().isEmpty())
+			if (route.getName() == null || route.getName().isEmpty())
 			{
-				route.setName("Imported Route");
+                throw new Exception("Missing route name");
+			}
+
+			if (route.getTaskType() == null || route.getTaskType().isEmpty())
+			{
+				throw new Exception("Missing route task type");
+			}
+
+			if (route.getId() == null || route.getId().isEmpty())
+			{
+				route.setId(UUID.randomUUID().toString());
 			}
 
 			String currentTaskType = taskService.getCurrentTaskType().getTaskJsonName();
@@ -82,6 +93,29 @@ public class RouteManager
 
 			route.setTaskType(currentTaskType);
 
+			Set<CustomRouteItem> duplicates = getDuplicateCustomRouteItems(route);
+			if (!duplicates.isEmpty())
+			{
+				int result = JOptionPane.showConfirmDialog(
+					null,
+					"Duplicate custom item IDs detected.\n"
+						+ "The imported route may be different than expected.\n\n"
+						+ "Import anyway?",
+					"Duplicate IDs",
+					JOptionPane.OK_CANCEL_OPTION,
+					JOptionPane.WARNING_MESSAGE
+				);
+				if (result != JOptionPane.OK_OPTION)
+				{
+					return false;
+				}
+				for (CustomRouteItem ci : duplicates)
+				{
+					String newId = UUID.randomUUID().toString();
+					log.warn("Duplicate custom item ID '{}' found, regenerated as '{}'", ci.getId(), newId);
+					ci.setId(newId);
+				}
+			}
 			ConfigValues.TaskListTabs currentTab = config.taskListTab();
 
 			trackerGlobalConfigStore.addRoute(currentTaskType, route);
@@ -116,10 +150,7 @@ public class RouteManager
 			return false;
 		}
 
-		Gson routeGson = gson.newBuilder()
-			.excludeFieldsWithoutExposeAnnotation()
-			.setPrettyPrinting()
-			.create();
+		Gson routeGson = GsonFactory.newBuilder(gson).setPrettyPrinting().create();
 
 		String json = routeGson.toJson(route);
 
@@ -158,12 +189,12 @@ public class RouteManager
 			return false;
 		}
 
-		CustomRoute route = new CustomRoute(name);
+		CustomRoute route = new CustomRoute(UUID.randomUUID().toString(), name, taskService.getCurrentTaskType().getTaskJsonName());
 		route.setTaskType(taskService.getCurrentTaskType().getTaskJsonName());
 		route.setAuthor("User");
 		route.setDescription("Created from current task order");
 
-		RouteSection section = new RouteSection("All Tasks");
+		RouteSection section = new RouteSection(UUID.randomUUID().toString(), "All Tasks");
 		section.setTaskIds(visibleTaskIds);
 
 		route.setSections(List.of(section));
@@ -223,6 +254,35 @@ public class RouteManager
 
 		log.debug("Deleted route: {}", routeName);
 		return true;
+	}
+
+	/**
+	 * Returns a set of duplicate CustomRouteItems (by ID) found in the route.
+	 * If empty, there are no duplicates.
+	 */
+	private Set<CustomRouteItem> getDuplicateCustomRouteItems(CustomRoute route)
+	{
+		Set<CustomRouteItem> duplicates = new HashSet<>();
+		if (route.getSections() == null)
+		{
+			return duplicates;
+		}
+		Set<String> seenIds = new HashSet<>();
+		for (RouteSection section : route.getSections())
+		{
+			for (RouteItem item : section.getItems())
+			{
+				if (!item.isTask() && item.getCustomItem() != null)
+				{
+					CustomRouteItem ci = item.getCustomItem();
+					if (!seenIds.add(ci.getId()))
+					{
+						duplicates.add(ci);
+					}
+				}
+			}
+		}
+		return duplicates;
 	}
 
 	private void showErrorMessage(String message)

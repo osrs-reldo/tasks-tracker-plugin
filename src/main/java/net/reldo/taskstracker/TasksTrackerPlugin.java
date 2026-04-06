@@ -27,10 +27,10 @@ import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.Export;
-import net.reldo.taskstracker.data.LongSerializer;
 import net.reldo.taskstracker.data.TasksSummary;
 import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.TrackerRSProfileConfigStore;
+import net.reldo.taskstracker.data.gson.GsonFactory;
 import net.reldo.taskstracker.data.route.RouteManager;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.reader.HttpDataStoreReader;
@@ -103,6 +103,7 @@ public class TasksTrackerPlugin extends Plugin
 	private Gson gson;
 	@Inject
 	private Client client;
+	@Getter
 	@Inject
 	private SpriteManager spriteManager;
 	@Inject
@@ -649,10 +650,7 @@ public class TasksTrackerPlugin extends Plugin
 	private String getCurrentTaskTypeExportJson()
 	{
 		TaskType taskType = taskService.getCurrentTaskType();
-		Gson gson = this.gson.newBuilder()
-			.excludeFieldsWithoutExposeAnnotation()
-			.registerTypeAdapter(float.class, new LongSerializer())
-			.create();
+		Gson gson = GsonFactory.newBuilder(this.gson).create();
 
 		if (taskType == null)
 		{
@@ -704,6 +702,11 @@ public class TasksTrackerPlugin extends Plugin
 	public TaskPanel getPriorityTask()
 	{
 		return pluginPanel.getPriorityTask();
+	}
+
+	public javax.swing.JComponent getPriorityPanel()
+	{
+		return pluginPanel.getPriorityPanel();
 	}
 
 	public void redraw()
