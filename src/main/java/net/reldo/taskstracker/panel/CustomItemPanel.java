@@ -26,6 +26,7 @@ import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.route.CustomRouteItem;
 import net.reldo.taskstracker.data.route.RouteItem;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.ui.FontManager;
@@ -223,6 +224,11 @@ public class CustomItemPanel extends JPanel
 		return customItem.getId();
 	}
 
+	public WorldPoint getWorldLocation()
+	{
+		return routeItem.getLocation();
+	}
+
 	public void refresh(Set<String> completedIds)
 	{
 		boolean isComplete = completedIds.contains(customItem.getId());
@@ -244,14 +250,14 @@ public class CustomItemPanel extends JPanel
 		sb.append(HtmlUtil.wrapWithBold(customItem.getDisplayLabel()));
 		if (customItem.getDescription() != null && !customItem.getDescription().isEmpty())
 		{
-			sb.append(HtmlUtil.HTML_LINE_BREAK).append(customItem.getDescription());
+			sb.append(HtmlUtil.HTML_LINE_BREAK).append(customItem.getDescription().replace("\n", HtmlUtil.HTML_LINE_BREAK));
 		}
 
 		String note = routeItem.getNote();
 		if (note != null && !note.isEmpty())
 		{
 			sb.append(HtmlUtil.HTML_LINE_BREAK).append(HtmlUtil.HTML_LINE_BREAK);
-			sb.append(HtmlUtil.wrapWithItalics(note));
+			sb.append(HtmlUtil.wrapWithItalics(note.replace("\n", HtmlUtil.HTML_LINE_BREAK)));
 		}
 
 		return HtmlUtil.wrapWithHtml(
@@ -278,9 +284,28 @@ public class CustomItemPanel extends JPanel
 		if (desc != null && !desc.isEmpty())
 		{
 			panelComponent.getChildren().add(LineComponent.builder().build());
+			for (String line : desc.split("\n"))
+			{
+				panelComponent.getChildren().add(LineComponent.builder()
+					.left(line)
+					.build());
+			}
+		}
+
+		String note = routeItem.getNote();
+		if (note != null && !note.isEmpty())
+		{
+			panelComponent.getChildren().add(LineComponent.builder().build());
 			panelComponent.getChildren().add(LineComponent.builder()
-				.left(desc)
+				.left("Note:")
 				.build());
+			for (String line : note.split("\n"))
+			{
+				panelComponent.getChildren().add(LineComponent.builder()
+					.left(line)
+					.leftFont(FontManager.getRunescapeFont().deriveFont(java.awt.Font.ITALIC))
+					.build());
+			}
 		}
 	}
 }

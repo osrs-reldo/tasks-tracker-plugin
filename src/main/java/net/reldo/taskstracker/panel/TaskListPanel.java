@@ -33,6 +33,7 @@ import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
 import net.reldo.taskstracker.panel.components.SectionHeaderPanel;
 import net.runelite.api.Skill;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.FontManager;
 
 @Slf4j
@@ -391,8 +392,12 @@ public class TaskListPanel extends JScrollPane
 	{
 		forceUpdatePriorityTaskFlag = false;
 
-		Optional<TaskPanel> optionalTaskPanel = taskPanels.stream().filter(Component::isVisible).
-			min((panel1, panel2) ->
+		boolean routeModeActive = plugin.isRouteMode();
+
+		Optional<TaskPanel> optionalTaskPanel = taskPanels.stream()
+			.filter(Component::isVisible)
+			.filter(panel -> !routeModeActive || !panel.task.isCompleted())
+			.min((panel1, panel2) ->
 				Integer.compare(getCurrentTaskListListPanel().getComponentZOrder(panel1),
 					getCurrentTaskListListPanel().getComponentZOrder(panel2)));
 		priorityTaskPanel = optionalTaskPanel.orElse(null);
@@ -404,6 +409,39 @@ public class TaskListPanel extends JScrollPane
 				getCurrentTaskListListPanel().getComponentZOrder(p1),
 				getCurrentTaskListListPanel().getComponentZOrder(p2)));
 		priorityCustomItemPanel = optionalCustomPanel.orElse(null);
+
+		plugin.getShortestPathService().setGpsTarget(getGpsTargetLocation());
+	}
+
+	private WorldPoint getGpsTargetLocation()
+	{
+		JComponent priority = getPriorityPanel();
+		if (priority instanceof CustomItemPanel)
+		{
+			return ((CustomItemPanel) priority).getWorldLocation();
+		}
+		if (priority instanceof TaskPanel)
+		{
+			TaskPanel taskPanel = (TaskPanel) priority;
+			ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+			CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
+			if (activeRoute != null)
+			{
+				WorldPoint routeLocation = activeRoute.getFlattenedItems().stream()
+					.filter(item -> item.isTask() && taskPanel.task.getStructId().equals(item.getTaskId()))
+					.map(RouteItem::getLocation)
+					.filter(java.util.Objects::nonNull)
+					.findFirst()
+					.orElse(null);
+				if (routeLocation != null)
+				{
+					return routeLocation;
+				}
+			}
+			// Fall back to store location (single-location tasks)
+			return taskPanel.task.getTaskDefinition().getLocation();
+		}
+		return null;
 	}
 
 	/**
