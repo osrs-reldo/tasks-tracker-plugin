@@ -2,6 +2,8 @@ package net.reldo.taskstracker.data.jsondatastore;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import net.reldo.taskstracker.data.gson.WorldPointAdapter;
+import net.runelite.api.coords.WorldPoint;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
@@ -69,7 +71,10 @@ public class TaskDataClient
 			InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
 		{
 			Type listType = TypeToken.getParameterized(ArrayList.class, TaskDefinition.class).getType();
-			return this.gson.fromJson(responseReader, listType);
+			Gson taskGson = this.gson.newBuilder()
+				.registerTypeAdapter(WorldPoint.class, new WorldPointAdapter())
+				.create();
+			return taskGson.fromJson(responseReader, listType);
 		}
 	}
 }

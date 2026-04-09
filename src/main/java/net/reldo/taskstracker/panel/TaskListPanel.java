@@ -427,12 +427,19 @@ public class TaskListPanel extends JScrollPane
 			CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
 			if (activeRoute != null)
 			{
-				return activeRoute.getFlattenedItems().stream()
+				WorldPoint routeLocation = activeRoute.getFlattenedItems().stream()
 					.filter(item -> item.isTask() && taskPanel.task.getStructId().equals(item.getTaskId()))
 					.map(RouteItem::getLocation)
+					.filter(java.util.Objects::nonNull)
 					.findFirst()
 					.orElse(null);
+				if (routeLocation != null)
+				{
+					return routeLocation;
+				}
 			}
+			// Fall back to store location (single-location tasks)
+			return taskPanel.task.getTaskDefinition().getLocation();
 		}
 		return null;
 	}

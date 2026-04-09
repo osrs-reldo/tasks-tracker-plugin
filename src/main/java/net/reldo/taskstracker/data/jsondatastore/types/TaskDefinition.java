@@ -3,6 +3,7 @@ package net.reldo.taskstracker.data.jsondatastore.types;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
+import net.runelite.api.coords.WorldPoint;
 
 /**
  * Represents a task with various attributes
@@ -43,4 +44,10 @@ public class TaskDefinition
 	 * Completion percent from the OSRS wiki
 	 */
 	private Float completionPercent;
+
+	/**
+	 * Default completion location for single-location tasks.
+	 * Used as GPS fallback when no route location is set.
+	 */
+	private WorldPoint location;
 }
