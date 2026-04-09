@@ -191,6 +191,18 @@ public interface TasksTrackerConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		position = 15,
+		keyName = "useShortestPath",
+		name = "Shortest Path GPS",
+		description = "Navigate to the current task using the Shortest Path plugin. Requires the overlay to be enabled.",
+		section = overlaySettings
+	)
+	default boolean useShortestPath()
+	{
+		return true;
+	}
+
 
 	/*=================================================================================================================
 	-- Internal settings                                                                                              --
