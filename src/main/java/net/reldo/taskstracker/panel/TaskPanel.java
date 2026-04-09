@@ -142,7 +142,7 @@ public class TaskPanel extends JPanel
 					.findFirst()
 					.ifPresent(note -> {
 						tooltipText.append(HtmlUtil.HTML_LINE_BREAK).append(HtmlUtil.HTML_LINE_BREAK);
-						tooltipText.append(HtmlUtil.wrapWithItalics(note)).append(HtmlUtil.HTML_LINE_BREAK);
+						tooltipText.append(HtmlUtil.wrapWithItalics(note.replace("\n", HtmlUtil.HTML_LINE_BREAK))).append(HtmlUtil.HTML_LINE_BREAK);
 					});
 			}
 		}
@@ -572,10 +572,13 @@ public class TaskPanel extends JPanel
 					.left("Note:")
 					.build());
 
-				panelComponent.getChildren().add(LineComponent.builder()
-					.left(task.getNote())
-					.leftFont(FontManager.getRunescapeFont().deriveFont(Font.ITALIC))
-					.build());
+				for (String line : task.getNote().split("\n"))
+				{
+					panelComponent.getChildren().add(LineComponent.builder()
+						.left(line)
+						.leftFont(FontManager.getRunescapeFont().deriveFont(Font.ITALIC))
+						.build());
+				}
 			}
 		}
 	}

@@ -250,14 +250,14 @@ public class CustomItemPanel extends JPanel
 		sb.append(HtmlUtil.wrapWithBold(customItem.getDisplayLabel()));
 		if (customItem.getDescription() != null && !customItem.getDescription().isEmpty())
 		{
-			sb.append(HtmlUtil.HTML_LINE_BREAK).append(customItem.getDescription());
+			sb.append(HtmlUtil.HTML_LINE_BREAK).append(customItem.getDescription().replace("\n", HtmlUtil.HTML_LINE_BREAK));
 		}
 
 		String note = routeItem.getNote();
 		if (note != null && !note.isEmpty())
 		{
 			sb.append(HtmlUtil.HTML_LINE_BREAK).append(HtmlUtil.HTML_LINE_BREAK);
-			sb.append(HtmlUtil.wrapWithItalics(note));
+			sb.append(HtmlUtil.wrapWithItalics(note.replace("\n", HtmlUtil.HTML_LINE_BREAK)));
 		}
 
 		return HtmlUtil.wrapWithHtml(
@@ -284,9 +284,12 @@ public class CustomItemPanel extends JPanel
 		if (desc != null && !desc.isEmpty())
 		{
 			panelComponent.getChildren().add(LineComponent.builder().build());
-			panelComponent.getChildren().add(LineComponent.builder()
-				.left(desc)
-				.build());
+			for (String line : desc.split("\n"))
+			{
+				panelComponent.getChildren().add(LineComponent.builder()
+					.left(line)
+					.build());
+			}
 		}
 
 		String note = routeItem.getNote();
@@ -296,10 +299,13 @@ public class CustomItemPanel extends JPanel
 			panelComponent.getChildren().add(LineComponent.builder()
 				.left("Note:")
 				.build());
-			panelComponent.getChildren().add(LineComponent.builder()
-				.left(note)
-				.leftFont(FontManager.getRunescapeFont().deriveFont(java.awt.Font.ITALIC))
-				.build());
+			for (String line : note.split("\n"))
+			{
+				panelComponent.getChildren().add(LineComponent.builder()
+					.left(line)
+					.leftFont(FontManager.getRunescapeFont().deriveFont(java.awt.Font.ITALIC))
+					.build());
+			}
 		}
 	}
 }
