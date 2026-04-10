@@ -170,4 +170,12 @@ public class TasksTrackerPluginPanel extends PluginPanel
 			loggedInPanel.enableTaskTypeDropdown();
 		}
 	}
+
+	public void hideRouteModeButton(boolean hideRouteModeButton)
+	{
+		if (loggedInPanelVisible)
+		{
+			loggedInPanel.hideRouteModeButton(hideRouteModeButton);
+		}
+	}
 }

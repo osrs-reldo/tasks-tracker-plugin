@@ -9,6 +9,7 @@ import java.util.Optional;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -47,6 +48,7 @@ import net.runelite.client.util.SwingUtil;
 @Slf4j
 public class LoggedInPanel extends JPanel
 {
+
 	public TaskListPanel taskListPanel;
 	private JComboBox<ComboItem<TaskType>> taskTypeDropdown;
 
@@ -76,6 +78,7 @@ public class LoggedInPanel extends JPanel
 	private JToggleButton tabOne;
 	private JToggleButton tabTwo;
 	private JToggleButton tabThree;
+	private JButton routeButton;
 
 	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, TaskService taskService, RouteManager routeManager)
 	{
@@ -380,6 +383,18 @@ public class LoggedInPanel extends JPanel
 	{
 		JPanel southPanel = new JPanel(new BorderLayout());
 		southPanel.setBorder(new EmptyBorder(5, 0, 2, 0));
+
+		routeButton = new JButton("Route Mode");
+		routeButton.setBorder(new EmptyBorder(5, 5, 5, 5));
+		routeButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
+		routeButton.addActionListener(e -> plugin.showRouteTutorial());
+		hideRouteModeButton(config.hideRouteModeButton());
+		plugin.getSpriteManager().getSpriteAsync(Icons.INFO_ICON, 0, img -> {
+			SwingUtilities.invokeLater(() -> {
+				routeButton.setIcon(new ImageIcon(img));
+			});
+		});
+		southPanel.add(routeButton, BorderLayout.NORTH);
 
 		JButton importButton = new JButton("Import");
 		importButton.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -809,6 +824,11 @@ public class LoggedInPanel extends JPanel
 		{
 			taskTypeDropdown.setEnabled(true);
 		}
+	}
+
+	public void hideRouteModeButton(boolean hide)
+	{
+		routeButton.setVisible(!hide);
 	}
 
 	private void initTaskTypeDropdownAsync()

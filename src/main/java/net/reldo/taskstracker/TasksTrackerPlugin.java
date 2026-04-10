@@ -309,6 +309,11 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
 		}
+
+		if (configChanged.getKey().equals("hideRouteModeButton"))
+		{
+			pluginPanel.hideRouteModeButton(config.hideRouteModeButton());
+		}
 	}
 
 	@Subscribe
@@ -708,6 +713,24 @@ public class TasksTrackerPlugin extends Plugin
 				LinkBrowser.browse("https://www.osleague.tools/tracker?open=import&tab=tasks");
 			}
 		});
+	}
+
+	public void showRouteTutorial()
+	{
+		String hideButtonOption = "Close & Hide tutorial button";
+		JOptionPane optionPane;
+		String[] options = {"Close Tutorial", hideButtonOption};
+		optionPane = new JOptionPane("This is the Route Mode Tutorial!", JOptionPane.INFORMATION_MESSAGE, JOptionPane.YES_NO_OPTION, null, options, options[0]);
+		JDialog dialog;
+		dialog = optionPane.createDialog(pluginPanel, "Route Tutorial");
+		dialog.setAlwaysOnTop(true);
+		dialog.setVisible(true);
+
+		Object selectedValue = optionPane.getValue();
+		if (hideButtonOption.equals(selectedValue))
+		{
+			configManager.setConfiguration(CONFIG_GROUP_NAME, "hideRouteModeButton", true);
+		}
 	}
 
 	public TaskPanel getPriorityTask()

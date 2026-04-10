@@ -23,6 +23,18 @@ public interface TasksTrackerConfig extends Config
 	String generalSettings = "generalSettings";
 
 	@ConfigItem(
+		position = 5,
+		keyName = "hideRouteModeButton",
+		name = "Hide Route Mode Button",
+		description = "Hides the \"Route Mode\" button at the bottom of the plugin panel.",
+		section = generalSettings
+	)
+	default boolean hideRouteModeButton()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		position = 10,
 		keyName = "untrackUponCompletion",
 		name = "Untrack Tasks Upon Completion",
