@@ -468,6 +468,49 @@ public class TaskListPanel extends JScrollPane
 		return taskZ < customZ ? priorityTaskPanel : priorityCustomItemPanel;
 	}
 
+	public void collapseAllSections()
+	{
+		setAllSectionsCollapseState(true);
+	}
+
+	public void expandAllSections()
+	{
+		setAllSectionsCollapseState(false);
+	}
+
+	public void setAllSectionsCollapseState(boolean collapsed)
+	{
+		getActiveSectionHeaderPanels().ifPresent(headerPanels -> {
+			headerPanels.values().forEach(headerPanel -> headerPanel.setCollapsedSilent(collapsed));
+			refreshAllTasks();
+		});
+	}
+
+	public void collapseAllExcept(String sectionName)
+	{
+		getActiveSectionHeaderPanels().ifPresent(headerPanels -> {
+			headerPanels.values()
+			.forEach(headerPanel -> headerPanel.setCollapsedSilent(!Objects.equals(headerPanel.getSectionName(), sectionName)));
+			refreshAllTasks();
+		});
+	}
+
+	public Optional<Map<String, SectionHeaderPanel>> getActiveSectionHeaderPanels()
+	{
+		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
+		CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
+		if (activeRoute == null)
+		{
+			return Optional.empty();
+		}
+		if (sectionHeaderPanels == null)
+		{
+			return Optional.empty();
+		}
+
+		return Optional.of(sectionHeaderPanels.get(activeRoute.getName()));
+	}
+
 	public String getEmptyTaskListMessage()
 	{
 		return "No tasks match the current filters.";
@@ -679,6 +722,9 @@ public class TaskListPanel extends JScrollPane
 					}
 					header.setCollapseCallback(collapsed -> {
 						SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
+					});
+					header.setCollapseOthersCallback(sectionName -> {
+						SwingUtilities.invokeLater(() -> collapseAllExcept(sectionName));
 					});
 					header.setVisible(true);
 

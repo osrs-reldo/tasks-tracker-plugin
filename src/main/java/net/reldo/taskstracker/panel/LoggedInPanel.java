@@ -640,6 +640,18 @@ public class LoggedInPanel extends JPanel
 		});
 		deleteItem.setEnabled(routeSelector.getSelectedRouteName() != null);
 
+		JMenuItem collapseSectionsItem = new JMenuItem("Collapse All Sections");
+		collapseSectionsItem.addActionListener(e -> {
+			taskListPanel.collapseAllSections();
+		});
+		collapseSectionsItem.setEnabled(routeSelector.getSelectedRouteName() != null);
+
+		JMenuItem expandSectionsItem = new JMenuItem("Expand All Sections");
+		expandSectionsItem.addActionListener(e -> {
+			taskListPanel.expandAllSections();
+		});
+		expandSectionsItem.setEnabled(routeSelector.getSelectedRouteName() != null);
+
 		// Route management menu items disabled while route editor in development
 		JMenuItem editorItem = new JMenuItem("Route Editor (Coming soon)");
 		editorItem.setEnabled(false);
@@ -655,6 +667,9 @@ public class LoggedInPanel extends JPanel
 		menu.add(deleteItem);
 		menu.addSeparator();
 		menu.add(editorItem);
+		menu.addSeparator();
+		menu.add(collapseSectionsItem);
+		menu.add(expandSectionsItem);
 
 		// Show below the manage button
 		menu.show(routeSelector, routeSelector.getWidth() - menu.getPreferredSize().width,

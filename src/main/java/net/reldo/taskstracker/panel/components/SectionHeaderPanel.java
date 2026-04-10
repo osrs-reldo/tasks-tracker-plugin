@@ -7,7 +7,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,6 +40,8 @@ public class SectionHeaderPanel extends JPanel
 
 	@Setter
 	private Consumer<Boolean> collapseCallback;
+	@Setter
+	private Consumer<String> collapseOthersCallback;
 
 	public SectionHeaderPanel(String sectionName, String description)
 	{
@@ -67,15 +71,31 @@ public class SectionHeaderPanel extends JPanel
 		container.add(titleLabel, BorderLayout.CENTER);
 		container.add(progressLabel, BorderLayout.EAST);
 
+		JPopupMenu popupMenu = new JPopupMenu();
+
+		JMenuItem collapseOthersItem = new JMenuItem("Collapse All Except");
+		collapseOthersItem.addActionListener(e -> {
+			if (collapseCallback != null)
+			{
+				collapseOthersCallback.accept(sectionName);
+			}
+		});
+		popupMenu.add(collapseOthersItem);
+
+		container.setComponentPopupMenu(popupMenu);
+
 		add(container, BorderLayout.CENTER);
 
 		// Click to toggle collapse
 		container.addMouseListener(new MouseAdapter()
 		{
 			@Override
-			public void mouseClicked(MouseEvent e)
+			public void mousePressed(MouseEvent e)
 			{
-				toggleCollapse();
+				if (e.getButton() == MouseEvent.BUTTON1)
+				{
+					toggleCollapse();
+				}
 			}
 
 			@Override
@@ -108,13 +128,7 @@ public class SectionHeaderPanel extends JPanel
 
 	private void toggleCollapse()
 	{
-		collapsed = !collapsed;
-		updateTitleText();
-
-		if (collapseCallback != null)
-		{
-			collapseCallback.accept(collapsed);
-		}
+		setCollapsed(!collapsed);
 	}
 
 	private void updateTitleText()
@@ -131,6 +145,16 @@ public class SectionHeaderPanel extends JPanel
 
 		html.append("</html>");
 		titleLabel.setText(html.toString());
+	}
+
+	public void setCollapsed(boolean collapsed)
+	{
+		this.collapsed = collapsed;
+		updateTitleText();
+		if (collapseCallback != null)
+		{
+			collapseCallback.accept(collapsed);
+		}
 	}
 
 	/**
