@@ -43,8 +43,6 @@ public class CustomItemPanel extends JPanel
 	private static final Color BACKGROUND_DEFAULT = ColorScheme.DARKER_GRAY_COLOR;
 	private static final Color BACKGROUND_COMPLETED = new Color(40, 60, 40);
 
-	private static final int UNCHECKED_ICON = 697;
-	private static final int CHECKED_ICON = 699;
 	private static final int MAX_ICON_DIMENSION = 22;
 
 	private final TasksTrackerPlugin plugin;
@@ -93,12 +91,12 @@ public class CustomItemPanel extends JPanel
 		}
 
 		completeToggle = new JToggleButton();
-		plugin.getSpriteManager().getSpriteAsync(UNCHECKED_ICON, 0, img -> {
+		plugin.getSpriteManager().getSpriteAsync(Icons.UNCHECKED_ICON, 0, img -> {
 			SwingUtilities.invokeLater(() -> {
 				completeToggle.setIcon(new ImageIcon(img));
 			});
 		});
-		plugin.getSpriteManager().getSpriteAsync(CHECKED_ICON, 0, img -> {
+		plugin.getSpriteManager().getSpriteAsync(Icons.CHECKED_ICON, 0, img -> {
 			SwingUtilities.invokeLater(() -> {
 				completeToggle.setSelectedIcon(new ImageIcon(img));
 			});
@@ -204,7 +202,7 @@ public class CustomItemPanel extends JPanel
 		configStore.saveCustomItemCompletion(taskType, activeRoute.getName(), completedIds);
 
 		// Full redraw to update section progress and overlay priority
-		plugin.pluginPanel.redraw();
+		plugin.refreshAllTasks();
 	}
 
 	private void updateAppearance()
@@ -268,6 +266,21 @@ public class CustomItemPanel extends JPanel
 	public void buildOverlayText(Graphics2D graphics, PanelComponent panelComponent)
 	{
 		panelComponent.setBackgroundColor(ComponentConstants.STANDARD_BACKGROUND_COLOR);
+
+		if (plugin.getConfig().dynamicOverlayPanelColourEnabled())
+		{
+			Color taskColour = container.getBackground();
+			Color overlayColour = new Color(
+				taskColour.getRed(),
+				taskColour.getGreen(),
+				taskColour.getBlue(),
+				ComponentConstants.STANDARD_BACKGROUND_COLOR.getAlpha());
+			panelComponent.setBackgroundColor(overlayColour);
+		}
+		else
+		{
+			panelComponent.setBackgroundColor(ComponentConstants.STANDARD_BACKGROUND_COLOR);
+		}
 
 		String title = customItem.getDisplayLabel();
 		String desc = customItem.getDescription();
