@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -71,8 +72,22 @@ public class TrackerGlobalConfigStore
 			{
 				return new ArrayList<>();
 			}
-			// Remove null routes and routes with null names (malformed data)
-			routes.removeIf(r -> r == null || r.getName() == null);
+			// Remove null routes and assign UUID to old route data
+			routes.removeIf(route -> route == null);
+			routes.forEach(route -> {
+				if (route.getId() == null || route.getId().isEmpty())
+				{
+					route.setId(UUID.randomUUID().toString());
+				}
+
+				route.getSections().forEach(section -> {
+					if (section.getId() == null || section.getId().isEmpty())
+					{
+						section.setId(UUID.randomUUID().toString());
+					}
+				});
+			});
+			saveRoutes(taskType, routes);
 			return routes;
 		}
 		catch (JsonParseException ex)
@@ -82,30 +97,30 @@ public class TrackerGlobalConfigStore
 		}
 	}
 
-	/** Adds or updates a route. If a route with the same name exists, it is replaced. */
+	/** Adds or updates a route. If a route with the same id exists, it is replaced. */
 	public void addRoute(String taskType, CustomRoute route)
 	{
-		if (route == null || route.getName() == null)
+		if (route == null)
 		{
-			log.warn("Cannot add route with null name");
+			log.warn("Cannot add a null route");
 			return;
 		}
 		List<CustomRoute> routes = loadRoutes(taskType);
-		String routeName = route.getName();
-		routes.removeIf(r -> r.getName().equals(routeName));
+		String routeId = route.getId();
+		routes.removeIf(r -> r.getId().equals(routeId));
 		routes.add(route);
 		saveRoutes(taskType, routes);
 	}
 
-	/** Removes a route by name. */
-	public void removeRoute(String taskType, String routeName)
+	/** Removes a route by id. */
+	public void removeRoute(String taskType, String routeId)
 	{
-		if (routeName == null)
+		if (routeId == null)
 		{
 			return;
 		}
 		List<CustomRoute> routes = loadRoutes(taskType);
-		routes.removeIf(r -> routeName.equals(r.getName()));
+		routes.removeIf(r -> routeId.equals(r.getId()));
 		saveRoutes(taskType, routes);
 	}
 
@@ -117,41 +132,41 @@ public class TrackerGlobalConfigStore
 	// ========================================================================
 
 	/** Saves which route is active for a specific tab and task type. Pass null to clear. */
-	public void saveActiveRouteName(ConfigValues.TaskListTabs tab, String taskType, String routeName)
+	public void saveActiveRouteId(ConfigValues.TaskListTabs tab, String taskType, String routeId)
 	{
 		String key = "activeRoute" + CONFIG_GROUP_PREFIX_SEPARATOR + tab.configID + CONFIG_GROUP_PREFIX_SEPARATOR + taskType;
-		if (routeName == null || routeName.isEmpty())
+		if (routeId == null || routeId.isEmpty())
 		{
 			configManager.unsetConfiguration(CONFIG_GROUP_NAME, key);
 		}
 		else
 		{
-			configManager.setConfiguration(CONFIG_GROUP_NAME, key, routeName);
+			configManager.setConfiguration(CONFIG_GROUP_NAME, key, routeId);
 		}
 	}
 
-	/** Loads the name of the active route for a specific tab and task type. Returns null if none. */
-	public String loadActiveRouteName(ConfigValues.TaskListTabs tab, String taskType)
+	/** Loads the id of the active route for a specific tab and task type. Returns null if none. */
+	public String loadActiveRouteId(ConfigValues.TaskListTabs tab, String taskType)
 	{
 		String key = "activeRoute" + CONFIG_GROUP_PREFIX_SEPARATOR + tab.configID + CONFIG_GROUP_PREFIX_SEPARATOR + taskType;
-		String name = configManager.getConfiguration(CONFIG_GROUP_NAME, key);
-		if (name == null || name.isEmpty())
+		String id = configManager.getConfiguration(CONFIG_GROUP_NAME, key);
+		if (id == null || id.isEmpty())
 		{
 			return null;
 		}
-		return name;
+		return id;
 	}
 
 	/** Loads and returns the full active route object for a tab, or null if none selected. */
 	public CustomRoute getActiveRoute(ConfigValues.TaskListTabs tab, String taskType)
 	{
-		String name = loadActiveRouteName(tab, taskType);
-		if (name == null || name.isEmpty())
+		String id = loadActiveRouteId(tab, taskType);
+		if (id == null || id.isEmpty())
 		{
 			return null;
 		}
 		return loadRoutes(taskType).stream()
-			.filter(r -> name.equals(r.getName()))
+			.filter(r -> id.equals(r.getId()))
 			.findFirst()
 			.orElse(null);
 	}
@@ -159,15 +174,15 @@ public class TrackerGlobalConfigStore
 	// ========================================================================
 	// Custom Item Completion Tracking
 	// Tracks which custom items (bank stops, teleports, etc.) have been marked complete.
-	// Stored in global config per taskType + routeName (shared across tabs using the same route).
-	// Config key pattern: "customCompletion-{taskType}-{routeName}"
+	// Stored in global config per taskType + routeId (shared across tabs using the same route).
+	// Config key pattern: "customCompletion-{taskType}-{routeId}"
 	// ========================================================================
 
 	/** Saves the set of completed custom item IDs for a route. Pass empty/null to clear. */
-	public void saveCustomItemCompletion(String taskType, String routeName, Set<String> completedIds)
+	public void saveCustomItemCompletion(String taskType, String routeId, Set<String> completedIds)
 	{
 		String key = "customCompletion" + CONFIG_GROUP_PREFIX_SEPARATOR + taskType
-			+ CONFIG_GROUP_PREFIX_SEPARATOR + routeName;
+			+ CONFIG_GROUP_PREFIX_SEPARATOR + routeId;
 		if (completedIds == null || completedIds.isEmpty())
 		{
 			configManager.unsetConfiguration(CONFIG_GROUP_NAME, key);
@@ -180,10 +195,10 @@ public class TrackerGlobalConfigStore
 	}
 
 	/** Loads the set of completed custom item IDs for a route. Returns empty set if none. */
-	public Set<String> loadCustomItemCompletion(String taskType, String routeName)
+	public Set<String> loadCustomItemCompletion(String taskType, String routeId)
 	{
 		String key = "customCompletion" + CONFIG_GROUP_PREFIX_SEPARATOR + taskType
-			+ CONFIG_GROUP_PREFIX_SEPARATOR + routeName;
+			+ CONFIG_GROUP_PREFIX_SEPARATOR + routeId;
 		String value = configManager.getConfiguration(CONFIG_GROUP_NAME, key);
 		if (value == null || value.isEmpty())
 		{
@@ -193,8 +208,8 @@ public class TrackerGlobalConfigStore
 	}
 
 	/** Clears all custom item completion data for a route. */
-	public void resetCustomItemCompletion(String taskType, String routeName)
+	public void resetCustomItemCompletion(String taskType, String routeId)
 	{
-		saveCustomItemCompletion(taskType, routeName, null);
+		saveCustomItemCompletion(taskType, routeId, null);
 	}
 }

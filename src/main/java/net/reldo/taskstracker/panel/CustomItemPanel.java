@@ -190,7 +190,7 @@ public class CustomItemPanel extends JPanel
 		}
 
 		TrackerGlobalConfigStore configStore = plugin.getTrackerGlobalConfigStore();
-		Set<String> completedIds = configStore.loadCustomItemCompletion(taskType, activeRoute.getName());
+		Set<String> completedIds = configStore.loadCustomItemCompletion(taskType, activeRoute.getId());
 		if (completed)
 		{
 			completedIds.add(customItem.getId());
@@ -199,7 +199,7 @@ public class CustomItemPanel extends JPanel
 		{
 			completedIds.remove(customItem.getId());
 		}
-		configStore.saveCustomItemCompletion(taskType, activeRoute.getName(), completedIds);
+		configStore.saveCustomItemCompletion(taskType, activeRoute.getId(), completedIds);
 
 		// Full redraw to update section progress and overlay priority
 		plugin.refreshAllTasks();

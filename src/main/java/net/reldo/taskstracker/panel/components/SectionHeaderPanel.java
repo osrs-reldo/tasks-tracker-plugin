@@ -28,6 +28,8 @@ public class SectionHeaderPanel extends JPanel
 	private static final String ARROW_COLLAPSED = "\u25B6";
 
 	@Getter
+	private final String sectionId;
+	@Getter
 	private final String sectionName;
 
 	@Getter
@@ -43,8 +45,9 @@ public class SectionHeaderPanel extends JPanel
 	@Setter
 	private Consumer<String> collapseOthersCallback;
 
-	public SectionHeaderPanel(String sectionName, String description)
+	public SectionHeaderPanel(String sectionId, String sectionName, String description)
 	{
+		this.sectionId = sectionId;
 		this.sectionName = sectionName;
 		this.description = description;
 
@@ -77,7 +80,7 @@ public class SectionHeaderPanel extends JPanel
 		collapseOthersItem.addActionListener(e -> {
 			if (collapseCallback != null)
 			{
-				collapseOthersCallback.accept(sectionName);
+				collapseOthersCallback.accept(sectionId);
 			}
 		});
 		popupMenu.add(collapseOthersItem);

@@ -13,9 +13,9 @@ import net.runelite.client.ui.ColorScheme;
 
 public class RouteSelector extends JPanel
 {
-	private static final String NO_ROUTE_OPTION = "(None)";
+	private static final CustomRoute NO_ROUTE_OPTION = new CustomRoute("ThisIsNotARoute", "(none)", "AllTaskTypes" );
 
-	private final JComboBox<String> routeDropdown;
+	private final JComboBox<CustomRoute> routeDropdown;
 	private final JButton manageButton;
 	private boolean isUpdating = false;
 
@@ -42,7 +42,7 @@ public class RouteSelector extends JPanel
 		add(manageButton, BorderLayout.EAST);
 	}
 
-	public void setRoutes(List<CustomRoute> routes, String activeRouteName)
+	public void setRoutes(List<CustomRoute> routes, String activeRouteId)
 	{
 		isUpdating = true;
 		try
@@ -54,13 +54,13 @@ public class RouteSelector extends JPanel
 			{
 				for (CustomRoute route : routes)
 				{
-					routeDropdown.addItem(route.getName());
+					routeDropdown.addItem(route);
 				}
-			}
 
-			if (activeRouteName != null && !activeRouteName.isEmpty())
-			{
-				routeDropdown.setSelectedItem(activeRouteName);
+				routes.stream()
+					.filter(route -> route.getId().equals(activeRouteId))
+					.findFirst()
+					.ifPresentOrElse(routeDropdown::setSelectedItem, () -> routeDropdown.setSelectedItem(NO_ROUTE_OPTION));
 			}
 			else
 			{
@@ -73,10 +73,22 @@ public class RouteSelector extends JPanel
 		}
 	}
 
+	public CustomRoute getSelectedRoute()
+	{
+		CustomRoute selected = (CustomRoute) routeDropdown.getSelectedItem();
+		return NO_ROUTE_OPTION.equals(selected) ? null : selected;
+	}
+
+	public String getSelectedRouteId()
+	{
+		CustomRoute selected = (CustomRoute) routeDropdown.getSelectedItem();
+		return (selected == null || NO_ROUTE_OPTION.equals(selected)) ? null : selected.getId();
+	}
+
 	public String getSelectedRouteName()
 	{
-		String selected = (String) routeDropdown.getSelectedItem();
-		return NO_ROUTE_OPTION.equals(selected) ? null : selected;
+		CustomRoute selected = (CustomRoute) routeDropdown.getSelectedItem();
+		return (selected == null || NO_ROUTE_OPTION.equals(selected)) ? null : selected.getName();
 	}
 
 	public void addRouteChangeListener(ActionListener listener)

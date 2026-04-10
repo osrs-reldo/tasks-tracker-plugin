@@ -55,14 +55,14 @@ public class TaskListPanel extends JScrollPane
 	private CustomItemPanel priorityCustomItemPanel = null;
 	private boolean forceUpdatePriorityTaskFlag = false;
 
-	/** Section header panels keyed by route name then section name */
+	/** Section header panels keyed by route id then section id */
 	private final HashMap<String, HashMap<String, SectionHeaderPanel>> sectionHeaderPanels = new HashMap<>();
 
 	/** Custom item panels keyed by custom item ID */
 	private final HashMap<String, CustomItemPanel> customItemPanels = new HashMap<>();
 
 	/** Tracks which route's custom items are currently cached */
-	private String cachedCustomItemRouteName = null;
+	private String cachedCustomItemRouteId = null;
 
 	public TaskListPanel(TasksTrackerPlugin plugin, TaskService taskService)
 	{
@@ -152,7 +152,7 @@ public class TaskListPanel extends JScrollPane
 			{
 				String taskType = taskService.getCurrentTaskType().getTaskJsonName();
 				Set<String> completedIds = plugin.getTrackerGlobalConfigStore()
-					.loadCustomItemCompletion(taskType, activeRoute.getName());
+					.loadCustomItemCompletion(taskType, activeRoute.getId());
 
 				for (CustomItemPanel panel : customItemPanels.values())
 				{
@@ -160,12 +160,12 @@ public class TaskListPanel extends JScrollPane
 				}
 
 				// Count section progress (tasks + custom items)
-				HashMap<String, SectionHeaderPanel> routeHeaders = sectionHeaderPanels.get(activeRoute.getName());
+				HashMap<String, SectionHeaderPanel> routeHeaders = sectionHeaderPanels.get(activeRoute.getId());
 				if (routeHeaders != null)
 				{
 					for (RouteSection section : activeRoute.getSections())
 					{
-						SectionHeaderPanel header = routeHeaders.get(section.getName());
+						SectionHeaderPanel header = routeHeaders.get(section.getId());
 						if (header == null)
 						{
 							continue;
@@ -209,10 +209,10 @@ public class TaskListPanel extends JScrollPane
 				.anyMatch(ci -> panel.getCustomItemId().equals(ci.getId()));
 			if (found)
 			{
-				HashMap<String, SectionHeaderPanel> routeHeaders = sectionHeaderPanels.get(activeRoute.getName());
+				HashMap<String, SectionHeaderPanel> routeHeaders = sectionHeaderPanels.get(activeRoute.getId());
 				if (routeHeaders != null)
 				{
-					SectionHeaderPanel header = routeHeaders.get(section.getName());
+					SectionHeaderPanel header = routeHeaders.get(section.getId());
 					boolean collapsed = header != null && header.isCollapsed();
 					panel.setVisible(!collapsed);
 				}
@@ -319,8 +319,8 @@ public class TaskListPanel extends JScrollPane
 			return;
 		}
 
-		String sectionKey = section.getName();
-		HashMap<String, SectionHeaderPanel> routeHeaders = sectionHeaderPanels.get(activeRoute.getName());
+		String sectionKey = section.getId();
+		HashMap<String, SectionHeaderPanel> routeHeaders = sectionHeaderPanels.get(activeRoute.getId());
 		if (routeHeaders == null)
 		{
 			return;
@@ -486,19 +486,18 @@ public class TaskListPanel extends JScrollPane
 		});
 	}
 
-	public void collapseAllExcept(String sectionName)
+	public void collapseAllExcept(String sectionId)
 	{
 		getActiveSectionHeaderPanels().ifPresent(headerPanels -> {
 			headerPanels.values()
-			.forEach(headerPanel -> headerPanel.setCollapsedSilent(!Objects.equals(headerPanel.getSectionName(), sectionName)));
+			.forEach(headerPanel -> headerPanel.setCollapsedSilent(!Objects.equals(headerPanel.getSectionId(), sectionId)));
 			refreshAllTasks();
 		});
 	}
 
 	public Optional<Map<String, SectionHeaderPanel>> getActiveSectionHeaderPanels()
 	{
-		ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
-		CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
+		CustomRoute activeRoute = taskService.getActiveRoute();
 		if (activeRoute == null)
 		{
 			return Optional.empty();
@@ -508,7 +507,7 @@ public class TaskListPanel extends JScrollPane
 			return Optional.empty();
 		}
 
-		return Optional.of(sectionHeaderPanels.get(activeRoute.getName()));
+		return Optional.of(sectionHeaderPanels.get(activeRoute.getId()));
 	}
 
 	public String getEmptyTaskListMessage()
@@ -588,7 +587,7 @@ public class TaskListPanel extends JScrollPane
 				priorityCustomItemPanel = null;
 				sectionHeaderPanels.clear();
 				customItemPanels.clear();
-				cachedCustomItemRouteName = null;
+				cachedCustomItemRouteId = null;
 
 				add(emptyTasks);
 
@@ -639,16 +638,16 @@ public class TaskListPanel extends JScrollPane
 				// Check if route changed - clean up stale custom item panels
 				ConfigValues.TaskListTabs currentTab = plugin.getConfig().taskListTab();
 				CustomRoute currentRoute = taskService.getActiveRoute(currentTab);
-				String currentRouteName = currentRoute != null ? currentRoute.getName() : null;
+				String currentRouteId = currentRoute != null ? currentRoute.getId() : null;
 
-				if (!Objects.equals(currentRouteName, cachedCustomItemRouteName))
+				if (!Objects.equals(currentRouteId, cachedCustomItemRouteId))
 				{
 					for (CustomItemPanel panel : customItemPanels.values())
 					{
 						remove(panel);
 					}
 					customItemPanels.clear();
-					cachedCustomItemRouteName = currentRouteName;
+					cachedCustomItemRouteId = currentRouteId;
 				}
 
 				// Hide all section headers and custom item panels before redraw
@@ -687,7 +686,7 @@ public class TaskListPanel extends JScrollPane
 				hasActiveRoute = activeRoute != null;
 			}
 
-			String indexName = hasActiveRoute ? activeRoute.getName() : plugin.getConfig().sortCriteria();
+			String indexId = hasActiveRoute ? activeRoute.getId() : plugin.getConfig().sortCriteria();
 			Boolean isAscending = plugin.getConfig().sortDirection().equals(ConfigValues.SortDirections.ASCENDING);
 
 			// Set pinned task if route mode not active
@@ -701,14 +700,14 @@ public class TaskListPanel extends JScrollPane
 			// Set section header panel positions
 			if (hasActiveRoute)
 			{
-				sectionHeaderPanels.computeIfAbsent(activeRoute.getName(), k -> new HashMap<>());
+				sectionHeaderPanels.computeIfAbsent(activeRoute.getId(), k -> new HashMap<>());
 
 				int sectionStartIndex = 0;
 				for (RouteSection section : activeRoute.getSections())
 				{
 					// Get or create section header
-					String sectionKey = section.getName();
-					HashMap<String, SectionHeaderPanel> routeHeaders = sectionHeaderPanels.get(activeRoute.getName());
+					String sectionKey = section.getId();
+					HashMap<String, SectionHeaderPanel> routeHeaders = sectionHeaderPanels.get(activeRoute.getId());
 					if (routeHeaders == null)
 					{
 						return;
@@ -716,15 +715,15 @@ public class TaskListPanel extends JScrollPane
 					SectionHeaderPanel header = routeHeaders.get(sectionKey);
 					if (header == null)
 					{
-						header = new SectionHeaderPanel(sectionKey, section.getDescription());
-						sectionHeaderPanels.get(activeRoute.getName()).put(sectionKey, header);
+						header = new SectionHeaderPanel(sectionKey, section.getName(), section.getDescription());
+						sectionHeaderPanels.get(activeRoute.getId()).put(sectionKey, header);
 						add(header);
 					}
 					header.setCollapseCallback(collapsed -> {
 						SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
 					});
-					header.setCollapseOthersCallback(sectionName -> {
-						SwingUtilities.invokeLater(() -> collapseAllExcept(sectionName));
+					header.setCollapseOthersCallback(sectionId -> {
+						SwingUtilities.invokeLater(() -> collapseAllExcept(sectionId));
 					});
 					header.setVisible(true);
 
@@ -743,7 +742,7 @@ public class TaskListPanel extends JScrollPane
 				priorityCustomItemPanel = null;
 				String taskType = taskService.getCurrentTaskType().getTaskJsonName();
 				Set<String> completedIds = plugin.getTrackerGlobalConfigStore()
-					.loadCustomItemCompletion(taskType, activeRoute.getName());
+					.loadCustomItemCompletion(taskType, activeRoute.getId());
 
 				for (RouteSection section : activeRoute.getSections())
 				{
@@ -754,20 +753,20 @@ public class TaskListPanel extends JScrollPane
 							continue;
 						}
 
-						CustomRouteItem ci = item.getCustomItem();
-						String ciId = ci.getId();
+						CustomRouteItem customItem = item.getCustomItem();
+						String customItemId = customItem.getId();
 
-						CustomItemPanel customPanel = customItemPanels.get(ciId);
+						CustomItemPanel customPanel = customItemPanels.get(customItemId);
 						if (customPanel == null)
 						{
 							customPanel = new CustomItemPanel(plugin, item);
-							customItemPanels.put(ciId, customPanel);
+							customItemPanels.put(customItemId, customPanel);
 							add(customPanel);
 						}
-						customPanel.setCompleted(completedIds.contains(ciId));
+						customPanel.setCompleted(completedIds.contains(customItemId));
 						customPanel.setVisible(true);
 
-						int indexPosition = taskService.getCustomItemIndex(activeRoute.getName(), ciId);
+						int indexPosition = taskService.getCustomItemIndex(activeRoute.getId(), customItemId);
 						if (indexPosition >= 0)
 						{
 							indexPosition += numberOfPinnedTasks;
@@ -797,7 +796,7 @@ public class TaskListPanel extends JScrollPane
 				}
 
 				// get sorted index for task
-				int indexPosition = taskService.getTaskIndex(indexName, taskStructId, isAscending);
+				int indexPosition = taskService.getTaskIndex(indexId, taskStructId, isAscending);
 				indexPosition += numberOfPinnedTasks;
 
 				// set priority task if not pinned
