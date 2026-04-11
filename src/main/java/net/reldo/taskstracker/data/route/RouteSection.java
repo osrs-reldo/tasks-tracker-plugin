@@ -47,12 +47,15 @@ public class RouteSection
 		}
 		if (taskIds != null)
 		{
-			return taskIds.stream()
+			setItems(taskIds.stream()
 				.filter(id -> id != null)
 				.map(id -> RouteItem.forTask(id))
-				.collect(Collectors.toList());
+				.collect(Collectors.toList()));
+
+			return items;
 		}
-		return new ArrayList<>();
+		setItems(new ArrayList<>());
+		return items;
 	}
 
 	public void setItems(List<RouteItem> items)
@@ -136,13 +139,24 @@ public class RouteSection
 
 	public boolean removeCustomItem(String customItemId)
 	{
-		if (items == null)
+		if (getItems() == null)
 		{
 			return false;
 		}
-		return items.removeIf(item ->
+		return getItems().removeIf(item ->
 			!item.isTask()
 			&& item.getCustomItem() != null
 			&& customItemId.equals(item.getCustomItem().getId()));
+	}
+
+	public boolean remove(Integer taskId)
+	{
+		if (getItems() == null)
+		{
+			return false;
+		}
+		return getItems().removeIf(item ->
+			item.isTask()
+				&& taskId.equals(item.getTaskId()));
 	}
 }
