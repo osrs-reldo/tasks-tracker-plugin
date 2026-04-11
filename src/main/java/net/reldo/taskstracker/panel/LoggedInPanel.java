@@ -9,6 +9,7 @@ import java.util.Optional;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -47,6 +48,7 @@ import net.runelite.client.util.SwingUtil;
 @Slf4j
 public class LoggedInPanel extends JPanel
 {
+
 	public TaskListPanel taskListPanel;
 	private JComboBox<ComboItem<TaskType>> taskTypeDropdown;
 
@@ -76,6 +78,7 @@ public class LoggedInPanel extends JPanel
 	private JToggleButton tabOne;
 	private JToggleButton tabTwo;
 	private JToggleButton tabThree;
+	private JButton routeButton;
 
 	public LoggedInPanel(TasksTrackerPlugin plugin, TasksTrackerConfig config, TaskService taskService, RouteManager routeManager)
 	{
@@ -381,6 +384,18 @@ public class LoggedInPanel extends JPanel
 		JPanel southPanel = new JPanel(new BorderLayout());
 		southPanel.setBorder(new EmptyBorder(5, 0, 2, 0));
 
+		routeButton = new JButton("Route Mode");
+		routeButton.setBorder(new EmptyBorder(5, 5, 5, 5));
+		routeButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
+		routeButton.addActionListener(e -> plugin.showRouteTutorial());
+		hideRouteModeButton(config.hideRouteModeButton());
+		plugin.getSpriteManager().getSpriteAsync(Icons.INFO_ICON, 0, img -> {
+			SwingUtilities.invokeLater(() -> {
+				routeButton.setIcon(new ImageIcon(img));
+			});
+		});
+		southPanel.add(routeButton, BorderLayout.NORTH);
+
 		JButton importButton = new JButton("Import");
 		importButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 		importButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
@@ -396,7 +411,7 @@ public class LoggedInPanel extends JPanel
 		JButton exportButton = new JButton("Export");
 		exportButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 		exportButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
-		exportButton.addActionListener(e -> plugin.copyJsonToClipboard());
+		exportButton.addActionListener(e -> plugin.openExportJsonDialog());
 		southPanel.add(exportButton, BorderLayout.EAST);
 
 		return southPanel;
@@ -451,15 +466,15 @@ public class LoggedInPanel extends JPanel
 		routeSelector.setAlignmentX(LEFT_ALIGNMENT);
 
 		routeSelector.addRouteChangeListener(e -> {
-			String selectedName = routeSelector.getSelectedRouteName();
+			String selectedId = routeSelector.getSelectedRouteId();
 			ConfigValues.TaskListTabs currentTab = config.taskListTab();
 			String taskType = taskService.getCurrentTaskType().getTaskJsonName();
 
 			// Save selection
-			plugin.getTrackerGlobalConfigStore().saveActiveRouteName(currentTab, taskType, selectedName);
+			plugin.getTrackerGlobalConfigStore().saveActiveRouteId(currentTab, taskType, selectedId);
 
 			// Update TaskService
-			CustomRoute route = selectedName != null
+			CustomRoute route = selectedId != null
 				? plugin.getTrackerGlobalConfigStore().getActiveRoute(currentTab, taskType)
 				: null;
 			taskService.setActiveRoute(currentTab, route);
@@ -567,18 +582,27 @@ public class LoggedInPanel extends JPanel
 		String taskType = taskService.getCurrentTaskType().getTaskJsonName();
 
 		List<CustomRoute> routes = plugin.getTrackerGlobalConfigStore().loadRoutes(taskType);
-		String activeName = plugin.getTrackerGlobalConfigStore().loadActiveRouteName(currentTab, taskType);
+		String activeId = plugin.getTrackerGlobalConfigStore().loadActiveRouteId(currentTab, taskType);
 
-		routeSelector.setRoutes(routes, activeName);
+		routeSelector.setRoutes(routes, activeId);
 
 		// Only set active route in TaskService when in route sort mode
 		if (sortPanel.isRouteMode())
 		{
-			CustomRoute activeRoute = activeName != null
+			CustomRoute activeRoute = activeId != null
 				? plugin.getTrackerGlobalConfigStore().getActiveRoute(currentTab, taskType)
 				: null;
 			taskService.setActiveRoute(currentTab, activeRoute);
 		}
+	}
+
+	public void forceRouteMode()
+	{
+		String tabId = config.taskListTab().configID;
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tabId + "SortCriteria", SortPanel.ROUTE_OPTION);
+		sortPanel.refreshFromConfig(); // Set config and refresh to avoid redundant task list redraws
+		onSortChanged(); // refreshFromConfig() suppresses callback
+		taskListPanel.redraw();
 	}
 
 	private void refreshAfterRouteChange()
@@ -621,15 +645,18 @@ public class LoggedInPanel extends JPanel
 
 		JMenuItem exportItem = new JMenuItem("Export Active Route to Clipboard");
 		exportItem.addActionListener(e -> routeManager.exportActiveRoute());
-		exportItem.setEnabled(routeSelector.getSelectedRouteName() != null);
+		exportItem.setEnabled(routeSelector.getSelectedRouteId() != null);
 
-		JMenuItem createItem = new JMenuItem("Create Route from Current Order...");
+		JMenuItem createItem = new JMenuItem("Create New Route (Coming soon)");
 		createItem.addActionListener(e -> {
 			if (routeManager.createRouteFromCurrentOrder(taskListPanel.getVisibleTaskIds()))
 			{
+				// force plugin into edit mode
+				plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "routeInEditMode", taskService.getActiveRoute().getId());
 				SwingUtilities.invokeLater(this::refreshAfterRouteChange);
 			}
 		});
+		createItem.setEnabled(false);
 
 		JMenuItem deleteItem = new JMenuItem("Delete Active Route");
 		deleteItem.addActionListener(e -> {
@@ -638,15 +665,23 @@ public class LoggedInPanel extends JPanel
 				SwingUtilities.invokeLater(this::refreshAfterRouteChange);
 			}
 		});
-		deleteItem.setEnabled(routeSelector.getSelectedRouteName() != null);
+		deleteItem.setEnabled(routeSelector.getSelectedRouteId() != null);
+
+		JMenuItem collapseSectionsItem = new JMenuItem("Collapse All Sections");
+		collapseSectionsItem.addActionListener(e -> {
+			taskListPanel.collapseAllSections();
+		});
+		collapseSectionsItem.setEnabled(routeSelector.getSelectedRouteId() != null);
+
+		JMenuItem expandSectionsItem = new JMenuItem("Expand All Sections");
+		expandSectionsItem.addActionListener(e -> {
+			taskListPanel.expandAllSections();
+		});
+		expandSectionsItem.setEnabled(routeSelector.getSelectedRouteId() != null);
 
 		// Route management menu items disabled while route editor in development
 		JMenuItem editorItem = new JMenuItem("Route Editor (Coming soon)");
 		editorItem.setEnabled(false);
-		importItem.setEnabled(true);
-		exportItem.setEnabled(true);
-		createItem.setEnabled(false);
-		deleteItem.setEnabled(true);
 
 		menu.add(importItem);
 		menu.add(exportItem);
@@ -655,6 +690,9 @@ public class LoggedInPanel extends JPanel
 		menu.add(deleteItem);
 		menu.addSeparator();
 		menu.add(editorItem);
+		menu.addSeparator();
+		menu.add(collapseSectionsItem);
+		menu.add(expandSectionsItem);
 
 		// Show below the manage button
 		menu.show(routeSelector, routeSelector.getWidth() - menu.getPreferredSize().width,
@@ -792,6 +830,11 @@ public class LoggedInPanel extends JPanel
 		{
 			taskTypeDropdown.setEnabled(true);
 		}
+	}
+
+	public void hideRouteModeButton(boolean hide)
+	{
+		routeButton.setVisible(!hide);
 	}
 
 	private void initTaskTypeDropdownAsync()

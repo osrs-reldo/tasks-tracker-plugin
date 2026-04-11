@@ -13,6 +13,7 @@ import javax.inject.Singleton;
 import javax.swing.JOptionPane;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
+import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.gson.GsonFactory;
@@ -30,6 +31,8 @@ public class RouteManager
 {
 	@Inject
 	private Gson gson;
+	@Inject
+	private TasksTrackerPlugin plugin;
 	@Inject
 	private TaskService taskService;
 	@Inject
@@ -60,7 +63,7 @@ public class RouteManager
 
 			if (route.getName() == null || route.getName().isEmpty())
 			{
-                throw new Exception("Missing route name");
+				throw new Exception("Missing route name");
 			}
 
 			if (route.getTaskType() == null || route.getTaskType().isEmpty())
@@ -75,10 +78,10 @@ public class RouteManager
 
 			String currentTaskType = taskService.getCurrentTaskType().getTaskJsonName();
 
-			if (route.getTaskType() != null && !route.getTaskType().equals(currentTaskType))
+			if (!route.getTaskType().equals(currentTaskType))
 			{
 				int result = JOptionPane.showConfirmDialog(
-					null,
+					plugin.pluginPanel,
 					"This route was created for " + route.getTaskType() +
 						" but you're viewing " + currentTaskType + ".\n\nImport anyway?",
 					"Task Type Mismatch",
@@ -91,13 +94,22 @@ public class RouteManager
 				}
 			}
 
+			List<RouteSection> sections = route.getSections();
+			for (RouteSection section : sections)
+			{
+				if (section.getId() == null || section.getId().isEmpty())
+				{
+					section.setId(UUID.randomUUID().toString());
+				}
+			}
+
 			route.setTaskType(currentTaskType);
 
 			Set<CustomRouteItem> duplicates = getDuplicateCustomRouteItems(route);
 			if (!duplicates.isEmpty())
 			{
 				int result = JOptionPane.showConfirmDialog(
-					null,
+					plugin.pluginPanel,
 					"Duplicate custom item IDs detected.\n"
 						+ "The imported route may be different than expected.\n\n"
 						+ "Import anyway?",
@@ -119,7 +131,7 @@ public class RouteManager
 			ConfigValues.TaskListTabs currentTab = config.taskListTab();
 
 			trackerGlobalConfigStore.addRoute(currentTaskType, route);
-			trackerGlobalConfigStore.saveActiveRouteName(currentTab, currentTaskType, route.getName());
+			trackerGlobalConfigStore.saveActiveRouteId(currentTab, currentTaskType, route.getId());
 			taskService.setActiveRoute(currentTab, route);
 
 			log.debug("Imported route: {}", route.getName());
@@ -170,7 +182,7 @@ public class RouteManager
 	public boolean createRouteFromCurrentOrder(List<Integer> visibleTaskIds)
 	{
 		String name = JOptionPane.showInputDialog(
-			null,
+			plugin.pluginPanel,
 			"Enter route name:",
 			"Create Route",
 			JOptionPane.PLAIN_MESSAGE
@@ -203,7 +215,7 @@ public class RouteManager
 		String taskType = route.getTaskType();
 
 		trackerGlobalConfigStore.addRoute(taskType, route);
-		trackerGlobalConfigStore.saveActiveRouteName(currentTab, taskType, name);
+		trackerGlobalConfigStore.saveActiveRouteId(currentTab, taskType, route.getId());
 		taskService.setActiveRoute(currentTab, route);
 
 		log.debug("Created route from current order: {}", name);
@@ -219,16 +231,18 @@ public class RouteManager
 	{
 		ConfigValues.TaskListTabs currentTab = config.taskListTab();
 		String taskType = taskService.getCurrentTaskType().getTaskJsonName();
-		String routeName = trackerGlobalConfigStore.loadActiveRouteName(currentTab, taskType);
+		CustomRoute activeRoute = taskService.getActiveRoute(currentTab);
 
-		if (routeName == null)
+		if (activeRoute == null)
 		{
 			return false;
 		}
 
+		String routeId = activeRoute.getId();
+
 		int result = JOptionPane.showConfirmDialog(
-			null,
-			"Delete route \"" + routeName + "\"?",
+			plugin.pluginPanel,
+			"Delete route \"" + activeRoute.getName() + "\"?",
 			"Delete Route",
 			JOptionPane.YES_NO_OPTION,
 			JOptionPane.WARNING_MESSAGE
@@ -239,20 +253,20 @@ public class RouteManager
 			return false;
 		}
 
-		trackerGlobalConfigStore.removeRoute(taskType, routeName);
+		trackerGlobalConfigStore.removeRoute(taskType, routeId);
 
 		// Clear active route on all tabs that reference the deleted route
 		for (ConfigValues.TaskListTabs tab : ConfigValues.TaskListTabs.values())
 		{
-			String tabRouteName = trackerGlobalConfigStore.loadActiveRouteName(tab, taskType);
-			if (routeName.equals(tabRouteName))
+			String tabRouteId = trackerGlobalConfigStore.loadActiveRouteId(tab, taskType);
+			if (routeId.equals(tabRouteId))
 			{
-				trackerGlobalConfigStore.saveActiveRouteName(tab, taskType, null);
+				trackerGlobalConfigStore.saveActiveRouteId(tab, taskType, null);
 				taskService.clearActiveRoute(tab);
 			}
 		}
 
-		log.debug("Deleted route: {}", routeName);
+		log.debug("Deleted route: {}", routeId);
 		return true;
 	}
 
@@ -288,7 +302,7 @@ public class RouteManager
 	private void showErrorMessage(String message)
 	{
 		JOptionPane.showMessageDialog(
-			null,
+			plugin.pluginPanel,
 			message,
 			"Error",
 			JOptionPane.ERROR_MESSAGE

@@ -22,7 +22,6 @@ public class CustomRoute
 	@NonNull
 	private String id;
 
-	/** Unique name identifying this route. */
 	@Expose
 	@NonNull
 	private String name;
@@ -181,4 +180,10 @@ public class CustomRoute
 		}
 		return false;
 	}
+	@Override
+	public String toString()
+	{
+		return getName();
+	}
+
 }
