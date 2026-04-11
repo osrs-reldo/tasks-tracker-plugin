@@ -178,4 +178,12 @@ public class TasksTrackerPluginPanel extends PluginPanel
 			loggedInPanel.hideRouteModeButton(hideRouteModeButton);
 		}
 	}
+
+	public void forceRouteMode()
+	{
+		if (loggedInPanelVisible)
+		{
+			loggedInPanel.forceRouteMode();
+		}
+	}
 }

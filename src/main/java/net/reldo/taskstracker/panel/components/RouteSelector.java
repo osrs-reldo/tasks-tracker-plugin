@@ -13,7 +13,7 @@ import net.runelite.client.ui.ColorScheme;
 
 public class RouteSelector extends JPanel
 {
-	private static final CustomRoute NO_ROUTE_OPTION = new CustomRoute("ThisIsNotARoute", "(none)", "AllTaskTypes" );
+	public static final CustomRoute NO_ROUTE_OPTION = new CustomRoute("ThisIsNotARoute", "(none)", "AllTaskTypes" );
 
 	private final JComboBox<CustomRoute> routeDropdown;
 	private final JButton manageButton;

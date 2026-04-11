@@ -411,7 +411,7 @@ public class LoggedInPanel extends JPanel
 		JButton exportButton = new JButton("Export");
 		exportButton.setBorder(new EmptyBorder(5, 5, 5, 5));
 		exportButton.setLayout(new BorderLayout(0, PluginPanel.BORDER_OFFSET));
-		exportButton.addActionListener(e -> plugin.copyJsonToClipboard());
+		exportButton.addActionListener(e -> plugin.openExportJsonDialog());
 		southPanel.add(exportButton, BorderLayout.EAST);
 
 		return southPanel;
@@ -596,6 +596,15 @@ public class LoggedInPanel extends JPanel
 		}
 	}
 
+	public void forceRouteMode()
+	{
+		String tabId = config.taskListTab().configID;
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tabId + "SortCriteria", SortPanel.ROUTE_OPTION);
+		sortPanel.refreshFromConfig(); // Set config and refresh to avoid redundant task list redraws
+		onSortChanged(); // refreshFromConfig() suppresses callback
+		taskListPanel.redraw();
+	}
+
 	private void refreshAfterRouteChange()
 	{
 		refreshRouteSelector();
@@ -638,7 +647,7 @@ public class LoggedInPanel extends JPanel
 		exportItem.addActionListener(e -> routeManager.exportActiveRoute());
 		exportItem.setEnabled(routeSelector.getSelectedRouteId() != null);
 
-		JMenuItem createItem = new JMenuItem("Create New Route");
+		JMenuItem createItem = new JMenuItem("Create New Route (Coming soon)");
 		createItem.addActionListener(e -> {
 			if (routeManager.createRouteFromCurrentOrder(taskListPanel.getVisibleTaskIds()))
 			{
@@ -647,6 +656,7 @@ public class LoggedInPanel extends JPanel
 				SwingUtilities.invokeLater(this::refreshAfterRouteChange);
 			}
 		});
+		createItem.setEnabled(false);
 
 		JMenuItem deleteItem = new JMenuItem("Delete Active Route");
 		deleteItem.addActionListener(e -> {
@@ -672,10 +682,6 @@ public class LoggedInPanel extends JPanel
 		// Route management menu items disabled while route editor in development
 		JMenuItem editorItem = new JMenuItem("Route Editor (Coming soon)");
 		editorItem.setEnabled(false);
-		importItem.setEnabled(true);
-		exportItem.setEnabled(true);
-		createItem.setEnabled(false);
-		deleteItem.setEnabled(true);
 
 		menu.add(importItem);
 		menu.add(exportItem);

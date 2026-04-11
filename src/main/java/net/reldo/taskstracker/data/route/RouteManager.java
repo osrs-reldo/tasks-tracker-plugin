@@ -13,6 +13,7 @@ import javax.inject.Singleton;
 import javax.swing.JOptionPane;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
+import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.gson.GsonFactory;
@@ -30,6 +31,8 @@ public class RouteManager
 {
 	@Inject
 	private Gson gson;
+	@Inject
+	private TasksTrackerPlugin plugin;
 	@Inject
 	private TaskService taskService;
 	@Inject
@@ -55,17 +58,17 @@ public class RouteManager
 
 			if (route == null)
 			{
-				throw new Exception("Invalid route JSON"); //todo remove exceptions
+				throw new Exception("Invalid route JSON");
 			}
 
 			if (route.getName() == null || route.getName().isEmpty())
 			{
-				throw new Exception("Missing route name"); //todo remove exceptions
+				throw new Exception("Missing route name");
 			}
 
 			if (route.getTaskType() == null || route.getTaskType().isEmpty())
 			{
-				throw new Exception("Missing route task type"); //todo remove exceptions
+				throw new Exception("Missing route task type");
 			}
 
 			if (route.getId() == null || route.getId().isEmpty())
@@ -78,7 +81,7 @@ public class RouteManager
 			if (!route.getTaskType().equals(currentTaskType))
 			{
 				int result = JOptionPane.showConfirmDialog(
-					null,
+					plugin.pluginPanel,
 					"This route was created for " + route.getTaskType() +
 						" but you're viewing " + currentTaskType + ".\n\nImport anyway?",
 					"Task Type Mismatch",
@@ -106,7 +109,7 @@ public class RouteManager
 			if (!duplicates.isEmpty())
 			{
 				int result = JOptionPane.showConfirmDialog(
-					null,
+					plugin.pluginPanel,
 					"Duplicate custom item IDs detected.\n"
 						+ "The imported route may be different than expected.\n\n"
 						+ "Import anyway?",
@@ -179,7 +182,7 @@ public class RouteManager
 	public boolean createRouteFromCurrentOrder(List<Integer> visibleTaskIds)
 	{
 		String name = JOptionPane.showInputDialog(
-			null,
+			plugin.pluginPanel,
 			"Enter route name:",
 			"Create Route",
 			JOptionPane.PLAIN_MESSAGE
@@ -238,7 +241,7 @@ public class RouteManager
 		String routeId = activeRoute.getId();
 
 		int result = JOptionPane.showConfirmDialog(
-			null,
+			plugin.pluginPanel,
 			"Delete route \"" + activeRoute.getName() + "\"?",
 			"Delete Route",
 			JOptionPane.YES_NO_OPTION,
@@ -299,7 +302,7 @@ public class RouteManager
 	private void showErrorMessage(String message)
 	{
 		JOptionPane.showMessageDialog(
-			null,
+			plugin.pluginPanel,
 			message,
 			"Error",
 			JOptionPane.ERROR_MESSAGE
