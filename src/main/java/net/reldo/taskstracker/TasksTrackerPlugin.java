@@ -66,12 +66,14 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.ProfileChanged;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.HotkeyListener;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
 
@@ -124,6 +126,8 @@ public class TasksTrackerPlugin extends Plugin
 	@Getter
 	@Inject
 	private TasksTrackerConfig config;
+	@Inject
+	private KeyManager keyManager;
 
 	@Inject
 	private TrackerRSProfileConfigStore trackerRSProfileConfigStore;
@@ -159,9 +163,20 @@ public class TasksTrackerPlugin extends Plugin
 		return configManager.getConfig(TasksTrackerConfig.class);
 	}
 
+	private final HotkeyListener completeCustomKeyListener = new HotkeyListener(() -> config.completeCustomKey())
+	{
+		@Override
+		public void hotkeyPressed()
+		{
+			SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.completeCurrentCustomTask());
+		}
+	};
+
 	@Override
 	protected void startUp()
 	{
+		keyManager.registerKeyListener(completeCustomKeyListener);
+
 		try
 		{
 			String taskTypeJsonName = config.taskTypeJsonName();
@@ -205,6 +220,8 @@ public class TasksTrackerPlugin extends Plugin
 		pluginPanel = null;
 		taskService.clearTaskTypes();
 		clientToolbar.removeNavigation(navButton);
+		overlayManager.remove(overlay);
+		keyManager.unregisterKeyListener(completeCustomKeyListener);
 		log.info("Tasks Tracker stopped!");
 	}
 

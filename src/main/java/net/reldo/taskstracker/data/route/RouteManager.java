@@ -103,6 +103,18 @@ public class RouteManager
 				{
 					section.setId(UUID.randomUUID().toString());
 				}
+
+				for (RouteItem item : section.getItems())
+				{
+					if (!item.isTask() && item.getCustomItem() != null)
+					{
+						CustomRouteItem customItem = item.getCustomItem();
+						if (customItem.getId() == null || customItem.getId().isEmpty())
+						{
+							customItem.setId(UUID.randomUUID().toString());
+						}
+					}
+				}
 			}
 
 			route.setTaskType(currentTaskType);

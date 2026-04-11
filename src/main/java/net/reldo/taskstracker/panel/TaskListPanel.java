@@ -510,6 +510,16 @@ public class TaskListPanel extends JScrollPane
 		return Optional.of(sectionHeaderPanels.get(activeRoute.getId()));
 	}
 
+	public void completeCurrentCustomTask()
+	{
+		JComponent priorityPanel = getPriorityPanel();
+		if (priorityPanel != null && priorityPanel.getClass().equals(CustomItemPanel.class))
+		{
+			CustomItemPanel priorityCustomPanel = (CustomItemPanel) priorityPanel;
+			priorityCustomPanel.setCompleted(true);
+		}
+	}
+
 	public String getEmptyTaskListMessage()
 	{
 		return "No tasks match the current filters.";
@@ -763,7 +773,7 @@ public class TaskListPanel extends JScrollPane
 							customItemPanels.put(customItemId, customPanel);
 							add(customPanel);
 						}
-						customPanel.setCompleted(completedIds.contains(customItemId));
+						customPanel.setCompletedSilent(completedIds.contains(customItemId));
 						customPanel.setVisible(true);
 
 						int indexPosition = taskService.getCustomItemIndex(activeRoute.getId(), customItemId);
