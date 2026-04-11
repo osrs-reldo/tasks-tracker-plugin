@@ -717,10 +717,50 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void showRouteTutorial()
 	{
-		String hideButtonOption = "Close & Hide tutorial button";
+		final int paragraphWidth = 350;
+		final int listItemWidth = 300;
+
+		String closeOption = "Close";
+		String hideButtonOption = "Close & Hide tutorial Button";
+		String[] options = {closeOption, hideButtonOption};
+
+		StringBuilder tutorialText = new StringBuilder();
+		tutorialText.append(HtmlUtil.wrapWithBold("Route Mode Tutorial"))
+			.append(HtmlUtil.HTML_LINE_BREAK)
+			.append(HtmlUtil.HTML_LINE_BREAK);
+
+		tutorialText.append(HtmlUtil.wrapWithWrappingParagraph("Start by switching to Route Mode by selecting \"Route\" in the sort dropdown above the task list.", paragraphWidth));
+		tutorialText.append(HtmlUtil.imageTag("https://github.com/user-attachments/assets/88da13ec-8622-4ad2-bfc8-de8103f9bba2"));
+		tutorialText.append(HtmlUtil.HTML_LINE_BREAK);
+		// add screenshot of route mode selection from sort dropdown
+
+		tutorialText.append("When in Route Mode:");
+		StringBuilder tipsList = new StringBuilder();
+		tipsList.append(HtmlUtil.wrapWithListItem(HtmlUtil.wrapWithWrappingParagraph("Select your route from the dropdown that appears below the sort order dropdown.", listItemWidth)));
+		tipsList.append(HtmlUtil.imageTag("https://github.com/user-attachments/assets/a6031cea-2476-4f92-9793-62b7fae7a83e"));
+		// add screenshot of route selection dropdown
+
+		tipsList.append(HtmlUtil.wrapWithListItem(HtmlUtil.wrapWithWrappingParagraph("Import/export a route using the Route Manager menu next to Route Selector dropdown.", listItemWidth)));
+		tipsList.append(HtmlUtil.imageTag("https://github.com/user-attachments/assets/756ccfb5-84fe-4171-aa36-4888b066f0ee"));
+		// add screenshot of route manager button
+
+		tipsList.append(HtmlUtil.wrapWithListItem(HtmlUtil.wrapWithWrappingParagraph("Overlay panel shows task info directly in the game window.", listItemWidth)));
+		// add screenshot of overlay panel/ setting
+
+		tipsList.append(HtmlUtil.wrapWithListItem(HtmlUtil.wrapWithWrappingParagraph("With overlay panel on and shortest path plugin enabled a GPS will be shown for any task with location data.", listItemWidth)));
+
+		tipsList.append(HtmlUtil.wrapWithListItem(HtmlUtil.wrapWithWrappingParagraph("Route Editor coming soon!", listItemWidth)));
+		// add screenshot of route editor
+
+		tutorialText.append(HtmlUtil.wrapWithUnorderedList(tipsList.toString()))
+			.append(HtmlUtil.HTML_LINE_BREAK)
+			.append(HtmlUtil.HTML_LINE_BREAK);
+
+		tutorialText.append(HtmlUtil.wrapWithWrappingParagraph("The tutorial button can be hidden when closing this window and toggled in the plugin config settings.", paragraphWidth))
+			.append(HtmlUtil.HTML_LINE_BREAK);
+
 		JOptionPane optionPane;
-		String[] options = {"Close Tutorial", hideButtonOption};
-		optionPane = new JOptionPane("This is the Route Mode Tutorial!", JOptionPane.INFORMATION_MESSAGE, JOptionPane.YES_NO_OPTION, null, options, options[0]);
+		optionPane = new JOptionPane(HtmlUtil.wrapWithHtml(tutorialText.toString()), JOptionPane.INFORMATION_MESSAGE, JOptionPane.YES_NO_OPTION, null, options, options[0]);
 		JDialog dialog;
 		dialog = optionPane.createDialog(pluginPanel, "Route Tutorial");
 		dialog.setAlwaysOnTop(true);
