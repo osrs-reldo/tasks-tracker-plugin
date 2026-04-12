@@ -25,18 +25,22 @@ public class PremadeRouteClient
 	@Inject
 	private DataStoreReader dataStoreReader;
 
+	private List<PremadeRouteEntry> cachedManifest;
+
 	public List<PremadeRouteEntry> getManifest() throws Exception
 	{
+		if (cachedManifest != null)
+		{
+			return cachedManifest;
+		}
+
 		try (InputStream stream = this.dataStoreReader.readPremadeRouteManifest();
 			InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8))
 		{
 			Type listType = TypeToken.getParameterized(ArrayList.class, PremadeRouteEntry.class).getType();
 			List<PremadeRouteEntry> entries = this.gson.fromJson(reader, listType);
-			if (entries == null)
-			{
-				return new ArrayList<>();
-			}
-			return entries;
+			cachedManifest = entries != null ? entries : new ArrayList<>();
+			return cachedManifest;
 		}
 	}
 
