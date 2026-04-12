@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
@@ -558,6 +559,18 @@ public class TaskListPanel extends JScrollPane
 		}
 
 		return ids;
+	}
+
+	public void pinRandomTask()
+	{
+		List<TaskPanel> visibleTasks = taskPanelsByStructId.values().stream()
+			.filter(Component::isVisible)
+			.collect(Collectors.toList());
+		int randomIndex = ThreadLocalRandom.current().nextInt(visibleTasks.size());
+		int randomTaskId = visibleTasks.get(randomIndex).task.getStructId();
+
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", randomTaskId);
+		SwingUtilities.invokeLater(plugin::redrawTaskList);
 	}
 
 	private class TaskListListPanel extends FixedWidthPanel

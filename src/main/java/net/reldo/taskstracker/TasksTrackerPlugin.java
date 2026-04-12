@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -176,11 +177,20 @@ public class TasksTrackerPlugin extends Plugin
 			SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.completeCurrentCustomTask());
 		}
 	};
+	private final HotkeyListener randomTaskKeyListener = new HotkeyListener(() -> config.randomTaskKey())
+	{
+		@Override
+		public void hotkeyPressed()
+		{
+			SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.pinRandomTask());
+		}
+	};
 
 	@Override
 	protected void startUp()
 	{
 		keyManager.registerKeyListener(completeCustomKeyListener);
+		keyManager.registerKeyListener(randomTaskKeyListener);
 
 		try
 		{
@@ -227,6 +237,7 @@ public class TasksTrackerPlugin extends Plugin
 		clientToolbar.removeNavigation(navButton);
 		overlayManager.remove(overlay);
 		keyManager.unregisterKeyListener(completeCustomKeyListener);
+		keyManager.unregisterKeyListener(randomTaskKeyListener);
 		log.info("Tasks Tracker stopped!");
 	}
 
@@ -295,6 +306,11 @@ public class TasksTrackerPlugin extends Plugin
 		}
 
 		if (configChanged.getKey().equals("filterPanelCollapsible"))
+		{
+			SwingUtilities.invokeLater(pluginPanel::redraw);
+		}
+
+		if (configChanged.getKey().equals("showRandomTaskButton"))
 		{
 			SwingUtilities.invokeLater(pluginPanel::redraw);
 		}
@@ -690,9 +706,17 @@ public class TasksTrackerPlugin extends Plugin
 				BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varpId));
 				boolean isTaskCompleted = varpValue.testBit(bitIndex);
 				task.setCompleted(isTaskCompleted);
-				if (isTaskCompleted && config.untrackUponCompletion())
+				if (isTaskCompleted)
 				{
-					task.setTracked(false);
+					if (config.untrackUponCompletion())
+					{
+						task.setTracked(false);
+					}
+
+					if (config.unpinUponCompletion() && Objects.equals(config.pinnedTaskId(), task.getStructId()))
+					{
+						configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", 0);
+					}
 				}
 				log.debug("process taskFromStruct {} ({}) {}", task.getStringParam("name"), task.getIntParam("id"), isTaskCompleted);
 				future.complete(isTaskCompleted);

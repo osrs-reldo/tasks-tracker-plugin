@@ -62,43 +62,6 @@ public interface TasksTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		position = 30,
-		keyName = "pinnedTaskId",
-		name = "Pinned Task ID",
-		description = "Task ID to pin to top of list.",
-		section = generalSettings,
-		hidden = true
-	)
-	default Integer pinnedTaskId()
-	{
-		return 0;
-	}
-
-	@ConfigItem(
-		position = 31,
-		keyName = "showPinnedTask",
-		name = "Always Show Pinned Task",
-		description = "Always show the pinned task regardless of filters.",
-		section = generalSettings
-	)
-	default boolean showPinnedTask()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		position = 32,
-		keyName = "unpinUponCompletion",
-		name = "Unpin Tasks Upon Completion",
-		description = "Configures whether completed tasks should also be automatically unpinned when the task is completed.",
-		section = generalSettings
-	)
-	default boolean unpinUponCompletion()
-	{
-		return false;
-	}
-
-	@ConfigItem(
 		position = 40,
 		keyName = "filterPanelCollapsible",
 		name = "Filter Panels Collapsible",
@@ -124,13 +87,86 @@ public interface TasksTrackerConfig extends Config
 
 
 	/*=================================================================================================================
+	-- Pinned task settings                                                                                        --
+	=================================================================================================================*/
+
+	@ConfigSection(
+		name = "Pinned Task",
+		description = "Pinned Task settings",
+		position = 1
+	)
+	String pinnedTaskSettings = "pinnedTaskSettings";
+
+	@ConfigItem(
+		position = 30,
+		keyName = "pinnedTaskId",
+		name = "Pinned Task ID",
+		description = "Task ID to pin to top of list.",
+		section = pinnedTaskSettings,
+		hidden = true
+	)
+	default Integer pinnedTaskId()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
+		position = 31,
+		keyName = "showPinnedTask",
+		name = "Always Show Pinned Task",
+		description = "Always show the pinned task regardless of filters.",
+		section = pinnedTaskSettings
+	)
+	default boolean showPinnedTask()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		position = 32,
+		keyName = "unpinUponCompletion",
+		name = "Unpin Tasks Upon Completion",
+		description = "Configures whether completed tasks should also be automatically unpinned when the task is completed.",
+		section = pinnedTaskSettings
+	)
+	default boolean unpinUponCompletion()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		position = 33,
+		keyName = "showRandomTaskButton",
+		name = "Random Task Button",
+		description = "Shows the random task picker button when not in route mode.",
+		section = pinnedTaskSettings
+	)
+	default boolean showRandomTaskButton()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		position = 34,
+		keyName = "randomTaskKey",
+		name = "Pin Random Task",
+		description = "Pins a random task from the visible list.",
+		section = pinnedTaskSettings
+	)
+	default Keybind randomTaskKey()
+	{
+		return new Keybind(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK);
+	}
+
+
+	/*=================================================================================================================
 	-- Overlay Panel settings                                                                                        --
 	=================================================================================================================*/
 
 	@ConfigSection(
 		name = "Overlay",
 		description = "Overlay settings",
-		position = 1
+		position = 2
 	)
 	String overlaySettings = "overlaySettings";
 
