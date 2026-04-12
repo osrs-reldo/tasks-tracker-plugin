@@ -212,6 +212,12 @@ public class CustomItemPanel extends JPanel
 
 	public void setCompleted(boolean completed)
 	{
+		completeToggle.setSelected(completed);
+		onCompletionToggled();
+	}
+
+	public void setCompletedSilent(boolean completed)
+	{
 		this.completed = completed;
 		completeToggle.setSelected(completed);
 		updateAppearance();
@@ -230,7 +236,7 @@ public class CustomItemPanel extends JPanel
 	public void refresh(Set<String> completedIds)
 	{
 		boolean isComplete = completedIds.contains(customItem.getId());
-		setCompleted(isComplete);
+		setCompletedSilent(isComplete);
 	}
 
 	@Override

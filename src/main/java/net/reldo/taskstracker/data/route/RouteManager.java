@@ -4,10 +4,12 @@ import com.google.gson.Gson;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.JOptionPane;
@@ -101,16 +103,36 @@ public class RouteManager
 				{
 					section.setId(UUID.randomUUID().toString());
 				}
+
+				for (RouteItem item : section.getItems())
+				{
+					if (!item.isTask() && item.getCustomItem() != null)
+					{
+						CustomRouteItem customItem = item.getCustomItem();
+						if (customItem.getId() == null || customItem.getId().isEmpty())
+						{
+							customItem.setId(UUID.randomUUID().toString());
+						}
+					}
+				}
 			}
 
 			route.setTaskType(currentTaskType);
 
-			Set<CustomRouteItem> duplicates = getDuplicateCustomRouteItems(route);
-			if (!duplicates.isEmpty())
+			Set<CustomRouteItem> duplicateCustomItems = getDuplicateCustomRouteItems(route);
+			Set<Integer> duplicateTasks = getDuplicateTaskIds(route);
+			if (!duplicateCustomItems.isEmpty() || !duplicateTasks.isEmpty())
 			{
+				List<String> duplicateMessages = new ArrayList<>();
+				duplicateMessages.add(!duplicateTasks.isEmpty() ? "task IDs" : "");
+				duplicateMessages.add(!duplicateCustomItems.isEmpty() ? "custom item IDs" : "");
+				String duplicatesMessage = duplicateMessages.stream()
+					.filter(string -> !string.isEmpty())
+					.collect(Collectors.joining(" and "));
+
 				int result = JOptionPane.showConfirmDialog(
 					plugin.pluginPanel,
-					"Duplicate custom item IDs detected.\n"
+					"Duplicate " + duplicatesMessage + " detected.\n"
 						+ "The imported route may be different than expected.\n\n"
 						+ "Import anyway?",
 					"Duplicate IDs",
@@ -121,15 +143,27 @@ public class RouteManager
 				{
 					return false;
 				}
-				for (CustomRouteItem ci : duplicates)
+				for (Integer taskId : duplicateTasks)
+				{
+					log.warn("Duplicate task ID '{}' found, all later instances removed", taskId);
+					RouteSection firstSection = route.getSectionForTask(taskId);
+					sections.forEach(section ->
+					{
+						if (!section.equals(firstSection))
+						{
+							section.remove(taskId);
+						}
+					});
+				}
+				for (CustomRouteItem customRouteItem : duplicateCustomItems)
 				{
 					String newId = UUID.randomUUID().toString();
-					log.warn("Duplicate custom item ID '{}' found, regenerated as '{}'", ci.getId(), newId);
-					ci.setId(newId);
+					log.warn("Duplicate custom item ID '{}' found, regenerated as '{}'", customRouteItem.getId(), newId);
+					customRouteItem.setId(newId);
 				}
 			}
-			ConfigValues.TaskListTabs currentTab = config.taskListTab();
 
+			ConfigValues.TaskListTabs currentTab = config.taskListTab();
 			trackerGlobalConfigStore.addRoute(currentTaskType, route);
 			trackerGlobalConfigStore.saveActiveRouteId(currentTab, currentTaskType, route.getId());
 			taskService.setActiveRoute(currentTab, route);
@@ -292,6 +326,35 @@ public class RouteManager
 					if (!seenIds.add(ci.getId()))
 					{
 						duplicates.add(ci);
+					}
+				}
+			}
+		}
+		return duplicates;
+	}
+
+	/**
+	 * Returns a set of duplicate tasks (by ID) found in the route.
+	 * If empty, there are no duplicates.
+	 */
+	private Set<Integer> getDuplicateTaskIds(CustomRoute route)
+	{
+		Set<Integer> duplicates = new HashSet<>();
+		if (route.getSections() == null)
+		{
+			return duplicates;
+		}
+		Set<Integer> seenIds = new HashSet<>();
+		for (RouteSection section : route.getSections())
+		{
+			for (RouteItem item : section.getItems())
+			{
+				if (item.isTask() && item.getTaskId() != null)
+				{
+					Integer taskId = item.getTaskId();
+					if (!seenIds.add(taskId))
+					{
+						duplicates.add(taskId);
 					}
 				}
 			}

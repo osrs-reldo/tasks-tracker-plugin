@@ -1,10 +1,13 @@
 package net.reldo.taskstracker;
 
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Keybind;
 import net.runelite.client.config.Range;
 
 @ConfigGroup(TasksTrackerPlugin.CONFIG_GROUP_NAME)
@@ -59,43 +62,6 @@ public interface TasksTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		position = 30,
-		keyName = "pinnedTaskId",
-		name = "Pinned Task ID",
-		description = "Task ID to pin to top of list.",
-		section = generalSettings,
-		hidden = true
-	)
-	default Integer pinnedTaskId()
-	{
-		return 0;
-	}
-
-	@ConfigItem(
-		position = 31,
-		keyName = "showPinnedTask",
-		name = "Always Show Pinned Task",
-		description = "Always show the pinned task regardless of filters.",
-		section = generalSettings
-	)
-	default boolean showPinnedTask()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		position = 32,
-		keyName = "unpinUponCompletion",
-		name = "Unpin Tasks Upon Completion",
-		description = "Configures whether completed tasks should also be automatically unpinned when the task is completed.",
-		section = generalSettings
-	)
-	default boolean unpinUponCompletion()
-	{
-		return false;
-	}
-
-	@ConfigItem(
 		position = 40,
 		keyName = "filterPanelCollapsible",
 		name = "Filter Panels Collapsible",
@@ -108,15 +74,88 @@ public interface TasksTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		position = 99,
-		keyName = "saveSubFilterState", //@todo generalise this to all sub-filters
-		name = "Save Filter State",
-		description = "Configures whether the state of area filters should be saved and recalled when switching task type or restarting the plugin.",
-		hidden = true //todo This is hidden because it currently doesn't do anything
+		position = 50,
+		keyName = "completeCustomKey",
+		name = "Complete Custom Task",
+		description = "When you press this key you'll complete the current custom task.",
+		section = generalSettings
 	)
-	default boolean saveSubFilterState()
+	default Keybind completeCustomKey()
+	{
+		return new Keybind(KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK);
+	}
+
+
+	/*=================================================================================================================
+	-- Pinned task settings                                                                                        --
+	=================================================================================================================*/
+
+	@ConfigSection(
+		name = "Pinned Task",
+		description = "Pinned Task settings",
+		position = 1
+	)
+	String pinnedTaskSettings = "pinnedTaskSettings";
+
+	@ConfigItem(
+		position = 30,
+		keyName = "pinnedTaskId",
+		name = "Pinned Task ID",
+		description = "Task ID to pin to top of list.",
+		section = pinnedTaskSettings,
+		hidden = true
+	)
+	default Integer pinnedTaskId()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
+		position = 31,
+		keyName = "showPinnedTask",
+		name = "Always Show Pinned Task",
+		description = "Always show the pinned task regardless of filters.",
+		section = pinnedTaskSettings
+	)
+	default boolean showPinnedTask()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		position = 32,
+		keyName = "unpinUponCompletion",
+		name = "Unpin Tasks Upon Completion",
+		description = "Configures whether completed tasks should also be automatically unpinned when the task is completed.",
+		section = pinnedTaskSettings
+	)
+	default boolean unpinUponCompletion()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		position = 33,
+		keyName = "showRandomTaskButton",
+		name = "Random Task Button",
+		description = "Shows the random task picker button when not in route mode.",
+		section = pinnedTaskSettings
+	)
+	default boolean showRandomTaskButton()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		position = 34,
+		keyName = "randomTaskKey",
+		name = "Pin Random Task",
+		description = "Pins a random task from the visible list.",
+		section = pinnedTaskSettings
+	)
+	default Keybind randomTaskKey()
+	{
+		return new Keybind(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK);
 	}
 
 
@@ -127,7 +166,7 @@ public interface TasksTrackerConfig extends Config
 	@ConfigSection(
 		name = "Overlay",
 		description = "Overlay settings",
-		position = 1
+		position = 2
 	)
 	String overlaySettings = "overlaySettings";
 

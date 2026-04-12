@@ -36,6 +36,7 @@ import net.reldo.taskstracker.data.task.filters.RegexTextMatcher;
 import net.reldo.taskstracker.data.task.filters.TextMatcher;
 import net.reldo.taskstracker.data.task.filters.TextMatcherFactory;
 import net.reldo.taskstracker.panel.components.FilterLockTabMenuItem;
+import net.reldo.taskstracker.panel.components.FixedWidthPanel;
 import net.reldo.taskstracker.panel.components.RouteSelector;
 import net.reldo.taskstracker.panel.components.SearchBox;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
@@ -74,6 +75,7 @@ public class LoggedInPanel extends JPanel
 	private JPanel subFilterWrapper;
 	private SortPanel sortPanel;
 	private JPanel searchPanel;
+	private JPanel randomButtonPanel;
 	private final JToggleButton collapseBtn = new JToggleButton();
 	private JToggleButton tabOne;
 	private JToggleButton tabTwo;
@@ -119,6 +121,7 @@ public class LoggedInPanel extends JPanel
 		subFilterPanel.redraw();
 		sortPanel.redraw();
 		updateCollapseButtonText();
+		randomButtonPanel.setVisible(!plugin.isRouteMode() && config.showRandomTaskButton());
 
 		refreshRouteSelector();
 		taskListPanel.drawNewTaskType();
@@ -130,6 +133,7 @@ public class LoggedInPanel extends JPanel
 		subFilterPanel.redraw();
 		sortPanel.redraw();
 		updateCollapseButtonText();
+		randomButtonPanel.setVisible(!plugin.isRouteMode() && config.showRandomTaskButton());
 
 		taskListPanel.redraw();
 	}
@@ -487,6 +491,17 @@ public class LoggedInPanel extends JPanel
 
 		searchPanel = getSearchPanel();
 
+		randomButtonPanel = new FixedWidthPanel();
+		randomButtonPanel.setLayout(new BorderLayout());
+		randomButtonPanel.setAlignmentX(LEFT_ALIGNMENT);
+		JButton randomButton = new JButton("Pin Random Task");
+		randomButton.setToolTipText("Task will be picked from the visible list. Use filters to restrict options.");
+		randomButton.setForeground(ColorScheme.TEXT_COLOR);
+		randomButton.setFocusable(false);
+		randomButton.setAlignmentX(LEFT_ALIGNMENT);
+		randomButton.addActionListener(e -> taskListPanel.pinRandomTask());
+		randomButtonPanel.add(randomButton, BorderLayout.CENTER);
+
 		northPanel.add(getTitleAndButtonPanel());
 		northPanel.add(Box.createVerticalStrut(10));
 		northPanel.add(taskTypeDropdown);
@@ -498,12 +513,15 @@ public class LoggedInPanel extends JPanel
 		northPanel.add(routeSelector);
 		northPanel.add(Box.createVerticalStrut(2));
 		northPanel.add(subFilterWrapper);
+		northPanel.add(Box.createVerticalStrut(2));
+		northPanel.add(randomButtonPanel);
 
 		// Route selector and sub-filter visibility based on sort mode
 		boolean isRouteMode = plugin.isRouteMode();
 		routeSelector.setVisible(isRouteMode);
 		subFilterWrapper.setVisible(!isRouteMode);
 		searchPanel.setVisible(!isRouteMode);
+		randomButtonPanel.setVisible(!isRouteMode && config.showRandomTaskButton());
 
 		return northPanel;
 	}
@@ -617,6 +635,7 @@ public class LoggedInPanel extends JPanel
 		routeSelector.setVisible(isRouteMode);
 		subFilterWrapper.setVisible(!isRouteMode);
 		searchPanel.setVisible(!isRouteMode);
+		randomButtonPanel.setVisible(!isRouteMode && config.showRandomTaskButton());
 
 		if (isRouteMode)
 		{

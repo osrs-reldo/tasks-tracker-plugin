@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
@@ -397,9 +398,9 @@ public class TaskListPanel extends JScrollPane
 		Optional<TaskPanel> optionalTaskPanel = taskPanels.stream()
 			.filter(Component::isVisible)
 			.filter(panel -> !routeModeActive || !panel.task.isCompleted())
-			.min((panel1, panel2) ->
-				Integer.compare(getCurrentTaskListListPanel().getComponentZOrder(panel1),
-					getCurrentTaskListListPanel().getComponentZOrder(panel2)));
+			.min((panel1, panel2) -> Integer.compare(
+				getCurrentTaskListListPanel().getComponentZOrder(panel1),
+				getCurrentTaskListListPanel().getComponentZOrder(panel2)));
 		priorityTaskPanel = optionalTaskPanel.orElse(null);
 
 		Optional<CustomItemPanel> optionalCustomPanel = customItemPanels.values().stream()
@@ -510,6 +511,16 @@ public class TaskListPanel extends JScrollPane
 		return Optional.of(sectionHeaderPanels.get(activeRoute.getId()));
 	}
 
+	public void completeCurrentCustomTask()
+	{
+		JComponent priorityPanel = getPriorityPanel();
+		if (priorityPanel != null && priorityPanel.getClass().equals(CustomItemPanel.class))
+		{
+			CustomItemPanel priorityCustomPanel = (CustomItemPanel) priorityPanel;
+			priorityCustomPanel.setCompleted(true);
+		}
+	}
+
 	public String getEmptyTaskListMessage()
 	{
 		return "No tasks match the current filters.";
@@ -548,6 +559,18 @@ public class TaskListPanel extends JScrollPane
 		}
 
 		return ids;
+	}
+
+	public void pinRandomTask()
+	{
+		List<TaskPanel> visibleTasks = taskPanelsByStructId.values().stream()
+			.filter(Component::isVisible)
+			.collect(Collectors.toList());
+		int randomIndex = ThreadLocalRandom.current().nextInt(visibleTasks.size());
+		int randomTaskId = visibleTasks.get(randomIndex).task.getStructId();
+
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", randomTaskId);
+		SwingUtilities.invokeLater(plugin::redrawTaskList);
 	}
 
 	private class TaskListListPanel extends FixedWidthPanel
@@ -763,7 +786,7 @@ public class TaskListPanel extends JScrollPane
 							customItemPanels.put(customItemId, customPanel);
 							add(customPanel);
 						}
-						customPanel.setCompleted(completedIds.contains(customItemId));
+						customPanel.setCompletedSilent(completedIds.contains(customItemId));
 						customPanel.setVisible(true);
 
 						int indexPosition = taskService.getCustomItemIndex(activeRoute.getId(), customItemId);
