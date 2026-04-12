@@ -49,10 +49,10 @@ public class TaskFromStruct
 		this.sortId = taskDefinition.getSortId();
 	}
 
-    public boolean hasNote()
-    {
-        return note != null && !note.isEmpty();
-    }
+	public boolean hasNote()
+	{
+		return note != null && !note.isEmpty();
+	}
 
 	public String getStringParam(String paramName)
 	{

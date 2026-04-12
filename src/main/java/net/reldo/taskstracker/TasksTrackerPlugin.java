@@ -3,8 +3,10 @@ package net.reldo.taskstracker;
 import com.google.gson.Gson;
 import com.google.inject.Binder;
 import com.google.inject.Provides;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.math.BigInteger;
@@ -15,15 +17,20 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.Export;
@@ -65,12 +72,14 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.ProfileChanged;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.HotkeyListener;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
 
@@ -123,6 +132,8 @@ public class TasksTrackerPlugin extends Plugin
 	@Getter
 	@Inject
 	private TasksTrackerConfig config;
+	@Inject
+	private KeyManager keyManager;
 
 	@Inject
 	private TrackerRSProfileConfigStore trackerRSProfileConfigStore;
@@ -158,9 +169,29 @@ public class TasksTrackerPlugin extends Plugin
 		return configManager.getConfig(TasksTrackerConfig.class);
 	}
 
+	private final HotkeyListener completeCustomKeyListener = new HotkeyListener(() -> config.completeCustomKey())
+	{
+		@Override
+		public void hotkeyPressed()
+		{
+			SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.completeCurrentCustomTask());
+		}
+	};
+	private final HotkeyListener randomTaskKeyListener = new HotkeyListener(() -> config.randomTaskKey())
+	{
+		@Override
+		public void hotkeyPressed()
+		{
+			SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.pinRandomTask());
+		}
+	};
+
 	@Override
 	protected void startUp()
 	{
+		keyManager.registerKeyListener(completeCustomKeyListener);
+		keyManager.registerKeyListener(randomTaskKeyListener);
+
 		try
 		{
 			String taskTypeJsonName = config.taskTypeJsonName();
@@ -204,6 +235,9 @@ public class TasksTrackerPlugin extends Plugin
 		pluginPanel = null;
 		taskService.clearTaskTypes();
 		clientToolbar.removeNavigation(navButton);
+		overlayManager.remove(overlay);
+		keyManager.unregisterKeyListener(completeCustomKeyListener);
+		keyManager.unregisterKeyListener(randomTaskKeyListener);
 		log.info("Tasks Tracker stopped!");
 	}
 
@@ -276,6 +310,11 @@ public class TasksTrackerPlugin extends Plugin
 			SwingUtilities.invokeLater(pluginPanel::redraw);
 		}
 
+		if (configChanged.getKey().equals("showRandomTaskButton"))
+		{
+			SwingUtilities.invokeLater(pluginPanel::redraw);
+		}
+
 		if (configChanged.getKey().startsWith("tab")) // task list tab config items all start 'tab#'
 		{
 			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
@@ -308,6 +347,11 @@ public class TasksTrackerPlugin extends Plugin
 		if (configChanged.getKey().equals("sortCriteria"))
 		{
 			pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
+		}
+
+		if (configChanged.getKey().equals("hideRouteModeButton"))
+		{
+			pluginPanel.hideRouteModeButton(config.hideRouteModeButton());
 		}
 	}
 
@@ -454,40 +498,71 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void openImportJsonDialog()
 	{
-		JOptionPane optionPane = new JOptionPane("Paste import data into the text field below to import task tracker data.", JOptionPane.INFORMATION_MESSAGE);
-		optionPane.setWantsInput(true);
-		JDialog inputDialog = optionPane.createDialog(this.pluginPanel, "Import Tasks Input");
-		inputDialog.setAlwaysOnTop(true);
-		inputDialog.setVisible(true);
+		String taskDataOption = "Task Data";
+		String routeOption = "Custom Route";
+		String[] options = {taskDataOption, routeOption};
+		String bodyText = "What do you want to import?";
 
-		if (optionPane.getInputValue().equals("") || optionPane.getInputValue().equals("uninitializedValue"))
+		JOptionPane optionPane;
+		optionPane = new JOptionPane(bodyText, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION, null, options);
+		JDialog dialog;
+		dialog = optionPane.createDialog(pluginPanel, "Import");
+		dialog.setAlwaysOnTop(true);
+		dialog.setVisible(true);
+
+		Object selectedValue = optionPane.getValue();
+		if (taskDataOption.equals(selectedValue))
 		{
-			this.showMessageBox("Import Tasks Error", "Input was empty so no data has been imported.", JOptionPane.ERROR_MESSAGE, false);
-			return;
+			importTaskDataJson();
+		}
+		else if (routeOption.equals(selectedValue))
+		{
+			if (routeManager.importRouteFromClipboard())
+			{
+				forceRouteMode();
+			}
+		}
+	}
+
+	public void importTaskDataJson()
+	{
+		String clipboard = "";
+		try
+		{
+			clipboard = Toolkit.getDefaultToolkit().getSystemClipboard()
+				.getData(DataFlavor.stringFlavor).toString();
+		}
+		catch (Exception e)
+		{
+			log.error("Failed to import task data from clipboard", e);
+			JOptionPane.showMessageDialog(
+				pluginPanel,
+				"Failed to import task data: " + e.getMessage(),
+				"Error",
+				JOptionPane.ERROR_MESSAGE
+			);
 		}
 
-		String json = "";
 		ReldoImport reldoImport;
 		try
 		{
-			json = (String) optionPane.getInputValue();
-			reldoImport = this.gson.fromJson(json, ReldoImport.class);
+			reldoImport = this.gson.fromJson(clipboard, ReldoImport.class);
 		}
 		catch (Exception ex)
 		{
 			this.showMessageBox("Import Tasks Error", "There was an issue importing task tracker data. " + ex.getMessage(), JOptionPane.ERROR_MESSAGE, false);
 			log.error("There was an issue importing task tracker data.", ex);
-			log.debug("reldoImport json: {}", json);
+			log.debug("reldoImport json: {}", clipboard);
 			return;
 		}
 
-		if (!reldoImport.taskTypeName.equalsIgnoreCase(config.taskTypeJsonName()))
+		if (reldoImport.taskTypeName == null || !reldoImport.taskTypeName.equalsIgnoreCase(config.taskTypeJsonName()))
 		{
-			this.showMessageBox("Import Tasks Error", String.format("Wrong task type. Select the %s task type to import this data.", reldoImport.taskTypeName), JOptionPane.ERROR_MESSAGE, false);
+			this.showMessageBox("Import Tasks Error", "Wrong task type. Ensure selected task type and data field match before importing data.", JOptionPane.ERROR_MESSAGE, false);
 			return;
 		}
 
-		optionPane = new JOptionPane("Importing tasks will overwrite task tracker settings and cannot be undone. Are you sure you want to import tasks?", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
+		JOptionPane optionPane = new JOptionPane("Importing tasks will overwrite task tracker saved data and cannot be undone. Are you sure you want to import tasks?", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
 		JDialog confirmDialog = optionPane.createDialog(this.pluginPanel, "Import Tasks Overwrite Confirmation");
 		confirmDialog.setAlwaysOnTop(true);
 		confirmDialog.setVisible(true);
@@ -556,7 +631,32 @@ public class TasksTrackerPlugin extends Plugin
 				.build());
 	}
 
-	public void copyJsonToClipboard()
+	public void openExportJsonDialog()
+	{
+		String taskDataOption = "Task Data";
+		String routeOption = "Custom Route";
+		String[] options = {taskDataOption, routeOption};
+		String bodyText = "What do you want to export?";
+
+		JOptionPane optionPane;
+		optionPane = new JOptionPane(bodyText, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION, null, options);
+		JDialog dialog;
+		dialog = optionPane.createDialog(pluginPanel, "Export");
+		dialog.setAlwaysOnTop(true);
+		dialog.setVisible(true);
+
+		Object selectedValue = optionPane.getValue();
+		if (taskDataOption.equals(selectedValue))
+		{
+			copyTaskDataJsonToClipboard();
+		}
+		else if (routeOption.equals(selectedValue))
+		{
+			routeManager.exportActiveRoute();
+		}
+	}
+
+	public void copyTaskDataJsonToClipboard()
 	{
 		clientThread.invokeLater(() -> {
 			// Not worried with this complexity on the client thread because it's from an infrequent button press
@@ -606,9 +706,17 @@ public class TasksTrackerPlugin extends Plugin
 				BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varpId));
 				boolean isTaskCompleted = varpValue.testBit(bitIndex);
 				task.setCompleted(isTaskCompleted);
-				if (isTaskCompleted && config.untrackUponCompletion())
+				if (isTaskCompleted)
 				{
-					task.setTracked(false);
+					if (config.untrackUponCompletion())
+					{
+						task.setTracked(false);
+					}
+
+					if (config.unpinUponCompletion() && Objects.equals(config.pinnedTaskId(), task.getStructId()))
+					{
+						configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", 0);
+					}
 				}
 				log.debug("process taskFromStruct {} ({}) {}", task.getStringParam("name"), task.getIntParam("id"), isTaskCompleted);
 				future.complete(isTaskCompleted);
@@ -710,6 +818,83 @@ public class TasksTrackerPlugin extends Plugin
 		});
 	}
 
+	public void showRouteTutorial()
+	{
+		final int mainBodyWidth = 500;
+		final int listItemWidth = mainBodyWidth - 50;
+		final String routeManagerButton = "(\u22EF)";
+
+		StringBuilder tutorialText = new StringBuilder();
+		tutorialText.append(HtmlUtil.wrapWithWrappingHeading("Route Mode", mainBodyWidth));
+		tutorialText.append(HtmlUtil.wrapWithWrappingParagraph("Route Mode lets you follow a planned route - a list of tasks organized into sections, in the order you should complete them.", mainBodyWidth));
+		tutorialText.append(HtmlUtil.HTML_LINE_BREAK);
+		tutorialText.append(HtmlUtil.HORIZONTAL_RULE);
+
+		tutorialText.append(HtmlUtil.wrapWithWrappingSubHeading("How to Start", mainBodyWidth));
+		StringBuilder startSectionList = new StringBuilder();
+		startSectionList.append(HtmlUtil.wrapWithListItem("Open the sort dropdown above the task list.", listItemWidth));
+		startSectionList.append(HtmlUtil.wrapWithListItem("Select \"Route\" to switch to Route Mode.", listItemWidth));
+		startSectionList.append(HtmlUtil.wrapWithListItem("Pick a route from the route dropdown that appears, or use the route manager button " + routeManagerButton + " to import one.", listItemWidth));
+		tutorialText.append(HtmlUtil.wrapWithOrderedList(startSectionList.toString()))
+			.append(HtmlUtil.HORIZONTAL_RULE);
+
+		tutorialText.append(HtmlUtil.wrapWithWrappingSubHeading("Importing a Route", mainBodyWidth));
+		StringBuilder importRouteList = new StringBuilder();
+		importRouteList.append(HtmlUtil.wrapWithListItem("Click the route manager button next to the route dropdown " + routeManagerButton, listItemWidth));
+		importRouteList.append(HtmlUtil.wrapWithListItem("Choose \"Import from Clipboard\" to load a route you copied from a planning tool.", listItemWidth));
+		importRouteList.append(HtmlUtil.wrapWithListItem("You can also export your current route to share it.", listItemWidth));
+		tutorialText.append(HtmlUtil.wrapWithUnorderedList(importRouteList.toString()))
+			.append(HtmlUtil.HORIZONTAL_RULE);
+
+		tutorialText.append(HtmlUtil.wrapWithWrappingSubHeading("In-Game Features", mainBodyWidth));
+		StringBuilder featuresList = new StringBuilder();
+		featuresList.append(HtmlUtil.wrapWithListItem("Turn on \"Show Overlay\" in plugin settings to see your current task on screen.", listItemWidth));
+		featuresList.append(HtmlUtil.wrapWithListItem("If you have \"Show Overlay\" enabled and the Shortest Path plugin installed, it can guide you to tasks in your route which have map locations.", listItemWidth));
+		tutorialText.append(HtmlUtil.wrapWithUnorderedList(featuresList.toString()))
+			.append(HtmlUtil.HORIZONTAL_RULE);
+
+		tutorialText.append(HtmlUtil.wrapWithWrappingSubHeading("Coming Soon", mainBodyWidth));
+		StringBuilder comingSoonList = new StringBuilder();
+		comingSoonList.append(HtmlUtil.wrapWithListItem("A built-in Route Editor is in development.", listItemWidth));
+		tutorialText.append(HtmlUtil.wrapWithUnorderedList(comingSoonList.toString()))
+			.append(HtmlUtil.HORIZONTAL_RULE);
+
+		tutorialText.append(HtmlUtil.HTML_LINE_BREAK);
+		tutorialText.append(HtmlUtil.wrapWithWrappingParagraph("You can hide this button by choosing the option below and unhide it in plugin settings.", mainBodyWidth))
+			.append(HtmlUtil.HTML_LINE_BREAK);
+
+		JPanel dialogPanel = new JPanel();
+		dialogPanel.setBorder(new EmptyBorder(0, 10, 0, 10));
+		dialogPanel.setLayout(new BorderLayout());
+
+		JLabel bodyText = new JLabel(HtmlUtil.wrapWithHtml(tutorialText.toString()));
+		dialogPanel.add(bodyText, BorderLayout.CENTER);
+
+		JCheckBox hideButton = new JCheckBox(" - hide Route Mode info button");
+		dialogPanel.add(hideButton, BorderLayout.SOUTH);
+
+		String routeModeOption = "Start Route Mode";
+		String closeOption = "Close";
+		String[] options = {routeModeOption, closeOption};
+
+		JOptionPane optionPane;
+		optionPane = new JOptionPane(dialogPanel, JOptionPane.PLAIN_MESSAGE, JOptionPane.YES_NO_OPTION, null, options);
+		JDialog dialog;
+		dialog = optionPane.createDialog(pluginPanel, "Route Mode Info");
+		dialog.setAlwaysOnTop(true);
+		dialog.setVisible(true);
+
+		Object selectedValue = optionPane.getValue();
+		if (routeModeOption.equals(selectedValue))
+		{
+			forceRouteMode();
+		}
+		if (hideButton.isSelected())
+		{
+			configManager.setConfiguration(CONFIG_GROUP_NAME, "hideRouteModeButton", true);
+		}
+	}
+
 	public TaskPanel getPriorityTask()
 	{
 		return pluginPanel.getPriorityTask();
@@ -736,6 +921,11 @@ public class TasksTrackerPlugin extends Plugin
 	public boolean isRouteMode()
 	{
 		return "route".equalsIgnoreCase(config.sortCriteria());
+	}
+
+	public void forceRouteMode()
+	{
+		pluginPanel.forceRouteMode();
 	}
 
 	public void enableTaskTypeDropdown()
