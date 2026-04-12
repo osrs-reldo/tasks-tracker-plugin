@@ -23,7 +23,8 @@ import net.runelite.client.util.SwingUtil;
 @Slf4j
 public class SortPanel extends FixedWidthPanel
 {
-	private static final String ROUTE_OPTION = "Route";
+	public static final String DEFAULT_OPTION = "Default";
+	public static final String ROUTE_OPTION = "Route";
 	private static final String ROUTE_INFO_TOOLTIP =
 		"<html>Route Mode orders tasks by sections defined in the selected route.<br>" +
 		"Import routes from clipboard or create one from your current task order<br>" +
@@ -65,7 +66,7 @@ public class SortPanel extends FixedWidthPanel
 			.sorted()
 			.map((str) -> str.substring(0, 1).toUpperCase() + str.substring(1))
 			.collect(Collectors.toList());
-		criteriaList.add(0, "Default");
+		criteriaList.add(0, DEFAULT_OPTION);
 		criteriaList.add(1, ROUTE_OPTION);
 
 		String[] criteriaArray = criteriaList.toArray(new String[0]);

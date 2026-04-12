@@ -13,6 +13,10 @@ import net.runelite.client.util.ImageUtil;
 
 public class Icons
 {
+	public static final int UNCHECKED_ICON = 697;
+	public static final int CHECKED_ICON = 699;
+	public static final int INFO_ICON = 1514;
+
 	private static final String completeBtnPath = "panel/components/complete_button/";
 	public static final Icon INCOMPLETE_ONLY_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, completeBtnPath + "incomplete_only_icon.png"));
 	public static final Icon COMPLETE_ONLY_ICON = new ImageIcon(ImageUtil.loadImageResource(TasksTrackerPlugin.class, completeBtnPath + "complete_only_icon.png"));
