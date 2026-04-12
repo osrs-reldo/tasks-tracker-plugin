@@ -820,8 +820,8 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void showRouteTutorial()
 	{
-		final int mainBodyWidth = 350;
-		final int listItemWidth = 300;
+		final int mainBodyWidth = 500;
+		final int listItemWidth = mainBodyWidth - 50;
 		final String routeManagerButton = "(\u22EF)";
 
 		StringBuilder tutorialText = new StringBuilder();
@@ -836,7 +836,6 @@ public class TasksTrackerPlugin extends Plugin
 		startSectionList.append(HtmlUtil.wrapWithListItem("Select \"Route\" to switch to Route Mode.", listItemWidth));
 		startSectionList.append(HtmlUtil.wrapWithListItem("Pick a route from the route dropdown that appears, or use the route manager button " + routeManagerButton + " to import one.", listItemWidth));
 		tutorialText.append(HtmlUtil.wrapWithOrderedList(startSectionList.toString()))
-			.append(HtmlUtil.HTML_LINE_BREAK)
 			.append(HtmlUtil.HORIZONTAL_RULE);
 
 		tutorialText.append(HtmlUtil.wrapWithWrappingSubHeading("Importing a Route", mainBodyWidth));
@@ -845,7 +844,6 @@ public class TasksTrackerPlugin extends Plugin
 		importRouteList.append(HtmlUtil.wrapWithListItem("Choose \"Import from Clipboard\" to load a route you copied from a planning tool.", listItemWidth));
 		importRouteList.append(HtmlUtil.wrapWithListItem("You can also export your current route to share it.", listItemWidth));
 		tutorialText.append(HtmlUtil.wrapWithUnorderedList(importRouteList.toString()))
-			.append(HtmlUtil.HTML_LINE_BREAK)
 			.append(HtmlUtil.HORIZONTAL_RULE);
 
 		tutorialText.append(HtmlUtil.wrapWithWrappingSubHeading("In-Game Features", mainBodyWidth));
@@ -853,14 +851,12 @@ public class TasksTrackerPlugin extends Plugin
 		featuresList.append(HtmlUtil.wrapWithListItem("Turn on \"Show Overlay\" in plugin settings to see your current task on screen.", listItemWidth));
 		featuresList.append(HtmlUtil.wrapWithListItem("If you have \"Show Overlay\" enabled and the Shortest Path plugin installed, it can guide you to tasks in your route which have map locations.", listItemWidth));
 		tutorialText.append(HtmlUtil.wrapWithUnorderedList(featuresList.toString()))
-			.append(HtmlUtil.HTML_LINE_BREAK)
 			.append(HtmlUtil.HORIZONTAL_RULE);
 
 		tutorialText.append(HtmlUtil.wrapWithWrappingSubHeading("Coming Soon", mainBodyWidth));
 		StringBuilder comingSoonList = new StringBuilder();
 		comingSoonList.append(HtmlUtil.wrapWithListItem("A built-in Route Editor is in development.", listItemWidth));
 		tutorialText.append(HtmlUtil.wrapWithUnorderedList(comingSoonList.toString()))
-			.append(HtmlUtil.HTML_LINE_BREAK)
 			.append(HtmlUtil.HORIZONTAL_RULE);
 
 		tutorialText.append(HtmlUtil.HTML_LINE_BREAK);
