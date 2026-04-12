@@ -563,6 +563,11 @@ public class TaskListPanel extends JScrollPane
 
 	public void pinRandomTask()
 	{
+		if (plugin.isRouteMode())
+		{
+			return;
+		}
+
 		List<TaskPanel> visibleTasks = taskPanelsByStructId.values().stream()
 			.filter(Component::isVisible)
 			.collect(Collectors.toList());
