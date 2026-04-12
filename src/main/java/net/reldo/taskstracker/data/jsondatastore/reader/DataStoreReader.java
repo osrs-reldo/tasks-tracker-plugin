@@ -11,4 +11,8 @@ public interface DataStoreReader
 	InputStream readTasks(String jsonFilename) throws Exception;
 
 	InputStream readFilterConfigs(String filterFilename) throws Exception;
+
+	InputStream readPremadeRouteManifest() throws Exception;
+
+	InputStream readPremadeRoute(String filename) throws Exception;
 }

@@ -14,6 +14,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
@@ -28,6 +29,7 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
+import net.reldo.taskstracker.data.jsondatastore.types.PremadeRouteEntry;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.route.RouteManager;
 import net.reldo.taskstracker.data.task.TaskService;
@@ -702,7 +704,73 @@ public class LoggedInPanel extends JPanel
 		JMenuItem editorItem = new JMenuItem("Route Editor (Coming soon)");
 		editorItem.setEnabled(false);
 
+		JMenuItem browseItem = new JMenuItem("Browse Premade Routes");
+		browseItem.addActionListener(e -> {
+			String currentTaskType = taskService.getCurrentTaskType().getTaskJsonName();
+			new Thread(() -> {
+				try
+				{
+					List<PremadeRouteEntry> manifest = routeManager.fetchPremadeRouteManifest();
+					List<PremadeRouteEntry> filtered = manifest.stream()
+						.filter(entry -> currentTaskType.equals(entry.getTaskType()))
+						.collect(java.util.stream.Collectors.toList());
+
+					SwingUtilities.invokeLater(() -> {
+						if (filtered.isEmpty())
+						{
+							JOptionPane.showMessageDialog(
+								this,
+								"No premade routes available for " + currentTaskType + ".",
+								"Premade Routes",
+								JOptionPane.INFORMATION_MESSAGE
+							);
+							return;
+						}
+
+						PremadeRouteEntry selected = PremadeRouteBrowserDialog.show(this, filtered);
+						if (selected != null)
+						{
+							// Fetch route on background thread, then import on EDT
+							new Thread(() -> {
+								try
+								{
+									CustomRoute route = routeManager.fetchPremadeRoute(selected.getFilename());
+									SwingUtilities.invokeLater(() -> {
+										if (routeManager.importRoute(route))
+										{
+											refreshAfterRouteChange();
+										}
+									});
+								}
+								catch (Exception ex2)
+								{
+									log.error("Failed to download premade route", ex2);
+									SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
+										this,
+										"Failed to download route: " + ex2.getMessage(),
+										"Error",
+										JOptionPane.ERROR_MESSAGE
+									));
+								}
+							}, "PremadeRouteDownload").start();
+						}
+					});
+				}
+				catch (Exception ex)
+				{
+					log.error("Failed to fetch premade routes", ex);
+					SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
+						this,
+						"Could not fetch premade routes: " + ex.getMessage(),
+						"Error",
+						JOptionPane.ERROR_MESSAGE
+					));
+				}
+			}, "PremadeRouteManifestFetch").start();
+		});
+
 		menu.add(importItem);
+		menu.add(browseItem);
 		menu.add(exportItem);
 		menu.addSeparator();
 		menu.add(createItem);

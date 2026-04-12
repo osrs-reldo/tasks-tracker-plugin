@@ -127,4 +127,60 @@ public class HttpDataStoreReader implements DataStoreReader
 		log.debug("getFilters json fetched successfully, deserializing result");
 		return response.body().byteStream();
 	}
+
+	@Override
+	public InputStream readPremadeRouteManifest() throws Exception
+	{
+		String url = JsonDataStore.baseUrl + "/premade-routes/manifest.json";
+		log.debug("getPremadeRouteManifest json from {} ...", url);
+		Request request = new Request.Builder()
+			.url(url)
+			.build();
+		Response response = this.okHttpClient.newCall(request).execute();
+		if (!response.isSuccessful())
+		{
+			String unsuccessful = "getPremadeRouteManifest request unsuccessful with status " + response.code();
+			if (response.body() != null)
+			{
+				unsuccessful += " and body \n" + response.body();
+			}
+			log.error(unsuccessful);
+			throw new Exception(unsuccessful);
+		}
+		if (response.body() == null)
+		{
+			log.error("getPremadeRouteManifest returned without body");
+			throw new Exception("getPremadeRouteManifest returned without body");
+		}
+		log.debug("getPremadeRouteManifest json fetched successfully, deserializing result");
+		return response.body().byteStream();
+	}
+
+	@Override
+	public InputStream readPremadeRoute(String filename) throws Exception
+	{
+		String url = JsonDataStore.baseUrl + "/premade-routes/" + filename + ".json";
+		log.debug("getPremadeRoute json from {} ...", url);
+		Request request = new Request.Builder()
+			.url(url)
+			.build();
+		Response response = this.okHttpClient.newCall(request).execute();
+		if (!response.isSuccessful())
+		{
+			String unsuccessful = "getPremadeRoute request unsuccessful with status " + response.code();
+			if (response.body() != null)
+			{
+				unsuccessful += " and body \n" + response.body();
+			}
+			log.error(unsuccessful);
+			throw new Exception(unsuccessful);
+		}
+		if (response.body() == null)
+		{
+			log.error("getPremadeRoute returned without body");
+			throw new Exception("getPremadeRoute returned without body");
+		}
+		log.debug("getPremadeRoute json fetched successfully, deserializing result");
+		return response.body().byteStream();
+	}
 }

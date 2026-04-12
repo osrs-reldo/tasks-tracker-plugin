@@ -19,6 +19,8 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.gson.GsonFactory;
+import net.reldo.taskstracker.data.jsondatastore.PremadeRouteClient;
+import net.reldo.taskstracker.data.jsondatastore.types.PremadeRouteEntry;
 import net.reldo.taskstracker.data.task.TaskService;
 
 /**
@@ -41,6 +43,8 @@ public class RouteManager
 	private TasksTrackerConfig config;
 	@Inject
 	private TrackerGlobalConfigStore trackerGlobalConfigStore;
+	@Inject
+	private PremadeRouteClient premadeRouteClient;
 
 	/**
 	 * Imports a route from the system clipboard.
@@ -55,119 +59,15 @@ public class RouteManager
 				.getData(DataFlavor.stringFlavor).toString();
 
 			Gson routeGson = GsonFactory.newBuilder(gson).create();
-
 			CustomRoute route = routeGson.fromJson(clipboard, CustomRoute.class);
 
+			route = validateAndPrepareRoute(route);
 			if (route == null)
 			{
-				throw new Exception("Invalid route JSON");
+				return false;
 			}
 
-			if (route.getName() == null || route.getName().isEmpty())
-			{
-				throw new Exception("Missing route name");
-			}
-
-			if (route.getTaskType() == null || route.getTaskType().isEmpty())
-			{
-				throw new Exception("Missing route task type");
-			}
-
-			if (route.getId() == null || route.getId().isEmpty())
-			{
-				route.setId(UUID.randomUUID().toString());
-			}
-
-			String currentTaskType = taskService.getCurrentTaskType().getTaskJsonName();
-
-			if (!route.getTaskType().equals(currentTaskType))
-			{
-				int result = JOptionPane.showConfirmDialog(
-					plugin.pluginPanel,
-					"This route was created for " + route.getTaskType() +
-						" but you're viewing " + currentTaskType + ".\n\nImport anyway?",
-					"Task Type Mismatch",
-					JOptionPane.YES_NO_OPTION,
-					JOptionPane.WARNING_MESSAGE
-				);
-				if (result != JOptionPane.YES_OPTION)
-				{
-					return false;
-				}
-			}
-
-			List<RouteSection> sections = route.getSections();
-			for (RouteSection section : sections)
-			{
-				if (section.getId() == null || section.getId().isEmpty())
-				{
-					section.setId(UUID.randomUUID().toString());
-				}
-
-				for (RouteItem item : section.getItems())
-				{
-					if (!item.isTask() && item.getCustomItem() != null)
-					{
-						CustomRouteItem customItem = item.getCustomItem();
-						if (customItem.getId() == null || customItem.getId().isEmpty())
-						{
-							customItem.setId(UUID.randomUUID().toString());
-						}
-					}
-				}
-			}
-
-			route.setTaskType(currentTaskType);
-
-			Set<CustomRouteItem> duplicateCustomItems = getDuplicateCustomRouteItems(route);
-			Set<Integer> duplicateTasks = getDuplicateTaskIds(route);
-			if (!duplicateCustomItems.isEmpty() || !duplicateTasks.isEmpty())
-			{
-				List<String> duplicateMessages = new ArrayList<>();
-				duplicateMessages.add(!duplicateTasks.isEmpty() ? "task IDs" : "");
-				duplicateMessages.add(!duplicateCustomItems.isEmpty() ? "custom item IDs" : "");
-				String duplicatesMessage = duplicateMessages.stream()
-					.filter(string -> !string.isEmpty())
-					.collect(Collectors.joining(" and "));
-
-				int result = JOptionPane.showConfirmDialog(
-					plugin.pluginPanel,
-					"Duplicate " + duplicatesMessage + " detected.\n"
-						+ "The imported route may be different than expected.\n\n"
-						+ "Import anyway?",
-					"Duplicate IDs",
-					JOptionPane.OK_CANCEL_OPTION,
-					JOptionPane.WARNING_MESSAGE
-				);
-				if (result != JOptionPane.OK_OPTION)
-				{
-					return false;
-				}
-				for (Integer taskId : duplicateTasks)
-				{
-					log.warn("Duplicate task ID '{}' found, all later instances removed", taskId);
-					RouteSection firstSection = route.getSectionForTask(taskId);
-					sections.forEach(section ->
-					{
-						if (!section.equals(firstSection))
-						{
-							section.remove(taskId);
-						}
-					});
-				}
-				for (CustomRouteItem customRouteItem : duplicateCustomItems)
-				{
-					String newId = UUID.randomUUID().toString();
-					log.warn("Duplicate custom item ID '{}' found, regenerated as '{}'", customRouteItem.getId(), newId);
-					customRouteItem.setId(newId);
-				}
-			}
-
-			ConfigValues.TaskListTabs currentTab = config.taskListTab();
-			trackerGlobalConfigStore.addRoute(currentTaskType, route);
-			trackerGlobalConfigStore.saveActiveRouteId(currentTab, currentTaskType, route.getId());
-			taskService.setActiveRoute(currentTab, route);
-
+			saveAndActivateRoute(route);
 			log.debug("Imported route: {}", route.getName());
 			return true;
 		}
@@ -177,6 +77,181 @@ public class RouteManager
 			showErrorMessage("Failed to import route: " + e.getMessage());
 			return false;
 		}
+	}
+
+	/**
+	 * Fetches the premade route manifest from the repository.
+	 * @return list of available premade routes, filtered to current task type
+	 */
+	public List<PremadeRouteEntry> fetchPremadeRouteManifest() throws Exception
+	{
+		return premadeRouteClient.getManifest();
+	}
+
+	/**
+	 * Fetches a premade route from the repository.
+	 * This performs a network call and must NOT be called on the EDT.
+	 * @param filename the route filename (without .json extension)
+	 * @return the fetched route
+	 */
+	public CustomRoute fetchPremadeRoute(String filename) throws Exception
+	{
+		return premadeRouteClient.getRoute(filename);
+	}
+
+	/**
+	 * Imports a pre-fetched route (from premade routes or any other source).
+	 * Validates, saves, and activates the route. Safe to call on the EDT.
+	 * @return true if the route was imported successfully
+	 */
+	public boolean importRoute(CustomRoute route)
+	{
+		try
+		{
+			route = validateAndPrepareRoute(route);
+			if (route == null)
+			{
+				return false;
+			}
+
+			saveAndActivateRoute(route);
+			log.debug("Imported route: {}", route.getName());
+			return true;
+		}
+		catch (Exception e)
+		{
+			log.error("Failed to import route", e);
+			showErrorMessage("Failed to import route: " + e.getMessage());
+			return false;
+		}
+	}
+
+	/**
+	 * Validates and sanitizes a route for import.
+	 * Checks required fields, generates missing UUIDs, handles task type mismatch,
+	 * and detects/resolves duplicate IDs.
+	 * @return the validated route, or null if the user cancelled a dialog
+	 */
+	private CustomRoute validateAndPrepareRoute(CustomRoute route) throws Exception
+	{
+		if (route == null)
+		{
+			throw new Exception("Invalid route JSON");
+		}
+
+		if (route.getName() == null || route.getName().isEmpty())
+		{
+			throw new Exception("Missing route name");
+		}
+
+		if (route.getTaskType() == null || route.getTaskType().isEmpty())
+		{
+			throw new Exception("Missing route task type");
+		}
+
+		if (route.getId() == null || route.getId().isEmpty())
+		{
+			route.setId(UUID.randomUUID().toString());
+		}
+
+		String currentTaskType = taskService.getCurrentTaskType().getTaskJsonName();
+
+		if (!route.getTaskType().equals(currentTaskType))
+		{
+			int result = JOptionPane.showConfirmDialog(
+				plugin.pluginPanel,
+				"This route was created for " + route.getTaskType() +
+					" but you're viewing " + currentTaskType + ".\n\nImport anyway?",
+				"Task Type Mismatch",
+				JOptionPane.YES_NO_OPTION,
+				JOptionPane.WARNING_MESSAGE
+			);
+			if (result != JOptionPane.YES_OPTION)
+			{
+				return null;
+			}
+		}
+
+		List<RouteSection> sections = route.getSections();
+		for (RouteSection section : sections)
+		{
+			if (section.getId() == null || section.getId().isEmpty())
+			{
+				section.setId(UUID.randomUUID().toString());
+			}
+
+			for (RouteItem item : section.getItems())
+			{
+				if (!item.isTask() && item.getCustomItem() != null)
+				{
+					CustomRouteItem customItem = item.getCustomItem();
+					if (customItem.getId() == null || customItem.getId().isEmpty())
+					{
+						customItem.setId(UUID.randomUUID().toString());
+					}
+				}
+			}
+		}
+
+		route.setTaskType(currentTaskType);
+
+		Set<CustomRouteItem> duplicateCustomItems = getDuplicateCustomRouteItems(route);
+		Set<Integer> duplicateTasks = getDuplicateTaskIds(route);
+		if (!duplicateCustomItems.isEmpty() || !duplicateTasks.isEmpty())
+		{
+			List<String> duplicateMessages = new ArrayList<>();
+			duplicateMessages.add(!duplicateTasks.isEmpty() ? "task IDs" : "");
+			duplicateMessages.add(!duplicateCustomItems.isEmpty() ? "custom item IDs" : "");
+			String duplicatesMessage = duplicateMessages.stream()
+				.filter(string -> !string.isEmpty())
+				.collect(Collectors.joining(" and "));
+
+			int result = JOptionPane.showConfirmDialog(
+				plugin.pluginPanel,
+				"Duplicate " + duplicatesMessage + " detected.\n"
+					+ "The imported route may be different than expected.\n\n"
+					+ "Import anyway?",
+				"Duplicate IDs",
+				JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.WARNING_MESSAGE
+			);
+			if (result != JOptionPane.OK_OPTION)
+			{
+				return null;
+			}
+			for (Integer taskId : duplicateTasks)
+			{
+				log.warn("Duplicate task ID '{}' found, all later instances removed", taskId);
+				RouteSection firstSection = route.getSectionForTask(taskId);
+				sections.forEach(section ->
+				{
+					if (!section.equals(firstSection))
+					{
+						section.remove(taskId);
+					}
+				});
+			}
+			for (CustomRouteItem customRouteItem : duplicateCustomItems)
+			{
+				String newId = UUID.randomUUID().toString();
+				log.warn("Duplicate custom item ID '{}' found, regenerated as '{}'", customRouteItem.getId(), newId);
+				customRouteItem.setId(newId);
+			}
+		}
+
+		return route;
+	}
+
+	/**
+	 * Persists the route and sets it as the active route on the current tab.
+	 */
+	private void saveAndActivateRoute(CustomRoute route)
+	{
+		String taskType = taskService.getCurrentTaskType().getTaskJsonName();
+		ConfigValues.TaskListTabs currentTab = config.taskListTab();
+		trackerGlobalConfigStore.addRoute(taskType, route);
+		trackerGlobalConfigStore.saveActiveRouteId(currentTab, taskType, route.getId());
+		taskService.setActiveRoute(currentTab, route);
 	}
 
 	/**
