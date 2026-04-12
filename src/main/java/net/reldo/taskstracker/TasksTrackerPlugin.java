@@ -3,6 +3,7 @@ package net.reldo.taskstracker;
 import com.google.gson.Gson;
 import com.google.inject.Binder;
 import com.google.inject.Provides;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
@@ -22,9 +23,13 @@ import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.Export;
@@ -791,58 +796,80 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void showRouteTutorial()
 	{
-		final int paragraphWidth = 350;
+		final int mainBodyWidth = 350;
 		final int listItemWidth = 300;
+		final String routeManagerButton = "(\u22EF)";
 
 		StringBuilder tutorialText = new StringBuilder();
-		tutorialText.append(HtmlUtil.wrapWithBold("Route Mode Tutorial"))
-			.append(HtmlUtil.HTML_LINE_BREAK)
-			.append(HtmlUtil.HTML_LINE_BREAK);
-
-		tutorialText.append(HtmlUtil.wrapWithWrappingParagraph("Start by switching to Route Mode by selecting \"Route\" in the sort dropdown above the task list.", paragraphWidth));
-		tutorialText.append(HtmlUtil.imageTag("https://github.com/user-attachments/assets/88da13ec-8622-4ad2-bfc8-de8103f9bba2"));
+		tutorialText.append(HtmlUtil.wrapWithWrappingHeading("Route Mode", mainBodyWidth));
+		tutorialText.append(HtmlUtil.wrapWithWrappingParagraph("Route Mode lets you follow a planned route - a list of tasks organized into sections, in the order you should complete them.", mainBodyWidth));
 		tutorialText.append(HtmlUtil.HTML_LINE_BREAK);
-		// add screenshot of route mode selection from sort dropdown
+		tutorialText.append(HtmlUtil.HORIZONTAL_RULE);
 
-		tutorialText.append("When in Route Mode:");
-		StringBuilder tipsList = new StringBuilder();
-		tipsList.append(HtmlUtil.wrapWithListItem(HtmlUtil.wrapWithWrappingParagraph("Select your route from the dropdown that appears below the sort order dropdown.", listItemWidth)));
-		tipsList.append(HtmlUtil.imageTag("https://github.com/user-attachments/assets/a6031cea-2476-4f92-9793-62b7fae7a83e"));
-		// add screenshot of route selection dropdown
-
-		tipsList.append(HtmlUtil.wrapWithListItem(HtmlUtil.wrapWithWrappingParagraph("Import/export a route using the Route Manager menu next to Route Selector dropdown.", listItemWidth)));
-		tipsList.append(HtmlUtil.imageTag("https://github.com/user-attachments/assets/756ccfb5-84fe-4171-aa36-4888b066f0ee"));
-		// add screenshot of route manager button
-
-		tipsList.append(HtmlUtil.wrapWithListItem(HtmlUtil.wrapWithWrappingParagraph("Overlay panel shows task info directly in the game window.", listItemWidth)));
-		// add screenshot of overlay panel/ setting
-
-		tipsList.append(HtmlUtil.wrapWithListItem(HtmlUtil.wrapWithWrappingParagraph("With overlay panel on and shortest path plugin enabled a GPS will be shown for any task with location data.", listItemWidth)));
-
-		tipsList.append(HtmlUtil.wrapWithListItem(HtmlUtil.wrapWithWrappingParagraph("Route Editor coming soon!", listItemWidth)));
-		// add screenshot of route editor
-
-		tutorialText.append(HtmlUtil.wrapWithUnorderedList(tipsList.toString()))
+		tutorialText.append(HtmlUtil.wrapWithWrappingSubHeading("How to Start", mainBodyWidth));
+		StringBuilder startSectionList = new StringBuilder();
+		startSectionList.append(HtmlUtil.wrapWithListItem("Open the sort dropdown above the task list.", listItemWidth));
+		startSectionList.append(HtmlUtil.wrapWithListItem("Select \"Route\" to switch to Route Mode.", listItemWidth));
+		startSectionList.append(HtmlUtil.wrapWithListItem("Pick a route from the route dropdown that appears, or use the route manager button " + routeManagerButton + " to import one.", listItemWidth));
+		tutorialText.append(HtmlUtil.wrapWithOrderedList(startSectionList.toString()))
 			.append(HtmlUtil.HTML_LINE_BREAK)
+			.append(HtmlUtil.HORIZONTAL_RULE);
+
+		tutorialText.append(HtmlUtil.wrapWithWrappingSubHeading("Importing a Route", mainBodyWidth));
+		StringBuilder importRouteList = new StringBuilder();
+		importRouteList.append(HtmlUtil.wrapWithListItem("Click the route manager button next to the route dropdown " + routeManagerButton, listItemWidth));
+		importRouteList.append(HtmlUtil.wrapWithListItem("Choose \"Import from Clipboard\" to load a route you copied from a planning tool.", listItemWidth));
+		importRouteList.append(HtmlUtil.wrapWithListItem("You can also export your current route to share it.", listItemWidth));
+		tutorialText.append(HtmlUtil.wrapWithUnorderedList(importRouteList.toString()))
+			.append(HtmlUtil.HTML_LINE_BREAK)
+			.append(HtmlUtil.HORIZONTAL_RULE);
+
+		tutorialText.append(HtmlUtil.wrapWithWrappingSubHeading("In-Game Features", mainBodyWidth));
+		StringBuilder featuresList = new StringBuilder();
+		featuresList.append(HtmlUtil.wrapWithListItem("Turn on \"Show Overlay\" in plugin settings to see your current task on screen.", listItemWidth));
+		featuresList.append(HtmlUtil.wrapWithListItem("If you have \"Show Overlay\" enabled and the Shortest Path plugin installed, it can guide you to tasks in your route which have map locations.", listItemWidth));
+		tutorialText.append(HtmlUtil.wrapWithUnorderedList(featuresList.toString()))
+			.append(HtmlUtil.HTML_LINE_BREAK)
+			.append(HtmlUtil.HORIZONTAL_RULE);
+
+		tutorialText.append(HtmlUtil.wrapWithWrappingSubHeading("Coming Soon", mainBodyWidth));
+		StringBuilder comingSoonList = new StringBuilder();
+		comingSoonList.append(HtmlUtil.wrapWithListItem("A built-in Route Editor is in development.", listItemWidth));
+		tutorialText.append(HtmlUtil.wrapWithUnorderedList(comingSoonList.toString()))
+			.append(HtmlUtil.HTML_LINE_BREAK)
+			.append(HtmlUtil.HORIZONTAL_RULE);
+
+		tutorialText.append(HtmlUtil.HTML_LINE_BREAK);
+		tutorialText.append(HtmlUtil.wrapWithWrappingParagraph("You can hide this button by choosing the option below and unhide it in plugin settings.", mainBodyWidth))
 			.append(HtmlUtil.HTML_LINE_BREAK);
 
-		tutorialText.append(HtmlUtil.wrapWithWrappingParagraph("The tutorial button can be hidden when closing this window and toggled in the plugin config settings.", paragraphWidth))
-			.append(HtmlUtil.HTML_LINE_BREAK);
+		JPanel dialogPanel = new JPanel();
+		dialogPanel.setBorder(new EmptyBorder(0, 10, 0, 10));
+		dialogPanel.setLayout(new BorderLayout());
 
+		JLabel bodyText = new JLabel(HtmlUtil.wrapWithHtml(tutorialText.toString()));
+		dialogPanel.add(bodyText, BorderLayout.CENTER);
 
+		JCheckBox hideButton = new JCheckBox(" - hide Route Mode info button");
+		dialogPanel.add(hideButton, BorderLayout.SOUTH);
+
+		String routeModeOption = "Start Route Mode";
 		String closeOption = "Close";
-		String hideButtonOption = "Close & Hide tutorial Button";
-		String[] options = {closeOption, hideButtonOption};
+		String[] options = {routeModeOption, closeOption};
 
 		JOptionPane optionPane;
-		optionPane = new JOptionPane(HtmlUtil.wrapWithHtml(tutorialText.toString()), JOptionPane.INFORMATION_MESSAGE, JOptionPane.YES_NO_OPTION, null, options, options[0]);
+		optionPane = new JOptionPane(dialogPanel, JOptionPane.PLAIN_MESSAGE, JOptionPane.YES_NO_OPTION, null, options);
 		JDialog dialog;
-		dialog = optionPane.createDialog(pluginPanel, "Route Tutorial");
+		dialog = optionPane.createDialog(pluginPanel, "Route Mode Info");
 		dialog.setAlwaysOnTop(true);
 		dialog.setVisible(true);
 
 		Object selectedValue = optionPane.getValue();
-		if (hideButtonOption.equals(selectedValue))
+		if (routeModeOption.equals(selectedValue))
+		{
+			forceRouteMode();
+		}
+		if (hideButton.isSelected())
 		{
 			configManager.setConfiguration(CONFIG_GROUP_NAME, "hideRouteModeButton", true);
 		}

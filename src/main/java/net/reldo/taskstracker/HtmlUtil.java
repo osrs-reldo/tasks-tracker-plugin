@@ -1,7 +1,6 @@
 package net.reldo.taskstracker;
 
 import java.awt.Color;
-import java.net.URI;
 import java.net.URL;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,10 +8,21 @@ import lombok.extern.slf4j.Slf4j;
 public class HtmlUtil
 {
 	public static String HTML_LINE_BREAK = "<br>";
+	public static String HORIZONTAL_RULE = "<hr />";
 
 	public static String wrapWithHtml(String text)
 	{
 		return "<html>" + text + "</html>";
+	}
+
+	public static String wrapWithWrappingHeading(String text, int width)
+	{
+		return "<h1 width=\"" + width + "\">" + text + "</h1>";
+	}
+
+	public static String wrapWithWrappingSubHeading(String text, int width)
+	{
+		return "<h2 width=\"" + width + "\">" + text + "</h2>";
 	}
 
 	public static String wrapWithWrappingParagraph(String text, int width)
@@ -25,9 +35,14 @@ public class HtmlUtil
 		return "<ul style=\"margin-left: 25px;\">" + text + "</ul>";
 	}
 
-	public static String wrapWithListItem(String text)
+	public static String wrapWithOrderedList(String text)
 	{
-		return "<li style=\"margin-bottom: 5px;\">" + text + "</li>";
+		return "<ol style=\"margin-left: 25px;\">" + text + "</ol>";
+	}
+
+	public static String wrapWithListItem(String text, int width)
+	{
+		return "<li style=\"margin-bottom: 5px;width: " + width + ";\">" + text + "</li>";
 	}
 
 	public static String wrapWithItalics(String text)
@@ -55,20 +70,5 @@ public class HtmlUtil
 		String buf = Integer.toHexString(color.getRGB());
 		String hex = "#" + buf.substring(buf.length() - 6);
 		return colorTag(hex, text);
-	}
-
-	public static String imageTag(String urlString)
-	{
-		try
-		{
-			URL url = new URI(urlString).toURL();
-			return imageTag(url);
-		}
-		catch (Exception e)
-		{
-			log.error("Image tag could not be found: {}", urlString);
-			log.error("Error: {}", e.getMessage());
-			return "";
-		}
 	}
 }

@@ -397,9 +397,9 @@ public class TaskListPanel extends JScrollPane
 		Optional<TaskPanel> optionalTaskPanel = taskPanels.stream()
 			.filter(Component::isVisible)
 			.filter(panel -> !routeModeActive || !panel.task.isCompleted())
-			.min((panel1, panel2) ->
-				Integer.compare(getCurrentTaskListListPanel().getComponentZOrder(panel1),
-					getCurrentTaskListListPanel().getComponentZOrder(panel2)));
+			.min((panel1, panel2) -> Integer.compare(
+				getCurrentTaskListListPanel().getComponentZOrder(panel1),
+				getCurrentTaskListListPanel().getComponentZOrder(panel2)));
 		priorityTaskPanel = optionalTaskPanel.orElse(null);
 
 		Optional<CustomItemPanel> optionalCustomPanel = customItemPanels.values().stream()
