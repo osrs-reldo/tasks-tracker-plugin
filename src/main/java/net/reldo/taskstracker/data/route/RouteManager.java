@@ -21,6 +21,7 @@ import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.gson.GsonFactory;
 import net.reldo.taskstracker.data.jsondatastore.PremadeRouteClient;
 import net.reldo.taskstracker.data.jsondatastore.types.PremadeRouteEntry;
+import net.reldo.taskstracker.data.task.TaskFromStruct;
 import net.reldo.taskstracker.data.task.TaskService;
 
 /**
@@ -256,6 +257,7 @@ public class RouteManager
 
 	/**
 	 * Exports the active route to the system clipboard as JSON.
+	 * Populates per-item completedOn timestamps so planning tools can display progress.
 	 * @return true if a route was exported
 	 */
 	public boolean exportActiveRoute()
@@ -271,6 +273,8 @@ public class RouteManager
 			return false;
 		}
 
+		populateCompletedOn(route, taskType);
+
 		Gson routeGson = GsonFactory.newBuilder(gson).setPrettyPrinting().create();
 
 		String json = routeGson.toJson(route);
@@ -280,6 +284,36 @@ public class RouteManager
 
 		log.debug("Exported route to clipboard: {}", route.getName());
 		return true;
+	}
+
+	/**
+	 * Decorates each RouteItem with completedOn (epoch ms) if it's been marked complete.
+	 * Tasks use their tracked completion timestamp; custom items use export-time since the
+	 * plugin doesn't persist real completion timestamps for them.
+	 */
+	private void populateCompletedOn(CustomRoute route, String taskType)
+	{
+		Set<String> completedCustomItems = trackerGlobalConfigStore.loadCustomItemCompletion(taskType, route.getId());
+		long now = System.currentTimeMillis();
+
+		for (RouteSection section : route.getSections())
+		{
+			for (RouteItem item : section.getItems())
+			{
+				if (item.isTask())
+				{
+					TaskFromStruct task = taskService.getTaskByStructId(item.getTaskId());
+					if (task != null && task.getCompletedOn() > 0)
+					{
+						item.setCompletedOn(task.getCompletedOn());
+					}
+				}
+				else if (item.getCustomItem() != null && completedCustomItems.contains(item.getCustomItem().getId()))
+				{
+					item.setCompletedOn(now);
+				}
+			}
+		}
 	}
 
 	/**
