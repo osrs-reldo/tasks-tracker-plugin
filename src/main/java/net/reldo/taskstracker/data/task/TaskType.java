@@ -16,7 +16,7 @@ import net.runelite.api.EnumComposition;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
 
-public class TaskType
+public class TaskType implements ITaskType
 {
 	@Getter
 	private final HashMap<Integer, BufferedImage> spritesById = new HashMap<>();
@@ -160,5 +160,10 @@ public class TaskType
 	{
 		ArrayList<TaskCompletionCountTierDefinition> unlocks = _taskTypeDefinition.getTaskCompletionCountTiers();
 		return unlocks != null ? unlocks : new ArrayList<>();
+	}
+
+	public TaskTypeDefinition getTaskTypeDefinition()
+	{
+		return _taskTypeDefinition;
 	}
 }

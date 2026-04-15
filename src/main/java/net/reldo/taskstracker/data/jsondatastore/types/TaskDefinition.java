@@ -12,7 +12,8 @@ import net.runelite.api.coords.WorldPoint;
 public class TaskDefinition
 {
 	/**
-	 * Struct id for task data
+	 * Struct ID for struct-based tasks.
+	 * Used as the stable save key. Null for DBROW-based tasks.
 	 */
 	private Integer structId;
 
@@ -20,6 +21,12 @@ public class TaskDefinition
 	 * Sort id based on the sort order in the game's UI
 	 */
 	private Integer sortId;
+
+	/**
+	 * DBRow ID for DBROW-based tasks (action dbrow ID).
+	 * Used as the stable save key. Null for struct-based tasks.
+	 */
+	private Integer dbRowId;
 
 	/**
 	 * Skills required for the task.

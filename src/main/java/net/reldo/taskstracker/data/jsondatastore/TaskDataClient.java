@@ -17,11 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskTypeDefinition;
+import net.reldo.taskstracker.data.task.ITaskType;
 import net.reldo.taskstracker.data.task.TaskType;
 import net.runelite.api.Client;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
-import okhttp3.OkHttpClient;
 
 @Singleton
 @Slf4j
@@ -29,8 +29,6 @@ public class TaskDataClient
 {
 	@Inject
 	private ManifestClient manifestClient;
-	@Inject
-	private OkHttpClient okHttpClient;
 	@Inject
 	private Gson gson;
 	@Inject
@@ -47,7 +45,7 @@ public class TaskDataClient
 		log.debug("init task data client");
 	}
 
-	public HashMap<String, TaskType> getTaskTypes() throws Exception
+	public HashMap<String, ITaskType> getTaskTypes() throws Exception
 	{
 		try (InputStream stream = this.dataStoreReader.readTaskTypes(this.manifestClient.getManifest().taskTypeMetadata);
 			InputStreamReader responseReader = new InputStreamReader(stream, StandardCharsets.UTF_8))
@@ -56,7 +54,7 @@ public class TaskDataClient
 
 			List<TaskTypeDefinition> taskTypeDefinitions = this.gson.fromJson(responseReader, listType);
 
-			HashMap<String, TaskType> taskTypes = new HashMap<>();
+			HashMap<String, ITaskType> taskTypes = new HashMap<>();
 			for (TaskTypeDefinition taskTypeDefinition : taskTypeDefinitions)
 			{
 				taskTypes.put(taskTypeDefinition.getTaskJsonName(), new TaskType(client, clientThread, spriteManager, taskTypeDefinition));

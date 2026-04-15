@@ -8,7 +8,7 @@ import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
-import net.reldo.taskstracker.data.task.TaskType;
+import net.reldo.taskstracker.data.task.ITaskType;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
@@ -23,7 +23,7 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 	private final ComboItem[] items;
 	private JComboBox<ComboItem> dropdown;
 
-	public DynamicDropdownFilterPanel(TasksTrackerPlugin plugin, FilterConfig filterConfig, TaskType taskType, ComboItem[] items)
+	public DynamicDropdownFilterPanel(TasksTrackerPlugin plugin, FilterConfig filterConfig, ITaskType taskType, ComboItem[] items)
 	{
 		this.configManager = plugin.getConfigManager();
 		this.plugin = plugin;
