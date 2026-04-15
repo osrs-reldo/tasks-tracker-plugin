@@ -270,6 +270,7 @@ public class RouteManager
 		{
 			String taskType = taskService.getCurrentTaskType().getTaskJsonName();
 			trackerGlobalConfigStore.addRoute(taskType, activeRoute);
+			taskService.addRouteIndex(activeRoute);
 			return true;
 		}
 		return false;
