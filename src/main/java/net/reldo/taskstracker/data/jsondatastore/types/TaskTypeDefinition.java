@@ -10,7 +10,6 @@ import lombok.Data;
 @Data
 public class TaskTypeDefinition
 {
-
 	/**
 	 * Name of the task type for UI display
 	 */
@@ -20,6 +19,13 @@ public class TaskTypeDefinition
 	 * Description of the task type
 	 */
 	private String description;
+
+	/**
+	 * Discriminator for the task data source.
+	 * STRUCT = existing struct-based system (Combat Achievements, Leagues 1-5).
+	 * DBROW = DBRow-based system (Gridmaster / Leagues 6+).
+	 */
+	private TaskSourceType taskSourceType;
 
 	/**
 	 * Is the task type enabled?

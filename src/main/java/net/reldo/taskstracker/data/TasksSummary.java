@@ -2,7 +2,7 @@ package net.reldo.taskstracker.data;
 
 import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.ITask;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.reldo.taskstracker.data.task.filters.TextMatcher;
 
@@ -27,7 +27,7 @@ public class TasksSummary
 	public int totalCompletedCount = 0;
 	public int totalCompletedPoints = 0;
 
-	public TasksSummary(Collection<TaskFromStruct> tasks)
+	public TasksSummary(Collection<ITask> tasks)
 	{
 		tasks.forEach(task -> {
 			if (task.isTracked())
@@ -47,7 +47,7 @@ public class TasksSummary
 	 * @param filterMatcher The filter matcher to determine which tasks pass current filters
 	 * @param textMatcher   The text matcher for search filtering (can be null)
 	 */
-	public TasksSummary(Collection<TaskFromStruct> tasks, FilterMatcher filterMatcher, TextMatcher textMatcher)
+	public TasksSummary(Collection<ITask> tasks, FilterMatcher filterMatcher, TextMatcher textMatcher)
 	{
 		tasks.forEach(task -> {
 			int points = task.getPoints();

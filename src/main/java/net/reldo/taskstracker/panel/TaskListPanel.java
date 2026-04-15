@@ -29,7 +29,7 @@ import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.route.CustomRouteItem;
 import net.reldo.taskstracker.data.route.RouteItem;
 import net.reldo.taskstracker.data.route.RouteSection;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.ITask;
 import net.reldo.taskstracker.data.task.TaskService;
 import net.reldo.taskstracker.panel.components.FixedWidthPanel;
 import net.reldo.taskstracker.panel.components.SectionHeaderPanel;
@@ -231,7 +231,7 @@ public class TaskListPanel extends JScrollPane
 			.collect(Collectors.toList()));
 	}
 
-	public void refreshMultipleTasks(Collection<TaskFromStruct> tasks)
+	public void refreshMultipleTasks(Collection<ITask> tasks)
 	{
 		log.debug("TaskListPanel.refreshMultipleTasks {}", tasks.size());
 		if (!SwingUtilities.isEventDispatchThread())
@@ -239,7 +239,7 @@ public class TaskListPanel extends JScrollPane
 			log.error("Task list panel refresh failed - not event dispatch thread.");
 			return;
 		}
-		for (TaskFromStruct task : tasks)
+		for (ITask task : tasks)
 		{
 			refresh(task, true);
 		}
@@ -249,13 +249,13 @@ public class TaskListPanel extends JScrollPane
 		}
 	}
 
-	public void refreshTask(TaskFromStruct task)
+	public void refreshTask(ITask task)
 	{
 		log.debug("TaskListPanel.refreshTask {}", task.getName());
 		refresh(task, false);
 	}
 
-	private void refresh(TaskFromStruct task, boolean delayPriorityTaskRefresh)
+	private void refresh(ITask task, boolean delayPriorityTaskRefresh)
 	{
 		if (!SwingUtilities.isEventDispatchThread())
 		{
@@ -270,7 +270,7 @@ public class TaskListPanel extends JScrollPane
 
 		emptyTasks.setVisible(false);
 
-		TaskPanel panel = taskPanelsByStructId.get(task.getStructId());
+		TaskPanel panel = taskPanelsByStructId.get(task.getTaskId());
 		if (panel != null)
 		{
 			refreshTaskPanel(panel);
@@ -313,7 +313,7 @@ public class TaskListPanel extends JScrollPane
 			return;
 		}
 
-		RouteSection section = activeRoute.getSectionForTask(panel.task.getStructId());
+		RouteSection section = activeRoute.getSectionForTask(panel.task.getTaskId());
 		if (section == null)
 		{
 			panel.setVisible(false);
@@ -429,7 +429,7 @@ public class TaskListPanel extends JScrollPane
 			if (activeRoute != null)
 			{
 				WorldPoint routeLocation = activeRoute.getFlattenedItems().stream()
-					.filter(item -> item.isTask() && taskPanel.task.getStructId().equals(item.getTaskId()))
+					.filter(item -> item.isTask() && item.getTaskId().equals(taskPanel.task.getTaskId()))
 					.map(RouteItem::getLocation)
 					.filter(java.util.Objects::nonNull)
 					.findFirst()
@@ -554,7 +554,7 @@ public class TaskListPanel extends JScrollPane
 			if (comp instanceof TaskPanel && comp.isVisible())
 			{
 				TaskPanel panel = (TaskPanel) comp;
-				ids.add(panel.task.getStructId());
+				ids.add(panel.task.getTaskId());
 			}
 		}
 
@@ -572,7 +572,7 @@ public class TaskListPanel extends JScrollPane
 			.filter(Component::isVisible)
 			.collect(Collectors.toList());
 		int randomIndex = ThreadLocalRandom.current().nextInt(visibleTasks.size());
-		int randomTaskId = visibleTasks.get(randomIndex).task.getStructId();
+		int randomTaskId = visibleTasks.get(randomIndex).task.getTaskId();
 
 		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", randomTaskId);
 		SwingUtilities.invokeLater(plugin::redrawTaskList);
@@ -619,7 +619,7 @@ public class TaskListPanel extends JScrollPane
 
 				add(emptyTasks);
 
-				List<TaskFromStruct> tasks = taskService.getTasks();
+				List<ITask> tasks = taskService.getTasks();
 				if (tasks == null || tasks.isEmpty())
 				{
 					emptyTasks.setVisible(true);
@@ -633,11 +633,11 @@ public class TaskListPanel extends JScrollPane
 
 				processInBatches(tasks.size(), indexPosition ->
 				{
-					TaskFromStruct task = tasks.get(indexPosition);
+					ITask task = tasks.get(indexPosition);
 					TaskPanel taskPanel = new TaskPanel(plugin, task, plugin.getFilterMatcher());
 					add(taskPanel);
 					newTaskPanels.add(taskPanel);
-					taskPanelsByStructId.put(task.getStructId(), taskPanel);
+					taskPanelsByStructId.put(task.getTaskId(), taskPanel);
 					if (indexPosition == (batchSize - 1))
 					{
 						taskPanels = newTaskPanels; // replace taskPanels list at end of first batch

@@ -14,7 +14,6 @@ import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
-import okhttp3.OkHttpClient;
 
 @Singleton
 @Slf4j
@@ -22,8 +21,6 @@ public class FilterDataClient
 {
 	@Inject
 	private ManifestClient manifestClient;
-	@Inject
-	private OkHttpClient okHttpClient;
 	@Inject
 	private Gson gson;
 	@Inject

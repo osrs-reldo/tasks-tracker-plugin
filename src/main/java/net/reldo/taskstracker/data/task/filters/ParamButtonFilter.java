@@ -2,7 +2,7 @@ package net.reldo.taskstracker.data.task.filters;
 
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.ITask;
 import net.runelite.client.config.ConfigManager;
 
 @Slf4j
@@ -20,7 +20,7 @@ public class ParamButtonFilter extends Filter
 	}
 
 	@Override
-	public boolean meetsCriteria(TaskFromStruct task)
+	public boolean meetsCriteria(ITask task)
 	{
 		String configValue = configManager.getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, filterConfigKey);
 		boolean isEmptyFilterSelection = configValue == null || configValue.isEmpty() || configValue.equals("-1");

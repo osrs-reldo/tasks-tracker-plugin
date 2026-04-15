@@ -11,7 +11,7 @@ import javax.swing.border.EmptyBorder;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterCustomItem;
-import net.reldo.taskstracker.data.task.TaskType;
+import net.reldo.taskstracker.data.task.ITaskType;
 import net.runelite.client.hiscore.HiscoreSkill;
 import static net.runelite.client.hiscore.HiscoreSkill.*;
 import net.runelite.client.ui.ColorScheme;
@@ -20,7 +20,7 @@ import net.runelite.client.util.ImageUtil;
 public class DynamicButtonFilterPanel extends FilterButtonPanel
 {
 	private final FilterConfig filterConfig;
-	private final TaskType taskType;
+	private final ITaskType taskType;
 
 	/**
 	 * Real skills, ordered in the way they should be displayed in the panel.
@@ -36,7 +36,7 @@ public class DynamicButtonFilterPanel extends FilterButtonPanel
 		CONSTRUCTION, HUNTER
 	);
 
-	public DynamicButtonFilterPanel(TasksTrackerPlugin plugin, FilterConfig filterConfig, TaskType taskType)
+	public DynamicButtonFilterPanel(TasksTrackerPlugin plugin, FilterConfig filterConfig, ITaskType taskType)
 	{
 		super(plugin, filterConfig.getLabel());
 		this.filterConfig = filterConfig;

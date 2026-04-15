@@ -20,11 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerConfig;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
-import net.reldo.taskstracker.data.jsondatastore.ManifestClient;
 import net.reldo.taskstracker.data.jsondatastore.TaskDataClient;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterValueType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskSourceType;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.route.RouteItem;
 import net.reldo.taskstracker.data.route.RouteSection;
@@ -38,8 +38,6 @@ import net.runelite.client.config.ConfigManager;
 @Slf4j
 public class TaskService
 {
-	@Inject
-	private ManifestClient manifestClient;
 	@Inject
 	private TaskDataClient taskDataClient;
 	@Inject
@@ -55,12 +53,12 @@ public class TaskService
 	@Setter
 	private boolean taskTypeChanged = false;
 	@Getter
-	private TaskType currentTaskType;
+	private ITaskType currentTaskType;
 	@Getter
-	private final List<TaskFromStruct> tasks = new ArrayList<>();
+	private final List<ITask> tasks = new ArrayList<>();
 	@Getter
 	private final HashMap<String, HashMap<Integer, Integer>> sortedIndexes = new HashMap<>();
-	private HashMap<String, TaskType> _taskTypes = new HashMap<>();
+	private HashMap<String, ITaskType> _taskTypes = new HashMap<>();
 	private HashSet<Integer> currentTaskTypeVarps = new HashSet<>();
 	private final ExecutorService futureExecutor = Executors.newSingleThreadExecutor();
 
@@ -75,7 +73,7 @@ public class TaskService
 	{
 		return getTaskTypesByJsonName().thenCompose(taskTypes ->
 		{
-			TaskType newTaskType = taskTypes.get(taskTypeJsonName);
+			ITaskType newTaskType = taskTypes.get(taskTypeJsonName);
 			if (newTaskType == null)
 			{
 				log.error("unsupported task type {}, falling back to COMBAT", taskTypeJsonName);
@@ -85,15 +83,14 @@ public class TaskService
 		});
 	}
 
-	private CompletableFuture<Boolean> loadAllTasksStructData(Collection<TaskFromStruct> tasks)
+	private CompletableFuture<Boolean> loadAllTaskData(Collection<? extends ITask> tasks)
 	{
 		Collection<CompletableFuture<Boolean>> taskFutures = new ArrayList<>();
-		for (TaskFromStruct task : tasks)
+		for (ITask task : tasks)
 		{
 			CompletableFuture<Boolean> taskFuture = new CompletableFuture<>();
 			clientThread.invoke(() -> {
-				boolean isTaskLoaded = task.loadStructData(client);
-				taskFuture.complete(isTaskLoaded);
+				taskFuture.complete(task.loadData(client));
 			});
 			taskFutures.add(taskFuture);
 		}
@@ -109,7 +106,7 @@ public class TaskService
 		});
 	}
 
-	public CompletableFuture<Boolean> setTaskType(TaskType newTaskType)
+	public CompletableFuture<Boolean> setTaskType(ITaskType newTaskType)
 	{
 		log.debug("setTaskType {}", newTaskType.getTaskJsonName());
 		if (newTaskType.equals(currentTaskType))
@@ -128,6 +125,11 @@ public class TaskService
 			{
 				// Set valueType to the one required by the global filter
 				FilterConfig globalFilterConfig = filterService.getGlobalFilterByKey(filterConfig.getConfigKey());
+				if (globalFilterConfig == null)
+				{
+					log.warn("Missing global filter config for key {}, skipping fixup", filterConfig.getConfigKey());
+					continue;
+				}
 				filterConfig.setValueType(globalFilterConfig.getValueType());
 
 				// Set any filterConfig fields not already specified
@@ -144,7 +146,7 @@ public class TaskService
 			}
 		}
 
-		List<TaskFromStruct> newTasks = new ArrayList<>();
+		List<ITask> newTasks = new ArrayList<>();
 		return newTaskType.loadTaskTypeDataAsync().thenCompose((isTaskTypeLoaded) -> {
 			if (!isTaskTypeLoaded)
 			{
@@ -157,12 +159,21 @@ public class TaskService
 				try
 				{
 					Collection<TaskDefinition> taskDefinitions = taskDataClient.getTaskDefinitions(currentTaskType.getTaskJsonName());
+					TaskSourceType sourceType = currentTaskType.getTaskTypeDefinition().getTaskSourceType();
 					for (TaskDefinition definition : taskDefinitions)
 					{
-						TaskFromStruct task = new TaskFromStruct(currentTaskType, definition);
-						newTasks.add(task);
+						if (sourceType == TaskSourceType.STRUCT)
+						{
+							TaskFromStruct task = new TaskFromStruct((TaskType) currentTaskType, definition);
+							newTasks.add(task);
+						}
+						else
+						{
+							TaskFromDbRow task = new TaskFromDbRow(currentTaskType, definition);
+							newTasks.add(task);
+						}
 					}
-					loadAllTasksStructData(newTasks).thenApply(future::complete);
+					loadAllTaskData(newTasks).thenApply(future::complete);
 				}
 				catch (Exception e3)
 				{
@@ -188,18 +199,23 @@ public class TaskService
 			sortedIndexes.clear();
 			currentTaskType.getIntParamMap().keySet().forEach(paramName -> {
 				sortedIndexes.put(paramName, null);
-				addSortedIndex(paramName, Comparator.comparingInt((TaskFromStruct task) -> task.getIntParam(paramName)));
+				addSortedIndex(paramName, Comparator.comparingInt((ITask task) -> {
+					Integer v = task.getIntParam(paramName);
+					return v != null ? v : 0;
+				}));
 			});
 			currentTaskType.getStringParamMap().keySet().forEach(paramName -> {
 				sortedIndexes.put(paramName, null);
-				addSortedIndex(paramName, Comparator.comparing((TaskFromStruct task) -> task.getStringParam(paramName)));
+				addSortedIndex(paramName, Comparator.comparing(
+					(ITask task) -> task.getStringParam(paramName),
+					Comparator.nullsLast(Comparator.naturalOrder())));
 			});
 			// todo: make this less of a special case.
 			if (tasks.stream().anyMatch(task -> task.getCompletionPercent() != null))
 			{
 				sortedIndexes.put("completion %", null);
 				addSortedIndex("completion %",
-					(TaskFromStruct task1, TaskFromStruct task2) ->
+					(ITask task1, ITask task2) ->
 					{
 						Float comp1 = task1.getTaskDefinition().getCompletionPercent() != null ? task1.getTaskDefinition().getCompletionPercent() : 0;
 						Float comp2 = task2.getTaskDefinition().getCompletionPercent() != null ? task2.getTaskDefinition().getCompletionPercent() : 0;
@@ -215,15 +231,15 @@ public class TaskService
 		});
 	}
 
-	private void addSortedIndex(String paramName, Comparator<TaskFromStruct> comparator)
+	private void addSortedIndex(String paramName, Comparator<ITask> comparator)
 	{
-		List<TaskFromStruct> sortedTasks = tasks.stream()
+		List<ITask> sortedTasks = tasks.stream()
 			.sorted(comparator)
 			.collect(Collectors.toCollection(ArrayList::new));
 		HashMap<Integer, Integer> sortedIndex = new HashMap<>();
-		for (TaskFromStruct task : tasks)
+		for (ITask task : tasks)
 		{
-			sortedIndex.put(task.getStructId(), sortedTasks.indexOf(task));
+			sortedIndex.put(task.getTaskId(), sortedTasks.indexOf(task));
 		}
 		sortedIndexes.put(paramName, sortedIndex);
 	}
@@ -254,11 +270,11 @@ public class TaskService
 		}
 
 		int afterRouteIndex = route.getItemCount() + sections.size();
-		for (TaskFromStruct task : tasks)
+		for (ITask task : tasks)
 		{
-			if (!route.getFlattenedOrder().contains(task.getStructId()))
+			if (!route.getFlattenedOrder().contains(task.getTaskId()))
 			{
-				routeIndex.put(task.getStructId(), ++afterRouteIndex);
+				routeIndex.put(task.getTaskId(), ++afterRouteIndex);
 			}
 		}
 
@@ -266,29 +282,39 @@ public class TaskService
 		customItemRouteIndexes.put(route.getId(), customIndex);
 	}
 
-	public int getTaskIndex(String sortCriteria, Integer taskStructId)
+	public int getTaskIndex(String sortCriteria, Integer taskId)
 	{
-		return getTaskIndex(sortCriteria, taskStructId, true);
+		return getTaskIndex(sortCriteria, taskId, true);
 	}
 
-	public int getTaskIndex(String indexId, Integer taskStructId, Boolean ascending)
+	public int getTaskIndex(String indexId, Integer taskId, Boolean ascending)
 	{
-		int position;
+		Integer position = null;
 		ConfigValues.TaskListTabs currentTab = configManager.getConfig(TasksTrackerConfig.class).taskListTab();
 		boolean activeRoute = hasActiveRoute(currentTab);
 
-		if (!activeRoute && sortedIndexes.containsKey(indexId))
+		if (!activeRoute)
 		{
-			position = sortedIndexes.get(indexId).get(taskStructId);
-		}
-		else if (activeRoute && routeIndexes.containsKey(indexId))
-		{
-			position = routeIndexes.get(indexId).get(taskStructId);
+			HashMap<Integer, Integer> sortedIndex = sortedIndexes.get(indexId);
+			if (sortedIndex != null)
+			{
+				position = sortedIndex.get(taskId);
+			}
 		}
 		else
 		{
+			HashMap<Integer, Integer> routeIndex = routeIndexes.get(indexId);
+			if (routeIndex != null)
+			{
+				position = routeIndex.get(taskId);
+			}
+		}
+
+		if (position == null)
+		{
 			// Fall back to game UI sort order
-			position = getTaskByStructId(taskStructId).getSortId();
+			ITask task = getTaskById(taskId);
+			position = task != null ? task.getSortId() : 0;
 		}
 
 		return ascending ? position : tasks.size() - (position + 1);
@@ -319,7 +345,7 @@ public class TaskService
 	 *
 	 * @return Hashmap of TaskType indexed by task type json name
 	 */
-	public CompletableFuture<HashMap<String, TaskType>> getTaskTypesByJsonName()
+	public CompletableFuture<HashMap<String, ITaskType>> getTaskTypesByJsonName()
 	{
 		if (_taskTypes.size() > 0)
 		{
@@ -328,7 +354,7 @@ public class TaskService
 
 		try
 		{
-			CompletableFuture<HashMap<String, TaskType>> future = new CompletableFuture<>();
+			CompletableFuture<HashMap<String, ITaskType>> future = new CompletableFuture<>();
 			futureExecutor.submit(() ->
 			{
 				try
@@ -381,7 +407,7 @@ public class TaskService
 		return future;
 	}
 
-	public void applySave(TaskType saveTaskType, HashMap<Integer, ConfigTaskSave> saveData)
+	public void applySave(ITaskType saveTaskType, HashMap<Integer, ConfigTaskSave> saveData)
 	{
 		String currentTaskTypeName = currentTaskType.getTaskJsonName();
 		String saveTaskTypeName = saveTaskType.getTaskJsonName();
@@ -391,9 +417,9 @@ public class TaskService
 			return;
 		}
 
-		for (TaskFromStruct task : getTasks())
+		for (ITask task : getTasks())
 		{
-			ConfigTaskSave configTaskSave = saveData.get(task.getStructId());
+			ConfigTaskSave configTaskSave = saveData.get(task.getTaskId());
 			if (configTaskSave == null)
 			{
 				continue;
@@ -402,15 +428,15 @@ public class TaskService
 		}
 	}
 
-	public List<TaskFromStruct> getTasksFromVarpId(Integer varpId)
+	public List<ITask> getTasksFromVarpId(Integer varpId)
 	{
 		int varpIndex = getCurrentTaskType().getTaskVarps().indexOf(varpId);
 		int minTaskId = varpIndex * 32;
 		int maxTaskId = minTaskId + 32;
 
 		return getTasks().stream().filter(t -> {
-			int taskId = t.getIntParam("id");
-			return taskId >= minTaskId && taskId <= maxTaskId;
+			int taskBitIndex = t.getVarpIndex();
+			return taskBitIndex >= minTaskId && taskBitIndex <= maxTaskId;
 		}).collect(Collectors.toList());
 	}
 
@@ -461,11 +487,11 @@ public class TaskService
 		setActiveRoute(tab, null);
 	}
 
-	/** Finds a task by its struct ID. Returns null if not found. */
-	public TaskFromStruct getTaskByStructId(Integer taskStructId)
+	/** Finds a task by its task ID. Returns null if not found. */
+	public ITask getTaskById(Integer taskId)
 	{
 		return tasks.stream()
-			.filter(t -> t.getStructId().equals(taskStructId))
+			.filter(t -> Integer.valueOf(t.getTaskId()).equals(taskId))
 			.findFirst()
 			.orElse(null);
 	}
