@@ -255,6 +255,27 @@ public class RouteManager
 	}
 
 	/**
+	 * Removes a task from the active route.
+	 * @param taskId the task ID to remove
+	 * @return true if the task was found and removed
+	 */
+	public boolean removeTaskFromActiveRoute(int taskId)
+	{
+		CustomRoute activeRoute = taskService.getActiveRoute();
+		if (activeRoute == null)
+		{
+			return false;
+		}
+		if (activeRoute.removeTask(taskId))
+		{
+			String taskType = taskService.getCurrentTaskType().getTaskJsonName();
+			trackerGlobalConfigStore.addRoute(taskType, activeRoute);
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Exports the active route to the system clipboard as JSON.
 	 * @return true if a route was exported
 	 */

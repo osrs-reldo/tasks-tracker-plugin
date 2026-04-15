@@ -297,6 +297,17 @@ public class TaskPanel extends JPanel
 				popupMenu.add(pinTaskItem);
 			}
 		}
+		else
+		{
+			JMenuItem removeFromRouteItem = new JMenuItem("Remove from route");
+			removeFromRouteItem.addActionListener(e -> {
+				if (plugin.getRouteManager().removeTaskFromActiveRoute(task.getTaskId()))
+				{
+					SwingUtilities.invokeLater(plugin::redrawTaskList);
+				}
+			});
+			popupMenu.add(removeFromRouteItem);
+		}
 		JMenuItem editNoteItem = new JMenuItem("Edit Note");
 		editNoteItem.addActionListener(e -> editTaskNote());
 		popupMenu.add(editNoteItem);
