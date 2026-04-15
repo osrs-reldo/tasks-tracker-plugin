@@ -368,7 +368,8 @@ public class TaskPanel extends JPanel
 		}
 		setBackgroundColor(getTaskBackgroundColor());
 		name.setText(HtmlUtil.wrapWithHtml(task.getName()));
-		description.setText(HtmlUtil.wrapWithHtml(task.getDescription()));
+		String desc = task.getDescription();
+		description.setText(desc != null ? HtmlUtil.wrapWithHtml(desc) : "");
 
 		// If completed tasks are auto-untracked, don't allow users to add them to tracked tasks, that's silly.
 		boolean disableTrack = plugin.getConfig().untrackUponCompletion() && task.isCompleted();

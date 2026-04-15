@@ -44,4 +44,20 @@ public class FilterService
 	{
 		this._filterConfigs.clear();
 	}
+
+	public void preloadFilterConfigs()
+	{
+		if (_filterConfigs != null && !_filterConfigs.isEmpty())
+		{
+			return;
+		}
+		try
+		{
+			_filterConfigs = filterDataClient.getFilterConfigs();
+		}
+		catch (Exception ex)
+		{
+			log.error("Unable to preload filter configs", ex);
+		}
+	}
 }

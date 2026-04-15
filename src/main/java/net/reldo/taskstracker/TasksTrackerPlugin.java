@@ -192,6 +192,9 @@ public class TasksTrackerPlugin extends Plugin
 		keyManager.registerKeyListener(completeCustomKeyListener);
 		keyManager.registerKeyListener(randomTaskKeyListener);
 
+		// Pre-warm filter configs off-EDT so later type switches can read from cache
+		CompletableFuture.runAsync(() -> filterService.preloadFilterConfigs());
+
 		try
 		{
 			String taskTypeJsonName = config.taskTypeJsonName();
@@ -702,7 +705,13 @@ public class TasksTrackerPlugin extends Plugin
 			int bitIndex = taskVarpIndex % 32;
 			try
 			{
-				int varpId = task.getTaskType().getTaskVarps().get(varbitIndex);
+				List<Integer> taskVarps = task.getTaskType().getTaskVarps();
+				if (varbitIndex < 0 || varbitIndex >= taskVarps.size())
+				{
+					future.complete(task.isCompleted());
+					return;
+				}
+				int varpId = taskVarps.get(varbitIndex);
 				BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varpId));
 				boolean isTaskCompleted = varpValue.testBit(bitIndex);
 				task.setCompleted(isTaskCompleted);

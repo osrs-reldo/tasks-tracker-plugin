@@ -125,6 +125,11 @@ public class TaskService
 			{
 				// Set valueType to the one required by the global filter
 				FilterConfig globalFilterConfig = filterService.getGlobalFilterByKey(filterConfig.getConfigKey());
+				if (globalFilterConfig == null)
+				{
+					log.warn("Missing global filter config for key {}, skipping fixup", filterConfig.getConfigKey());
+					continue;
+				}
 				filterConfig.setValueType(globalFilterConfig.getValueType());
 
 				// Set any filterConfig fields not already specified
@@ -194,11 +199,16 @@ public class TaskService
 			sortedIndexes.clear();
 			currentTaskType.getIntParamMap().keySet().forEach(paramName -> {
 				sortedIndexes.put(paramName, null);
-				addSortedIndex(paramName, Comparator.comparingInt((ITask task) -> task.getIntParam(paramName)));
+				addSortedIndex(paramName, Comparator.comparingInt((ITask task) -> {
+					Integer v = task.getIntParam(paramName);
+					return v != null ? v : 0;
+				}));
 			});
 			currentTaskType.getStringParamMap().keySet().forEach(paramName -> {
 				sortedIndexes.put(paramName, null);
-				addSortedIndex(paramName, Comparator.comparing((ITask task) -> task.getStringParam(paramName)));
+				addSortedIndex(paramName, Comparator.comparing(
+					(ITask task) -> task.getStringParam(paramName),
+					Comparator.nullsLast(Comparator.naturalOrder())));
 			});
 			// todo: make this less of a special case.
 			if (tasks.stream().anyMatch(task -> task.getCompletionPercent() != null))
@@ -279,22 +289,32 @@ public class TaskService
 
 	public int getTaskIndex(String indexId, Integer taskId, Boolean ascending)
 	{
-		int position;
+		Integer position = null;
 		ConfigValues.TaskListTabs currentTab = configManager.getConfig(TasksTrackerConfig.class).taskListTab();
 		boolean activeRoute = hasActiveRoute(currentTab);
 
-		if (!activeRoute && sortedIndexes.containsKey(indexId))
+		if (!activeRoute)
 		{
-			position = sortedIndexes.get(indexId).get(taskId);
-		}
-		else if (activeRoute && routeIndexes.containsKey(indexId))
-		{
-			position = routeIndexes.get(indexId).get(taskId);
+			HashMap<Integer, Integer> sortedIndex = sortedIndexes.get(indexId);
+			if (sortedIndex != null)
+			{
+				position = sortedIndex.get(taskId);
+			}
 		}
 		else
 		{
+			HashMap<Integer, Integer> routeIndex = routeIndexes.get(indexId);
+			if (routeIndex != null)
+			{
+				position = routeIndex.get(taskId);
+			}
+		}
+
+		if (position == null)
+		{
 			// Fall back to game UI sort order
-			position = getTaskById(taskId).getSortId();
+			ITask task = getTaskById(taskId);
+			position = task != null ? task.getSortId() : 0;
 		}
 
 		return ascending ? position : tasks.size() - (position + 1);
