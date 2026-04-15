@@ -143,6 +143,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Getter
 	@Inject
 	private TaskService taskService;
+	@Getter
 	@Inject
 	private RouteManager routeManager;
 	@Inject

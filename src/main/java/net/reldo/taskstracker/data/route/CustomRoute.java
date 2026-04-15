@@ -164,6 +164,23 @@ public class CustomRoute
 		return null;
 	}
 
+	/** Removes a task by ID from whichever section contains it. Returns true if found. */
+	public boolean removeTask(int taskId)
+	{
+		if (sections == null)
+		{
+			return false;
+		}
+		for (RouteSection section : sections)
+		{
+			if (section.remove(taskId))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/** Removes a custom item by ID from whichever section contains it. Returns true if found. */
 	public boolean removeCustomItem(String customItemId)
 	{
