@@ -10,14 +10,11 @@ import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.types.Manifest;
-import okhttp3.OkHttpClient;
 
 @Singleton
 @Slf4j
 public class ManifestClient
 {
-	@Inject
-	private OkHttpClient okHttpClient;
 	@Inject
 	private Gson gson;
 	@Inject

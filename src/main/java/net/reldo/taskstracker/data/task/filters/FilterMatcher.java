@@ -8,8 +8,8 @@ import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
-import net.reldo.taskstracker.data.task.TaskType;
+import net.reldo.taskstracker.data.task.ITask;
+import net.reldo.taskstracker.data.task.ITaskType;
 import net.runelite.client.config.ConfigManager;
 
 /**
@@ -22,7 +22,7 @@ public class FilterMatcher
 	private final TasksTrackerConfig config;
 	private final List<Filter> subFilters;
 
-	public FilterMatcher(ConfigManager configManager, TasksTrackerConfig config, TaskType taskType)
+	public FilterMatcher(ConfigManager configManager, TasksTrackerConfig config, ITaskType taskType)
 	{
 		this.configManager = configManager;
 		this.config = config;
@@ -33,7 +33,7 @@ public class FilterMatcher
 	 * Builds the list of sub-filters for a task type, from its JSON-defined filter config.
 	 * These correspond to the buttons/dropdowns in SubFilterPanel.
 	 */
-	private List<Filter> createSubFilters(TaskType taskType)
+	private List<Filter> createSubFilters(ITaskType taskType)
 	{
 		List<Filter> filters = new ArrayList<>();
 
@@ -67,10 +67,10 @@ public class FilterMatcher
 	 * @param textMatcher The text matcher for search filtering (can be null to skip text filter)
 	 * @return true if the task passes all filters, false otherwise
 	 */
-	public boolean meetsFilterCriteria(TaskFromStruct task, TextMatcher textMatcher)
+	public boolean meetsFilterCriteria(ITask task, TextMatcher textMatcher)
 	{
 		// Pinned task check
-		if (config.showPinnedTask() && task.getStructId().equals(config.pinnedTaskId()))
+		if (config.showPinnedTask() && config.pinnedTaskId().equals(task.getTaskId()))
 		{
 			return true;
 		}

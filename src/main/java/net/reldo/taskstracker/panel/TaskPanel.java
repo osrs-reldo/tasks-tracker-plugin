@@ -39,7 +39,7 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.ITask;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.runelite.api.Constants;
 import net.runelite.api.Skill;
@@ -56,7 +56,7 @@ import net.runelite.client.util.SwingUtil;
 @Slf4j
 public class TaskPanel extends JPanel
 {
-	public final TaskFromStruct task;
+	public final ITask task;
 
 	private final JLabel tierIcon = new JLabel();
 	private final JPanel container = new JPanel(new BorderLayout());
@@ -72,7 +72,7 @@ public class TaskPanel extends JPanel
 
 	protected TasksTrackerPlugin plugin;
 
-	public TaskPanel(TasksTrackerPlugin plugin, TaskFromStruct task, FilterMatcher filterMatcher)
+	public TaskPanel(TasksTrackerPlugin plugin, ITask task, FilterMatcher filterMatcher)
 	{
 		super(new BorderLayout());
 		this.plugin = plugin;
@@ -136,7 +136,7 @@ public class TaskPanel extends JPanel
 			if (activeRoute != null)
 			{
 				activeRoute.getFlattenedItems().stream()
-					.filter(routeItem -> routeItem.isTask() && task.getStructId().equals(routeItem.getTaskId()))
+					.filter(routeItem -> routeItem.isTask() && routeItem.getTaskId().equals(task.getTaskId()))
 					.map(item -> item.getNote())
 					.filter(note -> note != null && !note.isEmpty())
 					.findFirst()
@@ -280,7 +280,7 @@ public class TaskPanel extends JPanel
 		boolean isRouteMode = plugin.isRouteMode();
 		if (!isRouteMode)
 		{
-			if (plugin.getConfig().pinnedTaskId().equals(task.getStructId()))
+			if (plugin.getConfig().pinnedTaskId().equals(task.getTaskId()))
 			{
 				JMenuItem unpinTaskItem = new JMenuItem("Unpin");
 				unpinTaskItem.addActionListener(e -> unpinTaskPanel());
@@ -345,7 +345,7 @@ public class TaskPanel extends JPanel
 
 	private void pinTaskPanel()
 	{
-		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", task.getStructId());
+		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", task.getTaskId());
 		SwingUtilities.invokeLater(plugin::redrawTaskList);
 	}
 
@@ -358,7 +358,7 @@ public class TaskPanel extends JPanel
 	public void refresh()
 	{
 		boolean isRouteMode = plugin.isRouteMode();
-		if (!isRouteMode && plugin.getConfig().pinnedTaskId().equals(task.getStructId()))
+		if (!isRouteMode && plugin.getConfig().pinnedTaskId().equals(task.getTaskId()))
 		{
 			highlightContainer.setBorder(new LineBorder(ColorScheme.BRAND_ORANGE));
 		}
@@ -368,7 +368,8 @@ public class TaskPanel extends JPanel
 		}
 		setBackgroundColor(getTaskBackgroundColor());
 		name.setText(HtmlUtil.wrapWithHtml(task.getName()));
-		description.setText(HtmlUtil.wrapWithHtml(task.getDescription()));
+		String desc = task.getDescription();
+		description.setText(desc != null ? HtmlUtil.wrapWithHtml(desc) : "");
 
 		// If completed tasks are auto-untracked, don't allow users to add them to tracked tasks, that's silly.
 		boolean disableTrack = plugin.getConfig().untrackUponCompletion() && task.isCompleted();
@@ -405,7 +406,7 @@ public class TaskPanel extends JPanel
 				return false;
 			}
 
-			return activeRoute.getFlattenedOrder().contains(task.getStructId());
+			return activeRoute.getFlattenedOrder().contains(task.getTaskId());
 		}
 		return filterMatcher.meetsFilterCriteria(task, plugin.taskTextMatcher);
 	}
@@ -498,7 +499,7 @@ public class TaskPanel extends JPanel
 	public void buildOverlayText(Graphics2D graphics, PanelComponent panelComponent)
 	{
 
-		TaskFromStruct task = this.task;
+		ITask task = this.task;
 
 		if (plugin.getConfig().dynamicOverlayPanelColourEnabled())
 		{

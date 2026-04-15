@@ -12,7 +12,7 @@ import net.runelite.api.Client;
 import net.runelite.api.StructComposition;
 
 @Slf4j
-public class TaskFromStruct
+public class TaskFromStruct implements ITask
 {
 	@Getter
 	private final Integer structId;
@@ -49,6 +49,16 @@ public class TaskFromStruct
 		this.sortId = taskDefinition.getSortId();
 	}
 
+	public int getTaskId()
+	{
+		return structId;
+	}
+
+	public int getVarpIndex()
+	{
+		return getIntParam("id");
+	}
+
 	public boolean hasNote()
 	{
 		return note != null && !note.isEmpty();
@@ -64,8 +74,7 @@ public class TaskFromStruct
 		return this._intParams.get(paramName);
 	}
 
-	// TODO: Remove client from params
-	public boolean loadStructData(Client client)
+	public boolean loadData(Client client)
 	{
 		assert client.isClientThread();
 

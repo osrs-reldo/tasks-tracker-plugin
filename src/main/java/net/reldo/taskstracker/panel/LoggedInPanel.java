@@ -32,8 +32,8 @@ import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
 import net.reldo.taskstracker.data.jsondatastore.types.PremadeRouteEntry;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.route.RouteManager;
+import net.reldo.taskstracker.data.task.ITaskType;
 import net.reldo.taskstracker.data.task.TaskService;
-import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.data.task.filters.RegexTextMatcher;
 import net.reldo.taskstracker.data.task.filters.TextMatcher;
 import net.reldo.taskstracker.data.task.filters.TextMatcherFactory;
@@ -53,7 +53,7 @@ public class LoggedInPanel extends JPanel
 {
 
 	public TaskListPanel taskListPanel;
-	private JComboBox<ComboItem<TaskType>> taskTypeDropdown;
+	private JComboBox<ComboItem<ITaskType>> taskTypeDropdown;
 
 	private final TaskService taskService;
 	private final TasksTrackerPlugin plugin;
@@ -110,7 +110,7 @@ public class LoggedInPanel extends JPanel
 			log.debug("Task type dropdown de-synced, attempting to find current task type");
 			for (int i = 0; i < taskTypeDropdown.getItemCount(); i++)
 			{
-				ComboItem<TaskType> item = taskTypeDropdown.getItemAt(i);
+				ComboItem<ITaskType> item = taskTypeDropdown.getItemAt(i);
 				if (item.getValue().getTaskJsonName().equals(config.taskTypeJsonName()))
 				{
 					log.debug("Current task type found, setting selected task type");
@@ -926,22 +926,22 @@ public class LoggedInPanel extends JPanel
 
 	private void initTaskTypeDropdownAsync()
 	{
-		TaskType currentTaskType = taskService.getCurrentTaskType();
+		ITaskType currentTaskType = taskService.getCurrentTaskType();
 		taskService.getTaskTypesByJsonName().thenAccept(taskTypes -> {
-			ArrayList<ComboItem<TaskType>> taskTypeItems = new ArrayList<>();
+			ArrayList<ComboItem<ITaskType>> taskTypeItems = new ArrayList<>();
 			taskTypes.forEach((taskTypeJsonName, taskType) -> {
-				ComboItem<TaskType> item = new ComboItem<>(taskType, taskType.getName());
+				ComboItem<ITaskType> item = new ComboItem<>(taskType, taskType.getName());
 				taskTypeItems.add(item);
 				taskTypeDropdown.addItem(item);
 			});
 
-			ComboItem<TaskType> currentTaskTypeComboItem = taskTypeItems.stream()
+			ComboItem<ITaskType> currentTaskTypeComboItem = taskTypeItems.stream()
 				.filter(item -> item.getValue().equals(currentTaskType))
 				.findFirst().orElseGet(() -> taskTypeItems.get(0));
 			taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
 			taskTypeDropdown.addActionListener(e -> {
 				taskTypeDropdown.setEnabled(false);
-				TaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
+				ITaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
 				taskService.setTaskType(taskType).thenAccept(taskTypeChanged -> taskTypeDropdown.setEnabled(!taskTypeChanged));
 			});
 		});
