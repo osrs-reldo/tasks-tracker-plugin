@@ -97,7 +97,7 @@ public class Export
 			{
 				continue;
 			}
-			taskSavesById.put(String.valueOf(task.getIntParam("id")), task.getSaveData());
+			taskSavesById.put(String.valueOf(task.getTaskId()), task.getSaveData());
 		}
 		return taskSavesById;
 	}
