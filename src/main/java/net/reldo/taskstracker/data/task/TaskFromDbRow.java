@@ -198,37 +198,43 @@ public class TaskFromDbRow implements ITask
 			return true;
 		}
 
-		try
-		{
-			HashMap<String, Integer> intParamMap = taskType.getIntParamMap();
-			HashMap<String, Integer> stringParamMap = taskType.getStringParamMap();
+		HashMap<String, Integer> intParamMap = taskType.getIntParamMap();
+		HashMap<String, Integer> stringParamMap = taskType.getStringParamMap();
 
-			if (intParamMap != null)
-			{
-				intParamMap.forEach((paramName, column) -> {
+		if (intParamMap != null)
+		{
+			intParamMap.forEach((paramName, column) -> {
+				try
+				{
 					Object[] result = client.getDBTableField(dbRowId, column, 0);
 					if (result != null && result.length > 0 && result[0] instanceof Integer)
 					{
 						_intParams.put(paramName, (Integer) result[0]);
 					}
-				});
-			}
+				}
+				catch (Exception ex)
+				{
+					// Sparse columns throw when not populated for a given row; skip silently.
+				}
+			});
+		}
 
-			if (stringParamMap != null)
-			{
-				stringParamMap.forEach((paramName, column) -> {
+		if (stringParamMap != null)
+		{
+			stringParamMap.forEach((paramName, column) -> {
+				try
+				{
 					Object[] result = client.getDBTableField(dbRowId, column, 0);
 					if (result != null && result.length > 0 && result[0] instanceof String)
 					{
 						_stringParams.put(paramName, (String) result[0]);
 					}
-				});
-			}
-		}
-		catch (Exception ex)
-		{
-			log.error("error loading dbrow data for dbRowId={}", dbRowId, ex);
-			return false;
+				}
+				catch (Exception ex)
+				{
+					// Sparse columns throw when not populated for a given row; skip silently.
+				}
+			});
 		}
 
 		dbRowLoaded = true;
