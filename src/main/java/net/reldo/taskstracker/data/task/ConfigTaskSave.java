@@ -15,12 +15,12 @@ public class ConfigTaskSave
 	@Expose
 	public final String note;
 
-	public ConfigTaskSave(TaskFromStruct task)
+	public ConfigTaskSave(ITask task)
 	{
 		completed = task.getCompletedOn();
 		tracked = task.getTrackedOn();
 		ignored = task.getIgnoredOn();
-		structId = task.getStructId();
+		structId = task.getTaskId();
 		note = task.getNote();
 	}
 }

@@ -43,9 +43,9 @@ import net.reldo.taskstracker.data.route.ShortestPathService;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.reader.HttpDataStoreReader;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.ITask;
+import net.reldo.taskstracker.data.task.ITaskType;
 import net.reldo.taskstracker.data.task.TaskService;
-import net.reldo.taskstracker.data.task.TaskType;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.reldo.taskstracker.data.task.filters.FilterService;
 import net.reldo.taskstracker.data.task.filters.TextMatcher;
@@ -575,11 +575,11 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (selectedValue.equals(JOptionPane.YES_OPTION))
 		{
-			HashMap<Integer, TaskFromStruct> tasksById = new HashMap<>();
+			HashMap<Integer, ITask> tasksById = new HashMap<>();
 			taskService.getTasks().forEach((task) -> tasksById.put(task.getIntParam("id"), task));
 
 			reldoImport.getTasks().forEach((id, reldoTaskSave) -> {
-				TaskFromStruct task = tasksById.get(id);
+				ITask task = tasksById.get(id);
 				task.loadReldoSave(reldoTaskSave);
 			});
 
@@ -693,13 +693,13 @@ public class TasksTrackerPlugin extends Plugin
 		}));
 	}
 
-	private CompletableFuture<Boolean> processTaskStatus(TaskFromStruct task)
+	private CompletableFuture<Boolean> processTaskStatus(ITask task)
 	{
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
 		clientThread.invoke(() -> {
-			int taskId = task.getIntParam("id");
-			int varbitIndex = taskId / 32;
-			int bitIndex = taskId % 32;
+			int taskVarpIndex = task.getVarpIndex();
+			int varbitIndex = taskVarpIndex / 32;
+			int bitIndex = taskVarpIndex % 32;
 			try
 			{
 				int varpId = task.getTaskType().getTaskVarps().get(varbitIndex);
@@ -713,17 +713,17 @@ public class TasksTrackerPlugin extends Plugin
 						task.setTracked(false);
 					}
 
-					if (config.unpinUponCompletion() && Objects.equals(config.pinnedTaskId(), task.getStructId()))
+					if (config.unpinUponCompletion() && Objects.equals(config.pinnedTaskId(), task.getTaskId()))
 					{
 						configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", 0);
 					}
 				}
-				log.debug("process taskFromStruct {} ({}) {}", task.getStringParam("name"), task.getIntParam("id"), isTaskCompleted);
+				log.debug("process task {} ({}) {}", task.getName(), task.getVarpIndex(), isTaskCompleted);
 				future.complete(isTaskCompleted);
 			}
 			catch (Exception ex)
 			{
-				log.error("Error processing task status {}", taskId, ex);
+				log.error("Error processing task status {}", taskVarpIndex, ex);
 				future.completeExceptionally(ex);
 			}
 		});
@@ -740,12 +740,12 @@ public class TasksTrackerPlugin extends Plugin
 	{
 		log.info("processVarpAndUpdateTasks: " + (varpId != null ? varpId : "all"));
 
-		List<TaskFromStruct> tasks = varpId != null ?
+		List<ITask> tasks = varpId != null ?
 			taskService.getTasksFromVarpId(varpId) :
 			taskService.getTasks();
 
 		List<CompletableFuture<Boolean>> taskFutures = new ArrayList<>();
-		for (TaskFromStruct task : tasks)
+		for (ITask task : tasks)
 		{
 			CompletableFuture<Boolean> taskFuture = processTaskStatus(task);
 			taskFutures.add(taskFuture);
@@ -768,7 +768,7 @@ public class TasksTrackerPlugin extends Plugin
 
 	private String getCurrentTaskTypeExportJson()
 	{
-		TaskType taskType = taskService.getCurrentTaskType();
+		ITaskType taskType = taskService.getCurrentTaskType();
 		Gson gson = GsonFactory.newBuilder(this.gson).create();
 
 		if (taskType == null)

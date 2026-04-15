@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import lombok.Getter;
 import net.reldo.taskstracker.data.task.ConfigTaskSave;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
-import net.reldo.taskstracker.data.task.TaskType;
+import net.reldo.taskstracker.data.task.ITask;
+import net.reldo.taskstracker.data.task.ITaskType;
 import net.reldo.taskstracker.quests.DiaryData;
 import net.reldo.taskstracker.quests.QuestData;
 import net.runelite.api.Actor;
@@ -39,7 +39,7 @@ public class Export
 	@Expose
 	private final HashMap<String, ConfigTaskSave> tasks;
 
-	public Export(TaskType taskType, List<TaskFromStruct> tasks, String runeliteVersion, Client client)
+	public Export(ITaskType taskType, List<ITask> tasks, String runeliteVersion, Client client)
 	{
 		this.client = client;
 		Actor localPlayer = client.getLocalPlayer();
@@ -58,7 +58,7 @@ public class Export
 		this.tasks = getTaskSavesById(tasks);
 	}
 
-	private HashMap<Integer, Integer> getVarbits(TaskType taskType)
+	private HashMap<Integer, Integer> getVarbits(ITaskType taskType)
 	{
 		assert client.isClientThread();
 
@@ -71,7 +71,7 @@ public class Export
 		return varbitValueMap;
 	}
 
-	public HashMap<Integer, Integer> getVarps(TaskType taskType)
+	public HashMap<Integer, Integer> getVarps(ITaskType taskType)
 	{
 		assert client.isClientThread();
 
@@ -88,10 +88,10 @@ public class Export
 		return varpValueMap;
 	}
 
-	public HashMap<String, ConfigTaskSave> getTaskSavesById(List<TaskFromStruct> tasks)
+	public HashMap<String, ConfigTaskSave> getTaskSavesById(List<ITask> tasks)
 	{
 		HashMap<String, ConfigTaskSave> taskSavesById = new HashMap<>();
-		for (TaskFromStruct task : tasks)
+		for (ITask task : tasks)
 		{
 			if (task.getCompletedOn() == 0 && task.getIgnoredOn() == 0 && task.getTrackedOn() == 0)
 			{

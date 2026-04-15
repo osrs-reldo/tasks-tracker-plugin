@@ -14,9 +14,9 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.gson.GsonFactory;
 import net.reldo.taskstracker.data.task.ConfigTaskSave;
-import net.reldo.taskstracker.data.task.TaskFromStruct;
+import net.reldo.taskstracker.data.task.ITask;
+import net.reldo.taskstracker.data.task.ITaskType;
 import net.reldo.taskstracker.data.task.TaskService;
-import net.reldo.taskstracker.data.task.TaskType;
 import net.runelite.client.config.ConfigManager;
 
 @Singleton
@@ -41,7 +41,7 @@ public class TrackerRSProfileConfigStore
 
 	public void loadCurrentTaskTypeFromConfig()
 	{
-		TaskType currentTaskType = taskService.getCurrentTaskType();
+		ITaskType currentTaskType = taskService.getCurrentTaskType();
 		if (currentTaskType == null)
 		{
 			log.debug("loadTaskTypeFromConfig type is null, skipping");
@@ -75,8 +75,8 @@ public class TrackerRSProfileConfigStore
 		Map<Integer, ConfigTaskSave> saveDataByStructId = taskService.getTasks().stream()
 			.filter(task -> task.getCompletedOn() != 0 || task.getIgnoredOn() != 0 || task.getTrackedOn() != 0 || task.hasNote())
 			.collect(Collectors.toMap(
-				TaskFromStruct::getStructId,
-				TaskFromStruct::getSaveData,
+				ITask::getTaskId,
+				ITask::getSaveData,
 				(existing, replacement) -> existing,
 				HashMap::new
 			));
