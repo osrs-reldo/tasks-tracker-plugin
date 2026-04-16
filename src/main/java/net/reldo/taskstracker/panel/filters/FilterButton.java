@@ -60,13 +60,25 @@ public class FilterButton extends JToggleButton
 	{
 		addMouseListener(new MouseAdapter()
 		{
-			@Override
-			public void mouseReleased(MouseEvent e)
+
+			private void showContextMenuIfTriggered(MouseEvent e)
 			{
 				if (e.isPopupTrigger())
 				{
 					showContextMenu(e);
 				}
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e)
+			{
+				showContextMenuIfTriggered(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e)
+			{
+				showContextMenuIfTriggered(e);
 			}
 		});
 	}
