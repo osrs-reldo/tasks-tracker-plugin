@@ -262,14 +262,21 @@ public class TaskPanel extends JPanel
 
 		addMouseListener(new MouseAdapter()
 		{
-			@Override
-			public void mouseReleased(MouseEvent e)
-			{
-				if (e.isPopupTrigger())
-				{
+			private void showPopupIfTriggered(MouseEvent e) {
+				if (e.isPopupTrigger()) {
 					JPopupMenu menu = createTaskPopupMenu();
 					menu.show(e.getComponent(), e.getX(), e.getY());
 				}
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				showPopupIfTriggered(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				showPopupIfTriggered(e);
 			}
 		});
 	}
