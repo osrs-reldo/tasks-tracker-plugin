@@ -7,6 +7,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.plaf.basic.BasicBorders;
+import net.reldo.taskstracker.HtmlUtil;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 
@@ -35,19 +36,28 @@ public class FilterButton extends JToggleButton
 			setIcon(deselectedIcon);
 			setSelectedIcon(selectedIcon);
 			setPreferredSize(new Dimension(image.getWidth(), image.getHeight() + 10));
+
+			setToolTipText(tooltip.substring(0, 1).toUpperCase() + tooltip.substring(1).toLowerCase());
+
+			addActionListener(e -> {
+				parentPanel.updateFilterText();
+				parentPanel.updateCollapseButtonText();
+				parentPanel.plugin.refreshAllTasks();
+			});
 		}
 		else
 		{
+			setText(HtmlUtil.wrapWithHtml("Click to reload"));
+			setToolTipText("Icon Invalid - Click to reload");
+
 			setPreferredSize(new Dimension(getPreferredSize().width, 50));
+
+			addActionListener(e ->
+				{
+					this.setEnabled(false);
+					parentPanel.plugin.reloadTaskType();
+				});
 		}
-
-		setToolTipText(tooltip.substring(0, 1).toUpperCase() + tooltip.substring(1).toLowerCase());
-
-		addActionListener(e -> {
-			parentPanel.updateFilterText();
-			parentPanel.updateCollapseButtonText();
-			parentPanel.plugin.refreshAllTasks();
-		});
 
 		setComponentPopupMenu(createPopupMenu());
 
