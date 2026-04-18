@@ -1,8 +1,6 @@
 package net.reldo.taskstracker.panel.filters;
 
 import java.awt.Dimension;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
@@ -51,39 +49,12 @@ public class FilterButton extends JToggleButton
 			parentPanel.plugin.refreshAllTasks();
 		});
 
-		setupRightClickMenu();
+		setComponentPopupMenu(createPopupMenu());
 
 		setSelected(true);
 	}
 
-	private void setupRightClickMenu()
-	{
-		addMouseListener(new MouseAdapter()
-		{
-
-			private void showContextMenuIfTriggered(MouseEvent e)
-			{
-				if (e.isPopupTrigger())
-				{
-					showContextMenu(e);
-				}
-			}
-
-			@Override
-			public void mousePressed(MouseEvent e)
-			{
-				showContextMenuIfTriggered(e);
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent e)
-			{
-				showContextMenuIfTriggered(e);
-			}
-		});
-	}
-
-	private void showContextMenu(MouseEvent e)
+	private JPopupMenu createPopupMenu()
 	{
 		JPopupMenu popupMenu = new JPopupMenu();
 
@@ -105,7 +76,7 @@ public class FilterButton extends JToggleButton
 		});
 		popupMenu.add(exceptItem);
 
-		popupMenu.show(e.getComponent(), e.getX(), e.getY());
+		return popupMenu;
 	}
 
 	public String getKey()
