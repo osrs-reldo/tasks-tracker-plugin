@@ -41,6 +41,7 @@ import net.reldo.taskstracker.data.gson.GsonFactory;
 import net.reldo.taskstracker.data.route.RouteManager;
 import net.reldo.taskstracker.data.route.ShortestPathService;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
+import net.reldo.taskstracker.data.jsondatastore.reader.FileDataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.reader.HttpDataStoreReader;
 import net.reldo.taskstracker.data.reldo.ReldoImport;
 import net.reldo.taskstracker.data.task.ITask;
@@ -160,7 +161,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Override
 	public void configure(Binder binder)
 	{
-		binder.bind(DataStoreReader.class).to(HttpDataStoreReader.class);
+		binder.bind(DataStoreReader.class).to(FileDataStoreReader.class);
 		super.configure(binder);
 	}
 

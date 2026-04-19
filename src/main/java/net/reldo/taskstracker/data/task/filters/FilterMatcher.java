@@ -8,6 +8,7 @@ import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
+import net.reldo.taskstracker.data.jsondatastore.types.FilterValueType;
 import net.reldo.taskstracker.data.task.ITask;
 import net.reldo.taskstracker.data.task.ITaskType;
 import net.runelite.client.config.ConfigManager;
@@ -43,6 +44,13 @@ public class FilterMatcher
 		}
 
 		taskType.getFilters().forEach((filterConfig) -> {
+			FilterValueType valueType = filterConfig.getValueType();
+			if (valueType != FilterValueType.PARAM_INTEGER && valueType != FilterValueType.PARAM_STRING)
+			{
+				log.debug("Skipping filter {} with unhandled valueType {}", filterConfig.getConfigKey(), valueType);
+				return;
+			}
+
 			String paramName = filterConfig.getValueName();
 			String configKey = taskType.getFilterConfigPrefix() + filterConfig.getConfigKey();
 

@@ -141,8 +141,11 @@ public class TaskService
 				}, () -> filterConfig.setValueName(globalFilterConfig.getValueName()));
 				Optional.ofNullable(filterConfig.getOptionLabelEnum()).ifPresentOrElse(val -> {
 				}, () -> filterConfig.setOptionLabelEnum(globalFilterConfig.getOptionLabelEnum()));
-				Optional.ofNullable(filterConfig.getCustomItems()).ifPresentOrElse(val -> {
-				}, () -> filterConfig.setCustomItems(globalFilterConfig.getCustomItems()));
+				
+				if (filterConfig.getCustomItems() == null || filterConfig.getCustomItems().isEmpty())
+				{
+					filterConfig.setCustomItems(globalFilterConfig.getCustomItems());
+				}
 			}
 		}
 
