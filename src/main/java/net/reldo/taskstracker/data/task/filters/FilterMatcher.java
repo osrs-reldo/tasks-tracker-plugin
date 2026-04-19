@@ -45,7 +45,9 @@ public class FilterMatcher
 
 		taskType.getFilters().forEach((filterConfig) -> {
 			FilterValueType valueType = filterConfig.getValueType();
-			if (valueType != FilterValueType.PARAM_INTEGER && valueType != FilterValueType.PARAM_STRING)
+			if (valueType != FilterValueType.PARAM_INTEGER &&
+					valueType != FilterValueType.PARAM_STRING &&
+					valueType != FilterValueType.SKILL)
 			{
 				log.debug("Skipping filter {} with unhandled valueType {}", filterConfig.getConfigKey(), valueType);
 				return;
@@ -56,7 +58,14 @@ public class FilterMatcher
 
 			if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER))
 			{
-				filters.add(new ParamButtonFilter(configManager, paramName, configKey));
+				if (valueType == FilterValueType.SKILL)
+				{
+					filters.add(new SkillButtonFilter(configManager, configKey));
+				}
+				else
+				{
+					filters.add(new ParamButtonFilter(configManager, paramName, configKey));
+				}
 			}
 			else if (filterConfig.getFilterType().equals(FilterType.DROPDOWN_FILTER))
 			{
