@@ -1,14 +1,13 @@
 package net.reldo.taskstracker.panel.filters;
 
 import java.awt.Dimension;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.plaf.basic.BasicBorders;
+import net.reldo.taskstracker.HtmlUtil;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 
@@ -37,41 +36,35 @@ public class FilterButton extends JToggleButton
 			setIcon(deselectedIcon);
 			setSelectedIcon(selectedIcon);
 			setPreferredSize(new Dimension(image.getWidth(), image.getHeight() + 10));
+
+			setToolTipText(tooltip.substring(0, 1).toUpperCase() + tooltip.substring(1).toLowerCase());
+
+			addActionListener(e -> {
+				parentPanel.updateFilterText();
+				parentPanel.updateCollapseButtonText();
+				parentPanel.plugin.refreshAllTasks();
+			});
 		}
 		else
 		{
+			setText(HtmlUtil.wrapWithHtml("Click to reload"));
+			setToolTipText("Icon Invalid - Click to reload");
+
 			setPreferredSize(new Dimension(getPreferredSize().width, 50));
+
+			addActionListener(e ->
+				{
+					this.setEnabled(false);
+					parentPanel.plugin.reloadTaskType();
+				});
 		}
 
-		setToolTipText(tooltip.substring(0, 1).toUpperCase() + tooltip.substring(1).toLowerCase());
-
-		addActionListener(e -> {
-			parentPanel.updateFilterText();
-			parentPanel.updateCollapseButtonText();
-			parentPanel.plugin.refreshAllTasks();
-		});
-
-		setupRightClickMenu();
+		setComponentPopupMenu(createPopupMenu());
 
 		setSelected(true);
 	}
 
-	private void setupRightClickMenu()
-	{
-		addMouseListener(new MouseAdapter()
-		{
-			@Override
-			public void mouseReleased(MouseEvent e)
-			{
-				if (e.isPopupTrigger())
-				{
-					showContextMenu(e);
-				}
-			}
-		});
-	}
-
-	private void showContextMenu(MouseEvent e)
+	private JPopupMenu createPopupMenu()
 	{
 		JPopupMenu popupMenu = new JPopupMenu();
 
@@ -93,7 +86,7 @@ public class FilterButton extends JToggleButton
 		});
 		popupMenu.add(exceptItem);
 
-		popupMenu.show(e.getComponent(), e.getX(), e.getY());
+		return popupMenu;
 	}
 
 	public String getKey()
