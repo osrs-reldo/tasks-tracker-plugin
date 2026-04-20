@@ -33,7 +33,7 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 
 		setLayout(new GridLayout(1, 2));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		setBorder(new EmptyBorder(5, 10, 5, 10));
+		setBorder(new EmptyBorder(2, 10, 2, 10));
 	}
 
 	private JComboBox<ComboItem> makeDropdownPanel()

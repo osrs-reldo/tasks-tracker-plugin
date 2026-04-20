@@ -44,7 +44,7 @@ public class SkillButtonFilterPanel extends FilterButtonPanel
 
 		setLayout(new BorderLayout());
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		setBorder(new EmptyBorder(10, 10, 10, 10));
+		setBorder(new EmptyBorder(5, 10, 5, 10));
 
 		redraw();
 	}
