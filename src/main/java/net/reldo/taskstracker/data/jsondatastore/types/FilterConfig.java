@@ -1,14 +1,14 @@
 package net.reldo.taskstracker.data.jsondatastore.types;
 
 import java.util.ArrayList;
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Represents the configuration for a filter
  */
 @Data
-@AllArgsConstructor
+@NoArgsConstructor
 public class FilterConfig
 {
 	/**
@@ -47,6 +47,6 @@ public class FilterConfig
 	/**
 	 * Item values in a button filter (dropdown not yet supported)
 	 */
-	private ArrayList<FilterCustomItem> customItems;
+	private ArrayList<FilterCustomItem> customItems = new ArrayList<>();
 
 }
