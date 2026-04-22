@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
 import net.reldo.taskstracker.data.reldo.ReldoTaskSave;
 import net.runelite.api.Client;
+import net.runelite.api.coords.WorldPoint;
 
 @Slf4j
 public class TaskFromDbRow implements ITask
@@ -41,6 +42,10 @@ public class TaskFromDbRow implements ITask
 
 	private final Map<String, String> _stringParams = new HashMap<>();
 	private final Map<String, Integer> _intParams = new HashMap<>();
+	@Getter
+	@Setter
+	@Nullable
+	private WorldPoint completionLocation;
 
 	public TaskFromDbRow(ITaskType taskType, TaskDefinition taskDefinition)
 	{
@@ -165,6 +170,10 @@ public class TaskFromDbRow implements ITask
 		setIgnoredOn(loadedData.ignored);
 		setTrackedOn(loadedData.tracked);
 		setNote(loadedData.note);
+		if (loadedData.completionLocation != null)
+		{
+			setCompletionLocation(loadedData.completionLocation.toWorldPoint());
+		}
 	}
 
 	public void loadReldoSave(ReldoTaskSave loadedData)
