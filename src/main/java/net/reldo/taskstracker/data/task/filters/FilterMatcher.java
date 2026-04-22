@@ -8,6 +8,7 @@ import net.reldo.taskstracker.config.ConfigValues.CompletedFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.IgnoredFilterValues;
 import net.reldo.taskstracker.config.ConfigValues.TrackedFilterValues;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterType;
+import net.reldo.taskstracker.data.jsondatastore.types.FilterValueType;
 import net.reldo.taskstracker.data.task.ITask;
 import net.reldo.taskstracker.data.task.ITaskType;
 import net.runelite.client.config.ConfigManager;
@@ -43,12 +44,28 @@ public class FilterMatcher
 		}
 
 		taskType.getFilters().forEach((filterConfig) -> {
+			FilterValueType valueType = filterConfig.getValueType();
+			if (valueType != FilterValueType.PARAM_INTEGER &&
+					valueType != FilterValueType.PARAM_STRING &&
+					valueType != FilterValueType.SKILL)
+			{
+				log.debug("Skipping filter {} with unhandled valueType {}", filterConfig.getConfigKey(), valueType);
+				return;
+			}
+
 			String paramName = filterConfig.getValueName();
 			String configKey = taskType.getFilterConfigPrefix() + filterConfig.getConfigKey();
 
 			if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER))
 			{
-				filters.add(new ParamButtonFilter(configManager, paramName, configKey));
+				if (valueType == FilterValueType.SKILL)
+				{
+					filters.add(new SkillButtonFilter(configManager, configKey));
+				}
+				else
+				{
+					filters.add(new ParamButtonFilter(configManager, paramName, configKey));
+				}
 			}
 			else if (filterConfig.getFilterType().equals(FilterType.DROPDOWN_FILTER))
 			{
