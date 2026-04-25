@@ -686,7 +686,7 @@ public class TaskListPanel extends JScrollPane
 
 				redrawListItems();
 
-				TaskListPanel.this.refreshAllTasks();
+				refreshAllTasks();
 			}
 			else
 			{
