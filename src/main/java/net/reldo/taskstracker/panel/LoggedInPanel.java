@@ -43,6 +43,7 @@ import net.reldo.taskstracker.panel.components.RouteSelector;
 import net.reldo.taskstracker.panel.components.SearchBox;
 import net.reldo.taskstracker.panel.components.TriToggleButton;
 import net.reldo.taskstracker.panel.filters.ComboItem;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
@@ -204,40 +205,12 @@ public class LoggedInPanel extends JPanel
 	{
 		if (newTab != null)
 		{
-			saveCurrentTabFilters();
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskListTab", newTab);
 			refreshFilterButtonsFromConfig(newTab);
 			sortPanel.refreshFromConfig();
 			onSortChanged(); // handles refreshRouteSelector() when in route mode, clears route when not
 			taskListPanel.redraw();
 		}
-	}
-
-	public void saveCurrentTabFilters()
-	{
-		String tab = "tab" + (config.taskListTab().ordinal() + 1); // tabs are 1-indexed
-
-		Enum configValue;
-
-		if (plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "CompletedLock").equals("false"))
-		{
-			configValue = ConfigValues.CompletedFilterValues.values()[completedFilterBtn.getState()];
-			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "CompletedValue", configValue);
-		}
-
-		if (plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "TrackedLock").equals("false"))
-		{
-			configValue = ConfigValues.TrackedFilterValues.values()[trackedFilterBtn.getState()];
-			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "TrackedValue", configValue);
-		}
-
-		if (plugin.getConfigManager().getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "IgnoredLock").equals("false"))
-		{
-			configValue = ConfigValues.IgnoredFilterValues.values()[ignoredFilterBtn.getState()];
-			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + "IgnoredValue", configValue);
-		}
-
-		// Sort state is saved by SortPanel.updateConfig() which writes per-tab keys on every change
 	}
 
 	// TODO reduce duplication
@@ -317,46 +290,37 @@ public class LoggedInPanel extends JPanel
 
 		JPopupMenu popupMenu = new JPopupMenu("Filter Lock Toggles");
 
-		JMenuItem saveFiltersItem = new JMenuItem("Save Filter States");
-		saveFiltersItem.addActionListener(e -> saveCurrentTabFilters());
-
-		JMenuItem completedItem = new FilterLockTabMenuItem("Completed", completedFilterBtn, e -> {
+		JMenuItem completedLockItem = new FilterLockTabMenuItem("Completed", completedFilterBtn, e -> {
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "CompletedLock", completedFilterBtn.isEnabled());
 		});
-		JMenuItem trackedItem = new FilterLockTabMenuItem("Tracked", trackedFilterBtn, e -> {
+		JMenuItem trackedLockItem = new FilterLockTabMenuItem("Tracked", trackedFilterBtn, e -> {
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "TrackedLock", trackedFilterBtn.isEnabled());
 		});
-		JMenuItem ignoredItem = new FilterLockTabMenuItem("Ignored", ignoredFilterBtn, e -> {
+		JMenuItem ignoredLockItem = new FilterLockTabMenuItem("Ignored", ignoredFilterBtn, e -> {
 			plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab.configID + "IgnoredLock", ignoredFilterBtn.isEnabled());
 		});
 
 		JMenuItem taskOverlayItem = new JMenuItem("Toggle canvas overlay");
 		taskOverlayItem.addActionListener(e -> plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "showOverlay", !config.showOverlay()));
 
-		popupMenu.add(saveFiltersItem);
-		popupMenu.addSeparator();
-		popupMenu.add(completedItem);
-		popupMenu.add(trackedItem);
-		popupMenu.add(ignoredItem);
+		popupMenu.add(completedLockItem);
+		popupMenu.add(trackedLockItem);
+		popupMenu.add(ignoredLockItem);
 		popupMenu.addSeparator();
 		popupMenu.add(taskOverlayItem);
 
 		button.addChangeListener(e -> {
-			if (saveFiltersItem.isEnabled() != button.isSelected())
+			if (completedLockItem.isEnabled() != button.isSelected())
 			{
-				saveFiltersItem.setEnabled(button.isSelected());
+				completedLockItem.setEnabled(button.isSelected());
 			}
-			if (completedItem.isEnabled() != button.isSelected())
+			if (trackedLockItem.isEnabled() != button.isSelected())
 			{
-				completedItem.setEnabled(button.isSelected());
+				trackedLockItem.setEnabled(button.isSelected());
 			}
-			if (trackedItem.isEnabled() != button.isSelected())
+			if (ignoredLockItem.isEnabled() != button.isSelected())
 			{
-				trackedItem.setEnabled(button.isSelected());
-			}
-			if (ignoredItem.isEnabled() != button.isSelected())
-			{
-				ignoredItem.setEnabled(button.isSelected());
+				ignoredLockItem.setEnabled(button.isSelected());
 			}
 		});
 
@@ -788,8 +752,11 @@ public class LoggedInPanel extends JPanel
 
 	private void filterButtonActionNoRefresh(String filter)
 	{
+		ConfigManager configManager = plugin.getConfigManager();
 		int state;
 		Enum configValue;
+		String tab = "tab" + (config.taskListTab().ordinal() + 1); // tabs are 1-indexed
+		String tabFormatFilter = filter.substring(0, 1).toUpperCase() + filter.substring(1).toLowerCase();
 
 		switch (filter)
 		{
@@ -810,7 +777,14 @@ public class LoggedInPanel extends JPanel
 				return;
 		}
 
-		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, filter + "Filter", configValue);
+		// Set task list filter config
+		configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, filter + "Filter", configValue);
+
+		// Save button state to config
+		if (configManager.getConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + tabFormatFilter + "Lock").equals("false"))
+		{
+			configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, tab + tabFormatFilter + "Value", configValue);
+		}
 	}
 
 	private void filterButtonAction(String filter)

@@ -234,7 +234,6 @@ public class TasksTrackerPlugin extends Plugin
 	protected void shutDown()
 	{
 		shortestPathService.clearGps();
-		pluginPanel.saveCurrentTabFilters();
 		pluginPanel.hideLoggedInPanel();
 		pluginPanel = null;
 		taskService.clearTaskTypes();

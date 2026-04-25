@@ -134,15 +134,6 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	}
 
-	public void saveCurrentTabFilters()
-	{
-		if (loggedInPanelVisible)
-		{
-			loggedInPanel.saveCurrentTabFilters();
-		}
-
-	}
-
 	public TaskPanel getPriorityTask()
 	{
 		if (loggedInPanelVisible)
