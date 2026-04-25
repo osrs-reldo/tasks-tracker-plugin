@@ -28,7 +28,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.JToolTip;
-import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -281,7 +280,7 @@ public class TaskPanel extends JPanel
 		removeFromRouteItem.addActionListener(e -> {
 			if (plugin.getRouteManager().removeTaskFromActiveRoute(task.getTaskId()))
 			{
-				SwingUtilities.invokeLater(plugin::redrawTaskList);
+				plugin.redrawTaskList();
 			}
 		});
 		popupMenu.add(removeFromRouteItem);
@@ -386,13 +385,13 @@ public class TaskPanel extends JPanel
 	private void pinTaskPanel()
 	{
 		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", task.getTaskId());
-		SwingUtilities.invokeLater(plugin::redrawTaskList);
+		plugin.redrawTaskList();
 	}
 
 	private void unpinTaskPanel()
 	{
 		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", 0);
-		SwingUtilities.invokeLater(plugin::redrawTaskList);
+		plugin.redrawTaskList();
 	}
 
 	public void refresh()

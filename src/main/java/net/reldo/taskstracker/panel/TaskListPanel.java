@@ -575,7 +575,7 @@ public class TaskListPanel extends JScrollPane
 		int randomTaskId = visibleTasks.get(randomIndex).task.getTaskId();
 
 		plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", randomTaskId);
-		SwingUtilities.invokeLater(plugin::redrawTaskList);
+		plugin.redrawTaskList();
 	}
 
 	private class TaskListListPanel extends FixedWidthPanel
@@ -686,7 +686,7 @@ public class TaskListPanel extends JScrollPane
 
 				redrawListItems();
 
-				SwingUtilities.invokeLater(TaskListPanel.this::refreshAllTasks);
+				TaskListPanel.this.refreshAllTasks();
 			}
 			else
 			{
@@ -881,8 +881,8 @@ public class TaskListPanel extends JScrollPane
 			}
 			else
 			{
-				plugin.enableTaskTypeDropdown();
-				SwingUtilities.invokeLater(this::redraw);
+				plugin.setTaskTypeDropdownEnabled(true);
+				redraw();
 			}
 		}
 	}

@@ -209,7 +209,7 @@ public class LoggedInPanel extends JPanel
 			refreshFilterButtonsFromConfig(newTab);
 			sortPanel.refreshFromConfig();
 			onSortChanged(); // handles refreshRouteSelector() when in route mode, clears route when not
-			taskListPanel.redraw();
+			plugin.redrawTaskList();
 		}
 	}
 
@@ -885,11 +885,11 @@ public class LoggedInPanel extends JPanel
 	}
 
 
-	public void enableTaskTypeDropdown()
+	public void setTaskTypeDropdownEnabled(boolean enabled)
 	{
 		if (taskTypeDropdown != null)
 		{
-			taskTypeDropdown.setEnabled(true);
+			taskTypeDropdown.setEnabled(enabled);
 		}
 	}
 
@@ -912,12 +912,11 @@ public class LoggedInPanel extends JPanel
 			ComboItem<ITaskType> currentTaskTypeComboItem = taskTypeItems.stream()
 				.filter(item -> item.getValue().equals(currentTaskType))
 				.findFirst().orElseGet(() -> taskTypeItems.get(0));
-			taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
 			taskTypeDropdown.addActionListener(e -> {
-				taskTypeDropdown.setEnabled(false);
 				ITaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
-				taskService.setTaskType(taskType).thenAccept(taskTypeChanged -> taskTypeDropdown.setEnabled(!taskTypeChanged));
+				taskService.setTaskType(taskType);//.thenAccept(taskTypeChanged -> taskTypeDropdown.setEnabled(!taskTypeChanged));
 			});
+			taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
 		});
 	}
 }

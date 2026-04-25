@@ -48,7 +48,12 @@ public class TaskService
 	private FilterService filterService;
 	@Inject
 	private ConfigManager configManager;
+	@Inject
+	private TasksTrackerPlugin plugin;
 
+	@Getter
+	@Setter
+	private boolean taskTypeChangeInProgress = false;
 	@Getter
 	@Setter
 	private boolean taskTypeChanged = false;
@@ -112,8 +117,12 @@ public class TaskService
 		if (newTaskType.equals(currentTaskType))
 		{
 			log.debug("Skipping setTaskType, same task type selected");
+			taskTypeChangeInProgress = false;
+			plugin.setTaskTypeDropdownEnabled(true);
 			return CompletableFuture.completedFuture(false);
 		}
+		taskTypeChangeInProgress = true;
+		plugin.setTaskTypeDropdownEnabled(false);
 		currentTaskType = newTaskType;
 		configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "taskTypeJsonName", newTaskType.getTaskJsonName());
 		configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", 0);
@@ -141,7 +150,7 @@ public class TaskService
 				}, () -> filterConfig.setValueName(globalFilterConfig.getValueName()));
 				Optional.ofNullable(filterConfig.getOptionLabelEnum()).ifPresentOrElse(val -> {
 				}, () -> filterConfig.setOptionLabelEnum(globalFilterConfig.getOptionLabelEnum()));
-				
+
 				if (filterConfig.getCustomItems() == null || filterConfig.getCustomItems().isEmpty())
 				{
 					filterConfig.setCustomItems(globalFilterConfig.getCustomItems());
@@ -154,6 +163,8 @@ public class TaskService
 			if (!isTaskTypeLoaded)
 			{
 				log.error("Error loading task type during setTaskType");
+				taskTypeChangeInProgress = false;
+				plugin.setTaskTypeDropdownEnabled(true);
 				return CompletableFuture.completedFuture(false);
 			}
 
@@ -187,6 +198,8 @@ public class TaskService
 		}).thenCompose(areTasksLoaded -> {
 			if (!areTasksLoaded)
 			{
+				taskTypeChangeInProgress = false;
+				plugin.setTaskTypeDropdownEnabled(true);
 				return CompletableFuture.completedFuture(false);
 			}
 
@@ -229,6 +242,7 @@ public class TaskService
 			currentTaskTypeVarps.clear();
 			currentTaskTypeVarps = new HashSet<>(currentTaskType.getTaskVarps());
 
+			taskTypeChangeInProgress = false;
 			taskTypeChanged = true;
 			return CompletableFuture.completedFuture(true);
 		});

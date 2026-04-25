@@ -154,11 +154,11 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		return null;
 	}
 
-	public void enableTaskTypeDropdown()
+	public void setTaskTypeDropdownEnabled(boolean enabled)
 	{
 		if (loggedInPanelVisible)
 		{
-			loggedInPanel.enableTaskTypeDropdown();
+			loggedInPanel.setTaskTypeDropdownEnabled(enabled);
 		}
 	}
 
