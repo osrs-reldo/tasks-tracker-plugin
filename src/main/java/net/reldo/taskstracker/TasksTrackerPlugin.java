@@ -196,16 +196,6 @@ public class TasksTrackerPlugin extends Plugin
 		// Pre-warm filter configs off-EDT so later type switches can read from cache
 		CompletableFuture.runAsync(() -> filterService.preloadFilterConfigs());
 
-		try
-		{
-			String taskTypeJsonName = config.taskTypeJsonName();
-			taskService.setTaskType(taskTypeJsonName);
-		}
-		catch (Exception ex)
-		{
-			log.error("error setting task type in startUp", ex);
-		}
-
 		forceUpdateVarpsFlag = false;
 
 		pluginPanel = new TasksTrackerPluginPanel(this, config, spriteManager, taskService, routeManager);
@@ -234,7 +224,6 @@ public class TasksTrackerPlugin extends Plugin
 	protected void shutDown()
 	{
 		shortestPathService.clearGps();
-		pluginPanel.saveCurrentTabFilters();
 		pluginPanel.hideLoggedInPanel();
 		pluginPanel = null;
 		taskService.clearTaskTypes();
@@ -301,7 +290,7 @@ public class TasksTrackerPlugin extends Plugin
 		log.debug("onConfigChanged {} {}", configChanged.getKey(), configChanged.getNewValue());
 		if (configChanged.getKey().equals("untrackUponCompletion"))
 		{
-			SwingUtilities.invokeLater(pluginPanel::refreshAllTasks);
+			refreshAllTasks();
 
 			if (config.untrackUponCompletion())
 			{
@@ -311,12 +300,12 @@ public class TasksTrackerPlugin extends Plugin
 
 		if (configChanged.getKey().equals("filterPanelCollapsible"))
 		{
-			SwingUtilities.invokeLater(pluginPanel::redraw);
+			redraw();
 		}
 
 		if (configChanged.getKey().equals("showRandomTaskButton"))
 		{
-			SwingUtilities.invokeLater(pluginPanel::redraw);
+			redraw();
 		}
 
 		if (configChanged.getKey().startsWith("tab")) // task list tab config items all start 'tab#'
@@ -463,7 +452,11 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void refreshAllTasks()
 	{
-		SwingUtilities.invokeLater(() -> pluginPanel.refreshAllTasks());
+		if (taskService.isTaskTypeChangeInProgress())
+		{
+			return;
+		}
+		SwingUtilities.invokeLater(pluginPanel::refreshAllTasks);
 	}
 
 	public void reloadTaskType()
@@ -473,19 +466,7 @@ public class TasksTrackerPlugin extends Plugin
 		try
 		{
 			String taskTypeJsonName = config.taskTypeJsonName();
-			taskService.setTaskType(taskTypeJsonName).thenAccept(isSet -> {
-				if (!isSet)
-				{
-					return;
-				}
-				updateFilterMatcher();
-				SwingUtilities.invokeLater(() ->
-				{
-					pluginPanel.drawNewTaskType();
-					pluginPanel.refreshFilterButtonsFromConfig(config.taskListTab());
-					pluginPanel.refreshAllTasks();
-				});
-			});
+			taskService.setTaskType(taskTypeJsonName);
 		}
 		catch (Exception ex)
 		{
@@ -917,12 +898,20 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void redraw()
 	{
-		pluginPanel.redraw();
+		if (taskService.isTaskTypeChangeInProgress())
+		{
+			return;
+		}
+		SwingUtilities.invokeLater(pluginPanel::redraw);
 	}
 
 	public void redrawTaskList()
 	{
-		pluginPanel.redrawTaskList();
+		if (taskService.isTaskTypeChangeInProgress())
+		{
+			return;
+		}
+		SwingUtilities.invokeLater(pluginPanel::redrawTaskList);
 	}
 
 	/**
@@ -938,8 +927,8 @@ public class TasksTrackerPlugin extends Plugin
 		pluginPanel.forceRouteMode();
 	}
 
-	public void enableTaskTypeDropdown()
+	public void setTaskTypeDropdownEnabled(boolean enabled)
 	{
-		pluginPanel.enableTaskTypeDropdown();
+		pluginPanel.setTaskTypeDropdownEnabled(enabled);
 	}
 }

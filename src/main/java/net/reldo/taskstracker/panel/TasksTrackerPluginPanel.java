@@ -134,15 +134,6 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 	}
 
-	public void saveCurrentTabFilters()
-	{
-		if (loggedInPanelVisible)
-		{
-			loggedInPanel.saveCurrentTabFilters();
-		}
-
-	}
-
 	public TaskPanel getPriorityTask()
 	{
 		if (loggedInPanelVisible)
@@ -163,11 +154,11 @@ public class TasksTrackerPluginPanel extends PluginPanel
 		return null;
 	}
 
-	public void enableTaskTypeDropdown()
+	public void setTaskTypeDropdownEnabled(boolean enabled)
 	{
 		if (loggedInPanelVisible)
 		{
-			loggedInPanel.enableTaskTypeDropdown();
+			loggedInPanel.setTaskTypeDropdownEnabled(enabled);
 		}
 	}
 
