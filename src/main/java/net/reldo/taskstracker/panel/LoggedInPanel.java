@@ -871,6 +871,11 @@ public class LoggedInPanel extends JPanel
 
 			int count = (filterText.isEmpty() || filterText.equals("-1")) ? 0 : filterText.split(",").length;
 
+			if (filterConfig.getFilterType() == null)
+			{
+				log.warn("Skipping filter count for {} - filterType is null", filterConfig.getConfigKey());
+				continue;
+			}
 			if (filterConfig.getFilterType().equals(FilterType.BUTTON_FILTER))
 			{
 				countInclusive += count;
