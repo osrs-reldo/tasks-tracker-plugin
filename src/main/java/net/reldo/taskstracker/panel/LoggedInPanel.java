@@ -919,7 +919,7 @@ public class LoggedInPanel extends JPanel
 				.findFirst().orElseGet(() -> taskTypeItems.get(0));
 			taskTypeDropdown.addActionListener(e -> {
 				ITaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
-				taskService.setTaskType(taskType);
+				taskService.setTaskType(taskType.getTaskJsonName());
 			});
 			taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
 		});
