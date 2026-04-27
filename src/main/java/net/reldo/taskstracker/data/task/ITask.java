@@ -4,6 +4,7 @@ import javax.annotation.Nullable;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
 import net.reldo.taskstracker.data.reldo.ReldoTaskSave;
 import net.runelite.api.Client;
+import net.runelite.api.coords.WorldPoint;
 
 public interface ITask
 {
@@ -70,6 +71,11 @@ public interface ITask
 	void loadConfigSave(ConfigTaskSave loadedData);
 
 	void loadReldoSave(ReldoTaskSave loadedData);
+
+	@Nullable
+	WorldPoint getCompletionLocation();
+
+	void setCompletionLocation(@Nullable WorldPoint location);
 
 	/** Loads task data from the game cache (struct or dbrow). Must be called on client thread. */
 	boolean loadData(Client client);
