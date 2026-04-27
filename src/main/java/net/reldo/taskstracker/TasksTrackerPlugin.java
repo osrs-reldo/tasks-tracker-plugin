@@ -227,6 +227,7 @@ public class TasksTrackerPlugin extends Plugin
 		pluginPanel.hideLoggedInPanel();
 		pluginPanel = null;
 		taskService.clearTaskTypes();
+		filterService.clearFilterConfigs();
 		clientToolbar.removeNavigation(navButton);
 		overlayManager.remove(overlay);
 		keyManager.unregisterKeyListener(completeCustomKeyListener);

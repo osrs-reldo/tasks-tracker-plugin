@@ -72,6 +72,11 @@ public class TrackerRSProfileConfigStore
 	public void saveCurrentTaskTypeData()
 	{
 		log.debug("saveTaskTypeToConfig");
+		if (taskService.getTasks().isEmpty())
+		{
+			log.debug("saveCurrentTaskTypeData skipping - tasks not loaded yet");
+			return;
+		}
 		Map<Integer, ConfigTaskSave> saveDataByStructId = taskService.getTasks().stream()
 			.filter(task -> task.getCompletedOn() != 0 || task.getIgnoredOn() != 0 || task.getTrackedOn() != 0 || task.hasNote())
 			.collect(Collectors.toMap(
