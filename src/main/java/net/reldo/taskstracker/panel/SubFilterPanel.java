@@ -76,6 +76,11 @@ public class SubFilterPanel extends FixedWidthPanel
 
 	private FilterPanel createDynamicFilterPanel(FilterConfig filterConfig) throws Exception
 	{
+		if (filterConfig.getFilterType() == null)
+		{
+			log.warn("Skipping filter panel for {} - filterType is null", filterConfig.getConfigKey());
+			return null;
+		}
 		switch (filterConfig.getFilterType())
 		{
 			case BUTTON_FILTER:
