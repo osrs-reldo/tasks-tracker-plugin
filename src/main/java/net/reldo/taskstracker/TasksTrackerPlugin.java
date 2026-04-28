@@ -678,7 +678,7 @@ public class TasksTrackerPlugin extends Plugin
 		}));
 	}
 
-	private CompletableFuture<Boolean> processTaskStatus(ITask task)
+	private CompletableFuture<Boolean> processTaskStatus(ITask task, boolean captureLocation)
 	{
 		CompletableFuture<Boolean> future = new CompletableFuture<>();
 		clientThread.invoke(() -> {
@@ -696,9 +696,15 @@ public class TasksTrackerPlugin extends Plugin
 				int varpId = taskVarps.get(varbitIndex);
 				BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varpId));
 				boolean isTaskCompleted = varpValue.testBit(bitIndex);
+				boolean wasCompleted = task.isCompleted();
 				task.setCompleted(isTaskCompleted);
 				if (isTaskCompleted)
 				{
+					if (captureLocation && !wasCompleted && task.getCompletionLocation() == null
+						&& client.getLocalPlayer() != null)
+					{
+						task.setCompletionLocation(client.getLocalPlayer().getWorldLocation());
+					}
 					if (config.untrackUponCompletion())
 					{
 						task.setTracked(false);
@@ -736,9 +742,10 @@ public class TasksTrackerPlugin extends Plugin
 			taskService.getTasks();
 
 		List<CompletableFuture<Boolean>> taskFutures = new ArrayList<>();
+		boolean shouldCaptureLocation = varpId != null;
 		for (ITask task : tasks)
 		{
-			CompletableFuture<Boolean> taskFuture = processTaskStatus(task);
+			CompletableFuture<Boolean> taskFuture = processTaskStatus(task, shouldCaptureLocation);
 			taskFutures.add(taskFuture);
 		}
 

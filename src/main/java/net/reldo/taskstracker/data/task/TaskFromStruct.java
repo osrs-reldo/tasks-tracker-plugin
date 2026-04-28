@@ -3,6 +3,7 @@ package net.reldo.taskstracker.data.task;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,7 @@ import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
 import net.reldo.taskstracker.data.reldo.ReldoTaskSave;
 import net.runelite.api.Client;
 import net.runelite.api.StructComposition;
+import net.runelite.api.coords.WorldPoint;
 
 @Slf4j
 public class TaskFromStruct implements ITask
@@ -40,6 +42,10 @@ public class TaskFromStruct implements ITask
 	@Getter
 	@Setter
 	private String note;
+	@Getter
+	@Setter
+	@Nullable
+	private WorldPoint completionLocation;
 
 	public TaskFromStruct(TaskType taskType, TaskDefinition taskDefinition)
 	{
@@ -170,6 +176,10 @@ public class TaskFromStruct implements ITask
 	{
 		setDates(loadedData.completed, loadedData.ignored, loadedData.tracked);
 		setNote(loadedData.note);
+		if (loadedData.completionLocation != null)
+		{
+			setCompletionLocation(loadedData.completionLocation.toWorldPoint());
+		}
 	}
 
 	public void loadReldoSave(ReldoTaskSave loadedData)
