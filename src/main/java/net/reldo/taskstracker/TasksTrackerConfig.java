@@ -82,7 +82,7 @@ public interface TasksTrackerConfig extends Config
 	)
 	default Keybind completeCustomKey()
 	{
-		return new Keybind(KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK);
+		return Keybind.NOT_SET;
 	}
 
 
