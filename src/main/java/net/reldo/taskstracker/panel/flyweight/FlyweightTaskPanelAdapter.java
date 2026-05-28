@@ -25,10 +25,9 @@ import net.runelite.client.ui.overlay.components.PanelComponent;
 @Slf4j
 public final class FlyweightTaskPanelAdapter
 {
-	private static final FlyweightTaskPanelAdapter INSTANCE = new FlyweightTaskPanelAdapter();
-
 	private static final SharedTaskPanelResources sharedResources = SharedTaskPanelResources.getInstance();
 	private static final HtmlRendererPool rendererPool = HtmlRendererPool.getInstance();
+	private static final FlyweightTaskPanelAdapter INSTANCE = new FlyweightTaskPanelAdapter();
 
 	private FlyweightTaskPanelAdapter()
 	{

@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.swing.Icon;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import net.reldo.taskstracker.panel.Colors;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
@@ -58,37 +59,10 @@ public final class SharedTaskPanelResources
 		this.runeScapeSmallFont = FontManager.getRunescapeSmallFont();
 		this.runescapeFont = FontManager.getRunescapeFont();
 		this.italicFont = runescapeFont.deriveFont(Font.ITALIC);
-
-		// Load color resources from Colors class (assuming it exists)
-		this.unqualifiedBackground = getColorFromClass("UNQUALIFIED_BACKGROUND_COLOR");
-		this.completedBackground = getColorFromClass("COMPLETED_BACKGROUND_COLOR");
-		this.qualifiedText = getColorFromClass("QUALIFIED_TEXT_COLOR");
-		this.unqualifiedText = getColorFromClass("UNQUALIFIED_TEXT_COLOR");
-	}
-
-	/**
-	 * Safe color loading with fallback
-	 */
-	private Color getColorFromClass(String colorName)
-	{
-		try
-		{
-			Class<?> colorsClass = Class.forName("net.reldo.taskstracker.panel.Colors");
-			java.lang.reflect.Field field = colorsClass.getField(colorName);
-			return (Color) field.get(null);
-		}
-		catch (Exception e)
-		{
-			// Fallback to default colors
-			return switch (colorName)
-			{
-				case "UNQUALIFIED_BACKGROUND_COLOR" -> new Color(40, 40, 40);
-				case "COMPLETED_BACKGROUND_COLOR" -> new Color(40, 60, 40);
-				case "QUALIFIED_TEXT_COLOR" -> Color.GREEN;
-				case "UNQUALIFIED_TEXT_COLOR" -> Color.RED;
-				default -> Color.GRAY;
-			};
-		}
+		this.unqualifiedBackground = Colors.UNQUALIFIED_BACKGROUND_COLOR;
+		this.completedBackground = Colors.COMPLETED_BACKGROUND_COLOR;
+		this.qualifiedText = Colors.QUALIFIED_TEXT_COLOR;
+		this.unqualifiedText = Colors.UNQUALIFIED_TEXT_COLOR;
 	}
 
 	public static SharedTaskPanelResources getInstance()

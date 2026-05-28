@@ -7,8 +7,10 @@ import javax.swing.JComponent;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.panel.CustomItemPanel;
 import net.reldo.taskstracker.panel.TaskPanel;
+import net.reldo.taskstracker.panel.flyweight.FlyweightTaskPanelAdapter;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPanel;
+import net.runelite.client.ui.overlay.components.PanelComponent;
 
 public class TaskOverlayPanel extends OverlayPanel
 {
@@ -37,13 +39,26 @@ public class TaskOverlayPanel extends OverlayPanel
 			return null;
 		}
 
-		if (priorityPanel instanceof TaskPanel)
+		PanelComponent renderer = FlyweightTaskPanelAdapter.acquireRenderer();
+		try
 		{
-			((TaskPanel) priorityPanel).buildOverlayText(panelComponent);
+			if (priorityPanel instanceof TaskPanel)
+			{
+				((TaskPanel) priorityPanel).buildOverlayText(renderer);
+			}
+			else if (priorityPanel instanceof CustomItemPanel)
+			{
+				((CustomItemPanel) priorityPanel).buildOverlayText(renderer);
+			}
+
+			panelComponent.setBackgroundColor(renderer.getBackgroundColor());
+			panelComponent.setPreferredSize(renderer.getPreferredSize());
+			panelComponent.getChildren().clear();
+			panelComponent.getChildren().addAll(renderer.getChildren());
 		}
-		else if (priorityPanel instanceof CustomItemPanel)
+		finally
 		{
-			((CustomItemPanel) priorityPanel).buildOverlayText(panelComponent);
+			FlyweightTaskPanelAdapter.releaseRenderer(renderer);
 		}
 
 		return super.render(graphics);
