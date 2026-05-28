@@ -39,7 +39,8 @@ public class TaskOverlayPanel extends OverlayPanel
 			return null;
 		}
 
-		if (!(priorityPanel instanceof TaskPanel) && !(priorityPanel instanceof CustomItemPanel))
+		boolean supportedPanel = priorityPanel instanceof TaskPanel || priorityPanel instanceof CustomItemPanel;
+		if (!supportedPanel)
 		{
 			panelComponent.getChildren().clear();
 			return super.render(graphics);
@@ -48,6 +49,8 @@ public class TaskOverlayPanel extends OverlayPanel
 		PanelComponent renderer = FlyweightTaskPanelAdapter.acquireRenderer();
 		try
 		{
+			panelComponent.getChildren().clear();
+
 			if (priorityPanel instanceof TaskPanel)
 			{
 				((TaskPanel) priorityPanel).buildOverlayText(renderer);
