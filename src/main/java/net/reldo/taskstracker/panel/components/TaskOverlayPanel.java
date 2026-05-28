@@ -47,10 +47,21 @@ public class TaskOverlayPanel extends OverlayPanel
 		}
 
 		PanelComponent renderer = FlyweightTaskPanelAdapter.acquireRenderer();
+		if (renderer == null)
+		{
+			if (priorityPanel instanceof TaskPanel)
+			{
+				((TaskPanel) priorityPanel).buildOverlayText(panelComponent);
+			}
+			else
+			{
+				((CustomItemPanel) priorityPanel).buildOverlayText(panelComponent);
+			}
+			return super.render(graphics);
+		}
+
 		try
 		{
-			panelComponent.getChildren().clear();
-
 			if (priorityPanel instanceof TaskPanel)
 			{
 				((TaskPanel) priorityPanel).buildOverlayText(renderer);
