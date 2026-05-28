@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Font;
 import javax.swing.border.Border;
 import lombok.extern.slf4j.Slf4j;
-import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.runelite.client.ui.overlay.components.PanelComponent;
 
 /**
@@ -17,19 +16,29 @@ import net.runelite.client.ui.overlay.components.PanelComponent;
  *
  * Usage:
  *   Instead of: label.setFont(FontManager.getRunescapeSmallFont())
- *   Use:        label.setFont(FlyweightTaskPanelAdapter.getSharedFont())
+ *   Use:        label.setFont(FlyweightTaskPanelAdapter.getSharedRuneScapeSmallFont())
  *
  * This reduces object allocations and memory fragmentation.
+ *
+ * Thread-safe singleton - initialized on first static access via class initialization.
  */
 @Slf4j
 public final class FlyweightTaskPanelAdapter
 {
+	private static final FlyweightTaskPanelAdapter INSTANCE = new FlyweightTaskPanelAdapter();
+
 	private static final SharedTaskPanelResources sharedResources = SharedTaskPanelResources.getInstance();
 	private static final HtmlRendererPool rendererPool = HtmlRendererPool.getInstance();
 
 	private FlyweightTaskPanelAdapter()
 	{
-		// Utility class
+		log.info("Initializing FlyweightTaskPanelAdapter - Shared Resources + Renderer Pool");
+		log.debug("Renderer pool initialized with {} instances", rendererPool.getPoolSize());
+	}
+
+	public static FlyweightTaskPanelAdapter getInstance()
+	{
+		return INSTANCE;
 	}
 
 	// ===== Shared Font Access =====
@@ -175,16 +184,5 @@ public final class FlyweightTaskPanelAdapter
 	public static int getRendererPoolSize()
 	{
 		return rendererPool.getPoolSize();
-	}
-
-	/**
-	 * Initialize shared resources (call once on plugin startup).
-	 * This pre-caches common resources and warms up the renderer pool.
-	 */
-	public static void initialize(TasksTrackerPlugin plugin)
-	{
-		log.info("Initializing FlyweightTaskPanelAdapter");
-		log.debug("Shared resources loaded: {} renderers in pool",
-			getRendererPoolSize());
 	}
 }
