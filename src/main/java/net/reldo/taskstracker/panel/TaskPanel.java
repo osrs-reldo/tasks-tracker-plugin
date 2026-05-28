@@ -42,11 +42,11 @@ import net.reldo.taskstracker.data.jsondatastore.types.TaskProgressDefinition;
 import net.reldo.taskstracker.data.task.ITask;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.reldo.taskstracker.panel.components.TaskProgressBar;
+import net.reldo.taskstracker.panel.flyweight.FlyweightTaskPanelAdapter;
 import net.runelite.api.Constants;
 import net.runelite.api.Skill;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.overlay.components.ComponentConstants;
 import net.runelite.client.ui.overlay.components.LineComponent;
@@ -57,11 +57,6 @@ import net.runelite.client.util.SwingUtil;
 @Slf4j
 public class TaskPanel extends JPanel
 {
-	private static final String PIN_STATE = "Pin task";
-	private static final String UNPIN_STATE = "Unpin";
-	private static final String ADD_STATE = "Add to canvas";
-	private static final String REMOVE_STATE = "Remove from canvas";
-
 	public final ITask task;
 
 	private final JLabel tierIcon = new JLabel();
@@ -198,29 +193,29 @@ public class TaskPanel extends JPanel
 	public void createPanel()
 	{
 		setLayout(new BorderLayout());
-		setBorder(new EmptyBorder(0, 0, 7, 0));
+		setBorder(FlyweightTaskPanelAdapter.getSharedEmptyBorder0700());
 
-		highlightContainer.setBorder(new EmptyBorder(0, 0, 0, 0));
-		container.setBorder(new EmptyBorder(7, 7, 6, 0));
+		highlightContainer.setBorder(FlyweightTaskPanelAdapter.getSharedEmptyBorder0000());
+		container.setBorder(FlyweightTaskPanelAdapter.getSharedEmptyBorder7760());
 
 		// Body
 
-		name.setFont(FontManager.getRunescapeSmallFont());
-		name.setForeground(Color.WHITE);
+		name.setFont(FlyweightTaskPanelAdapter.getSharedRuneScapeSmallFont());
+		name.setForeground(FlyweightTaskPanelAdapter.getSharedWhiteText());
 		body.add(name, BorderLayout.NORTH);
 
-		description.setFont(FontManager.getRunescapeSmallFont());
-		description.setForeground(Color.GRAY);
+		description.setFont(FlyweightTaskPanelAdapter.getSharedRuneScapeSmallFont());
+		description.setForeground(FlyweightTaskPanelAdapter.getSharedGrayText());
 		body.add(description, BorderLayout.CENTER);
 
 		// Buttons
 		buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
-		buttons.setBorder(new EmptyBorder(0, 0, 0, 7));
+		buttons.setBorder(FlyweightTaskPanelAdapter.getSharedEmptyBorder0007());
 
 		toggleTrack.setPreferredSize(new Dimension(8, 8));
 		toggleTrack.setIcon(Icons.PLUS_ICON);
 		toggleTrack.setSelectedIcon(Icons.MINUS_ICON);
-		toggleTrack.setBorder(new EmptyBorder(5, 0, 5, 0));
+		toggleTrack.setBorder(FlyweightTaskPanelAdapter.getSharedEmptyBorder5050());
 		toggleTrack.addActionListener(e -> {
 			task.setTracked(toggleTrack.isSelected());
 			plugin.pluginPanel.taskListPanel.refreshTask(task);
@@ -232,7 +227,7 @@ public class TaskPanel extends JPanel
 		toggleIgnore.setIcon(Icons.EYE_CROSS_GREY);
 		toggleIgnore.setSelectedIcon(Icons.EYE_ICON);
 		SwingUtil.addModalTooltip(toggleIgnore, "Unignore", "Ignore");
-		toggleIgnore.setBorder(new EmptyBorder(5, 0, 5, 0));
+		toggleIgnore.setBorder(FlyweightTaskPanelAdapter.getSharedEmptyBorder5050());
 		toggleIgnore.addActionListener(e -> {
 			task.setIgnored(!task.isIgnored());
 			plugin.pluginPanel.taskListPanel.refreshTask(task);
@@ -253,11 +248,11 @@ public class TaskPanel extends JPanel
 		{
 			tierIcon.setMinimumSize(new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT));
 			tierIcon.setIcon(new ImageIcon(tierSprite));
-			tierIcon.setBorder(new EmptyBorder(0, 0, 0, 5));
+			tierIcon.setBorder(FlyweightTaskPanelAdapter.getSharedEmptyBorder0070());
 		}
 		else
 		{
-			tierIcon.setBorder(new EmptyBorder(0, 0, 0, 0));
+			tierIcon.setBorder(FlyweightTaskPanelAdapter.getSharedEmptyBorder0000());
 		}
 
 		highlightContainer.add(container, BorderLayout.NORTH);
@@ -273,11 +268,11 @@ public class TaskPanel extends JPanel
 	{
 		JPopupMenu popupMenu = new JPopupMenu();
 
-		JMenuItem overlayItem = new JMenuItem(plugin.getConfig().showOverlay() ? REMOVE_STATE : ADD_STATE);
+		JMenuItem overlayItem = new JMenuItem(plugin.getConfig().showOverlay() ? FlyweightTaskPanelAdapter.getSharedRemoveState() : FlyweightTaskPanelAdapter.getSharedAddState());
 		overlayItem.addActionListener(e -> plugin.getConfigManager().setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "showOverlay", !plugin.getConfig().showOverlay()));
 		popupMenu.add(overlayItem);
 
-		JMenuItem pinTaskItem = new JMenuItem(PIN_STATE);
+		JMenuItem pinTaskItem = new JMenuItem(FlyweightTaskPanelAdapter.getSharedPinState());
 		pinTaskItem.addActionListener(e -> togglePinTaskPanel());
 		popupMenu.add(pinTaskItem);
 
@@ -306,10 +301,10 @@ public class TaskPanel extends JPanel
 				if (!plugin.isRouteMode())
 				{
 					boolean isPinnedTask = plugin.getConfig().pinnedTaskId().equals(task.getTaskId());
-					pinTaskItem.setText(isPinnedTask ? UNPIN_STATE : PIN_STATE);
+					pinTaskItem.setText(isPinnedTask ? FlyweightTaskPanelAdapter.getSharedUnpinState() : FlyweightTaskPanelAdapter.getSharedPinState());
 					pinTaskItem.setVisible(true);
 
-					overlayItem.setText(plugin.getConfig().showOverlay() ? REMOVE_STATE : ADD_STATE);
+					overlayItem.setText(plugin.getConfig().showOverlay() ? FlyweightTaskPanelAdapter.getSharedRemoveState() : FlyweightTaskPanelAdapter.getSharedAddState());
 					overlayItem.setVisible(isPinnedTask);
 
 					removeFromRouteItem.setVisible(false);
@@ -404,11 +399,11 @@ public class TaskPanel extends JPanel
 		boolean isRouteMode = plugin.isRouteMode();
 		if (!isRouteMode && plugin.getConfig().pinnedTaskId().equals(task.getTaskId()))
 		{
-			highlightContainer.setBorder(new LineBorder(ColorScheme.BRAND_ORANGE));
+			highlightContainer.setBorder(new LineBorder(FlyweightTaskPanelAdapter.getSharedBrandOrange()));
 		}
 		else
 		{
-			highlightContainer.setBorder(new EmptyBorder(0, 0, 0, 0));
+			highlightContainer.setBorder(FlyweightTaskPanelAdapter.getSharedEmptyBorder0000());
 		}
 		setBackgroundColor(getTaskBackgroundColor());
 		name.setText(HtmlUtil.wrapWithHtml(task.getName()));
@@ -505,7 +500,7 @@ public class TaskPanel extends JPanel
 	public JToolTip createToolTip()
 	{
 		JToolTip customTooltip = new JToolTip();
-		customTooltip.setFont(FontManager.getRunescapeSmallFont());
+		customTooltip.setFont(FlyweightTaskPanelAdapter.getSharedRuneScapeSmallFont());
 		return customTooltip;
 	}
 
@@ -650,7 +645,7 @@ public class TaskPanel extends JPanel
 				{
 					panelComponent.getChildren().add(LineComponent.builder()
 						.left(line)
-						.leftFont(FontManager.getRunescapeFont().deriveFont(Font.ITALIC))
+						.leftFont(FlyweightTaskPanelAdapter.getSharedItalicFont())
 						.build());
 				}
 			}
