@@ -43,6 +43,7 @@ import net.reldo.taskstracker.data.jsondatastore.types.TaskProgressDefinition;
 import net.reldo.taskstracker.data.task.ITask;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
 import net.reldo.taskstracker.panel.components.TaskProgressPanel;
+import net.reldo.taskstracker.panel.components.WrapLabel;
 import net.runelite.api.Constants;
 import net.runelite.api.Skill;
 import net.runelite.client.game.SkillIconManager;
@@ -69,8 +70,8 @@ public class TaskPanel extends JPanel
 	private final JPanel container = new JPanel(new BorderLayout());
 	private final JPanel highlightContainer = new JPanel(new BorderLayout());
 	private final JPanel body = new JPanel(new BorderLayout());
-	private final JLabel name = new JLabel("task");
-	private final JLabel description = new JLabel("description");
+	private final WrapLabel name = new WrapLabel("task");
+	private final WrapLabel description = new WrapLabel("description");
 	private final JPanel buttons = new JPanel();
 	private final JToggleButton toggleTrack = new JToggleButton();
 	private final JToggleButton toggleIgnore = new JToggleButton();
@@ -412,9 +413,9 @@ public class TaskPanel extends JPanel
 			highlightContainer.setBorder(new EmptyBorder(0, 0, 0, 0));
 		}
 		setBackgroundColor(getTaskBackgroundColor());
-		name.setText(HtmlUtil.wrapWithHtml(task.getName()));
+		name.setText(task.getName());
 		String desc = task.getDescription();
-		description.setText(desc != null ? HtmlUtil.wrapWithHtml(desc) : "");
+		description.setText(desc != null ? desc : "");
 
 		// If completed tasks are auto-untracked, don't allow users to add them to tracked tasks, that's silly.
 		boolean disableTrack = plugin.getConfig().untrackUponCompletion() && task.isCompleted();
