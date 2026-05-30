@@ -63,4 +63,11 @@ public class TaskDefinition
 	 * Each entry describes one bar (type, source, and target value).
 	 */
 	private List<TaskProgressDefinition> progress;
+
+	/**
+	 * Controls how multiple progress bars are displayed.
+	 * SEPARATE (default/null): each bar is shown individually.
+	 * SUM: all bar values and targets are summed into one bar.
+	 */
+	private ProgressMode progressMode;
 }

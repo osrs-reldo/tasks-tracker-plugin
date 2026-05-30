@@ -2,9 +2,13 @@ package net.reldo.taskstracker.panel.components;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.util.List;
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
+import net.reldo.taskstracker.data.jsondatastore.types.ProgressMode;
 import net.reldo.taskstracker.data.jsondatastore.types.ProgressType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskProgressDefinition;
 import net.reldo.taskstracker.data.task.ITask;
@@ -13,50 +17,59 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
 @Slf4j
-public class TaskProgressBar extends JProgressBar
+public class TaskProgressPanel extends JPanel
 {
 	private final TasksTrackerPlugin plugin;
 	private final ITask task;
-	private final TaskProgressDefinition def;
 
-	public TaskProgressBar(TasksTrackerPlugin plugin, ITask task, TaskProgressDefinition def, int barHeight, boolean withText)
+	public TaskProgressPanel(TasksTrackerPlugin plugin, ITask task, List<TaskProgressDefinition> defs, int barHeight, boolean withText)
 	{
 		this.plugin = plugin;
 		this.task = task;
-		this.def = def;
 
-		int current = getCurrentValue();
-		int target = def.getTarget();
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		setOpaque(false);
 
-		setMinimum(0);
-		setMaximum(target);
-		setValue(Math.min(current, target));
-		setMaximumSize(new Dimension(Integer.MAX_VALUE, barHeight));
-		setPreferredSize(new Dimension(0, barHeight));
-		setBackground(ColorScheme.DARKER_GRAY_COLOR.darker());
-		setForeground(new Color(0, 168, 0));
-		setBorderPainted(false);
-		setStringPainted(withText);
+		ProgressMode progressMode = task.getTaskDefinition().getProgressMode();
+		if (progressMode == ProgressMode.SUM)
+		{
+			int totalCurrent = 0;
+			int totalTarget = 0;
+			for (TaskProgressDefinition def : defs)
+			{
+				totalCurrent += getCurrentValue(def);
+				totalTarget += def.getTarget();
+			}
+			add(buildBar(totalCurrent, totalTarget, barHeight, withText));
+		}
+		else
+		{
+			for (TaskProgressDefinition def : defs)
+			{
+				add(buildBar(getCurrentValue(def), def.getTarget(), barHeight, withText));
+			}
+		}
+	}
+
+	private JProgressBar buildBar(int current, int target, int barHeight, boolean withText)
+	{
+		JProgressBar bar = new JProgressBar(0, target);
+		bar.setValue(Math.min(current, target));
+		bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, barHeight));
+		bar.setPreferredSize(new Dimension(0, barHeight));
+		bar.setBackground(ColorScheme.DARKER_GRAY_COLOR.darker());
+		bar.setForeground(new Color(0, 168, 0));
+		bar.setBorderPainted(false);
+		bar.setStringPainted(withText);
 		if (withText)
 		{
-			setString(formatProgressText(current, target));
-			setFont(FontManager.getRunescapeSmallFont());
+			bar.setString(formatProgressText(current, target));
+			bar.setFont(FontManager.getRunescapeSmallFont());
 		}
+		return bar;
 	}
 
-	public void refresh()
-	{
-		int current = getCurrentValue();
-		int target = def.getTarget();
-
-		setValue(Math.min(current, target));
-		if (isStringPainted())
-		{
-			setString(formatProgressText(current, target));
-		}
-	}
-
-	private int getCurrentValue()
+	private int getCurrentValue(TaskProgressDefinition def)
 	{
 		switch (def.getType())
 		{

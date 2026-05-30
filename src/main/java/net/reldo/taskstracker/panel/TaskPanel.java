@@ -37,11 +37,12 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
+import net.reldo.taskstracker.data.jsondatastore.types.ProgressMode;
 import net.reldo.taskstracker.data.jsondatastore.types.ProgressType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskProgressDefinition;
 import net.reldo.taskstracker.data.task.ITask;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
-import net.reldo.taskstracker.panel.components.TaskProgressBar;
+import net.reldo.taskstracker.panel.components.TaskProgressPanel;
 import net.runelite.api.Constants;
 import net.runelite.api.Skill;
 import net.runelite.client.game.SkillIconManager;
@@ -487,11 +488,7 @@ public class TaskPanel extends JPanel
 		boolean withText = displayMode == ConfigValues.ProgressBarDisplay.FULL;
 		int barHeight = compact ? 6 : 12;
 
-		for (TaskProgressDefinition def : progressDefs)
-		{
-			progressBarsPanel.add(new TaskProgressBar(plugin, task, def, barHeight, withText));
-		}
-
+		progressBarsPanel.add(new TaskProgressPanel(plugin, task, progressDefs, barHeight, withText));
 		progressBarsPanel.setVisible(true);
 	}
 
@@ -712,18 +709,39 @@ public class TaskPanel extends JPanel
 		}
 
 		panelComponent.getChildren().add(LineComponent.builder().build());
-		for (TaskProgressDefinition def : progressDefs)
+		ProgressMode progressMode = task.getTaskDefinition().getProgressMode();
+		if (progressMode == ProgressMode.SUM)
 		{
-			int current = getProgressCurrentValue(def);
-			int target = def.getTarget();
-
+			int totalCurrent = 0;
+			int totalTarget = 0;
+			for (TaskProgressDefinition def : progressDefs)
+			{
+				totalCurrent += getProgressCurrentValue(def);
+				totalTarget += def.getTarget();
+			}
 			ProgressBarComponent bar = new ProgressBarComponent();
 			bar.setMinimum(0);
-			bar.setMaximum(target);
-			bar.setValue(current);
+			bar.setMaximum(totalTarget);
+			bar.setValue(totalCurrent);
 			bar.setLabelDisplayMode(displayMode.labelDisplayMode);
 			bar.setForegroundColor(new Color(0, 168, 0));
 			panelComponent.getChildren().add(bar);
+		}
+		else
+		{
+			for (TaskProgressDefinition def : progressDefs)
+			{
+				int current = getProgressCurrentValue(def);
+				int target = def.getTarget();
+
+				ProgressBarComponent bar = new ProgressBarComponent();
+				bar.setMinimum(0);
+				bar.setMaximum(target);
+				bar.setValue(current);
+				bar.setLabelDisplayMode(displayMode.labelDisplayMode);
+				bar.setForegroundColor(new Color(0, 168, 0));
+				panelComponent.getChildren().add(bar);
+			}
 		}
 	}
 
