@@ -67,7 +67,7 @@ public class TaskPanel extends JPanel
 	private static final String ADD_STATE = "Add to canvas";
 	private static final String REMOVE_STATE = "Remove from canvas";
 
-	private static final int LABEL_WIDTH = 162;
+	private static final int LABEL_WIDTH = 157;
 
 	public final ITask task;
 
