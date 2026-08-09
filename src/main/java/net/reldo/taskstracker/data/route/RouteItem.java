@@ -29,6 +29,10 @@ public class RouteItem
 	@Expose
 	private String note;
 
+	/** Epoch ms when this item was marked complete. Null/absent when not complete. Populated on export only. */
+	@Expose
+	private Long completedOn;
+
 	/** Returns true if this item represents a task (vs a custom item). */
 	public boolean isTask()
 	{
