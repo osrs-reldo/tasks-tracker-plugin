@@ -75,25 +75,27 @@ public class TaskService
 
 	private CompletableFuture<Boolean> loadAllTaskData(Collection<? extends ITask> tasks)
 	{
-		Collection<CompletableFuture<Boolean>> taskFutures = new ArrayList<>();
-		for (ITask task : tasks)
-		{
-			CompletableFuture<Boolean> taskFuture = new CompletableFuture<>();
-			clientThread.invoke(() -> {
-				taskFuture.complete(task.loadData(client));
-			});
-			taskFutures.add(taskFuture);
-		}
-		return CompletableFuture.allOf(taskFutures.toArray(new CompletableFuture[0])).thenApply(v -> {
-			for (CompletableFuture<Boolean> future : taskFutures)
+		CompletableFuture<Boolean> future = new CompletableFuture<>();
+		clientThread.invoke(() -> {
+			try
 			{
-				if (!future.join())
+				boolean allSuccess = true;
+				for (ITask task : tasks)
 				{
-					return false;
+					if (!task.loadData(client))
+					{
+						allSuccess = false;
+					}
 				}
+				future.complete(allSuccess);
 			}
-			return true;
+			catch (Exception ex)
+			{
+				log.error("Error loading task data on client thread", ex);
+				future.completeExceptionally(ex);
+			}
 		});
+		return future;
 	}
 
 	public CompletableFuture<Boolean> setTaskType(String taskTypeJsonName)

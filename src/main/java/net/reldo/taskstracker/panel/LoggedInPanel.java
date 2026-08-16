@@ -105,18 +105,25 @@ public class LoggedInPanel extends JPanel
 	public void drawNewTaskType()
 	{
 		// taskTypeDropdown may become de-synced after profile change
-		String selectedTaskTypeJsonName = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue().getTaskJsonName();
-		if (!selectedTaskTypeJsonName.equals(config.taskTypeJsonName()))
+		if (taskTypeDropdown != null && taskTypeDropdown.getItemCount() > 0 && taskTypeDropdown.getSelectedIndex() >= 0)
 		{
-			log.debug("Task type dropdown de-synced, attempting to find current task type");
-			for (int i = 0; i < taskTypeDropdown.getItemCount(); i++)
+			ComboItem<ITaskType> selectedItem = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex());
+			if (selectedItem != null && selectedItem.getValue() != null)
 			{
-				ComboItem<ITaskType> item = taskTypeDropdown.getItemAt(i);
-				if (item.getValue().getTaskJsonName().equals(config.taskTypeJsonName()))
+				String selectedTaskTypeJsonName = selectedItem.getValue().getTaskJsonName();
+				if (!selectedTaskTypeJsonName.equals(config.taskTypeJsonName()))
 				{
-					log.debug("Current task type found, setting selected task type");
-					taskTypeDropdown.setSelectedIndex(i);
-					break;
+					log.debug("Task type dropdown de-synced, attempting to find current task type");
+					for (int i = 0; i < taskTypeDropdown.getItemCount(); i++)
+					{
+						ComboItem<ITaskType> item = taskTypeDropdown.getItemAt(i);
+						if (item != null && item.getValue() != null && item.getValue().getTaskJsonName().equals(config.taskTypeJsonName()))
+						{
+							log.debug("Current task type found, setting selected task type");
+							taskTypeDropdown.setSelectedIndex(i);
+							break;
+						}
+					}
 				}
 			}
 		}
