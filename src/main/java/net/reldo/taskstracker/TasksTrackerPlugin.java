@@ -704,6 +704,7 @@ public class TasksTrackerPlugin extends Plugin
 		clientThread.invoke(() -> {
 			try
 			{
+				boolean shouldUnpin = false;
 				Map<Integer, Integer> varpValues = new HashMap<>();
 				for (ITask task : tasks)
 				{
@@ -736,10 +737,16 @@ public class TasksTrackerPlugin extends Plugin
 
 						if (config.unpinUponCompletion() && Objects.equals(config.pinnedTaskId(), task.getTaskId()))
 						{
-							configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", 0);
+							shouldUnpin = true;
 						}
 					}
 				}
+
+				if (shouldUnpin)
+				{
+					SwingUtilities.invokeLater(() -> configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", 0));
+				}
+
 				future.complete(true);
 			}
 			catch (Exception ex)
@@ -750,15 +757,16 @@ public class TasksTrackerPlugin extends Plugin
 		});
 
 		return future.thenApply(v -> {
-			if (pluginPanel != null)
+			final TasksTrackerPluginPanel panel = this.pluginPanel;
+			if (panel != null)
 			{
-				if (varpId != null && pluginPanel.taskListPanel != null)
+				if (varpId != null && panel.taskListPanel != null)
 				{
-					SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.refreshMultipleTasks(tasks));
+					SwingUtilities.invokeLater(() -> panel.taskListPanel.refreshMultipleTasks(tasks));
 				}
 				else
 				{
-					SwingUtilities.invokeLater(pluginPanel::refreshAllTasks);
+					SwingUtilities.invokeLater(panel::refreshAllTasks);
 				}
 			}
 			return true;

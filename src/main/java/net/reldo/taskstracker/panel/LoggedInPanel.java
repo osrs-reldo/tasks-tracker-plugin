@@ -914,21 +914,35 @@ public class LoggedInPanel extends JPanel
 	{
 		ITaskType currentTaskType = taskService.getCurrentTaskType();
 		taskService.getTaskTypesByJsonName().thenAccept(taskTypes -> {
-			ArrayList<ComboItem<ITaskType>> taskTypeItems = new ArrayList<>();
-			taskTypes.forEach((taskTypeJsonName, taskType) -> {
-				ComboItem<ITaskType> item = new ComboItem<>(taskType, taskType.getName());
-				taskTypeItems.add(item);
-				taskTypeDropdown.addItem(item);
-			});
+			if (taskTypes == null || taskTypes.isEmpty())
+			{
+				return;
+			}
+			SwingUtilities.invokeLater(() -> {
+				ArrayList<ComboItem<ITaskType>> taskTypeItems = new ArrayList<>();
+				taskTypes.forEach((taskTypeJsonName, taskType) -> {
+					ComboItem<ITaskType> item = new ComboItem<>(taskType, taskType.getName());
+					taskTypeItems.add(item);
+					taskTypeDropdown.addItem(item);
+				});
 
-			ComboItem<ITaskType> currentTaskTypeComboItem = taskTypeItems.stream()
-				.filter(item -> item.getValue().equals(currentTaskType))
-				.findFirst().orElseGet(() -> taskTypeItems.get(0));
-			taskTypeDropdown.addActionListener(e -> {
-				ITaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
-				taskService.setTaskType(taskType.getTaskJsonName());
+				ComboItem<ITaskType> currentTaskTypeComboItem = taskTypeItems.stream()
+					.filter(item -> item.getValue().equals(currentTaskType))
+					.findFirst().orElseGet(() -> taskTypeItems.get(0));
+
+				taskTypeDropdown.addActionListener(e -> {
+					if (taskTypeDropdown.getSelectedIndex() >= 0)
+					{
+						ComboItem<ITaskType> selectedItem = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex());
+						if (selectedItem != null && selectedItem.getValue() != null)
+						{
+							ITaskType taskType = selectedItem.getValue();
+							taskService.setTaskType(taskType.getTaskJsonName());
+						}
+					}
+				});
+				taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
 			});
-			taskTypeDropdown.setSelectedItem(currentTaskTypeComboItem);
 		});
 	}
 }

@@ -92,7 +92,7 @@ public class TaskService
 			catch (Exception ex)
 			{
 				log.error("Error loading task data on client thread", ex);
-				future.completeExceptionally(ex);
+				future.complete(false);
 			}
 		});
 		return future;
@@ -177,11 +177,20 @@ public class TaskService
 								newTasks.add(task);
 							}
 						}
-						loadAllTaskData(newTasks).thenApply(future::complete);
+						loadAllTaskData(newTasks).whenComplete((res, ex) -> {
+							if (ex != null || Boolean.FALSE.equals(res))
+							{
+								future.complete(false);
+							}
+							else
+							{
+								future.complete(true);
+							}
+						});
 					}
 					catch (Exception e3)
 					{
-						future.completeExceptionally(e3);
+						future.complete(false);
 					}
 				});
 				return future;
