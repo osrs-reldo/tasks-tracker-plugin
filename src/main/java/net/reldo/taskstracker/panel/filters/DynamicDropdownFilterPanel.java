@@ -20,7 +20,7 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 	private final FilterConfig filterConfig;
 	private final ConfigManager configManager;
 	private final TasksTrackerPlugin plugin;
-	private final ComboItem[] items;
+	private ComboItem[] items;
 	private JComboBox<ComboItem> dropdown;
 
 	public DynamicDropdownFilterPanel(TasksTrackerPlugin plugin, FilterConfig filterConfig, ITaskType taskType, ComboItem[] items)
@@ -68,8 +68,18 @@ public class DynamicDropdownFilterPanel extends FilterPanel
 		configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, configKey, dropdown.getItemAt(dropdown.getSelectedIndex()).getValue());
 	}
 
+	public void setItems(ComboItem[] items)
+	{
+		this.items = items;
+		redraw();
+	}
+
 	public void redraw()
 	{
+		if (items.length == 0)
+		{
+			return;
+		}
 		if (SwingUtilities.isEventDispatchThread())
 		{
 			removeAll();
