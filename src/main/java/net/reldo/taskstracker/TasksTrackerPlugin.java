@@ -679,60 +679,11 @@ public class TasksTrackerPlugin extends Plugin
 		}));
 	}
 
-	private CompletableFuture<Boolean> processTaskStatus(ITask task, boolean captureLocation)
-	{
-		CompletableFuture<Boolean> future = new CompletableFuture<>();
-		clientThread.invoke(() -> {
-			int taskVarpIndex = task.getVarpIndex();
-			int varbitIndex = taskVarpIndex / 32;
-			int bitIndex = taskVarpIndex % 32;
-			try
-			{
-				List<Integer> taskVarps = task.getTaskType().getTaskVarps();
-				if (varbitIndex < 0 || varbitIndex >= taskVarps.size())
-				{
-					future.complete(task.isCompleted());
-					return;
-				}
-				int varpId = taskVarps.get(varbitIndex);
-				BigInteger varpValue = BigInteger.valueOf(client.getVarpValue(varpId));
-				boolean isTaskCompleted = varpValue.testBit(bitIndex);
-				boolean wasCompleted = task.isCompleted();
-				task.setCompleted(isTaskCompleted);
-				if (isTaskCompleted)
-				{
-					if (captureLocation && !wasCompleted && task.getCompletionLocation() == null
-						&& client.getLocalPlayer() != null)
-					{
-						task.setCompletionLocation(client.getLocalPlayer().getWorldLocation());
-					}
-					if (config.untrackUponCompletion())
-					{
-						task.setTracked(false);
-					}
-
-					if (config.unpinUponCompletion() && Objects.equals(config.pinnedTaskId(), task.getTaskId()))
-					{
-						configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", 0);
-					}
-				}
-				log.debug("process task {} ({}) {}", task.getName(), task.getVarpIndex(), isTaskCompleted);
-				future.complete(isTaskCompleted);
-			}
-			catch (Exception ex)
-			{
-				log.error("Error processing task status {}", taskVarpIndex, ex);
-				future.completeExceptionally(ex);
-			}
-		});
-		return future;
-	}
-
 	/**
 	 * Update task completion status. If no varpId is specified, it updates all tasks in the current task type
 	 *
 	 * @param varpId varp id to update (optional)
-	 * @return An observable that emits true if all tasks were processed
+	 * @return A completable future that emits true if tasks were processed
 	 */
 	private CompletableFuture<Boolean> processVarpAndUpdateTasks(@Nullable Integer varpId)
 	{
@@ -742,27 +693,84 @@ public class TasksTrackerPlugin extends Plugin
 			taskService.getTasksFromVarpId(varpId) :
 			taskService.getTasks();
 
-		List<CompletableFuture<Boolean>> taskFutures = new ArrayList<>();
-		boolean shouldCaptureLocation = varpId != null;
-		for (ITask task : tasks)
+		if (tasks.isEmpty())
 		{
-			CompletableFuture<Boolean> taskFuture = processTaskStatus(task, shouldCaptureLocation);
-			taskFutures.add(taskFuture);
+			return CompletableFuture.completedFuture(true);
 		}
 
-		CompletableFuture<Void> allTasksFuture = CompletableFuture.allOf(taskFutures.toArray(new CompletableFuture[0]));
-		return allTasksFuture
-			.thenRun(() -> {
-				if (varpId != null)
+		CompletableFuture<Boolean> future = new CompletableFuture<>();
+		boolean shouldCaptureLocation = varpId != null;
+
+		clientThread.invoke(() -> {
+			try
+			{
+				boolean shouldUnpin = false;
+				Map<Integer, Integer> varpValues = new HashMap<>();
+				for (ITask task : tasks)
 				{
-					SwingUtilities.invokeLater(() -> pluginPanel.taskListPanel.refreshMultipleTasks(tasks));
+					int taskVarpIndex = task.getVarpIndex();
+					int varbitIndex = taskVarpIndex / 32;
+					int bitIndex = taskVarpIndex % 32;
+
+					List<Integer> taskVarps = task.getTaskType().getTaskVarps();
+					if (varbitIndex < 0 || varbitIndex >= taskVarps.size())
+					{
+						continue;
+					}
+					int currentVarpId = taskVarps.get(varbitIndex);
+					int varpValue = varpValues.computeIfAbsent(currentVarpId, client::getVarpValue);
+
+					boolean isTaskCompleted = ((varpValue >> bitIndex) & 1) == 1;
+					boolean wasCompleted = task.isCompleted();
+					task.setCompleted(isTaskCompleted);
+					if (isTaskCompleted)
+					{
+						if (shouldCaptureLocation && !wasCompleted && task.getCompletionLocation() == null
+							&& client.getLocalPlayer() != null)
+						{
+							task.setCompletionLocation(client.getLocalPlayer().getWorldLocation());
+						}
+						if (config.untrackUponCompletion())
+						{
+							task.setTracked(false);
+						}
+
+						if (config.unpinUponCompletion() && Objects.equals(config.pinnedTaskId(), task.getTaskId()))
+						{
+							shouldUnpin = true;
+						}
+					}
+				}
+
+				if (shouldUnpin)
+				{
+					SwingUtilities.invokeLater(() -> configManager.setConfiguration(TasksTrackerPlugin.CONFIG_GROUP_NAME, "pinnedTaskId", 0));
+				}
+
+				future.complete(true);
+			}
+			catch (Exception ex)
+			{
+				log.error("Error processing tasks on client thread", ex);
+				future.completeExceptionally(ex);
+			}
+		});
+
+		return future.thenApply(v -> {
+			final TasksTrackerPluginPanel panel = this.pluginPanel;
+			if (panel != null)
+			{
+				if (varpId != null && panel.taskListPanel != null)
+				{
+					SwingUtilities.invokeLater(() -> panel.taskListPanel.refreshMultipleTasks(tasks));
 				}
 				else
 				{
-					SwingUtilities.invokeLater(() -> pluginPanel.refreshAllTasks());
+					SwingUtilities.invokeLater(panel::refreshAllTasks);
 				}
-			})
-			.thenApply(v -> true);
+			}
+			return true;
+		});
 	}
 
 	private String getCurrentTaskTypeExportJson()
@@ -872,12 +880,12 @@ public class TasksTrackerPlugin extends Plugin
 
 	public TaskPanel getPriorityTask()
 	{
-		return pluginPanel.getPriorityTask();
+		return pluginPanel != null ? pluginPanel.getPriorityTask() : null;
 	}
 
 	public javax.swing.JComponent getPriorityPanel()
 	{
-		return pluginPanel.getPriorityPanel();
+		return pluginPanel != null ? pluginPanel.getPriorityPanel() : null;
 	}
 
 	public void redraw()
@@ -886,7 +894,10 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			return;
 		}
-		SwingUtilities.invokeLater(pluginPanel::redraw);
+		if (pluginPanel != null)
+		{
+			SwingUtilities.invokeLater(pluginPanel::redraw);
+		}
 	}
 
 	public void redrawTaskList()
@@ -895,7 +906,10 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			return;
 		}
-		SwingUtilities.invokeLater(pluginPanel::redrawTaskList);
+		if (pluginPanel != null)
+		{
+			SwingUtilities.invokeLater(pluginPanel::redrawTaskList);
+		}
 	}
 
 	/**
@@ -908,11 +922,17 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void forceRouteMode()
 	{
-		pluginPanel.forceRouteMode();
+		if (pluginPanel != null)
+		{
+			pluginPanel.forceRouteMode();
+		}
 	}
 
 	public void setTaskTypeDropdownEnabled(boolean enabled)
 	{
-		pluginPanel.setTaskTypeDropdownEnabled(enabled);
+		if (pluginPanel != null)
+		{
+			pluginPanel.setTaskTypeDropdownEnabled(enabled);
+		}
 	}
 }
