@@ -108,6 +108,12 @@ public class CustomItemPanel extends JPanel
 		completeToggle.addActionListener(e -> onCompletionToggled());
 		SwingUtil.removeButtonDecorations(completeToggle);
 
+		if (customItem.getQuestId() != null)
+		{
+			completeToggle.setEnabled(false);
+			completeToggle.setToolTipText("Tracked automatically from quest completion");
+		}
+
 		JPanel body = new JPanel(new BorderLayout());
 		body.setOpaque(false);
 		body.setBorder(new EmptyBorder(0, 1, 0, 0));

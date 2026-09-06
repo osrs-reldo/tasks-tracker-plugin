@@ -14,11 +14,11 @@ import okhttp3.Response;
 public class HttpDataStoreReader implements DataStoreReader
 {
 	private final OkHttpClient okHttpClient;
-	
+
 	@Inject
 	public HttpDataStoreReader(OkHttpClient okHttpClient)
 	{
-	    this.okHttpClient = okHttpClient.newBuilder().cache(null).build();
+		this.okHttpClient = okHttpClient.newBuilder().cache(null).build();
 	}
 
 	@Override

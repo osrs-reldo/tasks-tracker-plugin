@@ -38,6 +38,9 @@ import net.reldo.taskstracker.data.TasksSummary;
 import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.TrackerRSProfileConfigStore;
 import net.reldo.taskstracker.data.gson.GsonFactory;
+import net.reldo.taskstracker.data.route.CustomRoute;
+import net.reldo.taskstracker.data.route.CustomRouteItem;
+import net.reldo.taskstracker.data.route.RouteItem;
 import net.reldo.taskstracker.data.route.RouteManager;
 import net.reldo.taskstracker.data.route.ShortestPathService;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
@@ -56,6 +59,8 @@ import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.Experience;
 import net.runelite.api.GameState;
+import net.runelite.api.Quest;
+import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
 import net.runelite.api.events.CommandExecuted;
 import net.runelite.api.events.GameStateChanged;
@@ -81,7 +86,6 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.HotkeyListener;
 import net.runelite.client.util.ImageUtil;
-import net.runelite.client.util.LinkBrowser;
 
 @Slf4j
 @PluginDescriptor(
@@ -98,10 +102,13 @@ public class TasksTrackerPlugin extends Plugin
 	public TasksTrackerPluginPanel pluginPanel;
 
 	private static final long VARP_UPDATE_THROTTLE_DELAY_MS = 7 * 1000;
+	private static final long QUEST_CHECK_THROTTLE_DELAY_MS = 5 * 1000;
 
 	private boolean forceUpdateVarpsFlag = false;
 	private Set<Integer> varpIdsToUpdate = new HashSet<>();
 	private long lastVarpUpdate = 0;
+	private long lastQuestCheck = 0;
+	private final Set<Integer> knownCompletedQuestIds = new HashSet<>();
 	private NavigationButton navButton;
 	private RuneScapeProfileType currentProfileType;
 	private final Map<Skill, Integer> oldExperience = new EnumMap<>(Skill.class);
@@ -361,6 +368,7 @@ public class TasksTrackerPlugin extends Plugin
 		// Logged in
 		if (newGameState == GameState.LOGGING_IN)
 		{
+			knownCompletedQuestIds.clear();
 			forceUpdateVarpsFlag = true;
 			if (config.showOverlay())
 			{
@@ -403,6 +411,64 @@ public class TasksTrackerPlugin extends Plugin
 			varpIdsToUpdate = new HashSet<>();
 			lastVarpUpdate = currentTimeEpoch;
 		}
+
+		// Throttled quest-state check for route custom items with questIds
+		if (isRouteMode() && currentTimeEpoch - lastQuestCheck > QUEST_CHECK_THROTTLE_DELAY_MS)
+		{
+			lastQuestCheck = currentTimeEpoch;
+			checkQuestCompletions();
+		}
+	}
+
+	private void checkQuestCompletions()
+	{
+		CustomRoute route = taskService.getActiveRoute();
+		if (route == null || taskService.getCurrentTaskType() == null)
+		{
+			return;
+		}
+
+		// questId -> custom item ids in the active route, skipping quests already known complete
+		Map<Integer, List<String>> questItemIds = new HashMap<>();
+		for (RouteItem item : route.getFlattenedItems())
+		{
+			CustomRouteItem customItem = item.getCustomItem();
+			if (item.isTask() || customItem == null || customItem.getQuestId() == null
+				|| knownCompletedQuestIds.contains(customItem.getQuestId()))
+			{
+				continue;
+			}
+			questItemIds.computeIfAbsent(customItem.getQuestId(), k -> new ArrayList<>()).add(customItem.getId());
+		}
+		if (questItemIds.isEmpty())
+		{
+			return;
+		}
+
+		String taskType = taskService.getCurrentTaskType().getTaskJsonName();
+		String routeId = route.getId();
+		clientThread.invoke(() ->
+		{
+			Set<Integer> newlyCompleted = new HashSet<>();
+			for (Quest quest : Quest.values())
+			{
+				if (questItemIds.containsKey(quest.getId()) && quest.getState(client) == QuestState.FINISHED)
+				{
+					newlyCompleted.add(quest.getId());
+				}
+			}
+			if (newlyCompleted.isEmpty())
+			{
+				return;
+			}
+			knownCompletedQuestIds.addAll(newlyCompleted);
+
+			Set<String> completedIds = trackerGlobalConfigStore.loadCustomItemCompletion(taskType, routeId);
+			newlyCompleted.forEach(questId -> completedIds.addAll(questItemIds.get(questId)));
+			trackerGlobalConfigStore.saveCustomItemCompletion(taskType, routeId, completedIds);
+
+			refreshAllTasks();
+		});
 	}
 
 	@Subscribe
