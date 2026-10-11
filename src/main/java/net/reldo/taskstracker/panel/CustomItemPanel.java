@@ -4,10 +4,17 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.JToolTip;
@@ -24,9 +31,11 @@ import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.route.CustomRouteItem;
 import net.reldo.taskstracker.data.route.RouteItem;
+import net.runelite.api.Quest;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.client.util.LinkBrowser;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.components.ComponentConstants;
 import net.runelite.client.ui.overlay.components.LineComponent;
@@ -41,6 +50,27 @@ public class CustomItemPanel extends JPanel
 	private static final Color BACKGROUND_COMPLETED = new Color(40, 60, 40);
 
 	private static final int MAX_ICON_DIMENSION = 22;
+
+	private static final String WIKI_BASE_URL = "https://oldschool.runescape.wiki/w/";
+
+	// Quests whose RuneLite name doesn't match their wiki page title
+	private static final Map<Quest, String> QUEST_WIKI_PAGE_OVERRIDES = Map.ofEntries(
+		Map.entry(Quest.RECIPE_FOR_DISASTER__ANOTHER_COOKS_QUEST, "Recipe for Disaster/Another Cook's Quest"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__MOUNTAIN_DWARF, "Recipe for Disaster/Freeing the Mountain Dwarf"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__WARTFACE__BENTNOZE, "Recipe for Disaster/Freeing the Goblin generals"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__PIRATE_PETE, "Recipe for Disaster/Freeing Pirate Pete"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__LUMBRIDGE_GUIDE, "Recipe for Disaster/Freeing the Lumbridge Guide"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__EVIL_DAVE, "Recipe for Disaster/Freeing Evil Dave"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__SKRACH_UGLOGWEE, "Recipe for Disaster/Freeing Skrach Uglogwee"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__SIR_AMIK_VARZE, "Recipe for Disaster/Freeing Sir Amik Varze"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__KING_AWOWOGEI, "Recipe for Disaster/Freeing King Awowogei"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__CULINAROMANCER, "Recipe for Disaster/Defeating the Culinaromancer")
+	);
+
+	// Quests without a "<wiki page>/Quick guide" subpage
+	private static final Map<Quest, String> QUEST_QUICK_GUIDE_OVERRIDES = Map.of(
+		Quest.RECIPE_FOR_DISASTER__CULINAROMANCER, "Recipe for Disaster/Quick guide#The final battles"
+	);
 
 	private final TasksTrackerPlugin plugin;
 	private final RouteItem routeItem;
@@ -108,6 +138,12 @@ public class CustomItemPanel extends JPanel
 		if (customItem.getQuestId() != null)
 		{
 			completeToggle.setVisible(false);
+
+			Quest quest = findQuest(customItem.getQuestId());
+			if (quest != null)
+			{
+				setComponentPopupMenu(createQuestPopupMenu(quest));
+			}
 		}
 
 		JPanel body = new JPanel(new BorderLayout());
@@ -128,6 +164,50 @@ public class CustomItemPanel extends JPanel
 		add(container, BorderLayout.NORTH);
 
 		ToolTipManager.sharedInstance().registerComponent(this);
+	}
+
+	private static Quest findQuest(int questId)
+	{
+		return Arrays.stream(Quest.values())
+			.filter(quest -> quest.getId() == questId)
+			.findFirst()
+			.orElse(null);
+	}
+
+	private JPopupMenu createQuestPopupMenu(Quest quest)
+	{
+		JPopupMenu popupMenu = new JPopupMenu();
+
+		String wikiPage = QUEST_WIKI_PAGE_OVERRIDES.getOrDefault(quest, quest.getName());
+		String quickGuidePage = QUEST_QUICK_GUIDE_OVERRIDES.getOrDefault(quest, wikiPage + "/Quick guide");
+
+		JMenuItem openWikiItem = new JMenuItem("Wiki");
+		openWikiItem.addActionListener(e -> LinkBrowser.browse(getWikiUrl(wikiPage)));
+		popupMenu.add(openWikiItem);
+
+		JMenuItem openQuickGuideItem = new JMenuItem("Wiki Quick Guide");
+		openQuickGuideItem.addActionListener(e -> LinkBrowser.browse(getWikiUrl(quickGuidePage)));
+		popupMenu.add(openQuickGuideItem);
+
+		return popupMenu;
+	}
+
+	private static String getWikiUrl(String page)
+	{
+		String anchor = "";
+		int anchorIndex = page.indexOf('#');
+		if (anchorIndex >= 0)
+		{
+			anchor = page.substring(anchorIndex).replace(' ', '_');
+			page = page.substring(0, anchorIndex);
+		}
+
+		// Encode each path segment separately so subpage separators are preserved
+		String path = Arrays.stream(page.replace(' ', '_').split("/"))
+			.map(segment -> URLEncoder.encode(segment, StandardCharsets.UTF_8))
+			.collect(Collectors.joining("/"));
+
+		return WIKI_BASE_URL + path + anchor;
 	}
 
 	private void setFallbackIcon()
