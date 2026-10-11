@@ -107,8 +107,7 @@ public class CustomItemPanel extends JPanel
 
 		if (customItem.getQuestId() != null)
 		{
-			completeToggle.setEnabled(false);
-			completeToggle.setToolTipText("Tracked automatically from quest completion");
+			completeToggle.setVisible(false);
 		}
 
 		JPanel body = new JPanel(new BorderLayout());
@@ -147,6 +146,10 @@ public class CustomItemPanel extends JPanel
 			else if ("Teleport".equals(label))
 			{
 				color = new Color(100, 200, 255);
+			}
+			else if ("Quest".equals(label))
+			{
+				color = new Color(135, 151, 230);
 			}
 		}
 
