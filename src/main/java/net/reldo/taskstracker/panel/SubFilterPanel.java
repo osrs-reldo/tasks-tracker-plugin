@@ -1,11 +1,10 @@
 package net.reldo.taskstracker.panel;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import javax.swing.BoxLayout;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
@@ -91,42 +90,61 @@ public class SubFilterPanel extends FixedWidthPanel
 				return new DynamicButtonFilterPanel(plugin, filterConfig, taskService.getCurrentTaskType());
 			case DROPDOWN_FILTER:
 				ComboItem[] dropdownItems = getDropdownItems(filterConfig);
-				return new DynamicDropdownFilterPanel(plugin, filterConfig, taskService.getCurrentTaskType(), dropdownItems);
+				DynamicDropdownFilterPanel dropdownPanel = new DynamicDropdownFilterPanel(plugin, filterConfig, taskService.getCurrentTaskType(), dropdownItems);
+				populateDropdownItemsAsync(filterConfig, dropdownPanel);
+				return dropdownPanel;
 			default:
 				log.error("invalid filter type " + filterConfig.getFilterType());
 				return null;
 		}
 	}
 
-	private ComboItem[] getDropdownItems(FilterConfig filterConfig) throws ExecutionException, InterruptedException
+	private ComboItem[] getDropdownItems(FilterConfig filterConfig)
 	{
 		if (filterConfig.getValueType() == null)
 		{
 			throw new Error("invalid filterConfig for dropdown items");
 		}
-		if (filterConfig.getValueType().equals(FilterValueType.PARAM_INTEGER))
+		if (filterConfig.getValueType().equals(FilterValueType.PARAM_INTEGER) && !filterConfig.getOptionLabelEnum().isEmpty())
 		{
-			String enumName = filterConfig.getOptionLabelEnum();
-			if (!enumName.isEmpty())
-			{
-				HashMap<Integer, String> enumEntries = taskService.getStringEnumValuesAsync(enumName).get(); // TODO: blocking call
-				ArrayList<ComboItem<Integer>> options = new ArrayList<>();
-				options.add(new ComboItem<>(-1, ""));
-				for (Map.Entry<Integer, String> entry : enumEntries.entrySet())
-				{
-					if (filterConfig.getValueName().equals("tier"))
-					{
-						if (entry.getValue().equals("All") || entry.getValue().equals("Tier"))
-						{
-							continue;
-						}
-					}
-					options.add(new ComboItem<>(entry.getKey(), entry.getValue()));
-				}
-				return options.toArray(new ComboItem[0]);
-			}
+			ArrayList<ComboItem<Integer>> options = new ArrayList<>();
+			options.add(new ComboItem<>(-1, ""));
+			return options.toArray(new ComboItem[0]);
 		}
 
 		return new ComboItem[0];
+	}
+
+	private void populateDropdownItemsAsync(FilterConfig filterConfig, DynamicDropdownFilterPanel dropdownPanel)
+	{
+		if (filterConfig.getValueType() != FilterValueType.PARAM_INTEGER)
+		{
+			return;
+		}
+		String enumName = filterConfig.getOptionLabelEnum();
+		if (enumName == null || enumName.isEmpty())
+		{
+			return;
+		}
+
+		taskService.getStringEnumValuesAsync(enumName).thenAccept(enumEntries -> {
+			ArrayList<ComboItem<Integer>> options = new ArrayList<>();
+			options.add(new ComboItem<>(-1, ""));
+			for (Map.Entry<Integer, String> entry : enumEntries.entrySet())
+			{
+				if (filterConfig.getValueName().equals("tier"))
+				{
+					if (entry.getValue().equals("All") || entry.getValue().equals("Tier"))
+					{
+						continue;
+					}
+				}
+				options.add(new ComboItem<>(entry.getKey(), entry.getValue()));
+			}
+			SwingUtilities.invokeLater(() -> dropdownPanel.setItems(options.toArray(new ComboItem[0])));
+		}).exceptionally(ex -> {
+			log.error("error populating dropdown items for {}", filterConfig.getConfigKey(), ex);
+			return null;
+		});
 	}
 }

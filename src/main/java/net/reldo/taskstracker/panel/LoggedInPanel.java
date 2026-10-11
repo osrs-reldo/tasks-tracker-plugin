@@ -96,12 +96,6 @@ public class LoggedInPanel extends JPanel
 		createPanel();
 	}
 
-	@Override
-	public Dimension getPreferredSize()
-	{
-		return getParent().getSize();
-	}
-
 	public void drawNewTaskType()
 	{
 		// taskTypeDropdown may become de-synced after profile change

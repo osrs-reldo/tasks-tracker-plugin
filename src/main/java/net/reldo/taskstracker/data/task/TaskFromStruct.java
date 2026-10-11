@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 import lombok.Getter;
+import net.reldo.taskstracker.data.jsondatastore.types.ProgressType;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
@@ -39,6 +40,8 @@ public class TaskFromStruct implements ITask
 	private StructComposition _struct;
 	private final Map<String, String> _stringParams = new HashMap<>();
 	private final Map<String, Integer> _intParams = new HashMap<>();
+	private Map<Integer, Integer> _cachedVarpProgress;
+	private Map<Integer, Integer> _cachedVarbitProgress;
 	@Getter
 	@Setter
 	private String note;
@@ -238,5 +241,34 @@ public class TaskFromStruct implements ITask
 	public Float getCompletionPercent()
 	{
 		return getTaskDefinition().getCompletionPercent();
+	}
+
+	@Override
+	public void setProgressValue(ProgressType type, int id, int value)
+	{
+		if (type == ProgressType.VARP)
+		{
+			if (_cachedVarpProgress == null) _cachedVarpProgress = new HashMap<>();
+			_cachedVarpProgress.put(id, value);
+		}
+		else if (type == ProgressType.VARBIT)
+		{
+			if (_cachedVarbitProgress == null) _cachedVarbitProgress = new HashMap<>();
+			_cachedVarbitProgress.put(id, value);
+		}
+	}
+
+	@Override
+	public int getProgressValue(ProgressType type, int id)
+	{
+		if (type == ProgressType.VARP)
+		{
+			return _cachedVarpProgress != null ? _cachedVarpProgress.getOrDefault(id, 0) : 0;
+		}
+		else if (type == ProgressType.VARBIT)
+		{
+			return _cachedVarbitProgress != null ? _cachedVarbitProgress.getOrDefault(id, 0) : 0;
+		}
+		return 0;
 	}
 }

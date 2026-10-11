@@ -25,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskProgressDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.ProgressType;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.route.CustomRouteItem;
 import net.reldo.taskstracker.data.route.RouteItem;
@@ -388,6 +390,46 @@ public class TaskListPanel extends JScrollPane
 					);
 			})
 			.forEach(TaskPanel::refresh);
+	}
+
+	public void refreshProgressBarsForSkill(Skill skill)
+	{
+		taskPanelsByStructId.values().stream()
+			.filter(tp -> !tp.task.isCompleted())
+			.filter(tp ->
+			{
+				List<TaskProgressDefinition> defs = tp.task.getTaskDefinition().getProgress();
+				if (defs == null || defs.isEmpty())
+				{
+					return false;
+				}
+				return defs.stream().anyMatch(d ->
+					(d.getType() == ProgressType.EXPERIENCE || d.getType() == ProgressType.LEVEL)
+					&& skill.getName().equalsIgnoreCase(d.getSkill()));
+			})
+			.forEach(TaskPanel::refreshProgressBars);
+	}
+
+	public void refreshProgressBarsForVars(Set<Integer> varpIds, Set<Integer> varbitIds)
+	{
+		if (varpIds.isEmpty() && varbitIds.isEmpty())
+		{
+			return;
+		}
+		taskPanelsByStructId.values().stream()
+			.filter(tp -> !tp.task.isCompleted())
+			.filter(tp ->
+			{
+				List<TaskProgressDefinition> defs = tp.task.getTaskDefinition().getProgress();
+				if (defs == null || defs.isEmpty())
+				{
+					return false;
+				}
+				return defs.stream().anyMatch(d ->
+					(d.getType() == ProgressType.VARP && d.getId() != null && varpIds.contains(d.getId()))
+					|| (d.getType() == ProgressType.VARBIT && d.getId() != null && varbitIds.contains(d.getId())));
+			})
+			.forEach(TaskPanel::refreshProgressBars);
 	}
 
 	public void updatePriorityTaskAfterRefresh()

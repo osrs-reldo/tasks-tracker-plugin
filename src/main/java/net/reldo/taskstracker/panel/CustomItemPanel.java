@@ -3,8 +3,6 @@ package net.reldo.taskstracker.panel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.Set;
 import javax.swing.ImageIcon;
@@ -33,7 +31,6 @@ import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.components.ComponentConstants;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
-import net.runelite.client.ui.overlay.components.TitleComponent;
 import net.runelite.client.util.SwingUtil;
 
 @Slf4j
@@ -275,7 +272,7 @@ public class CustomItemPanel extends JPanel
 		);
 	}
 
-	public void buildOverlayText(Graphics2D graphics, PanelComponent panelComponent)
+	public void buildOverlayText(PanelComponent panelComponent)
 	{
 		panelComponent.setBackgroundColor(ComponentConstants.STANDARD_BACKGROUND_COLOR);
 
@@ -297,13 +294,9 @@ public class CustomItemPanel extends JPanel
 		String title = customItem.getDisplayLabel();
 		String desc = customItem.getDescription();
 
-		final FontMetrics fontMetrics = graphics.getFontMetrics();
-		int panelWidth = Math.max(ComponentConstants.STANDARD_WIDTH, fontMetrics.stringWidth(title) +
-			ComponentConstants.STANDARD_BORDER + ComponentConstants.STANDARD_BORDER);
-
-		panelComponent.setPreferredSize(new Dimension(panelWidth, 0));
-		panelComponent.getChildren().add(TitleComponent.builder()
-			.text(title)
+		panelComponent.setPreferredSize(new Dimension(ComponentConstants.STANDARD_WIDTH, 0));
+		panelComponent.getChildren().add(LineComponent.builder()
+			.left(title)
 			.build());
 
 		if (desc != null && !desc.isEmpty())
