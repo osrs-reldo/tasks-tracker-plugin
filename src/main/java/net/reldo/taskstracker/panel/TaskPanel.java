@@ -2,16 +2,11 @@ package net.reldo.taskstracker.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -55,6 +50,7 @@ import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.overlay.components.ComponentConstants;
 import net.runelite.client.ui.overlay.components.LineComponent;
+import net.runelite.client.util.LinkBrowser;
 import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.ui.overlay.components.ProgressBarComponent;
 import net.runelite.client.util.SwingUtil;
@@ -363,21 +359,7 @@ public class TaskPanel extends JPanel
 	private void openRuneScapeWiki()
 	{
 		String wikiUrl = String.format("https://oldschool.runescape.wiki/%s", URLEncoder.encode(task.getName().replace(' ', '_'), StandardCharsets.UTF_8));
-		if (Desktop.isDesktopSupported())
-		{
-			try
-			{
-				Desktop.getDesktop().browse(new URI(wikiUrl));
-			}
-			catch (IOException | URISyntaxException ex)
-			{
-				log.error("Error opening RuneScape Wiki.", ex);
-			}
-		}
-		else
-		{
-			log.warn("Desktop browsing is not supported on this system.");
-		}
+		LinkBrowser.browse(wikiUrl);
 	}
 
 	private void togglePinTaskPanel()
