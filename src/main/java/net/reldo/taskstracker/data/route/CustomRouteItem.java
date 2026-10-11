@@ -39,6 +39,10 @@ public class CustomRouteItem
 	@Expose
 	private String description;
 
+	/** RuneLite Quest id for auto-completion tracking. Null for non-quest items. */
+	@Expose
+	private Integer questId;
+
 	/** Returns the label for display, falling back to "Custom" if empty. */
 	public String getDisplayLabel()
 	{
