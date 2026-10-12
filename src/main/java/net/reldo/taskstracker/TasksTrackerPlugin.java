@@ -42,6 +42,7 @@ import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.route.CustomRouteItem;
 import net.reldo.taskstracker.data.route.RouteItem;
 import net.reldo.taskstracker.data.route.RouteManager;
+import net.reldo.taskstracker.data.route.QuestHelperService;
 import net.reldo.taskstracker.data.route.ShortestPathService;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
 import net.reldo.taskstracker.data.jsondatastore.reader.HttpDataStoreReader;
@@ -168,6 +169,9 @@ public class TasksTrackerPlugin extends Plugin
 	@Getter
 	@Inject
 	private ShortestPathService shortestPathService;
+	@Getter
+	@Inject
+	private QuestHelperService questHelperService;
 
 	@Getter
 	private FilterMatcher filterMatcher;
