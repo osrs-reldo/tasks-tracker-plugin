@@ -36,7 +36,6 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
-import net.reldo.taskstracker.data.jsondatastore.types.ProgressMode;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskProgressDefinition;
 import net.reldo.taskstracker.data.task.ITask;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
@@ -702,78 +701,15 @@ public class TaskPanel extends JPanel
 		}
 
 		panelComponent.getChildren().add(LineComponent.builder().build());
-		ProgressMode progressMode = task.getTaskDefinition().getProgressMode();
-		if (progressMode == ProgressMode.SUM)
+		for (TaskProgressPanel.BarValue barValue : TaskProgressPanel.getBarValues(plugin, task, progressDefs))
 		{
-			int totalCurrent = 0;
-			int totalTarget = 0;
-			for (TaskProgressDefinition def : progressDefs)
-			{
-				totalCurrent += getProgressCurrentValue(def);
-				totalTarget += def.getTarget();
-			}
 			ProgressBarComponent bar = new ProgressBarComponent();
 			bar.setMinimum(0);
-			bar.setMaximum(totalTarget);
-			bar.setValue(totalCurrent);
+			bar.setMaximum(barValue.getTarget());
+			bar.setValue(barValue.getCurrent());
 			bar.setLabelDisplayMode(displayMode.labelDisplayMode);
 			bar.setForegroundColor(new Color(0, 168, 0));
 			panelComponent.getChildren().add(bar);
-		}
-		else
-		{
-			for (TaskProgressDefinition def : progressDefs)
-			{
-				int current = getProgressCurrentValue(def);
-				int target = def.getTarget();
-
-				ProgressBarComponent bar = new ProgressBarComponent();
-				bar.setMinimum(0);
-				bar.setMaximum(target);
-				bar.setValue(current);
-				bar.setLabelDisplayMode(displayMode.labelDisplayMode);
-				bar.setForegroundColor(new Color(0, 168, 0));
-				panelComponent.getChildren().add(bar);
-			}
-		}
-	}
-
-	private int getProgressCurrentValue(TaskProgressDefinition def)
-	{
-		switch (def.getType())
-		{
-			case EXPERIENCE:
-				if (plugin.playerXp == null) return 0;
-				try
-				{
-					Skill skill = Skill.valueOf(def.getSkill().toUpperCase());
-					return plugin.playerXp[skill.ordinal()];
-				}
-				catch (IllegalArgumentException | NullPointerException ex)
-				{
-					log.warn("Unknown skill for EXPERIENCE progress: {}", def.getSkill());
-					return 0;
-				}
-			case LEVEL:
-				if (plugin.playerSkills == null) return 0;
-				try
-				{
-					Skill skill = Skill.valueOf(def.getSkill().toUpperCase());
-					return plugin.playerSkills[skill.ordinal()];
-				}
-				catch (IllegalArgumentException | NullPointerException ex)
-				{
-					log.warn("Unknown skill for LEVEL progress: {}", def.getSkill());
-					return 0;
-				}
-			case VARP:
-				if (def.getId() == null) return 0;
-				return plugin.getTaskService().getProgressVarpValue(def.getId());
-			case VARBIT:
-				if (def.getId() == null) return 0;
-				return plugin.getTaskService().getProgressVarbitValue(def.getId());
-			default:
-				return 0;
 		}
 	}
 

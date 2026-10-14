@@ -2,11 +2,12 @@ package net.reldo.taskstracker.panel.components;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import lombok.extern.slf4j.Slf4j;
+import lombok.Value;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.jsondatastore.types.ProgressMode;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskProgressDefinition;
@@ -15,37 +16,52 @@ import net.runelite.api.Skill;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
-@Slf4j
 public class TaskProgressPanel extends JPanel
 {
-	private final TasksTrackerPlugin plugin;
+	@Value
+	public static class BarValue
+	{
+		int current;
+		int target;
+	}
 
 	public TaskProgressPanel(TasksTrackerPlugin plugin, ITask task, List<TaskProgressDefinition> defs, int barHeight, boolean withText)
 	{
-		this.plugin = plugin;
-
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setOpaque(false);
 
-		ProgressMode progressMode = task.getTaskDefinition().getProgressMode();
-		if (progressMode == ProgressMode.SUM)
+		for (BarValue barValue : getBarValues(plugin, task, defs))
+		{
+			add(buildBar(barValue.getCurrent(), barValue.getTarget(), barHeight, withText));
+		}
+	}
+
+	/**
+	 * The bars to draw for a task's progress: one summed bar in SUM mode, otherwise one per definition.
+	 * Shared by the side panel and the overlay.
+	 */
+	public static List<BarValue> getBarValues(TasksTrackerPlugin plugin, ITask task, List<TaskProgressDefinition> defs)
+	{
+		List<BarValue> barValues = new ArrayList<>();
+		if (task.getTaskDefinition().getProgressMode() == ProgressMode.SUM)
 		{
 			int totalCurrent = 0;
 			int totalTarget = 0;
 			for (TaskProgressDefinition def : defs)
 			{
-				totalCurrent += getCurrentValue(def);
+				totalCurrent += getCurrentValue(plugin, task, def);
 				totalTarget += def.getTarget();
 			}
-			add(buildBar(totalCurrent, totalTarget, barHeight, withText));
+			barValues.add(new BarValue(totalCurrent, totalTarget));
 		}
 		else
 		{
 			for (TaskProgressDefinition def : defs)
 			{
-				add(buildBar(getCurrentValue(def), def.getTarget(), barHeight, withText));
+				barValues.add(new BarValue(getCurrentValue(plugin, task, def), def.getTarget()));
 			}
 		}
+		return barValues;
 	}
 
 	private JProgressBar buildBar(int current, int target, int barHeight, boolean withText)
@@ -66,40 +82,28 @@ public class TaskProgressPanel extends JPanel
 		return bar;
 	}
 
-	private int getCurrentValue(TaskProgressDefinition def)
+	private static int getCurrentValue(TasksTrackerPlugin plugin, ITask task, TaskProgressDefinition def)
 	{
 		switch (def.getType())
 		{
 			case EXPERIENCE:
-				if (plugin.playerXp == null)
+			{
+				Skill skill = def.getResolvedSkill();
+				if (plugin.playerXp == null || skill == null)
 				{
 					return 0;
 				}
-				try
-				{
-					Skill skill = Skill.valueOf(def.getSkill().toUpperCase());
-					return plugin.playerXp[skill.ordinal()];
-				}
-				catch (IllegalArgumentException | NullPointerException ex)
-				{
-					log.warn("Unknown skill for EXPERIENCE progress: {}", def.getSkill());
-					return 0;
-				}
+				return plugin.playerXp[skill.ordinal()];
+			}
 			case LEVEL:
-				if (plugin.playerSkills == null)
+			{
+				Skill skill = def.getResolvedSkill();
+				if (plugin.playerSkills == null || skill == null)
 				{
 					return 0;
 				}
-				try
-				{
-					Skill skill = Skill.valueOf(def.getSkill().toUpperCase());
-					return plugin.playerSkills[skill.ordinal()];
-				}
-				catch (IllegalArgumentException | NullPointerException ex)
-				{
-					log.warn("Unknown skill for LEVEL progress: {}", def.getSkill());
-					return 0;
-				}
+				return plugin.playerSkills[skill.ordinal()];
+			}
 			case VARP:
 				if (def.getId() == null)
 				{
