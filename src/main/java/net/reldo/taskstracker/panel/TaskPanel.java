@@ -37,7 +37,6 @@ import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
 import net.reldo.taskstracker.data.jsondatastore.types.ProgressMode;
-import net.reldo.taskstracker.data.jsondatastore.types.ProgressType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskProgressDefinition;
 import net.reldo.taskstracker.data.task.ITask;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
@@ -769,10 +768,10 @@ public class TaskPanel extends JPanel
 				}
 			case VARP:
 				if (def.getId() == null) return 0;
-				return task.getProgressValue(ProgressType.VARP, def.getId());
+				return plugin.getTaskService().getProgressVarpValue(def.getId());
 			case VARBIT:
 				if (def.getId() == null) return 0;
-				return task.getProgressValue(ProgressType.VARBIT, def.getId());
+				return plugin.getTaskService().getProgressVarbitValue(def.getId());
 			default:
 				return 0;
 		}

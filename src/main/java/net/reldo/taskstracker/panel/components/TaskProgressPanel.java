@@ -9,7 +9,6 @@ import javax.swing.JProgressBar;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.data.jsondatastore.types.ProgressMode;
-import net.reldo.taskstracker.data.jsondatastore.types.ProgressType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskProgressDefinition;
 import net.reldo.taskstracker.data.task.ITask;
 import net.runelite.api.Skill;
@@ -20,12 +19,10 @@ import net.runelite.client.ui.FontManager;
 public class TaskProgressPanel extends JPanel
 {
 	private final TasksTrackerPlugin plugin;
-	private final ITask task;
 
 	public TaskProgressPanel(TasksTrackerPlugin plugin, ITask task, List<TaskProgressDefinition> defs, int barHeight, boolean withText)
 	{
 		this.plugin = plugin;
-		this.task = task;
 
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setOpaque(false);
@@ -108,13 +105,13 @@ public class TaskProgressPanel extends JPanel
 				{
 					return 0;
 				}
-				return task.getProgressValue(ProgressType.VARP, def.getId());
+				return plugin.getTaskService().getProgressVarpValue(def.getId());
 			case VARBIT:
 				if (def.getId() == null)
 				{
 					return 0;
 				}
-				return task.getProgressValue(ProgressType.VARBIT, def.getId());
+				return plugin.getTaskService().getProgressVarbitValue(def.getId());
 			default:
 				return 0;
 		}

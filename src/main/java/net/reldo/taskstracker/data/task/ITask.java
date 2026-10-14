@@ -1,7 +1,6 @@
 package net.reldo.taskstracker.data.task;
 
 import javax.annotation.Nullable;
-import net.reldo.taskstracker.data.jsondatastore.types.ProgressType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
 import net.reldo.taskstracker.data.reldo.ReldoTaskSave;
 import net.runelite.api.Client;
@@ -80,8 +79,4 @@ public interface ITask
 
 	/** Loads task data from the game cache (struct or dbrow). Must be called on client thread. */
 	boolean loadData(Client client);
-
-	void setProgressValue(ProgressType type, int id, int value);
-
-	int getProgressValue(ProgressType type, int id);
 }
