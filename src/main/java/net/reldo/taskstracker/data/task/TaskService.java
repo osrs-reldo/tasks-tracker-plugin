@@ -63,14 +63,15 @@ public class TaskService
 	private ITaskType currentTaskType;
 	@Getter
 	private final List<ITask> tasks = new ArrayList<>();
+	// Read on the client thread (onVarbitChanged), rebuilt on the loader thread (setTaskType)
 	@Getter
-	private Set<Integer> progressVarpIds = new HashSet<>();
+	private volatile Set<Integer> progressVarpIds = new HashSet<>();
 	@Getter
-	private Set<Integer> progressVarbitIds = new HashSet<>();
+	private volatile Set<Integer> progressVarbitIds = new HashSet<>();
 	@Getter
-	private Map<Integer, List<ITask>> progressVarpToTasks = new HashMap<>();
+	private volatile Map<Integer, List<ITask>> progressVarpToTasks = new HashMap<>();
 	@Getter
-	private Map<Integer, List<ITask>> progressVarbitToTasks = new HashMap<>();
+	private volatile Map<Integer, List<ITask>> progressVarbitToTasks = new HashMap<>();
 	@Getter
 	private final HashMap<String, HashMap<Integer, Integer>> sortedIndexes = new HashMap<>();
 	private HashMap<String, ITaskType> _taskTypes = new HashMap<>();
@@ -205,11 +206,11 @@ public class TaskService
 				tasks.clear();
 				tasks.addAll(newTasks);
 
-				progressVarpIds = new HashSet<>();
-				progressVarbitIds = new HashSet<>();
-				progressVarpToTasks = new HashMap<>();
-				progressVarbitToTasks = new HashMap<>();
-				for (ITask task : tasks)
+				Set<Integer> newProgressVarpIds = new HashSet<>();
+				Set<Integer> newProgressVarbitIds = new HashSet<>();
+				Map<Integer, List<ITask>> newProgressVarpToTasks = new HashMap<>();
+				Map<Integer, List<ITask>> newProgressVarbitToTasks = new HashMap<>();
+				for (ITask task : newTasks)
 				{
 					List<TaskProgressDefinition> progressDefs = task.getTaskDefinition().getProgress();
 					if (progressDefs == null) continue;
@@ -217,16 +218,20 @@ public class TaskService
 					{
 						if (def.getType() == ProgressType.VARP && def.getId() != null)
 						{
-							progressVarpIds.add(def.getId());
-							progressVarpToTasks.computeIfAbsent(def.getId(), k -> new ArrayList<>()).add(task);
+							newProgressVarpIds.add(def.getId());
+							newProgressVarpToTasks.computeIfAbsent(def.getId(), k -> new ArrayList<>()).add(task);
 						}
 						else if (def.getType() == ProgressType.VARBIT && def.getId() != null)
 						{
-							progressVarbitIds.add(def.getId());
-							progressVarbitToTasks.computeIfAbsent(def.getId(), k -> new ArrayList<>()).add(task);
+							newProgressVarbitIds.add(def.getId());
+							newProgressVarbitToTasks.computeIfAbsent(def.getId(), k -> new ArrayList<>()).add(task);
 						}
 					}
 				}
+				progressVarpIds = newProgressVarpIds;
+				progressVarbitIds = newProgressVarbitIds;
+				progressVarpToTasks = newProgressVarpToTasks;
+				progressVarbitToTasks = newProgressVarbitToTasks;
 
 				// Clear route state from previous task type
 				routeIndexes.clear();

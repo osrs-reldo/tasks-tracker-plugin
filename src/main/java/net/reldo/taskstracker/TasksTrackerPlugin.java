@@ -106,7 +106,7 @@ public class TasksTrackerPlugin extends Plugin
 	private Set<Integer> dirtyProgressVarpIds = new HashSet<>();
 	private Set<Integer> dirtyProgressVarbitIds = new HashSet<>();
 	private static final long VARP_UPDATE_THROTTLE_DELAY_MS = 7 * 1000;
-	private static final long QUEST_CHECK_THROTTLE_DELAY_MS = 5 * 1000;
+	private static final long QUEST_CHECK_THROTTLE_DELAY_MS = 10 * 1000;
 	private static final long XP_PROGRESS_UPDATE_DELAY_MS = 10 * 1000;
 	private static final long VAR_PROGRESS_UPDATE_DELAY_MS = 5 * 1000;
 
@@ -114,7 +114,6 @@ public class TasksTrackerPlugin extends Plugin
 	private Set<Integer> varpIdsToUpdate = new HashSet<>();
 	private long lastVarpUpdate = 0;
 	private long lastQuestCheck = 0;
-	private final Set<Integer> knownCompletedQuestIds = new HashSet<>();
 	private long lastXpProgressUpdate = 0;
 	private long lastVarProgressUpdate = 0;
 	private NavigationButton navButton;
@@ -293,13 +292,14 @@ public class TasksTrackerPlugin extends Plugin
 			varpIdsToUpdate.add(varpId);
 		}
 
-		if (taskService.isProgressVarpInCurrentTaskType(varpId))
+		int varbitId = varbitChanged.getVarbitId();
+
+		if (varbitId == -1 && taskService.isProgressVarpInCurrentTaskType(varpId))
 		{
 			taskService.updateProgressVarp(varpId, varbitChanged.getValue());
 			dirtyProgressVarpIds.add(varpId);
 		}
 
-		int varbitId = varbitChanged.getVarbitId();
 		if (varbitId > 0 && taskService.isProgressVarbitInCurrentTaskType(varbitId))
 		{
 			taskService.updateProgressVarbit(varbitId, varbitChanged.getValue());
@@ -395,7 +395,6 @@ public class TasksTrackerPlugin extends Plugin
 		// Logged in
 		if (newGameState == GameState.LOGGING_IN)
 		{
-			knownCompletedQuestIds.clear();
 			forceUpdateVarpsFlag = true;
 			if (config.showOverlay())
 			{
@@ -442,7 +441,7 @@ public class TasksTrackerPlugin extends Plugin
 		if (currentTimeEpoch - lastXpProgressUpdate > XP_PROGRESS_UPDATE_DELAY_MS && !dirtyXpSkills.isEmpty() )
 		{
 			Set<Skill> toFlush = dirtyXpSkills;
-			dirtyXpSkills.clear();
+			dirtyXpSkills = new HashSet<>();
 			lastXpProgressUpdate = currentTimeEpoch;
 			SwingUtilities.invokeLater(() ->
 				toFlush.forEach(s -> pluginPanel.taskListPanel.refreshProgressBarsForSkill(s)));
@@ -475,13 +474,17 @@ public class TasksTrackerPlugin extends Plugin
 			return;
 		}
 
-		// questId -> custom item ids in the active route, skipping quests already known complete
+		String taskType = taskService.getCurrentTaskType().getTaskJsonName();
+		String routeId = route.getId();
+		Set<String> completedCustomTaskIds = trackerGlobalConfigStore.loadCustomItemCompletion(taskType, routeId);
+
+		// questId -> custom item ids in the active route, skipping quests already marked complete
 		Map<Integer, List<String>> questItemIds = new HashMap<>();
 		for (RouteItem item : route.getFlattenedItems())
 		{
 			CustomRouteItem customItem = item.getCustomItem();
 			if (item.isTask() || customItem == null || customItem.getQuestId() == null
-				|| knownCompletedQuestIds.contains(customItem.getQuestId()))
+				|| completedCustomTaskIds.contains(customItem.getId()))
 			{
 				continue;
 			}
@@ -492,8 +495,6 @@ public class TasksTrackerPlugin extends Plugin
 			return;
 		}
 
-		String taskType = taskService.getCurrentTaskType().getTaskJsonName();
-		String routeId = route.getId();
 		clientThread.invoke(() ->
 		{
 			Set<Integer> newlyCompleted = new HashSet<>();
@@ -508,7 +509,6 @@ public class TasksTrackerPlugin extends Plugin
 			{
 				return;
 			}
-			knownCompletedQuestIds.addAll(newlyCompleted);
 
 			Set<String> completedIds = trackerGlobalConfigStore.loadCustomItemCompletion(taskType, routeId);
 			newlyCompleted.forEach(questId -> completedIds.addAll(questItemIds.get(questId)));

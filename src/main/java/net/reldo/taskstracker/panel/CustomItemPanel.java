@@ -137,11 +137,10 @@ public class CustomItemPanel extends JPanel
 
 		if (customItem.getQuestId() != null)
 		{
-			completeToggle.setVisible(false);
-
 			Quest quest = findQuest(customItem.getQuestId());
 			if (quest != null)
 			{
+				completeToggle.setVisible(false); // allow user to mark unknown quests as complete.
 				setComponentPopupMenu(createQuestPopupMenu(quest));
 			}
 		}

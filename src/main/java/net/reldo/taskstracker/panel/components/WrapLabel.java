@@ -1,7 +1,6 @@
 package net.reldo.taskstracker.panel.components;
 
 import java.awt.FontMetrics;
-import java.awt.font.FontRenderContext;
 import java.util.Objects;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -34,7 +33,6 @@ public class WrapLabel extends JPanel
 		this.text = text;
 		this.removeAll();
 
-		getFont().getStringBounds(text, new FontRenderContext(null, false, false));
 		final FontMetrics fontMetrics = getFontMetrics(getFont());
 
 		int stringWidth = fontMetrics.stringWidth(text);
@@ -50,10 +48,10 @@ public class WrapLabel extends JPanel
 		for (String part : parts)
 		{
 			String nextPart = partSum + part;
-			if (fontMetrics.stringWidth(nextPart) > labelWidth)
+			if (!partSum.isEmpty() && fontMetrics.stringWidth(nextPart) > labelWidth)
 			{
-				addLabel(partSum);
-				partSum = part;
+				addLabel(partSum.stripTrailing());
+				partSum = part.stripLeading();
 				continue;
 			}
 			partSum = nextPart;
