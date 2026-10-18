@@ -5,7 +5,9 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.net.URL;
@@ -22,8 +24,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolTip;
+import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
@@ -495,7 +499,49 @@ public class TaskPanel extends JPanel
 			MouseWheelEvent eventForTarget = (MouseWheelEvent) SwingUtilities.convertMouseEvent((Component) e.getSource(), e, this);
 			this.dispatchEvent(eventForTarget);
 		});
+		customTooltip.addMouseMotionListener(new MouseMotionAdapter()
+		{
+			@Override
+			public void mouseMoved(MouseEvent e)
+			{
+				showTooltipForTaskUnderCursor(e);
+			}
+		});
 		return customTooltip;
+	}
+
+	// While the cursor is over the tooltip, the task panel beneath it gets no mouse events, so the
+	// ToolTipManager never learns it has changed. Send it a mouse-entered event so the tooltip switches task.
+	private void showTooltipForTaskUnderCursor(MouseEvent e)
+	{
+		JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, this);
+		if (scrollPane == null)
+		{
+			return;
+		}
+
+		JViewport viewport = scrollPane.getViewport();
+		Point viewportPoint = e.getLocationOnScreen();
+		SwingUtilities.convertPointFromScreen(viewportPoint, viewport);
+		if (!viewport.contains(viewportPoint))
+		{
+			return;
+		}
+
+		Component view = viewport.getView();
+		Point viewPoint = SwingUtilities.convertPoint(viewport, viewportPoint, view);
+		Component deepest = SwingUtilities.getDeepestComponentAt(view, viewPoint.x, viewPoint.y);
+		TaskPanel target = deepest instanceof TaskPanel
+			? (TaskPanel) deepest
+			: (TaskPanel) SwingUtilities.getAncestorOfClass(TaskPanel.class, deepest);
+		if (target == null || target == this)
+		{
+			return;
+		}
+
+		Point targetPoint = SwingUtilities.convertPoint(view, viewPoint, target);
+		ToolTipManager.sharedInstance().mouseEntered(new MouseEvent(target, MouseEvent.MOUSE_ENTERED, e.getWhen(), 0,
+			targetPoint.x, targetPoint.y, e.getXOnScreen(), e.getYOnScreen(), 0, false, MouseEvent.NOBUTTON));
 	}
 
 	@Override

@@ -1,6 +1,10 @@
 package net.reldo.taskstracker.panel;
 
 import java.awt.Component;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,8 +20,10 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
+import javax.swing.JViewport;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import lombok.Setter;
@@ -57,6 +63,8 @@ public class TaskListPanel extends JScrollPane
 	@Getter
 	private CustomItemPanel priorityCustomItemPanel = null;
 	private boolean forceUpdatePriorityTaskFlag = false;
+	private Point lastViewPosition = new Point();
+	private boolean mouseMoveReplayPending = false;
 
 	/** Section header panels keyed by route id then section id */
 	private final HashMap<String, HashMap<String, SectionHeaderPanel>> sectionHeaderPanels = new HashMap<>();
@@ -85,6 +93,68 @@ public class TaskListPanel extends JScrollPane
 		setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
 		setCurrentTaskListListPanel(0);
+
+		getViewport().addChangeListener(e -> onViewportChanged());
+	}
+
+	// Scrolling moves tasks under a stationary cursor without any mouse event, so hover state such as the task
+	// tooltip goes stale. Dismiss the tooltip, then once the scroll has been applied, replay a mouse move at the
+	// cursor so the task now under it starts its hover delay.
+	private void onViewportChanged()
+	{
+		Point viewPosition = getViewport().getViewPosition();
+		if (!viewPosition.equals(lastViewPosition))
+		{
+			dismissTooltip();
+			if (!mouseMoveReplayPending)
+			{
+				mouseMoveReplayPending = true;
+				SwingUtilities.invokeLater(this::replayMouseMove);
+			}
+		}
+		lastViewPosition = viewPosition;
+	}
+
+	// ToolTipManager has no public way to dismiss its tooltip, but a mouse press hides it and clears its
+	// show-immediately state, so the next tooltip waits for the full initial delay.
+	private void dismissTooltip()
+	{
+		ToolTipManager.sharedInstance().mousePressed(new MouseEvent(this, MouseEvent.MOUSE_PRESSED,
+			System.currentTimeMillis(), 0, 0, 0, 1, false, MouseEvent.BUTTON1));
+	}
+
+	private void replayMouseMove()
+	{
+		mouseMoveReplayPending = false;
+
+		JViewport viewport = getViewport();
+		PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+		if (pointerInfo == null || !viewport.isShowing())
+		{
+			return;
+		}
+
+		Point screenPoint = pointerInfo.getLocation();
+		Point viewportPoint = new Point(screenPoint);
+		SwingUtilities.convertPointFromScreen(viewportPoint, viewport);
+		if (!viewport.contains(viewportPoint))
+		{
+			return;
+		}
+
+		// Mouse events enter Swing through the nearest heavyweight container, which routes them to the
+		// component under the cursor and sends the enter/exit events that drive tooltips.
+		// With the tooltip dismissed, this move starts the initial hover delay for the task under the cursor.
+		Component nativeContainer = viewport;
+		while (nativeContainer.isLightweight())
+		{
+			nativeContainer = nativeContainer.getParent();
+		}
+
+		Point nativePoint = new Point(screenPoint);
+		SwingUtilities.convertPointFromScreen(nativePoint, nativeContainer);
+		nativeContainer.dispatchEvent(new MouseEvent(nativeContainer, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0,
+			nativePoint.x, nativePoint.y, screenPoint.x, screenPoint.y, 0, false, MouseEvent.NOBUTTON));
 	}
 
 	private void setCurrentTaskListListPanel(int index)
@@ -557,7 +627,7 @@ public class TaskListPanel extends JScrollPane
 	public void completeCurrentCustomTask()
 	{
 		JComponent priorityPanel = getPriorityPanel();
-		if (priorityPanel != null && priorityPanel.getClass().equals(CustomItemPanel.class))
+		if (priorityPanel instanceof CustomItemPanel)
 		{
 			CustomItemPanel priorityCustomPanel = (CustomItemPanel) priorityPanel;
 			priorityCustomPanel.setCompleted(true);
