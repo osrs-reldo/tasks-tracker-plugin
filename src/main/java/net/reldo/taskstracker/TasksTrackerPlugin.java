@@ -418,7 +418,7 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick gameTick)
 	{
-		if (forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
+		if ((forceUpdateVarpsFlag || taskService.isTaskTypeChanged()) && taskService.getCurrentTaskType() != null)
 		{
 			log.debug("forceUpdateVarpsFlag game tick {} {}", forceUpdateVarpsFlag, taskService.isTaskTypeChanged());
 			trackerRSProfileConfigStore.loadCurrentTaskTypeFromConfig();
@@ -1055,6 +1055,10 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void setTaskTypeDropdownEnabled(boolean enabled)
 	{
+		if (pluginPanel == null)
+		{
+			return;
+		}
 		pluginPanel.setTaskTypeDropdownEnabled(enabled);
 	}
 }

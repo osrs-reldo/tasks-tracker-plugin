@@ -899,7 +899,6 @@ public class LoggedInPanel extends JPanel
 
 	private void initTaskTypeDropdownAsync()
 	{
-		ITaskType currentTaskType = taskService.getCurrentTaskType();
 		taskService.getTaskTypesByJsonName().thenAccept(taskTypes -> {
 			ArrayList<ComboItem<ITaskType>> taskTypeItems = new ArrayList<>();
 			taskTypes.forEach((taskTypeJsonName, taskType) -> {
@@ -908,8 +907,9 @@ public class LoggedInPanel extends JPanel
 				taskTypeDropdown.addItem(item);
 			});
 
+			String configuredTaskType = config.taskTypeJsonName();
 			ComboItem<ITaskType> currentTaskTypeComboItem = taskTypeItems.stream()
-				.filter(item -> item.getValue().equals(currentTaskType))
+				.filter(item -> item.getValue().getTaskJsonName().equals(configuredTaskType))
 				.findFirst().orElseGet(() -> taskTypeItems.get(0));
 			taskTypeDropdown.addActionListener(e -> {
 				ITaskType taskType = taskTypeDropdown.getItemAt(taskTypeDropdown.getSelectedIndex()).getValue();
