@@ -12,7 +12,6 @@ import java.awt.image.BufferedImage;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -95,8 +94,7 @@ public class TasksTrackerPlugin extends Plugin
 {
 	public static final String CONFIG_GROUP_NAME = "tasks-tracker";
 
-	public int[] playerSkills;
-	public int[] playerXp;
+	private volatile int[] skillXp;
 
 	public TextMatcher taskTextMatcher;
 
@@ -118,7 +116,6 @@ public class TasksTrackerPlugin extends Plugin
 	private long lastVarProgressUpdate = 0;
 	private NavigationButton navButton;
 	private RuneScapeProfileType currentProfileType;
-	private final Map<Skill, Integer> oldExperience = new EnumMap<>(Skill.class);
 
 	@Inject
 	@Named("runelite.version")
@@ -220,6 +217,8 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			forceUpdateVarpsFlag = true;
 			overlayManager.add(overlay);
+			// StatChanged won't fire again until XP changes, so read current stats now
+			clientThread.invokeLater(() -> skillXp = copyClientSkillXp());
 		}
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
@@ -392,6 +391,12 @@ public class TasksTrackerPlugin extends Plugin
 
 		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedInState(newGameState)));
 
+		// A different account may log in next, so don't carry these stats over
+		if (newGameState == GameState.LOGIN_SCREEN)
+		{
+			skillXp = null;
+		}
+
 		// Logged in
 		if (newGameState == GameState.LOGGING_IN)
 		{
@@ -519,33 +524,100 @@ public class TasksTrackerPlugin extends Plugin
 
 	}
 
+	/** Whether skill XP is known yet. Until it is, skill getters return 0. */
+	public boolean isSkillDataLoaded()
+	{
+		return skillXp != null;
+	}
+
+	/** Cached XP for a skill, or 0 if unknown. OVERALL is the sum of all skills. */
+	public int getCachedSkillXp(Skill skill)
+	{
+		int[] xp = skillXp;
+		if (xp == null)
+		{
+			return 0;
+		}
+		if (skill != Skill.OVERALL)
+		{
+			return xp[skill.ordinal()];
+		}
+
+		long total = 0;
+		for (Skill s : Skill.values())
+		{
+			if (s != Skill.OVERALL)
+			{
+				total += xp[s.ordinal()];
+			}
+		}
+		return (int) Math.min(total, Integer.MAX_VALUE); // Total can be bigger than int (4.6b)
+	}
+
+	/** Cached real level for a skill, or 0 if unknown. OVERALL is the total level. */
+	public int getCachedSkillLevel(Skill skill)
+	{
+		int[] xp = skillXp;
+		if (xp == null)
+		{
+			return 0;
+		}
+		if (skill != Skill.OVERALL)
+		{
+			return getRealLevelForXp(xp[skill.ordinal()]);
+		}
+
+		int total = 0;
+		for (Skill s : Skill.values())
+		{
+			if (s != Skill.OVERALL)
+			{
+				total += getRealLevelForXp(xp[s.ordinal()]);
+			}
+		}
+		return total;
+	}
+
+	private static int getRealLevelForXp(int xp)
+	{
+		return Math.min(Experience.getLevelForXp(xp), Experience.MAX_REAL_LEVEL);
+	}
+
+	private int[] copyClientSkillXp()
+	{
+		return Arrays.copyOf(client.getSkillExperiences(), Skill.values().length);
+	}
+
 	@Subscribe
 	public void onStatChanged(StatChanged statChanged)
 	{
-		// @todo deprecate one of these, we don't need to track player skills twice.
-		// Cache current player skills
-		int[] newSkills = client.getRealSkillLevels();
-		boolean changed = !Arrays.equals(playerSkills, newSkills);
-		if (changed)
+		final Skill skill = statChanged.getSkill();
+		final int xpAfter = statChanged.getXp();
+
+		final int xpBefore;
+		int[] xp = skillXp;
+		if (xp == null)
 		{
-			playerSkills = client.getRealSkillLevels();
+			xp = copyClientSkillXp();
+			xpBefore = -1;
+		}
+		else
+		{
+			xp = xp.clone();
+			xpBefore = xp[skill.ordinal()];
+		}
+		xp[skill.ordinal()] = xpAfter;
+		skillXp = xp;
+
+		// If skill xp has changed mark it for next flush
+		if (xpAfter != xpBefore)
+		{
+			dirtyXpSkills.add(skill);
 		}
 
-		// Cache all skill XP for progress bar reads
-		playerXp = client.getSkillExperiences();
-
-		final Skill skill = statChanged.getSkill();
-
 		// Modified from m0bilebtw's modification from Nightfirecat's virtual level ups plugin
-		final int xpAfter = client.getSkillExperience(skill);
 		final int levelAfter = Experience.getLevelForXp(xpAfter);
-		final int xpBefore = oldExperience.getOrDefault(skill, -1);
 		final int levelBefore = xpBefore == -1 ? -1 : Experience.getLevelForXp(xpBefore);
-
-		oldExperience.put(skill, xpAfter);
-
-		// Mark skill dirty so the game-tick flush can update progress bars
-		dirtyXpSkills.add(skill);
 
 		// Do not proceed if any of the following are true:
 		//  * xpBefore == -1              (don't fire when first setting new known value)

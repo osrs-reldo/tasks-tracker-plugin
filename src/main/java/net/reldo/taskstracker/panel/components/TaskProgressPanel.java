@@ -89,20 +89,12 @@ public class TaskProgressPanel extends JPanel
 			case EXPERIENCE:
 			{
 				Skill skill = def.getResolvedSkill();
-				if (plugin.playerXp == null || skill == null)
-				{
-					return 0;
-				}
-				return plugin.playerXp[skill.ordinal()];
+				return skill == null ? 0 : plugin.getCachedSkillXp(skill);
 			}
 			case LEVEL:
 			{
 				Skill skill = def.getResolvedSkill();
-				if (plugin.playerSkills == null || skill == null)
-				{
-					return 0;
-				}
-				return plugin.playerSkills[skill.ordinal()];
+				return skill == null ? 0 : plugin.getCachedSkillLevel(skill);
 			}
 			case VARP:
 				if (def.getId() == null)

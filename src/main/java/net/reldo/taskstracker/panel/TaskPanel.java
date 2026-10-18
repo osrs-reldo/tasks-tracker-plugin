@@ -159,7 +159,7 @@ public class TaskPanel extends JPanel
 
 	public Color getTaskBackgroundColor()
 	{
-		if (plugin.playerSkills == null)
+		if (!plugin.isSkillDataLoaded())
 		{
 			return ColorScheme.DARKER_GRAY_COLOR;
 		}
@@ -188,7 +188,7 @@ public class TaskPanel extends JPanel
 				continue;
 			}
 
-			if (plugin.playerSkills[skill.ordinal()] < requiredSkill.getLevel())
+			if (plugin.getCachedSkillLevel(skill) < requiredSkill.getLevel())
 			{
 				return Colors.UNQUALIFIED_BACKGROUND_COLOR;
 			}
@@ -533,9 +533,9 @@ public class TaskPanel extends JPanel
 			{
 				continue;
 			}
-			if (plugin.playerSkills != null)
+			if (plugin.isSkillDataLoaded())
 			{
-				playerLevel = plugin.playerSkills[skill.ordinal()];
+				playerLevel = plugin.getCachedSkillLevel(skill);
 			}
 			String skillMessage = getSkillRequirementHtml(requiredSkill.getSkill().toLowerCase(), playerLevel, requiredLevel);
 			skillSection.append(skillMessage).append(" ");
@@ -676,9 +676,9 @@ public class TaskPanel extends JPanel
 			{
 				continue;
 			}
-			if (plugin.playerSkills != null)
+			if (plugin.isSkillDataLoaded())
 			{
-				playerLevel = plugin.playerSkills[skill.ordinal()];
+				playerLevel = plugin.getCachedSkillLevel(skill);
 			}
 
 			panelComponent.getChildren().add(getSkillRequirementLineComponent(requiredSkill.getSkill().toLowerCase(), playerLevel, requiredLevel));

@@ -395,17 +395,17 @@ public class TaskListPanel extends JScrollPane
 	public void refreshProgressBarsForSkill(Skill skill)
 	{
 		taskPanelsByStructId.values().stream()
-			.filter(tp -> !tp.task.isCompleted())
-			.filter(tp ->
+			.filter(taskPanel -> !taskPanel.task.isCompleted())
+			.filter(taskPanel ->
 			{
-				List<TaskProgressDefinition> defs = tp.task.getTaskDefinition().getProgress();
+				List<TaskProgressDefinition> defs = taskPanel.task.getTaskDefinition().getProgress();
 				if (defs == null || defs.isEmpty())
 				{
 					return false;
 				}
-				return defs.stream().anyMatch(d ->
-					(d.getType() == ProgressType.EXPERIENCE || d.getType() == ProgressType.LEVEL)
-					&& skill.getName().equalsIgnoreCase(d.getSkill()));
+				return defs.stream().anyMatch(progressDef ->
+					(progressDef.getType() == ProgressType.EXPERIENCE || progressDef.getType() == ProgressType.LEVEL)
+					&& (skill.name().equalsIgnoreCase(progressDef.getSkill()) || "overall".equalsIgnoreCase(progressDef.getSkill())));
 			})
 			.forEach(TaskPanel::refreshProgressBars);
 	}
