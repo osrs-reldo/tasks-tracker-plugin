@@ -12,7 +12,6 @@ import java.awt.image.BufferedImage;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -38,6 +37,9 @@ import net.reldo.taskstracker.data.TasksSummary;
 import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.TrackerRSProfileConfigStore;
 import net.reldo.taskstracker.data.gson.GsonFactory;
+import net.reldo.taskstracker.data.route.CustomRoute;
+import net.reldo.taskstracker.data.route.CustomRouteItem;
+import net.reldo.taskstracker.data.route.RouteItem;
 import net.reldo.taskstracker.data.route.RouteManager;
 import net.reldo.taskstracker.data.route.ShortestPathService;
 import net.reldo.taskstracker.data.jsondatastore.reader.DataStoreReader;
@@ -56,6 +58,8 @@ import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.Experience;
 import net.runelite.api.GameState;
+import net.runelite.api.Quest;
+import net.runelite.api.QuestState;
 import net.runelite.api.Skill;
 import net.runelite.api.events.CommandExecuted;
 import net.runelite.api.events.GameStateChanged;
@@ -81,7 +85,6 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.HotkeyListener;
 import net.runelite.client.util.ImageUtil;
-import net.runelite.client.util.LinkBrowser;
 
 @Slf4j
 @PluginDescriptor(
@@ -91,20 +94,28 @@ public class TasksTrackerPlugin extends Plugin
 {
 	public static final String CONFIG_GROUP_NAME = "tasks-tracker";
 
-	public int[] playerSkills;
+	private volatile int[] skillXp;
 
 	public TextMatcher taskTextMatcher;
 
 	public TasksTrackerPluginPanel pluginPanel;
 
+	private Set<Skill> dirtyXpSkills = new HashSet<>();
+	private Set<Integer> dirtyProgressVarpIds = new HashSet<>();
+	private Set<Integer> dirtyProgressVarbitIds = new HashSet<>();
 	private static final long VARP_UPDATE_THROTTLE_DELAY_MS = 7 * 1000;
+	private static final long QUEST_CHECK_THROTTLE_DELAY_MS = 10 * 1000;
+	private static final long XP_PROGRESS_UPDATE_DELAY_MS = 10 * 1000;
+	private static final long VAR_PROGRESS_UPDATE_DELAY_MS = 5 * 1000;
 
 	private boolean forceUpdateVarpsFlag = false;
 	private Set<Integer> varpIdsToUpdate = new HashSet<>();
 	private long lastVarpUpdate = 0;
+	private long lastQuestCheck = 0;
+	private long lastXpProgressUpdate = 0;
+	private long lastVarProgressUpdate = 0;
 	private NavigationButton navButton;
 	private RuneScapeProfileType currentProfileType;
-	private final Map<Skill, Integer> oldExperience = new EnumMap<>(Skill.class);
 
 	@Inject
 	@Named("runelite.version")
@@ -206,6 +217,8 @@ public class TasksTrackerPlugin extends Plugin
 		{
 			forceUpdateVarpsFlag = true;
 			overlayManager.add(overlay);
+			// StatChanged won't fire again until XP changes, so read current stats now
+			clientThread.invokeLater(() -> skillXp = copyClientSkillXp());
 		}
 
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "panel_icon.png");
@@ -273,11 +286,24 @@ public class TasksTrackerPlugin extends Plugin
 			return;
 		}
 		int varpId = varbitChanged.getVarpId();
-		if (!taskService.isVarpInCurrentTaskType(varpId))
+		if (taskService.isVarpInCurrentTaskType(varpId))
 		{
-			return;
+			varpIdsToUpdate.add(varpId);
 		}
-		varpIdsToUpdate.add(varbitChanged.getVarpId());
+
+		int varbitId = varbitChanged.getVarbitId();
+
+		if (varbitId == -1 && taskService.isProgressVarpInCurrentTaskType(varpId))
+		{
+			taskService.updateProgressVarp(varpId, varbitChanged.getValue());
+			dirtyProgressVarpIds.add(varpId);
+		}
+
+		if (varbitId > 0 && taskService.isProgressVarbitInCurrentTaskType(varbitId))
+		{
+			taskService.updateProgressVarbit(varbitId, varbitChanged.getValue());
+			dirtyProgressVarbitIds.add(varbitId);
+		}
 	}
 
 	@Subscribe
@@ -307,6 +333,13 @@ public class TasksTrackerPlugin extends Plugin
 		if (configChanged.getKey().equals("showRandomTaskButton"))
 		{
 			redraw();
+		}
+
+		if (configChanged.getKey().equals("progressBarDisplay")
+			|| configChanged.getKey().equals("overlayProgressBarDisplay")
+			|| configChanged.getKey().equals("showProgressBarsForCompletedTasks"))
+		{
+			refreshAllTasks();
 		}
 
 		if (configChanged.getKey().startsWith("tab")) // task list tab config items all start 'tab#'
@@ -358,6 +391,12 @@ public class TasksTrackerPlugin extends Plugin
 
 		SwingUtilities.invokeLater(() -> pluginPanel.setLoggedIn(isLoggedInState(newGameState)));
 
+		// A different account may log in next, so don't carry these stats over
+		if (newGameState == GameState.LOGIN_SCREEN)
+		{
+			skillXp = null;
+		}
+
 		// Logged in
 		if (newGameState == GameState.LOGGING_IN)
 		{
@@ -384,18 +423,18 @@ public class TasksTrackerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick gameTick)
 	{
-		if (forceUpdateVarpsFlag || taskService.isTaskTypeChanged())
+		if ((forceUpdateVarpsFlag || taskService.isTaskTypeChanged()) && taskService.getCurrentTaskType() != null)
 		{
 			log.debug("forceUpdateVarpsFlag game tick {} {}", forceUpdateVarpsFlag, taskService.isTaskTypeChanged());
 			trackerRSProfileConfigStore.loadCurrentTaskTypeFromConfig();
 			forceVarpUpdate();
+			forceTaskProgressUpdate();
 			updateFilterMatcher();
 			SwingUtilities.invokeLater(() -> pluginPanel.drawNewTaskType());
 			forceUpdateVarpsFlag = false;
 			taskService.setTaskTypeChanged(false);
 		}
 
-		// Flush throttled varp updates
 		long currentTimeEpoch = System.currentTimeMillis();
 		if (currentTimeEpoch - lastVarpUpdate > VARP_UPDATE_THROTTLE_DELAY_MS)
 		{
@@ -403,29 +442,182 @@ public class TasksTrackerPlugin extends Plugin
 			varpIdsToUpdate = new HashSet<>();
 			lastVarpUpdate = currentTimeEpoch;
 		}
+
+		if (currentTimeEpoch - lastXpProgressUpdate > XP_PROGRESS_UPDATE_DELAY_MS && !dirtyXpSkills.isEmpty() )
+		{
+			Set<Skill> toFlush = dirtyXpSkills;
+			dirtyXpSkills = new HashSet<>();
+			lastXpProgressUpdate = currentTimeEpoch;
+			SwingUtilities.invokeLater(() ->
+				toFlush.forEach(s -> pluginPanel.taskListPanel.refreshProgressBarsForSkill(s)));
+		}
+
+		if (currentTimeEpoch - lastVarProgressUpdate > VAR_PROGRESS_UPDATE_DELAY_MS && (!dirtyProgressVarpIds.isEmpty() || !dirtyProgressVarbitIds.isEmpty()))
+		{
+			Set<Integer> varpsToFlush = dirtyProgressVarpIds;
+			Set<Integer> varbitsToFlush = dirtyProgressVarbitIds;
+			dirtyProgressVarpIds = new HashSet<>();
+			dirtyProgressVarbitIds = new HashSet<>();
+			lastVarProgressUpdate = currentTimeEpoch;
+			SwingUtilities.invokeLater(() ->
+				pluginPanel.taskListPanel.refreshProgressBarsForVars(varpsToFlush, varbitsToFlush));
+		}
+
+		// Throttled quest-state check for route custom items with questIds
+		if (isRouteMode() && currentTimeEpoch - lastQuestCheck > QUEST_CHECK_THROTTLE_DELAY_MS)
+		{
+			lastQuestCheck = currentTimeEpoch;
+			checkQuestCompletions();
+		}
+	}
+
+	private void checkQuestCompletions()
+	{
+		CustomRoute route = taskService.getActiveRoute();
+		if (route == null || taskService.getCurrentTaskType() == null)
+		{
+			return;
+		}
+
+		String taskType = taskService.getCurrentTaskType().getTaskJsonName();
+		String routeId = route.getId();
+		Set<String> completedCustomTaskIds = trackerGlobalConfigStore.loadCustomItemCompletion(taskType, routeId);
+
+		// questId -> custom item ids in the active route, skipping quests already marked complete
+		Map<Integer, List<String>> questItemIds = new HashMap<>();
+		for (RouteItem item : route.getFlattenedItems())
+		{
+			CustomRouteItem customItem = item.getCustomItem();
+			if (item.isTask() || customItem == null || customItem.getQuestId() == null
+				|| completedCustomTaskIds.contains(customItem.getId()))
+			{
+				continue;
+			}
+			questItemIds.computeIfAbsent(customItem.getQuestId(), k -> new ArrayList<>()).add(customItem.getId());
+		}
+		if (questItemIds.isEmpty())
+		{
+			return;
+		}
+
+		clientThread.invoke(() ->
+		{
+			Set<Integer> newlyCompleted = new HashSet<>();
+			for (Quest quest : Quest.values())
+			{
+				if (questItemIds.containsKey(quest.getId()) && quest.getState(client) == QuestState.FINISHED)
+				{
+					newlyCompleted.add(quest.getId());
+				}
+			}
+			if (newlyCompleted.isEmpty())
+			{
+				return;
+			}
+
+			Set<String> completedIds = trackerGlobalConfigStore.loadCustomItemCompletion(taskType, routeId);
+			newlyCompleted.forEach(questId -> completedIds.addAll(questItemIds.get(questId)));
+			trackerGlobalConfigStore.saveCustomItemCompletion(taskType, routeId, completedIds);
+
+			refreshAllTasks();
+		});
+
+	}
+
+	/** Whether skill XP is known yet. Until it is, skill getters return 0. */
+	public boolean isSkillDataLoaded()
+	{
+		return skillXp != null;
+	}
+
+	/** Cached XP for a skill, or 0 if unknown. OVERALL is the sum of all skills. */
+	public int getCachedSkillXp(Skill skill)
+	{
+		int[] xp = skillXp;
+		if (xp == null)
+		{
+			return 0;
+		}
+		if (skill != Skill.OVERALL)
+		{
+			return xp[skill.ordinal()];
+		}
+
+		long total = 0;
+		for (Skill s : Skill.values())
+		{
+			if (s != Skill.OVERALL)
+			{
+				total += xp[s.ordinal()];
+			}
+		}
+		return (int) Math.min(total, Integer.MAX_VALUE); // Total can be bigger than int (4.6b)
+	}
+
+	/** Cached real level for a skill, or 0 if unknown. OVERALL is the total level. */
+	public int getCachedSkillLevel(Skill skill)
+	{
+		int[] xp = skillXp;
+		if (xp == null)
+		{
+			return 0;
+		}
+		if (skill != Skill.OVERALL)
+		{
+			return getRealLevelForXp(xp[skill.ordinal()]);
+		}
+
+		int total = 0;
+		for (Skill s : Skill.values())
+		{
+			if (s != Skill.OVERALL)
+			{
+				total += getRealLevelForXp(xp[s.ordinal()]);
+			}
+		}
+		return total;
+	}
+
+	private static int getRealLevelForXp(int xp)
+	{
+		return Math.min(Experience.getLevelForXp(xp), Experience.MAX_REAL_LEVEL);
+	}
+
+	private int[] copyClientSkillXp()
+	{
+		return Arrays.copyOf(client.getSkillExperiences(), Skill.values().length);
 	}
 
 	@Subscribe
 	public void onStatChanged(StatChanged statChanged)
 	{
-		// @todo deprecate one of these, we don't need to track player skills twice.
-		// Cache current player skills
-		int[] newSkills = client.getRealSkillLevels();
-		boolean changed = !Arrays.equals(playerSkills, newSkills);
-		if (changed)
+		final Skill skill = statChanged.getSkill();
+		final int xpAfter = statChanged.getXp();
+
+		final int xpBefore;
+		int[] xp = skillXp;
+		if (xp == null)
 		{
-			playerSkills = client.getRealSkillLevels();
+			xp = copyClientSkillXp();
+			xpBefore = -1;
+		}
+		else
+		{
+			xp = xp.clone();
+			xpBefore = xp[skill.ordinal()];
+		}
+		xp[skill.ordinal()] = xpAfter;
+		skillXp = xp;
+
+		// If skill xp has changed mark it for next flush
+		if (xpAfter != xpBefore)
+		{
+			dirtyXpSkills.add(skill);
 		}
 
-		final Skill skill = statChanged.getSkill();
-
 		// Modified from m0bilebtw's modification from Nightfirecat's virtual level ups plugin
-		final int xpAfter = client.getSkillExperience(skill);
 		final int levelAfter = Experience.getLevelForXp(xpAfter);
-		final int xpBefore = oldExperience.getOrDefault(skill, -1);
 		final int levelBefore = xpBefore == -1 ? -1 : Experience.getLevelForXp(xpBefore);
-
-		oldExperience.put(skill, xpAfter);
 
 		// Do not proceed if any of the following are true:
 		//  * xpBefore == -1              (don't fire when first setting new known value)
@@ -663,6 +855,28 @@ public class TasksTrackerPlugin extends Plugin
 			{
 				log.debug("forceVarpUpdate processed complete, saving");
 				saveCurrentTaskTypeData();
+			}
+		});
+	}
+
+	public void forceTaskProgressUpdate()
+	{
+		Set<Integer> varpIds = taskService.getProgressVarpIds();
+		Set<Integer> varbitIds = taskService.getProgressVarbitIds();
+
+		if (varpIds.isEmpty() && varbitIds.isEmpty())
+		{
+			return;
+		}
+
+		clientThread.invoke(() -> {
+			for (int id : varpIds)
+			{
+				taskService.updateProgressVarp(id, client.getVarpValue(id));
+			}
+			for (int id : varbitIds)
+			{
+				taskService.updateProgressVarbit(id, client.getVarbitValue(id));
 			}
 		});
 	}
@@ -913,6 +1127,10 @@ public class TasksTrackerPlugin extends Plugin
 
 	public void setTaskTypeDropdownEnabled(boolean enabled)
 	{
+		if (pluginPanel == null)
+		{
+			return;
+		}
 		pluginPanel.setTaskTypeDropdownEnabled(enabled);
 	}
 }

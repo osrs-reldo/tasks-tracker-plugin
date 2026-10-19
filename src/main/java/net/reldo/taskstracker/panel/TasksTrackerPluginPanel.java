@@ -35,17 +35,31 @@ public class TasksTrackerPluginPanel extends PluginPanel
 
 		loggedInPanel = new LoggedInPanel(plugin, config, taskService, routeManager);
 		taskListPanel = loggedInPanel.taskListPanel;
-		add(loggedInPanel, BorderLayout.NORTH);
+		add(loggedInPanel, BorderLayout.CENTER);
 		loggedInPanel.setVisible(false);
 
+
 		// Add error pane
-		add(loggedOutPanel);
+		add(loggedOutPanel, BorderLayout.NORTH);
 	}
 
 	@Override
 	public Dimension getPreferredSize()
 	{
-		return new Dimension(PANEL_WIDTH + SCROLLBAR_WIDTH, super.getPreferredSize().height);
+		// Cap height at current size to prevent content expansion (e.g. filter panels)
+		// from inflating the RuneLite window. Fall back to natural size on first layout.
+		int height = getSize().height;
+		if (height == 0)
+		{
+			height = super.getPreferredSize().height;
+		}
+		return new Dimension(PANEL_WIDTH + SCROLLBAR_WIDTH, height);
+	}
+
+	@Override
+	public Dimension getMinimumSize()
+	{
+		return new Dimension(PANEL_WIDTH + SCROLLBAR_WIDTH, 0);
 	}
 
 	public void redraw()

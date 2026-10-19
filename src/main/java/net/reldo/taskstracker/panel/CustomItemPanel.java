@@ -3,13 +3,18 @@ package net.reldo.taskstracker.panel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.JToolTip;
@@ -26,14 +31,15 @@ import net.reldo.taskstracker.data.TrackerGlobalConfigStore;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.route.CustomRouteItem;
 import net.reldo.taskstracker.data.route.RouteItem;
+import net.runelite.api.Quest;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.client.util.LinkBrowser;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.components.ComponentConstants;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
-import net.runelite.client.ui.overlay.components.TitleComponent;
 import net.runelite.client.util.SwingUtil;
 
 @Slf4j
@@ -44,6 +50,27 @@ public class CustomItemPanel extends JPanel
 	private static final Color BACKGROUND_COMPLETED = new Color(40, 60, 40);
 
 	private static final int MAX_ICON_DIMENSION = 22;
+
+	private static final String WIKI_BASE_URL = "https://oldschool.runescape.wiki/w/";
+
+	// Quests whose RuneLite name doesn't match their wiki page title
+	private static final Map<Quest, String> QUEST_WIKI_PAGE_OVERRIDES = Map.ofEntries(
+		Map.entry(Quest.RECIPE_FOR_DISASTER__ANOTHER_COOKS_QUEST, "Recipe for Disaster/Another Cook's Quest"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__MOUNTAIN_DWARF, "Recipe for Disaster/Freeing the Mountain Dwarf"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__WARTFACE__BENTNOZE, "Recipe for Disaster/Freeing the Goblin generals"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__PIRATE_PETE, "Recipe for Disaster/Freeing Pirate Pete"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__LUMBRIDGE_GUIDE, "Recipe for Disaster/Freeing the Lumbridge Guide"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__EVIL_DAVE, "Recipe for Disaster/Freeing Evil Dave"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__SKRACH_UGLOGWEE, "Recipe for Disaster/Freeing Skrach Uglogwee"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__SIR_AMIK_VARZE, "Recipe for Disaster/Freeing Sir Amik Varze"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__KING_AWOWOGEI, "Recipe for Disaster/Freeing King Awowogei"),
+		Map.entry(Quest.RECIPE_FOR_DISASTER__CULINAROMANCER, "Recipe for Disaster/Defeating the Culinaromancer")
+	);
+
+	// Quests without a "<wiki page>/Quick guide" subpage
+	private static final Map<Quest, String> QUEST_QUICK_GUIDE_OVERRIDES = Map.of(
+		Quest.RECIPE_FOR_DISASTER__CULINAROMANCER, "Recipe for Disaster/Quick guide#The final battles"
+	);
 
 	private final TasksTrackerPlugin plugin;
 	private final RouteItem routeItem;
@@ -108,6 +135,20 @@ public class CustomItemPanel extends JPanel
 		completeToggle.addActionListener(e -> onCompletionToggled());
 		SwingUtil.removeButtonDecorations(completeToggle);
 
+		if (customItem.getQuestId() != null)
+		{
+			Quest quest = findQuest(customItem.getQuestId());
+			if (quest != null)
+			{
+				completeToggle.setVisible(false); // allow user to mark unknown quests as complete.
+				setComponentPopupMenu(createPopupMenu(quest));
+			}
+		}
+		else
+		{
+			setComponentPopupMenu(createPopupMenu(null));
+		}
+
 		JPanel body = new JPanel(new BorderLayout());
 		body.setOpaque(false);
 		body.setBorder(new EmptyBorder(0, 1, 0, 0));
@@ -128,6 +169,62 @@ public class CustomItemPanel extends JPanel
 		ToolTipManager.sharedInstance().registerComponent(this);
 	}
 
+	private static Quest findQuest(int questId)
+	{
+		return Arrays.stream(Quest.values())
+			.filter(quest -> quest.getId() == questId)
+			.findFirst()
+			.orElse(null);
+	}
+
+	private JPopupMenu createPopupMenu(Quest quest)
+	{
+		JPopupMenu popupMenu = new JPopupMenu();
+
+		JMenuItem removeFromRouteItem = new JMenuItem("Remove from route");
+		removeFromRouteItem.addActionListener(e -> {
+			if (plugin.getRouteManager().removeCustomTaskFromActiveRoute(customItem.getId()))
+			{
+				plugin.redrawTaskList();
+			}
+		});
+		popupMenu.add(removeFromRouteItem);
+
+		if (quest != null)
+		{
+			String wikiPage = QUEST_WIKI_PAGE_OVERRIDES.getOrDefault(quest, quest.getName());
+			String quickGuidePage = QUEST_QUICK_GUIDE_OVERRIDES.getOrDefault(quest, wikiPage + "/Quick guide");
+
+			JMenuItem openWikiItem = new JMenuItem("Wiki");
+			openWikiItem.addActionListener(e -> LinkBrowser.browse(getWikiUrl(wikiPage)));
+			popupMenu.add(openWikiItem);
+
+			JMenuItem openQuickGuideItem = new JMenuItem("Wiki Quick Guide");
+			openQuickGuideItem.addActionListener(e -> LinkBrowser.browse(getWikiUrl(quickGuidePage)));
+			popupMenu.add(openQuickGuideItem);
+		}
+
+		return popupMenu;
+	}
+
+	private static String getWikiUrl(String page)
+	{
+		String anchor = "";
+		int anchorIndex = page.indexOf('#');
+		if (anchorIndex >= 0)
+		{
+			anchor = page.substring(anchorIndex).replace(' ', '_');
+			page = page.substring(0, anchorIndex);
+		}
+
+		// Encode each path segment separately so subpage separators are preserved
+		String path = Arrays.stream(page.replace(' ', '_').split("/"))
+			.map(segment -> URLEncoder.encode(segment, StandardCharsets.UTF_8))
+			.collect(Collectors.joining("/"));
+
+		return WIKI_BASE_URL + path + anchor;
+	}
+
 	private void setFallbackIcon()
 	{
 		String letter = "C";
@@ -144,6 +241,10 @@ public class CustomItemPanel extends JPanel
 			else if ("Teleport".equals(label))
 			{
 				color = new Color(100, 200, 255);
+			}
+			else if ("Quest".equals(label))
+			{
+				color = new Color(135, 151, 230);
 			}
 		}
 
@@ -269,7 +370,7 @@ public class CustomItemPanel extends JPanel
 		);
 	}
 
-	public void buildOverlayText(Graphics2D graphics, PanelComponent panelComponent)
+	public void buildOverlayText(PanelComponent panelComponent)
 	{
 		panelComponent.setBackgroundColor(ComponentConstants.STANDARD_BACKGROUND_COLOR);
 
@@ -291,13 +392,9 @@ public class CustomItemPanel extends JPanel
 		String title = customItem.getDisplayLabel();
 		String desc = customItem.getDescription();
 
-		final FontMetrics fontMetrics = graphics.getFontMetrics();
-		int panelWidth = Math.max(ComponentConstants.STANDARD_WIDTH, fontMetrics.stringWidth(title) +
-			ComponentConstants.STANDARD_BORDER + ComponentConstants.STANDARD_BORDER);
-
-		panelComponent.setPreferredSize(new Dimension(panelWidth, 0));
-		panelComponent.getChildren().add(TitleComponent.builder()
-			.text(title)
+		panelComponent.setPreferredSize(new Dimension(ComponentConstants.STANDARD_WIDTH, 0));
+		panelComponent.getChildren().add(LineComponent.builder()
+			.left(title)
 			.build());
 
 		if (desc != null && !desc.isEmpty())

@@ -8,6 +8,14 @@ checkstyle {
 	toolVersion = '10.21.4'
 }
 
+configurations.checkstyle {
+	attributes {
+		// Guava 32.1+ publishes android/jre variants that Gradle 6.x cannot
+		// disambiguate; pin checkstyle's resolution to the standard JVM variant.
+		attribute(Attribute.of('org.gradle.jvm.environment', String), 'standard-jvm')
+	}
+}
+
 repositories {
 	mavenLocal()
 	maven {
