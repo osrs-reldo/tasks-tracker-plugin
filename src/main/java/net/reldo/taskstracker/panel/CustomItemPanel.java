@@ -141,8 +141,12 @@ public class CustomItemPanel extends JPanel
 			if (quest != null)
 			{
 				completeToggle.setVisible(false); // allow user to mark unknown quests as complete.
-				setComponentPopupMenu(createQuestPopupMenu(quest));
+				setComponentPopupMenu(createPopupMenu(quest));
 			}
+		}
+		else
+		{
+			setComponentPopupMenu(createPopupMenu(null));
 		}
 
 		JPanel body = new JPanel(new BorderLayout());
@@ -173,20 +177,32 @@ public class CustomItemPanel extends JPanel
 			.orElse(null);
 	}
 
-	private JPopupMenu createQuestPopupMenu(Quest quest)
+	private JPopupMenu createPopupMenu(Quest quest)
 	{
 		JPopupMenu popupMenu = new JPopupMenu();
 
-		String wikiPage = QUEST_WIKI_PAGE_OVERRIDES.getOrDefault(quest, quest.getName());
-		String quickGuidePage = QUEST_QUICK_GUIDE_OVERRIDES.getOrDefault(quest, wikiPage + "/Quick guide");
+		JMenuItem removeFromRouteItem = new JMenuItem("Remove from route");
+		removeFromRouteItem.addActionListener(e -> {
+			if (plugin.getRouteManager().removeCustomTaskFromActiveRoute(customItem.getId()))
+			{
+				plugin.redrawTaskList();
+			}
+		});
+		popupMenu.add(removeFromRouteItem);
 
-		JMenuItem openWikiItem = new JMenuItem("Wiki");
-		openWikiItem.addActionListener(e -> LinkBrowser.browse(getWikiUrl(wikiPage)));
-		popupMenu.add(openWikiItem);
+		if (quest != null)
+		{
+			String wikiPage = QUEST_WIKI_PAGE_OVERRIDES.getOrDefault(quest, quest.getName());
+			String quickGuidePage = QUEST_QUICK_GUIDE_OVERRIDES.getOrDefault(quest, wikiPage + "/Quick guide");
 
-		JMenuItem openQuickGuideItem = new JMenuItem("Wiki Quick Guide");
-		openQuickGuideItem.addActionListener(e -> LinkBrowser.browse(getWikiUrl(quickGuidePage)));
-		popupMenu.add(openQuickGuideItem);
+			JMenuItem openWikiItem = new JMenuItem("Wiki");
+			openWikiItem.addActionListener(e -> LinkBrowser.browse(getWikiUrl(wikiPage)));
+			popupMenu.add(openWikiItem);
+
+			JMenuItem openQuickGuideItem = new JMenuItem("Wiki Quick Guide");
+			openQuickGuideItem.addActionListener(e -> LinkBrowser.browse(getWikiUrl(quickGuidePage)));
+			popupMenu.add(openQuickGuideItem);
+		}
 
 		return popupMenu;
 	}
