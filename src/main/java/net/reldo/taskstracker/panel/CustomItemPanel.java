@@ -22,6 +22,8 @@ import javax.swing.ToolTipManager;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.reldo.taskstracker.HtmlUtil;
@@ -203,6 +205,30 @@ public class CustomItemPanel extends JPanel
 			openQuickGuideItem.addActionListener(e -> LinkBrowser.browse(getWikiUrl(quickGuidePage)));
 			popupMenu.add(openQuickGuideItem);
 		}
+
+		JMenuItem startQuestHelperItem = new JMenuItem("Start Quest Helper");
+		startQuestHelperItem.addActionListener(e -> plugin.getQuestHelperService().startQuestHelper(quest));
+		popupMenu.add(startQuestHelperItem);
+
+		// Only offer Quest Helper while it is installed and enabled
+		popupMenu.addPopupMenuListener(new PopupMenuListener()
+		{
+			@Override
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e)
+			{
+				startQuestHelperItem.setVisible(plugin.getQuestHelperService().isQuestHelperEnabled());
+			}
+
+			@Override
+			public void popupMenuWillBecomeInvisible(PopupMenuEvent e)
+			{
+			}
+
+			@Override
+			public void popupMenuCanceled(PopupMenuEvent e)
+			{
+			}
+		});
 
 		return popupMenu;
 	}
