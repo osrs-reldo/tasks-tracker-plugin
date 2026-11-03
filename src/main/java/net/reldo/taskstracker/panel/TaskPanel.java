@@ -2,11 +2,13 @@ package net.reldo.taskstracker.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -22,8 +24,11 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolTip;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -35,8 +40,11 @@ import net.reldo.taskstracker.TasksTrackerPlugin;
 import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinitionSkill;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskProgressDefinition;
 import net.reldo.taskstracker.data.task.ITask;
 import net.reldo.taskstracker.data.task.filters.FilterMatcher;
+import net.reldo.taskstracker.panel.components.TaskProgressPanel;
+import net.reldo.taskstracker.panel.components.WrapLabel;
 import net.runelite.api.Constants;
 import net.runelite.api.Skill;
 import net.runelite.client.game.SkillIconManager;
@@ -47,7 +55,7 @@ import net.runelite.client.ui.overlay.components.ComponentConstants;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.util.LinkBrowser;
 import net.runelite.client.ui.overlay.components.PanelComponent;
-import net.runelite.client.ui.overlay.components.TitleComponent;
+import net.runelite.client.ui.overlay.components.ProgressBarComponent;
 import net.runelite.client.util.SwingUtil;
 
 @Slf4j
@@ -58,17 +66,20 @@ public class TaskPanel extends JPanel
 	private static final String ADD_STATE = "Add to canvas";
 	private static final String REMOVE_STATE = "Remove from canvas";
 
+	private static final int LABEL_WIDTH = 157;
+
 	public final ITask task;
 
 	private final JLabel tierIcon = new JLabel();
 	private final JPanel container = new JPanel(new BorderLayout());
 	private final JPanel highlightContainer = new JPanel(new BorderLayout());
 	private final JPanel body = new JPanel(new BorderLayout());
-	private final JLabel name = new JLabel("task");
-	private final JLabel description = new JLabel("description");
+	private final WrapLabel name = new WrapLabel("task", LABEL_WIDTH);
+	private final WrapLabel description = new WrapLabel("description", LABEL_WIDTH);
 	private final JPanel buttons = new JPanel();
 	private final JToggleButton toggleTrack = new JToggleButton();
 	private final JToggleButton toggleIgnore = new JToggleButton();
+	private final JPanel progressBarsPanel = new JPanel();
 	private final JPopupMenu popupMenu;
 
 	protected final FilterMatcher filterMatcher;
@@ -152,7 +163,7 @@ public class TaskPanel extends JPanel
 
 	public Color getTaskBackgroundColor()
 	{
-		if (plugin.playerSkills == null)
+		if (!plugin.isSkillDataLoaded())
 		{
 			return ColorScheme.DARKER_GRAY_COLOR;
 		}
@@ -181,7 +192,7 @@ public class TaskPanel extends JPanel
 				continue;
 			}
 
-			if (plugin.playerSkills[skill.ordinal()] < requiredSkill.getLevel())
+			if (plugin.getCachedSkillLevel(skill) < requiredSkill.getLevel())
 			{
 				return Colors.UNQUALIFIED_BACKGROUND_COLOR;
 			}
@@ -257,6 +268,9 @@ public class TaskPanel extends JPanel
 
 		highlightContainer.add(container, BorderLayout.NORTH);
 		add(highlightContainer, BorderLayout.NORTH);
+
+		progressBarsPanel.setLayout(new BoxLayout(progressBarsPanel, BoxLayout.Y_AXIS));
+		highlightContainer.add(progressBarsPanel, BorderLayout.SOUTH);
 
 		setComponentPopupMenu(popupMenu);
 	}
@@ -389,9 +403,9 @@ public class TaskPanel extends JPanel
 			highlightContainer.setBorder(new EmptyBorder(0, 0, 0, 0));
 		}
 		setBackgroundColor(getTaskBackgroundColor());
-		name.setText(HtmlUtil.wrapWithHtml(task.getName()));
+		name.setText(task.getName());
 		String desc = task.getDescription();
-		description.setText(desc != null ? HtmlUtil.wrapWithHtml(desc) : "");
+		description.setText(desc != null ? desc : "");
 
 		// If completed tasks are auto-untracked, don't allow users to add them to tracked tasks, that's silly.
 		boolean disableTrack = plugin.getConfig().untrackUponCompletion() && task.isCompleted();
@@ -409,6 +423,8 @@ public class TaskPanel extends JPanel
 
 		toggleTrack.setSelected(task.isTracked());
 		toggleIgnore.setSelected(task.isIgnored());
+
+		refreshProgressBars();
 
 		setVisible(meetsFilterCriteria());
 
@@ -440,6 +456,33 @@ public class TaskPanel extends JPanel
 		buttons.setBackground(color);
 	}
 
+	public void refreshProgressBars()
+	{
+		progressBarsPanel.removeAll();
+
+		ConfigValues.ProgressBarDisplay displayMode = plugin.getConfig().progressBarDisplay();
+		List<TaskProgressDefinition> progressDefs = task.getTaskDefinition().getProgress();
+
+		boolean completedAllowed = task.isCompleted() && plugin.getConfig().showProgressBarsForCompletedTasks();
+		boolean showBars = displayMode != ConfigValues.ProgressBarDisplay.NONE
+			&& (!task.isCompleted() || completedAllowed)
+			&& progressDefs != null
+			&& !progressDefs.isEmpty();
+
+		if (!showBars)
+		{
+			progressBarsPanel.setVisible(false);
+			return;
+		}
+
+		boolean compact = displayMode == ConfigValues.ProgressBarDisplay.COMPACT;
+		boolean withText = displayMode == ConfigValues.ProgressBarDisplay.FULL;
+		int barHeight = compact ? 6 : 12;
+
+		progressBarsPanel.add(new TaskProgressPanel(plugin, task, progressDefs, barHeight, withText));
+		progressBarsPanel.setVisible(true);
+	}
+
 	@Override
 	public Dimension getMaximumSize()
 	{
@@ -451,7 +494,54 @@ public class TaskPanel extends JPanel
 	{
 		JToolTip customTooltip = new JToolTip();
 		customTooltip.setFont(FontManager.getRunescapeSmallFont());
+		customTooltip.addMouseWheelListener(e ->
+		{
+			MouseWheelEvent eventForTarget = (MouseWheelEvent) SwingUtilities.convertMouseEvent((Component) e.getSource(), e, this);
+			this.dispatchEvent(eventForTarget);
+		});
+		customTooltip.addMouseMotionListener(new MouseMotionAdapter()
+		{
+			@Override
+			public void mouseMoved(MouseEvent e)
+			{
+				showTooltipForTaskUnderCursor(e);
+			}
+		});
 		return customTooltip;
+	}
+
+	// While the cursor is over the tooltip, the task panel beneath it gets no mouse events, so the
+	// ToolTipManager never learns it has changed. Send it a mouse-entered event so the tooltip switches task.
+	private void showTooltipForTaskUnderCursor(MouseEvent e)
+	{
+		JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, this);
+		if (scrollPane == null)
+		{
+			return;
+		}
+
+		JViewport viewport = scrollPane.getViewport();
+		Point viewportPoint = e.getLocationOnScreen();
+		SwingUtilities.convertPointFromScreen(viewportPoint, viewport);
+		if (!viewport.contains(viewportPoint))
+		{
+			return;
+		}
+
+		Component view = viewport.getView();
+		Point viewPoint = SwingUtilities.convertPoint(viewport, viewportPoint, view);
+		Component deepest = SwingUtilities.getDeepestComponentAt(view, viewPoint.x, viewPoint.y);
+		TaskPanel target = deepest instanceof TaskPanel
+			? (TaskPanel) deepest
+			: (TaskPanel) SwingUtilities.getAncestorOfClass(TaskPanel.class, deepest);
+		if (target == null || target == this)
+		{
+			return;
+		}
+
+		Point targetPoint = SwingUtilities.convertPoint(view, viewPoint, target);
+		ToolTipManager.sharedInstance().mouseEntered(new MouseEvent(target, MouseEvent.MOUSE_ENTERED, e.getWhen(), 0,
+			targetPoint.x, targetPoint.y, e.getXOnScreen(), e.getYOnScreen(), 0, false, MouseEvent.NOBUTTON));
 	}
 
 	@Override
@@ -489,9 +579,9 @@ public class TaskPanel extends JPanel
 			{
 				continue;
 			}
-			if (plugin.playerSkills != null)
+			if (plugin.isSkillDataLoaded())
 			{
-				playerLevel = plugin.playerSkills[skill.ordinal()];
+				playerLevel = plugin.getCachedSkillLevel(skill);
 			}
 			String skillMessage = getSkillRequirementHtml(requiredSkill.getSkill().toLowerCase(), playerLevel, requiredLevel);
 			skillSection.append(skillMessage).append(" ");
@@ -518,7 +608,7 @@ public class TaskPanel extends JPanel
 		return " - " + points + " points";
 	}
 
-	public void buildOverlayText(Graphics2D graphics, PanelComponent panelComponent)
+	public void buildOverlayText(PanelComponent panelComponent)
 	{
 
 		ITask task = this.task;
@@ -539,13 +629,9 @@ public class TaskPanel extends JPanel
 		}
 
 		// Title
-		final FontMetrics fontMetrics = graphics.getFontMetrics();
-		int panelWidth = Math.max(ComponentConstants.STANDARD_WIDTH, fontMetrics.stringWidth(task.getName()) +
-			ComponentConstants.STANDARD_BORDER + ComponentConstants.STANDARD_BORDER);
-
-		panelComponent.setPreferredSize(new Dimension(panelWidth, 0));
-		panelComponent.getChildren().add(TitleComponent.builder()
-			.text(task.getName())
+		panelComponent.setPreferredSize(new Dimension(ComponentConstants.STANDARD_WIDTH, 0));
+		panelComponent.getChildren().add(LineComponent.builder()
+			.left(task.getName())
 			.build());
 
 		// Description
@@ -604,6 +690,9 @@ public class TaskPanel extends JPanel
 				}
 			}
 		}
+
+		// Progress Bars
+		buildOverlayProgressSection(panelComponent);
 	}
 
 	private void buildOverlaySkillSection(PanelComponent panelComponent)
@@ -633,12 +722,40 @@ public class TaskPanel extends JPanel
 			{
 				continue;
 			}
-			if (plugin.playerSkills != null)
+			if (plugin.isSkillDataLoaded())
 			{
-				playerLevel = plugin.playerSkills[skill.ordinal()];
+				playerLevel = plugin.getCachedSkillLevel(skill);
 			}
 
 			panelComponent.getChildren().add(getSkillRequirementLineComponent(requiredSkill.getSkill().toLowerCase(), playerLevel, requiredLevel));
+		}
+	}
+
+	private void buildOverlayProgressSection(PanelComponent panelComponent)
+	{
+		List<TaskProgressDefinition> progressDefs = task.getTaskDefinition().getProgress();
+		boolean completedAllowed = task.isCompleted() && plugin.getConfig().showProgressBarsForCompletedTasks();
+		if (progressDefs == null || progressDefs.isEmpty() || (task.isCompleted() && !completedAllowed))
+		{
+			return;
+		}
+
+		ConfigValues.OverlayProgressBarDisplay displayMode = plugin.getConfig().overlayProgressBarDisplay();
+		if (displayMode == ConfigValues.OverlayProgressBarDisplay.NONE)
+		{
+			return;
+		}
+
+		panelComponent.getChildren().add(LineComponent.builder().build());
+		for (TaskProgressPanel.BarValue barValue : TaskProgressPanel.getBarValues(plugin, task, progressDefs))
+		{
+			ProgressBarComponent bar = new ProgressBarComponent();
+			bar.setMinimum(0);
+			bar.setMaximum(barValue.getTarget());
+			bar.setValue(barValue.getCurrent());
+			bar.setLabelDisplayMode(displayMode.labelDisplayMode);
+			bar.setForegroundColor(new Color(0, 168, 0));
+			panelComponent.getChildren().add(bar);
 		}
 	}
 

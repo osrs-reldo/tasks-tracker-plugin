@@ -21,6 +21,9 @@ public class CustomRouteItem
 	/** Sprite archive ID for transportation map icon. */
 	public static final int TELEPORT_ICON_SPRITE = 1504;
 
+	/** Sprite archive ID for quest icon. */
+	public static final int QUEST_ICON_SPRITE = 835;
+
 	/** Unique identifier (8-char UUID prefix). Counterpart to structId/taskId. */
 	@Expose
 	@NonNull
@@ -38,6 +41,10 @@ public class CustomRouteItem
 	/** Detail text shown below the label. Counterpart to task description. */
 	@Expose
 	private String description;
+
+	/** RuneLite Quest id for auto-completion tracking. Null for non-quest items. */
+	@Expose
+	private Integer questId;
 
 	/** Returns the label for display, falling back to "Custom" if empty. */
 	public String getDisplayLabel()
@@ -71,6 +78,17 @@ public class CustomRouteItem
 		item.setLabel("Teleport");
 		item.setIcon(TELEPORT_ICON_SPRITE);
 		item.setDescription(description);
+		return item;
+	}
+
+	public static CustomRouteItem createQuest(Integer questId, String description)
+	{
+		CustomRouteItem item = new CustomRouteItem();
+		item.setId(generateId());
+		item.setLabel("Quest");
+		item.setIcon(QUEST_ICON_SPRITE);
+		item.setDescription(description);
+		item.setQuestId(questId);
 		return item;
 	}
 

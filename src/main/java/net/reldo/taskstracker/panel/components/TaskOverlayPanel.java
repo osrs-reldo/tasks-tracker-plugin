@@ -39,11 +39,11 @@ public class TaskOverlayPanel extends OverlayPanel
 
 		if (priorityPanel instanceof TaskPanel)
 		{
-			((TaskPanel) priorityPanel).buildOverlayText(graphics, panelComponent);
+			((TaskPanel) priorityPanel).buildOverlayText(panelComponent);
 		}
 		else if (priorityPanel instanceof CustomItemPanel)
 		{
-			((CustomItemPanel) priorityPanel).buildOverlayText(graphics, panelComponent);
+			((CustomItemPanel) priorityPanel).buildOverlayText(panelComponent);
 		}
 
 		return super.render(graphics);

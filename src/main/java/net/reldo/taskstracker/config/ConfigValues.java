@@ -1,5 +1,6 @@
 package net.reldo.taskstracker.config;
 
+import net.runelite.client.ui.overlay.components.ProgressBarComponent;
 
 public class ConfigValues
 {
@@ -81,6 +82,49 @@ public class ConfigValues
 	{
 		ASCENDING,
 		DESCENDING;
+	}
+
+	public enum ProgressBarDisplay
+	{
+		NONE("None"),
+		NO_LABEL("No Label"),
+		FULL("With Label"),
+		COMPACT("Compact");
+
+		public final String name;
+
+		public String toString()
+		{
+			return name;
+		}
+
+		ProgressBarDisplay(String name)
+		{
+			this.name = name;
+		}
+	}
+
+	public enum OverlayProgressBarDisplay
+	{
+		NONE("None", null),
+		NO_LABEL("No Label", ProgressBarComponent.LabelDisplayMode.TEXT_ONLY),
+		PERCENTAGE("Percentage", ProgressBarComponent.LabelDisplayMode.PERCENTAGE),
+		FULL("Current / Target", ProgressBarComponent.LabelDisplayMode.FULL),
+		BOTH("Both", ProgressBarComponent.LabelDisplayMode.BOTH);
+
+		public final String name;
+		public final ProgressBarComponent.LabelDisplayMode labelDisplayMode;
+
+		public String toString()
+		{
+			return name;
+		}
+
+		OverlayProgressBarDisplay(String name, ProgressBarComponent.LabelDisplayMode labelDisplayMode)
+		{
+			this.name = name;
+			this.labelDisplayMode = labelDisplayMode;
+		}
 	}
 
 }

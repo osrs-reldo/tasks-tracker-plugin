@@ -7,7 +7,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -22,7 +24,9 @@ import net.reldo.taskstracker.config.ConfigValues;
 import net.reldo.taskstracker.data.jsondatastore.TaskDataClient;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterConfig;
 import net.reldo.taskstracker.data.jsondatastore.types.FilterValueType;
+import net.reldo.taskstracker.data.jsondatastore.types.ProgressType;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskDefinition;
+import net.reldo.taskstracker.data.jsondatastore.types.TaskProgressDefinition;
 import net.reldo.taskstracker.data.jsondatastore.types.TaskSourceType;
 import net.reldo.taskstracker.data.route.CustomRoute;
 import net.reldo.taskstracker.data.route.RouteItem;
@@ -60,6 +64,14 @@ public class TaskService
 	private ITaskType currentTaskType;
 	@Getter
 	private final List<ITask> tasks = new ArrayList<>();
+	// Read on the client thread (onVarbitChanged), rebuilt on the loader thread (setTaskType)
+	@Getter
+	private volatile Set<Integer> progressVarpIds = new HashSet<>();
+	@Getter
+	private volatile Set<Integer> progressVarbitIds = new HashSet<>();
+	// Latest values of progress varps/varbits: written on the client thread, read on the EDT and overlay
+	private final Map<Integer, Integer> progressVarpValues = new ConcurrentHashMap<>();
+	private final Map<Integer, Integer> progressVarbitValues = new ConcurrentHashMap<>();
 	@Getter
 	private final HashMap<String, HashMap<Integer, Integer>> sortedIndexes = new HashMap<>();
 	private HashMap<String, ITaskType> _taskTypes = new HashMap<>();
@@ -193,6 +205,29 @@ public class TaskService
 
 				tasks.clear();
 				tasks.addAll(newTasks);
+
+				Set<Integer> newProgressVarpIds = new HashSet<>();
+				Set<Integer> newProgressVarbitIds = new HashSet<>();
+				progressVarpValues.clear();
+				progressVarbitValues.clear();
+				for (ITask task : tasks)
+				{
+					List<TaskProgressDefinition> progressDefs = task.getTaskDefinition().getProgress();
+					if (progressDefs == null) continue;
+					for (TaskProgressDefinition def : progressDefs)
+					{
+						if (def.getType() == ProgressType.VARP && def.getId() != null)
+						{
+							newProgressVarpIds.add(def.getId());
+						}
+						else if (def.getType() == ProgressType.VARBIT && def.getId() != null)
+						{
+							newProgressVarbitIds.add(def.getId());
+						}
+					}
+				}
+				progressVarpIds = newProgressVarpIds;
+				progressVarbitIds = newProgressVarbitIds;
 
 				// Clear route state from previous task type
 				routeIndexes.clear();
@@ -339,6 +374,36 @@ public class TaskService
 	public boolean isVarpInCurrentTaskType(int varpId)
 	{
 		return currentTaskTypeVarps.contains(varpId);
+	}
+
+	public boolean isProgressVarpInCurrentTaskType(int varpId)
+	{
+		return progressVarpIds.contains(varpId);
+	}
+
+	public boolean isProgressVarbitInCurrentTaskType(int varbitId)
+	{
+		return progressVarbitIds.contains(varbitId);
+	}
+
+	public void updateProgressVarp(int varpId, int value)
+	{
+		progressVarpValues.put(varpId, value);
+	}
+
+	public void updateProgressVarbit(int varbitId, int value)
+	{
+		progressVarbitValues.put(varbitId, value);
+	}
+
+	public int getProgressVarpValue(int varpId)
+	{
+		return progressVarpValues.getOrDefault(varpId, 0);
+	}
+
+	public int getProgressVarbitValue(int varbitId)
+	{
+		return progressVarbitValues.getOrDefault(varbitId, 0);
 	}
 
 	public void clearTaskTypes()
