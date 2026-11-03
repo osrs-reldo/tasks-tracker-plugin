@@ -736,6 +736,8 @@ public class TaskListPanel extends JScrollPane
 				if (tasks == null || tasks.isEmpty())
 				{
 					emptyTasks.setVisible(true);
+					// Run the (empty) batch pipeline so the new list panel is shown and the task type dropdown is re-enabled
+					processInBatches(0, indexPosition -> { });
 					return;
 				}
 
